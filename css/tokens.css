@@ -1,0 +1,39 @@
+@import url('https://fonts.googleapis.com/css2?family=Literata:wght@300;400;600&family=Manrope:wght@800&display=swap');
+
+:root {
+  --primitive-black: #393a3d;
+  --primitive-grey-dark: #6b6c72;
+  --primitive-grey-light: #f8f9fc;
+  --primitive-white: #ffffff;
+  --primitive-green-light: #cbeacb;
+  --primitive-orange: #ff8d28;
+
+  --spacing-4: 4px;
+  --spacing-8: 8px;
+  --spacing-16: 16px;
+  --spacing-32: 32px;
+  --spacing-64: 64px;
+  --spacing-128: 128px;
+
+  --sizing-content-max: 900px;
+
+  --text-display: 48px/1.32 "Literata", Georgia, serif;
+  --text-heading1: 38px/1.2 "Literata", Georgia, serif;
+  --text-heading2: 22px/1.3 "Literata", Georgia, serif;
+  --text-heading3: 22px/1.3 "Literata", Georgia, serif;
+  --text-body: 18px/1.7 "Literata", Georgia, serif;
+  --text-number-section: 20px/1 "Manrope", Arial, sans-serif;
+
+  --font-weight-light: 300;
+  --font-weight-semibold: 600;
+  --font-weight-extrabold: 800;
+}
+
+@media (max-width: 600px) {
+  :root {
+    --text-display: 30px/1.3 "Literata", Georgia, serif;
+    --text-heading1: 24px/1.13 "Literata", Georgia, serif;
+    --text-body: 18px/1.68 "Literata", Georgia, serif;
+    --text-number-section: 16px/1 "Manrope", Arial, sans-serif;
+  }
+}

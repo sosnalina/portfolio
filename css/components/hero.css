@@ -1,0 +1,7 @@
+.section-hero {
+  width: 100%;
+  text-align: center;
+  color: var(--primitive-black);
+  font: var(--text-display);
+  font-weight: var(--font-weight-semibold);
+}

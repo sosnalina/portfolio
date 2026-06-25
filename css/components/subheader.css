@@ -1,0 +1,29 @@
+.section-subheader {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8);
+  align-items: flex-start;
+  width: 100%;
+}
+
+.section-subheader__title {
+  font: var(--text-heading2);
+  font-weight: var(--font-weight-semibold);
+  color: var(--primitive-black);
+}
+
+.section-subheader__subtitle {
+  font: var(--text-heading3);
+  font-weight: var(--font-weight-light);
+  color: var(--primitive-grey-dark);
+}
+
+@media (max-width: 600px) {
+  .section-subheader__title {
+    font-size: 20px;
+  }
+
+  .section-subheader__subtitle {
+    font-size: 20px;
+  }
+}

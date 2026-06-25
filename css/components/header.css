@@ -1,0 +1,28 @@
+.section-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-16);
+  align-items: flex-start;
+  width: 100%;
+}
+
+.section-header__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primitive-green-light);
+  padding: var(--spacing-4) var(--spacing-8);
+  border-radius: var(--spacing-8);
+}
+
+.section-header__badge-text {
+  font: var(--text-number-section);
+  font-weight: var(--font-weight-extrabold);
+  color: var(--primitive-black);
+}
+
+.section-header__heading {
+  font: var(--text-heading1);
+  font-weight: var(--font-weight-semibold);
+  color: var(--primitive-black);
+}

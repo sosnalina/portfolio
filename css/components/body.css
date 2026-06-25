@@ -1,0 +1,23 @@
+.section-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  width: 100%;
+  font: var(--text-body);
+  color: var(--primitive-grey-dark);
+  text-align: left;
+}
+
+.section-body p {
+  width: 100%;
+  margin: 0 0 var(--spacing-16);
+}
+
+.section-body p:last-child {
+  margin-bottom: 0;
+}
+
+.section--green-light .section-body {
+  color: var(--primitive-black);
+}
