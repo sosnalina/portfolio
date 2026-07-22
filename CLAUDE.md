@@ -20,6 +20,17 @@ All structural frames and layers use kebab-case names describing structural role
 
 Exception: decorative vector/illustration internals that are exported as a single flattened image asset do not need renaming — the coding agent never reads their Figma layer names.
 
+## Folder structure — components vs. widgets
+
+Two separate folders, so article-level and widget-level styles can never collide by filename or class name — mirrors the Figma-side split already in place (`desktop/articles/...` vs `desktop/widgets/...`).
+
+- **`css/components/`** — existing, reusable article/page-level components (`header.css`, `hero.css`, `section.css`, etc.), shared across case study pages. Mapped in COMPONENT-MAP.md.
+- **`css/widgets/{widget-name}/`** — one subfolder per interactive widget. Cockpit Widget's files live at `css/widgets/cockpit/` (e.g. `css/widgets/cockpit/members-rail.css`, `css/widgets/cockpit/steps-rail.css`).
+
+**Class naming rule:** widget CSS classes are prefixed with the widget name (e.g. `.cockpit-header`, not `.header`) so they can never accidentally override or collide with article-level classes, even if both are loaded on the same page.
+
+Reusability across widgets (e.g. whether Tag or the toggle tab styles get shared by a future second widget) is decided case by case as new widgets are built — see BP-COCKPIT.md §4 for the current undecided items.
+
 ## How to receive a task
 
 Each task must specify:

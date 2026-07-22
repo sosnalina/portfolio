@@ -15,6 +15,7 @@ When a new component is needed, add a row here first. Do not create a CSS file w
 | `Visual/video` | `video.css` |
 | `section` (platfrom=desktop/mobile, placement=Hero) | `hero.css` |
 | `section` (platfrom=desktop/mobile, placement=*) | `section.css` |
+| layout-master (Cockpit Widget, node 466:14209) | css/widgets/cockpit/ — split by sub-component (see BP-COCKPIT.md for the full breakdown: members-rail.css, steps-rail.css, toggle.css, tag.css, center-stage.css) |
 
 Note: "platfrom" is a typo in Figma — preserve it in code comments exactly as it appears. Do not correct it.
 
@@ -24,7 +25,6 @@ Note: "platfrom" is a typo in Figma — preserve it in code comments exactly as 
 |---|---|---|
 | Table/data component (`header row`, `Table row new`, `Component 25-28`) | Bill Pay, "Pay bills - post signup" section | Not yet mapped to a CSS file. Do not build until resolved. |
 | `Info` component | Bill Pay | Not yet mapped to a CSS file. Do not build until resolved. |
-| Interactive infographic (currently raw ellipses/groups, draft only) | Bill Pay | Out of scope for this map — governed by its own spec doc (`bill-pay-infographic-spec.md`) once the real frame is available. |
 
 ## How to add a new row
 
