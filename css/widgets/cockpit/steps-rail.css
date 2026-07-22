@@ -1,0 +1,195 @@
+.cockpit-widget {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  width: 800px;
+  background: var(--primitive-white);
+  border-radius: var(--spacing-16);
+}
+
+.cockpit-left-nav {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 240px;
+}
+
+.cockpit-nav-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  height: 480px;
+  padding: 0 var(--spacing-16);
+  background: var(--primitive-grey-light);
+  border-radius: var(--spacing-16) var(--spacing-16) 0 0;
+}
+
+.cockpit-headline-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding-left: 19px;
+}
+
+.cockpit-headline {
+  width: 208px;
+  height: 116px;
+  display: flex;
+  align-items: center;
+  font: var(--text-widget-header);
+  letter-spacing: var(--tracking-widget-tight);
+  color: var(--primitive-black);
+}
+
+.cockpit-content-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 340px;
+  padding: 0 19px 0 0;
+}
+
+.cockpit-steps-column-wrapper {
+  position: relative;
+  width: 204px;
+  height: 340px;
+}
+
+.cockpit-steps-column {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  width: 204px;
+  height: 340px;
+}
+
+.cockpit-selected-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  border-radius: var(--spacing-12);
+  background: var(--primitive-white);
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+  transition: top 0.2s ease;
+  z-index: 1;
+}
+
+.cockpit-selected-bg--hidden {
+  display: none;
+}
+
+.cockpit-connector-line {
+  position: absolute;
+  top: 0;
+  left: calc(var(--spacing-16) + 3.5px);
+  width: 1px;
+  height: 340px;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    var(--primitive-black) 0,
+    var(--primitive-black) 2px,
+    transparent 2px,
+    transparent 4px
+  );
+  opacity: 0.35;
+  z-index: 2;
+}
+
+.cockpit-step {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-16);
+  width: 204px;
+  height: 60px;
+  padding: var(--spacing-16);
+  border-radius: var(--spacing-12);
+  background: var(--primitive-grey-light);
+  cursor: default;
+}
+
+.cockpit-steps-column--active .cockpit-step {
+  cursor: pointer;
+}
+
+.cockpit-step__dot {
+  position: relative;
+  z-index: 3;
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.cockpit-step--selected .cockpit-step__dot,
+.cockpit-step--driver .cockpit-step__dot,
+.cockpit-step--hover .cockpit-step__dot {
+  background: var(--primitive-green);
+}
+
+.cockpit-step--normal .cockpit-step__dot,
+.cockpit-step--selected-hovering-other .cockpit-step__dot {
+  background: var(--primitive-disable);
+}
+
+.cockpit-step--escalation .cockpit-step__dot {
+  background: var(--primitive-grey-light);
+  border: 1.5px solid var(--primitive-green);
+}
+
+.cockpit-step--selected .cockpit-step__dot,
+.cockpit-step--driver .cockpit-step__dot {
+  box-shadow: 0 0 8px color-mix(in srgb, var(--primitive-green) 82%, transparent);
+}
+
+.cockpit-step--pain-point-hover .cockpit-step__dot {
+  background: var(--primitive-orange);
+  box-shadow: 0 0 9px color-mix(in srgb, var(--primitive-orange) 45%, transparent);
+}
+
+.cockpit-step__body {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex: 1 0 0;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+
+.cockpit-step__title {
+  font: var(--text-widget-step-name);
+  letter-spacing: var(--tracking-widget-tight);
+  color: var(--primitive-black);
+}
+
+.cockpit-step__subtitle {
+  font: var(--text-widget-step-subheadline);
+  color: var(--primitive-grey-dark);
+}
+
+.cockpit-toggle-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 60px;
+  background: var(--primitive-grey-medium);
+  border-radius: 0 0 var(--spacing-16) var(--spacing-16);
+}
+
+.cockpit-right {
+  display: flex;
+  flex: 1 0 0;
+  flex-direction: column;
+  min-width: 0;
+  height: 540px;
+  padding: var(--spacing-32);
+  gap: var(--spacing-24);
+  overflow: hidden;
+}

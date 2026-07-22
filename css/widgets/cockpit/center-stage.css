@@ -1,0 +1,98 @@
+.cockpit-body-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 26px;
+  width: 100%;
+  height: 186px;
+  padding-top: var(--spacing-16);
+  padding-bottom: var(--spacing-4);
+  overflow: hidden;
+}
+
+.cockpit-quote-block {
+  display: flex;
+  flex: 1 0 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 15px;
+  min-width: 0;
+}
+
+.cockpit-quote-mark {
+  flex-shrink: 0;
+  width: 24px;
+  height: 20px;
+}
+
+.cockpit-quote-text {
+  width: 100%;
+  font: var(--text-widget-quote);
+  color: var(--primitive-black);
+}
+
+.cockpit-quote-divider {
+  align-self: stretch;
+  width: 0;
+  border-left: 1px solid var(--primitive-grey-medium);
+}
+
+.cockpit-does-column {
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  width: 162px;
+}
+
+.cockpit-widget-subheader {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-16);
+  width: 72px;
+}
+
+.cockpit-widget-subheader__title {
+  font: var(--text-widget-step-name);
+  letter-spacing: var(--tracking-widget-tight);
+  color: var(--primitive-black);
+}
+
+.cockpit-widget-subheader__divider {
+  width: 26px;
+  height: 0;
+  border-top: 1px solid var(--primitive-green);
+}
+
+.cockpit-does-list {
+  list-style: decimal;
+  padding-inline-start: 16.5px;
+  font: var(--text-widget-line-item);
+  color: var(--primitive-black);
+}
+
+.cockpit-section-divider {
+  width: 100%;
+  height: 0;
+  border-top: 1px solid var(--primitive-grey-medium);
+}
+
+.cockpit-pain-points {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-24);
+  width: 100%;
+  overflow: hidden;
+}
+
+.cockpit-tags-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--spacing-8);
+  width: 100%;
+  max-height: 18px;
+  overflow: hidden;
+}

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cockpit Widget</title>
+    <link rel="stylesheet" href="css/tokens.css" />
+    <link rel="stylesheet" href="css/reset.css" />
+    <link rel="stylesheet" href="css/widgets/cockpit/steps-rail.css" />
+    <link rel="stylesheet" href="css/widgets/cockpit/members-rail.css" />
+    <link rel="stylesheet" href="css/widgets/cockpit/toggle.css" />
+    <link rel="stylesheet" href="css/widgets/cockpit/tag.css" />
+    <link rel="stylesheet" href="css/widgets/cockpit/center-stage.css" />
+  </head>
+  <body>
+    <main>
+      <div class="cockpit-widget">
+        <div class="cockpit-left-nav">
+          <div class="cockpit-nav-panel">
+            <div class="cockpit-headline-row">
+              <h2 class="cockpit-headline">Headline AP lifecycle Headline</h2>
+            </div>
+            <div class="cockpit-content-row">
+              <div class="cockpit-steps-column-wrapper">
+                <div class="cockpit-selected-bg" id="cockpit-selected-bg"></div>
+                <div class="cockpit-connector-line"></div>
+                <ol class="cockpit-steps-column" id="cockpit-steps-column"></ol>
+              </div>
+            </div>
+          </div>
+          <div class="cockpit-toggle-slot">
+            <div class="cockpit-toggle" id="cockpit-toggle">
+              <div class="cockpit-toggle__track journey" id="cockpit-toggle-track">
+                <div class="cockpit-toggle__pill"></div>
+                <div class="cockpit-toggle__labels">
+                  <p class="cockpit-toggle__label" id="cockpit-toggle-label-journey">Journey</p>
+                  <p class="cockpit-toggle__label" id="cockpit-toggle-label-empathy">Empathy</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="cockpit-right" id="cockpit-right">
+          <div class="cockpit-members-rail" id="cockpit-members-rail">
+            <div class="cockpit-member-row" id="cockpit-member-row"></div>
+            <div class="cockpit-highlight-track">
+              <div class="cockpit-highlight-track__fill" id="cockpit-highlight-fill"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+    <script src="js/cockpit-widget.js"></script>
+  </body>
+</html>

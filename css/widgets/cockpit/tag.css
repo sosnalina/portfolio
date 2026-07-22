@@ -1,0 +1,16 @@
+.cockpit-tag {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  height: 18px;
+  padding: 6px;
+  background: var(--primitive-black);
+  border-radius: var(--spacing-32);
+}
+
+.cockpit-tag__label {
+  font: var(--text-widget-tag);
+  color: var(--primitive-white);
+  white-space: nowrap;
+}

@@ -1,0 +1,52 @@
+.cockpit-toggle {
+  position: relative;
+  width: 160px;
+  height: 23px;
+}
+
+.cockpit-toggle__track {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: var(--primitive-white);
+  border-radius: var(--spacing-12);
+  cursor: pointer;
+}
+
+.cockpit-toggle__pill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 90.667px;
+  height: 100%;
+  background: var(--primitive-green);
+  border-radius: var(--spacing-12);
+  transition: left 0.3s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.cockpit-toggle__track.empathy .cockpit-toggle__pill {
+  left: 69.333px;
+}
+
+.cockpit-toggle__labels {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+.cockpit-toggle__label {
+  flex: 1 0 0;
+  text-align: center;
+  color: var(--primitive-grey-dark);
+  font: var(--text-widget-tab-nonselected);
+  transition: color 0.3s ease;
+}
+
+.cockpit-toggle__track.journey #cockpit-toggle-label-journey,
+.cockpit-toggle__track.empathy #cockpit-toggle-label-empathy {
+  color: var(--primitive-white);
+  font: var(--text-widget-tab-selected);
+}
