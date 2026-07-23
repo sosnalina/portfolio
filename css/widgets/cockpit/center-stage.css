@@ -79,20 +79,70 @@
 }
 
 .cockpit-pain-points {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--spacing-24);
+  position: relative;
   width: 100%;
+  /* Fixed: header (31px) + its gap (24px) + one collapsed tag row (18px) = 73px.
+     Never changes in any state — the header retracting (below) is what frees
+     room for the drawer to grow into, not any change to this box's own size. */
+  height: 73px;
   overflow: hidden;
 }
 
-.cockpit-tags-row {
+.cockpit-pain-points__header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1), opacity 300ms ease-out 100ms;
+}
+
+.cockpit-pain-points--expanded .cockpit-pain-points__header {
+  transform: translateY(-40px);
+  opacity: 0;
+  transition: transform 420ms cubic-bezier(0.34, 1.45, 0.64, 1), opacity 200ms ease-out;
+}
+
+.cockpit-pain-points__drawer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 55px; /* header (31px) + its gap (24px) — collapsed resting position, directly below the header */
+  height: 18px;
+  overflow: hidden;
+  transition: height 300ms cubic-bezier(0.4, 0, 0.2, 1), top 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.cockpit-pain-points--expanded .cockpit-pain-points__drawer {
+  transition: height 420ms cubic-bezier(0.34, 1.45, 0.64, 1), top 420ms cubic-bezier(0.34, 1.45, 0.64, 1);
+}
+
+.cockpit-pain-points__view {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
   gap: var(--spacing-8);
-  width: 100%;
-  max-height: 18px;
-  overflow: hidden;
+}
+
+.cockpit-pain-points__view--collapsed {
+  opacity: 1;
+  transition: opacity 200ms ease-out 200ms;
+}
+
+.cockpit-pain-points__view--expanded {
+  opacity: 0;
+  transition: opacity 150ms ease-out;
+}
+
+.cockpit-pain-points--expanded .cockpit-pain-points__view--collapsed {
+  opacity: 0;
+  transition: opacity 150ms ease-out;
+}
+
+.cockpit-pain-points--expanded .cockpit-pain-points__view--expanded {
+  opacity: 1;
+  transition: opacity 250ms ease-out 120ms;
 }

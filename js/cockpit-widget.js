@@ -1,13 +1,15 @@
 (function () {
   var ILLUSTRATION_BASE = "assets/illustrations/cockpit-widget/";
   var QUOTE_MARK_SRC = "assets/icons/quote-mark.svg";
+  var PAIN_POINTS_FIXED_HEIGHT = 73; // header (31px) + its gap (24px) + one collapsed tag row (18px) — the section's permanently fixed box
+  var PAIN_POINTS_HEADER_SPACE = 55; // header (31px) + its gap (24px) — the drawer's collapsed top offset
 
   var PERSONAS = [
-    { id: "finance-director", labelHtml: "Finance<br>Director", word: "cats" },
-    { id: "ap-manager", labelHtml: "AP<br>Manager", word: "dogs" },
-    { id: "ap-clerk", labelHtml: "AP<br>Clerk", word: "elephant" },
-    { id: "department-heads", labelHtml: "Department Heads", word: "giraffe" },
-    { id: "procurement-manager", labelHtml: "Procurement Manager", word: "penguin" }
+    { id: "finance-director", labelHtml: "Finance<br>Director", word: "cats", painPoints: ["Weak audit trail", "Failing on performance KPIs", "Missing early payment discounts", "Tool sets allow unauthorized edits", "Controls get worked around"] }, // Real content — Notion "Pain Point → Step Highlight Mapping" table, Finance Director rows
+    { id: "ap-manager", labelHtml: "AP<br>Manager", word: "dogs", painPoints: ["Missing visibility on approval audit", "One bad batch stalls the whole run", "Balancing conflicting priorities", "Vendor inquiries add overhead"] }, // Real content — Notion "Pain Point → Step Highlight Mapping" table, AP Manager rows
+    { id: "ap-clerk", labelHtml: "AP<br>Clerk", word: "elephant", painPoints: [3, 2, 4, 1, 3] },
+    { id: "department-heads", labelHtml: "Department Heads", word: "giraffe", painPoints: [3, 2, 4] },
+    { id: "procurement-manager", labelHtml: "Procurement Manager", word: "penguin", painPoints: [3, 2, 4, 1] }
   ];
 
   var STEPS = [
@@ -272,19 +274,99 @@
 
     var painPoints = document.createElement("div");
     painPoints.className = "cockpit-pain-points cockpit-generated-content";
-    painPoints.innerHTML =
+
+    var header = document.createElement("div");
+    header.className = "cockpit-pain-points__header";
+    header.innerHTML =
       '<div class="cockpit-widget-subheader"><p class="cockpit-widget-subheader__title">Pain points</p><div class="cockpit-widget-subheader__divider"></div></div>';
-    var tagsRow = document.createElement("div");
-    tagsRow.className = "cockpit-tags-row";
-    var tagLengths = [3, 2, 1, 4];
-    tagLengths.forEach(function (len) {
+    painPoints.appendChild(header);
+
+    var drawer = document.createElement("div");
+    drawer.className = "cockpit-pain-points__drawer";
+
+    var collapsedView = document.createElement("div");
+    collapsedView.className = "cockpit-pain-points__view cockpit-pain-points__view--collapsed";
+
+    var expandedView = document.createElement("div");
+    expandedView.className = "cockpit-pain-points__view cockpit-pain-points__view--expanded";
+
+    drawer.appendChild(collapsedView);
+    drawer.appendChild(expandedView);
+    painPoints.appendChild(drawer);
+
+    els.right.appendChild(painPoints);
+
+    var tagTexts = persona.painPoints.map(function (item) {
+      return typeof item === "string" ? item : repeatWord(word, item).replace(/\.$/, "");
+    });
+
+    function makeTagEl(text) {
       var tag = document.createElement("div");
       tag.className = "cockpit-tag";
-      tag.innerHTML = '<p class="cockpit-tag__label">' + repeatWord(word, len).replace(/\.$/, "") + "</p>";
-      tagsRow.appendChild(tag);
+      tag.innerHTML = '<p class="cockpit-tag__label">' + text + "</p>";
+      return tag;
+    }
+
+    tagTexts.forEach(function (text) {
+      expandedView.appendChild(makeTagEl(text));
     });
-    painPoints.appendChild(tagsRow);
-    els.right.appendChild(painPoints);
+
+    var shown = [];
+    var firstRowTop = null;
+    for (var i = 0; i < tagTexts.length; i++) {
+      var tagEl = makeTagEl(tagTexts[i]);
+      collapsedView.appendChild(tagEl);
+      var top = tagEl.offsetTop;
+      if (firstRowTop === null) firstRowTop = top;
+      if (top > firstRowTop) {
+        collapsedView.removeChild(tagEl);
+        break;
+      }
+      shown.push(tagEl);
+    }
+
+    var hiddenCount = tagTexts.length - shown.length;
+    if (hiddenCount > 0) {
+      var chip = document.createElement("div");
+      chip.className = "cockpit-tag cockpit-tag--number";
+      chip.innerHTML = '<p class="cockpit-tag__label">+' + hiddenCount + "</p>";
+      collapsedView.appendChild(chip);
+      while (chip.offsetTop > firstRowTop && shown.length > 0) {
+        var last = shown.pop();
+        collapsedView.removeChild(last);
+        hiddenCount++;
+        chip.querySelector(".cockpit-tag__label").textContent = "+" + hiddenCount;
+      }
+    }
+
+    var expandedHeight = expandedView.scrollHeight;
+    var expandedTop = (PAIN_POINTS_FIXED_HEIGHT - expandedHeight) / 2;
+    var collapseTimer = null;
+
+    function expandPainPoints() {
+      clearTimeout(collapseTimer);
+      painPoints.classList.add("cockpit-pain-points--expanded");
+      drawer.style.top = expandedTop + "px";
+      drawer.style.height = expandedHeight + "px";
+      // Re-asserting overflow inline (redundant with the CSS rule) works around a
+      // rendering bug where this element's computed top/height silently stick at
+      // their old values otherwise, inside a fixed-size overflow:hidden ancestor.
+      drawer.style.overflow = "hidden";
+    }
+
+    function collapsePainPoints() {
+      painPoints.classList.remove("cockpit-pain-points--expanded");
+      drawer.style.top = PAIN_POINTS_HEADER_SPACE + "px";
+      drawer.style.height = "18px";
+      drawer.style.overflow = "hidden";
+    }
+
+    if (hiddenCount > 0) {
+      painPoints.addEventListener("mouseenter", expandPainPoints);
+      painPoints.addEventListener("mouseleave", function () {
+        collapseTimer = setTimeout(collapsePainPoints, 120);
+      });
+    }
   }
 
   function renderToggle() {

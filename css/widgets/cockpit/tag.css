@@ -14,3 +14,21 @@
   color: var(--primitive-white);
   white-space: nowrap;
 }
+
+.cockpit-tag--number {
+  background: transparent;
+  border: 1px solid var(--primitive-black);
+}
+
+.cockpit-tag--number .cockpit-tag__label {
+  color: var(--primitive-black);
+}
+
+.cockpit-tag--number:hover {
+  background: var(--primitive-black);
+  border-color: transparent;
+}
+
+.cockpit-tag--number:hover .cockpit-tag__label {
+  color: var(--primitive-white);
+}
