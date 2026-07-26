@@ -23,27 +23,74 @@
     },
     {
       id: "capture-approve-bill", name: "Capture & Approve Bill", subheadline: "Capture, Validate, Route", driver: "ap-clerk", escalation: ["ap-manager", "department-heads", "finance-director"],
-      summary: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-      tasks: ["Ut enim ad minim veniam, quis nostrud exercitation", "Duis aute irure dolor in reprehenderit"],
-      painPoints: ["Sunt in culpa qui officia deserunt mollit anim", "Id est laborum et dolorum fuga"]
+      // Real content — Notion "Journey — Step Content & Highlight Mapping" table, Capture & Approve Bill row
+      summary: "Bills come in any format or source, get checked, turned into data, and routed for approval. Any missed error stalls a bill's payment.",
+      tasks: [
+        "Receive invoices via email, mail, portal, EDI, or manual upload",
+        "Confirm the invoice is addressed to the right entity",
+        "Catch if the same invoice was received twice",
+        "Capture and verify invoice details: vendor, dates, amounts, line items",
+        "Assign GL accounts and cost centers",
+        "Match invoice to PO and receipt",
+        "Route to the right approver"
+      ],
+      painPoints: [
+        "AP staff download attachments, rename files inconsistently, save to shared drives; invoices lost in inboxes; decentralized receipt",
+        "Manually reviewing invoices for duplicates; missing mandatory fields not caught early",
+        "One in four invoices needs manual intervention",
+        "Inconsistent manual coding; non-PO invoices hard to code; coding errors",
+        "Matching PO line items to receipt line items cited as single most tedious task; ~30% of teams still cite matching errors as bottleneck",
+        "When approvers go unavailable, approvals stall for days — eating ~20% of AP time."
+      ]
     },
     {
       id: "execute-payments", name: "Execute Payments", subheadline: "Set, Prioritize, Batch", driver: "ap-manager", escalation: ["finance-director"],
-      summary: "Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium.",
-      tasks: ["Totam rem aperiam eaque ipsa quae ab illo", "Nemo enim ipsam voluptatem quia voluptas", "Neque porro quisquam est qui dolorem ipsum"],
-      painPoints: ["Ut enim ad minima veniam quis nostrum", "Quis autem vel eum iure reprehenderit", "Qui in ea voluptate velit esse quam nihil"]
+      // Real content — Notion "Journey — Step Content & Highlight Mapping" table, Execute Payments row
+      summary: "Approved bills are grouped into batches. Cost, timing, and terms get weighed against each other and the batch, before it can be scheduled.",
+      tasks: [
+        "Set and prioritize bills to be included in each payment run",
+        "Configure payment method, delivery, and deduction date, balancing them against due dates and cash flow protection",
+        "Apply company policy on early-payment discounts, late-fee avoidance, and vendor terms",
+        "Route escalated payments (amount threshold, new vendor, bank-detail change, off-cycle, FX) to the Controller for review; release routine payments by default"
+      ],
+      painPoints: [
+        "A bill missing required information risks stalling or breaking the entire run.",
+        "Each payment method carries different processing times and fees; without them laid out together, mistakes slip through and work slows down.",
+        "Late fees or missed early-payment discounts",
+        "Check runs are slow (print, stamp, mail)",
+        "Prefunding and settlement complexity",
+        "Without automation to enforce a company's segregation-of-duty rules, the business is exposed to fraud risk and duplicate payments."
+      ]
     },
     {
       id: "track-manage", name: "Track & Manage", subheadline: "Monitor, Flag, Resolve", driver: "ap-manager", escalation: ["finance-director"],
-      summary: "At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum.",
-      tasks: ["Deleniti atque corrupti quos dolores et quas", "Molestias excepturi sint occaecati cupiditate", "Similique sunt in culpa qui officia deserunt"],
-      painPoints: ["Mollitia animi id est laborum et dolorum", "Fuga et harum quidem rerum facilis", "Est et expedita distinctio nam libero"]
+      // Real content — Notion "Journey — Step Content & Highlight Mapping" table, Track & Manage row
+      summary: "Failed payments sit blocked until corrected. Without knowing which bill or vendor caused it, and why, there's nothing to act on.",
+      tasks: [
+        "Check a payment's real time status and transaction history (scheduled → processing → sent → paid)",
+        "Resolve a failed or returned payment: identify it, log it, contact the vendor, and reissue it",
+        "Quickly cancel or void a payment when needed",
+        "Track payment through pre-execution, execution, and post-execution states; reconcile differing views across AP workflow, provider, and bank settlement (lifecycle reconciliation)"
+      ],
+      painPoints: [
+        "Failed payments sit blocked until someone manually digs in and fixes them manually.",
+        "Understanding what caused a payment failure, which bill or vendor, and why, is manual, time-consuming work with no explanation surfaced automatically.",
+        "A payment provider marking something \"complete\" doesn't mean the vendor's bank has actually received the funds yet."
+      ]
     },
     {
       id: "reconcile-comply", name: "Reconcile & Comply", subheadline: "Post, Archive, Audit", driver: "finance-director", escalation: [],
-      summary: "Nam libero tempore cum soluta nobis est eligendi optio cumque nihil impedit quo minus.",
-      tasks: ["Id quod maxime placeat facere possimus", "Omnis voluptas assumenda est omnis dolor", "Repellendus temporibus autem quibusdam"],
-      painPoints: ["Et aut officiis debitis aut rerum necessitatibus", "Saepe eveniet ut et voluptates repudiandae", "Sint et molestiae non recusandae"]
+      // Real content — Notion "Journey — Step Content & Highlight Mapping" table, Reconcile & Comply row
+      summary: "Every paid bill gets posted and filed for record. Stale data can break that sync, and gaps in the trail mean manual digging later.",
+      tasks: [
+        "Post/write approved invoice + payment status back to ERP; two-way sync (posting)",
+        "Store invoice, PO, receipt, proof of payment; reconcile AP ledger; retain for audit (reconciliation/archival)",
+        "Supply audit evidence linking a released payment back to its approved invoice and approval trail, as part of reconciliation integrity"
+      ],
+      painPoints: [
+        "Second-pass errors; managing sync jobs creates overhead; stale master data breaks integrations (posting)",
+        "Manual searches; no real-time analytics; audit trail gaps (reconciliation/archival)"
+      ]
     }
   ];
 
