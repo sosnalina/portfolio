@@ -151,6 +151,8 @@
           state.journeyHoverStep = null;
           updateStepClasses();
         });
+      } else {
+        li.addEventListener("click", triggerThumbPeek);
       }
 
       els.stepsColumn.appendChild(li);
@@ -233,6 +235,8 @@
           state.empathyHoverPersona = null;
           updateMemberClasses();
         });
+      } else {
+        member.addEventListener("click", triggerThumbPeek);
       }
 
       els.memberRow.appendChild(member);
@@ -489,6 +493,19 @@
     els.toggleTrack.classList.toggle("empathy", isEmpathy);
   }
 
+  var thumbPeeking = false;
+
+  function triggerThumbPeek() {
+    if (thumbPeeking) return;
+    thumbPeeking = true;
+    var animationName = state.mode === "empathy" ? "thumbPeekLeft" : "thumbPeekRight";
+    els.togglePill.style.animation = animationName + " 420ms ease-out both";
+    setTimeout(function () {
+      els.togglePill.style.animation = "none";
+      thumbPeeking = false;
+    }, 480);
+  }
+
   function renderAll() {
     renderStepsRail();
     renderMembersRail();
@@ -516,6 +533,7 @@
     els.highlightFill = document.getElementById("cockpit-highlight-fill");
     els.right = document.getElementById("cockpit-right");
     els.toggleTrack = document.getElementById("cockpit-toggle-track");
+    els.togglePill = document.querySelector(".cockpit-toggle__pill");
 
     els.toggleTrack.addEventListener("click", function () {
       switchMode(state.mode === "journey" ? "empathy" : "journey");

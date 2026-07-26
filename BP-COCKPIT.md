@@ -237,3 +237,17 @@ All four states share the same shape/padding/corner-radius (`spacing/32` radius)
 **Static "Approval / Escalation" footer** — icon + label pair, identical on every step, not bound to any per-step data. This is a fixed legend explaining what the driver/escalation highlight *means*, distinct from the driver/escalation data itself, which lives on `STEPS` and actually drives the MembersRail highlight (§5, §7) per step. Sits below a full-width section divider (`.cockpit-section-divider`, same `primitive/grey-medium` divider as elsewhere).
 
 **Scroll behavior** (fade-gradient at both the top and bottom edges where the scrollable two-column body meets the sticky footer, hidden native scrollbar) is interaction logic, not Figma structure — built per Behavioral Spec §6, not detailed further here per this doc's own scope (see §12).
+
+---
+
+## 16. ModeToggle — "Thumb Peek" Redirect Cue
+
+**What it is:** clicking an item on a passive rail (Steps rail in Empathy mode, Members rail in Journey mode) plays a one-shot reach-and-bounce animation on the ModeToggle's green pill (`.cockpit-toggle__pill`) — a nudge toward the currently inactive label, signaling "switch modes to interact here." Purely visual: no item gets selected, no highlight changes, `state.mode` is untouched.
+
+**Trigger:** `click` only, on passive-rail items — no `hover`/`mouseenter` equivalent. Wired into the same `if (activeRail) { ... } else { ... }` branch in `renderStepsRail()`/`renderMembersRail()` that already gates each rail's active-only listeners; the passive branch attaches nothing else, so this click listener is the *only* behavior a passive rail item has.
+
+**Animation:** two new `@keyframes` in `toggle.css` — `thumbPeekLeft` / `thumbPeekRight` — each a `translateX` reach-and-settle (peak displacement, partial return, smaller second peak, back to `0`), applied `420ms ease-out`, one-shot (not looping). Direction is chosen by `state.mode` at click time: `state.mode === "empathy"` → `thumbPeekLeft` (pill sits on the right, peeks left toward Journey); `state.mode === "journey"` → `thumbPeekRight` (pill sits on the left, peeks right toward Empathy). This animates `transform` — a different CSS property from the pill's existing `left`-position `transition` (§14) — so the two coexist on the same element without conflict; a real toggle click mid-peek still runs its own `left` transition normally.
+
+**Guard:** a module-level `thumbPeeking` boolean in `cockpit-widget.js` blocks re-triggering while an animation is in flight. Set `true` on trigger, the animation is applied via inline style (`el.style.animation = "<name> 420ms ease-out both"`), then a `setTimeout` releases the guard and resets `el.style.animation = "none"` after `480ms` (420ms animation + 60ms buffer) — clearing back to `none` is also what allows the *same* keyframe name to be reapplied cleanly on the next trigger.
+
+**Reference:** Behavioral Spec §4.2 (Notion) for the underlying rationale (passive-rail redirect cue). Note: §4.2 as written scopes this to one direction only (passive Steps → active Members, Empathy mode) and targets the rail itself, with an explicit "do not build without further direction" hold; this implementation was a deliberate call to apply the cue to the ModeToggle pill instead, in both directions — see conversation history, not yet reflected back into the Notion doc.

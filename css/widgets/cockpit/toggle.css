@@ -50,3 +50,19 @@
   color: var(--primitive-white);
   font: var(--text-widget-tab-selected);
 }
+
+@keyframes thumbPeekLeft {
+  0%   { transform: translateX(0); }
+  28%  { transform: translateX(-11px); }
+  55%  { transform: translateX(-1px); }
+  75%  { transform: translateX(-6px); }
+  100% { transform: translateX(0); }
+}
+
+@keyframes thumbPeekRight {
+  0%   { transform: translateX(0); }
+  28%  { transform: translateX(+11px); }
+  55%  { transform: translateX(+1px); }
+  75%  { transform: translateX(+6px); }
+  100% { transform: translateX(0); }
+}
