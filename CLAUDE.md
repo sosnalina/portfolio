@@ -41,6 +41,8 @@ Each task must specify:
 
 If any of these are missing, stop and ask before doing anything.
 
+Before building any new component structure (not small tweaks — actual new layout/structure), independently pull and confirm the real Figma node yourself using the Figma MCP tool, rather than building from a structural description relayed in a prompt, even a confident one. If a prompt describes a structure without an explicit node ID to verify against, ask for one before starting. A relayed description that sounds confident can still be wrong in ways that are only caught by reading the actual node first.
+
 ## Execution rules
 
 - Build one section at a time. Do not proceed until the current section passes the verification checklist.

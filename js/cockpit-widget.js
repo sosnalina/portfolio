@@ -1,6 +1,7 @@
 (function () {
   var ILLUSTRATION_BASE = "assets/illustrations/cockpit-widget/";
   var QUOTE_MARK_SRC = "assets/icons/quote-mark.svg";
+  var ALERT_ICON_SRC = "assets/icons/alert.svg";
   var PAIN_POINTS_FIXED_HEIGHT = 73; // header (31px) + its gap (24px) + one collapsed tag row (18px) — the section's permanently fixed box
   var PAIN_POINTS_HEADER_SPACE = 55; // header (31px) + its gap (24px) — the drawer's collapsed top offset
 
@@ -13,11 +14,37 @@
   ];
 
   var STEPS = [
-    { id: "manage-vendors", name: "Manage Vendors", subheadline: "Onboard, Create, Update", driver: "ap-clerk", escalation: ["finance-director", "procurement-manager"] },
-    { id: "capture-approve-bill", name: "Capture & Approve Bill", subheadline: "Capture, Validate, Route", driver: "ap-clerk", escalation: ["ap-manager", "department-heads", "finance-director"] },
-    { id: "execute-payments", name: "Execute Payments", subheadline: "Set, Prioritize, Batch", driver: "ap-manager", escalation: ["finance-director"] },
-    { id: "track-manage", name: "Track & Manage", subheadline: "Monitor, Flag, Resolve", driver: "ap-manager", escalation: ["finance-director"] },
-    { id: "reconcile-comply", name: "Reconcile & Comply", subheadline: "Post, Archive, Audit", driver: "finance-director", escalation: [] }
+    {
+      id: "manage-vendors", name: "Manage Vendors", subheadline: "Onboard, Create, Update", driver: "ap-clerk", escalation: ["finance-director", "procurement-manager"],
+      // Real content — Notion "Journey — Step Content & Highlight Mapping" table, Manage Vendors row
+      summary: "Vendor details get collected, approved, and kept current in a trusted record. The risk is when records are wrong or change later, unnoticed.",
+      tasks: ["Collect, submit, and validate supplier details (forms, banking, tax IDs)", "Route for risk-based approval", "Create/update the vendor record"],
+      painPoints: ["Bank-detail changes are the highest-cost failure point, misrouting a payment entirely.", "Duplicate entries create invoice exceptions, which lead to payment reissues", "Audit can't show how approval happened"]
+    },
+    {
+      id: "capture-approve-bill", name: "Capture & Approve Bill", subheadline: "Capture, Validate, Route", driver: "ap-clerk", escalation: ["ap-manager", "department-heads", "finance-director"],
+      summary: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+      tasks: ["Ut enim ad minim veniam, quis nostrud exercitation", "Duis aute irure dolor in reprehenderit"],
+      painPoints: ["Sunt in culpa qui officia deserunt mollit anim", "Id est laborum et dolorum fuga"]
+    },
+    {
+      id: "execute-payments", name: "Execute Payments", subheadline: "Set, Prioritize, Batch", driver: "ap-manager", escalation: ["finance-director"],
+      summary: "Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium.",
+      tasks: ["Totam rem aperiam eaque ipsa quae ab illo", "Nemo enim ipsam voluptatem quia voluptas", "Neque porro quisquam est qui dolorem ipsum"],
+      painPoints: ["Ut enim ad minima veniam quis nostrum", "Quis autem vel eum iure reprehenderit", "Qui in ea voluptate velit esse quam nihil"]
+    },
+    {
+      id: "track-manage", name: "Track & Manage", subheadline: "Monitor, Flag, Resolve", driver: "ap-manager", escalation: ["finance-director"],
+      summary: "At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum.",
+      tasks: ["Deleniti atque corrupti quos dolores et quas", "Molestias excepturi sint occaecati cupiditate", "Similique sunt in culpa qui officia deserunt"],
+      painPoints: ["Mollitia animi id est laborum et dolorum", "Fuga et harum quidem rerum facilis", "Est et expedita distinctio nam libero"]
+    },
+    {
+      id: "reconcile-comply", name: "Reconcile & Comply", subheadline: "Post, Archive, Audit", driver: "finance-director", escalation: [],
+      summary: "Nam libero tempore cum soluta nobis est eligendi optio cumque nihil impedit quo minus.",
+      tasks: ["Id quod maxime placeat facere possimus", "Omnis voluptas assumenda est omnis dolor", "Repellendus temporibus autem quibusdam"],
+      painPoints: ["Et aut officiis debitis aut rerum necessitatibus", "Saepe eveniet ut et voluptates repudiandae", "Sint et molestiae non recusandae"]
+    }
   ];
 
   var PERSONA_STEPS = {
@@ -222,10 +249,97 @@
     }
   }
 
+  function renderJourneyStage() {
+    var step = stepById[state.journeySelectedStep];
+
+    var stage = document.createElement("div");
+    stage.className = "cockpit-journey-stage cockpit-generated-content";
+
+    var body = document.createElement("div");
+    body.className = "cockpit-journey-stage__body";
+
+    var bodyTop = document.createElement("div");
+    bodyTop.className = "cockpit-journey-stage__body-top";
+
+    var leftColumn = document.createElement("div");
+    leftColumn.className = "cockpit-journey-stage__left-column";
+
+    var summary = document.createElement("p");
+    summary.className = "cockpit-journey-stage__summary";
+    summary.textContent = step.summary;
+    leftColumn.appendChild(summary);
+
+    var tasksHeader = document.createElement("div");
+    tasksHeader.className = "cockpit-widget-subheader";
+    tasksHeader.innerHTML =
+      '<p class="cockpit-widget-subheader__title">Tasks</p><div class="cockpit-widget-subheader__divider"></div>';
+    leftColumn.appendChild(tasksHeader);
+
+    var tasksList = document.createElement("div");
+    tasksList.className = "cockpit-journey-stage__tasks";
+    step.tasks.forEach(function (text) {
+      var p = document.createElement("p");
+      p.textContent = text;
+      tasksList.appendChild(p);
+    });
+    leftColumn.appendChild(tasksList);
+
+    bodyTop.appendChild(leftColumn);
+
+    var divider = document.createElement("div");
+    divider.className = "cockpit-quote-divider";
+    bodyTop.appendChild(divider);
+
+    var rightColumn = document.createElement("div");
+    rightColumn.className = "cockpit-does-column";
+
+    var painHeader = document.createElement("div");
+    painHeader.className = "cockpit-widget-subheader";
+    painHeader.innerHTML =
+      '<p class="cockpit-widget-subheader__title">Frictions</p><div class="cockpit-widget-subheader__divider"></div>';
+    rightColumn.appendChild(painHeader);
+
+    var painList = document.createElement("ol");
+    painList.className = "cockpit-does-list";
+    step.painPoints.forEach(function (text) {
+      var li = document.createElement("li");
+      li.textContent = text;
+      painList.appendChild(li);
+    });
+    rightColumn.appendChild(painList);
+
+    bodyTop.appendChild(rightColumn);
+
+    body.appendChild(bodyTop);
+    stage.appendChild(body);
+
+    var footer = document.createElement("div");
+    footer.className = "cockpit-journey-stage__footer";
+    footer.innerHTML =
+      '<div class="cockpit-section-divider"></div>' +
+      '<div class="cockpit-journey-stage__legend">' +
+      '<img class="cockpit-journey-stage__legend-icon" src="' + ALERT_ICON_SRC + '" alt="" />' +
+      '<p class="cockpit-journey-stage__legend-label">Approval / Escalation</p>' +
+      "</div>";
+    stage.appendChild(footer);
+
+    els.right.appendChild(stage);
+
+    // Scroll-gradient cue: only show it when the body actually overflows.
+    if (body.scrollHeight > body.clientHeight) {
+      body.classList.add("cockpit-journey-stage__body--overflowing");
+    }
+  }
+
   function renderCenterStage() {
     Array.prototype.slice.call(els.right.querySelectorAll(":scope > .cockpit-generated-content")).forEach(function (el) {
       el.remove();
     });
+
+    if (state.mode === "journey") {
+      renderJourneyStage();
+      return;
+    }
 
     if (state.mode !== "empathy" || !state.empathySelectedPersona) return;
 

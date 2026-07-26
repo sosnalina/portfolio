@@ -215,3 +215,25 @@ All four states share the same shape/padding/corner-radius (`spacing/32` radius)
 **Confirmed motion — pure CSS throughout, no `@keyframes`, no JS frame-driven animation:**
 - **Pill position:** `transition: left 0.3s cubic-bezier(0.65, 0, 0.35, 1);` — `left: 0` (Journey) / `left: 69.333px` (Empathy). `69.333px = track width (160px) − pill width (90.667px)`.
 - **Label color:** `transition: color 0.3s ease;` — each label independently switches between `primitive/grey-dark` (inactive) and `primitive/white` (active, sitting on the pill), driven purely by the `.journey`/`.empathy` class on the track, not by any per-label class of its own.
+
+---
+
+## 15. CenterStage — Journey Mode Structure
+
+**Component/frame:** `Property 1=Journey`, node [466:14206](https://www.figma.com/design/3XG9JnADI2psNR3B7TwQdx/Portfolio?node-id=466-14206). Previously unaudited — flagged as such in the original handover; this section closes that gap.
+
+**Two-column layout (`Body-top`, 496px wide, matching `Right`'s content width) — mirrors Empathy mode's own `quote-block` / `does-column` split, not a separate pattern:**
+
+- **Left column** (flex `1 0 0`, no fixed width): an **unlabeled paragraph** of body text (no "Summary" header — the step's real subheadline already lives in the StepsRail card in the left nav, so it isn't duplicated here), followed by a **"Tasks"** section using the shared `widget-subheader` component + its own line-item list.
+- **Vertical divider** — same real `LINE` node category as the rest of the widget's dividers (see §9), bound to `primitive/grey-medium`. Confirmed via direct variable inspection of node `465:13074` (Line 348), not assumed.
+- **Right column** (fixed `162px` wide): a **"Frictions"** section — Journey mode's pain-points equivalent — using the same `widget-subheader` component + an ordered list.
+
+**Divider x-position must exactly match Empathy mode's own quote/Does divider.** This isn't a coordinate to hardcode — both modes share the same `Right` panel width/padding, and the divider's position falls out automatically from the same structural pattern: flexible left column, fixed-width right column, identical gap. In the build, this is satisfied by literally reusing Empathy's existing classes for the right column and divider (`.cockpit-does-column`, `.cockpit-quote-divider`) rather than writing new Journey-specific ones — so the two dividers can't drift apart independently. Confirmed by direct measurement: both land at the identical `x` position when toggling between modes.
+
+**Summary paragraph — fixed `129px` height** (Figma-confirmed literal on the text node itself, node `465:13073`; no spacing token applies, same category as other confirmed-literal dimensions elsewhere in this doc/codebase, e.g. §1's fixed frame height). Exists specifically so the "Tasks" section starts at the same vertical position regardless of how long a given step's summary text is — without this, a short summary would pull Tasks up and a long one would push it down, per step.
+- Short content: leaves blank space below the text — never centered or stretched to fill the box.
+- Overflowing content: clipped (`overflow: hidden`), not pushed into Tasks. This is treated as a content problem, not a layout one — real content is checked against the 129px box at build/verification time, and any step that genuinely overflows gets flagged for shortening in Notion rather than silently clipped and left undiscovered.
+
+**Static "Approval / Escalation" footer** — icon + label pair, identical on every step, not bound to any per-step data. This is a fixed legend explaining what the driver/escalation highlight *means*, distinct from the driver/escalation data itself, which lives on `STEPS` and actually drives the MembersRail highlight (§5, §7) per step. Sits below a full-width section divider (`.cockpit-section-divider`, same `primitive/grey-medium` divider as elsewhere).
+
+**Scroll behavior** (fade-gradient at both the top and bottom edges where the scrollable two-column body meets the sticky footer, hidden native scrollbar) is interaction logic, not Figma structure — built per Behavioral Spec §6, not detailed further here per this doc's own scope (see §12).

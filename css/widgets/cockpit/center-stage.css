@@ -146,3 +146,116 @@
   opacity: 1;
   transition: opacity 250ms ease-out 120ms;
 }
+
+.cockpit-journey-stage {
+  display: flex;
+  flex-direction: column;
+  flex: 1 0 0;
+  min-height: 0;
+  width: 100%;
+}
+
+.cockpit-journey-stage__body {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.cockpit-journey-stage__body::-webkit-scrollbar {
+  display: none;
+}
+
+.cockpit-journey-stage__body::before,
+.cockpit-journey-stage__body::after {
+  content: "";
+  position: sticky;
+  left: 0;
+  right: 0;
+  z-index: 1;
+  display: block;
+  height: 32px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.cockpit-journey-stage__body::before {
+  top: 0;
+  margin-bottom: -32px;
+  background: linear-gradient(to top, transparent, var(--primitive-white));
+}
+
+.cockpit-journey-stage__body::after {
+  bottom: 0;
+  margin-top: -32px;
+  background: linear-gradient(to bottom, transparent, var(--primitive-white));
+}
+
+.cockpit-journey-stage__body--overflowing::before,
+.cockpit-journey-stage__body--overflowing::after {
+  opacity: 1;
+}
+
+.cockpit-journey-stage__body-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 26px;
+  width: 100%;
+  padding-top: var(--spacing-16);
+  padding-bottom: var(--spacing-4);
+}
+
+.cockpit-journey-stage__left-column {
+  display: flex;
+  flex: 1 0 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 15px;
+  min-width: 0;
+}
+
+.cockpit-journey-stage__summary {
+  flex-shrink: 0;
+  width: 100%;
+  height: 129px;
+  overflow: hidden;
+  font: var(--text-widget-stage-header);
+  color: var(--primitive-black);
+}
+
+.cockpit-journey-stage__tasks p {
+  font: var(--text-widget-line-item);
+  color: var(--primitive-black);
+  margin-bottom: var(--spacing-8);
+}
+
+.cockpit-journey-stage__tasks p:last-child {
+  margin-bottom: 0;
+}
+
+.cockpit-journey-stage__footer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-16);
+  flex-shrink: 0;
+  padding-top: var(--spacing-16);
+}
+
+.cockpit-journey-stage__legend {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.cockpit-journey-stage__legend-icon {
+  flex-shrink: 0;
+  width: 12.395px;
+  height: 11px;
+}
+
+.cockpit-journey-stage__legend-label {
+  font: var(--text-widget-legend);
+  color: var(--primitive-black);
+}

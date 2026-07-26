@@ -40,6 +40,8 @@
   --text-widget-tab-selected: 500 10px/8px "Literata", Georgia, serif;
   --text-widget-tab-nonselected: 300 10px/8px "Literata", Georgia, serif;
   --text-widget-tag: 500 8.5px/8px "Literata", Georgia, serif;
+  --text-widget-stage-header: 300 16px/1.56 "Literata", Georgia, serif;
+  --text-widget-legend: 500 13px/1.27 "Literata", Georgia, serif;
 
   --tracking-widget-tight: -0.022em;
 
