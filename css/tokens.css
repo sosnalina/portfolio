@@ -36,7 +36,7 @@
   --text-widget-step-subheadline: 300 11px/8px "Literata", Georgia, serif;
   --text-widget-role: 500 12px/14px "Literata", Georgia, serif;
   --text-widget-quote: italic 300 14px/1.5 "Literata", Georgia, serif;
-  --text-widget-line-item: 300 11px/18px "Literata", Georgia, serif;
+  --text-widget-line-item: 300 11px/var(--spacing-16) "Literata", Georgia, serif;
   --text-widget-tab-selected: 500 10px/8px "Literata", Georgia, serif;
   --text-widget-tab-nonselected: 300 10px/8px "Literata", Georgia, serif;
   --text-widget-tag: 500 8.5px/8px "Literata", Georgia, serif;
