@@ -47,14 +47,14 @@
     {
       id: "manage-vendors", name: "Manage Vendors", subheadline: "Onboard, Create, Update", driver: "ap-clerk", escalation: ["finance-director", "procurement-manager"],
       // Real content — Notion "Journey — Step Content & Highlight Mapping" table, Manage Vendors row
-      summary: "Vendor details get collected, approved, and kept current in a trusted record. The risk is when records are wrong or change later, unnoticed.",
+      summary: "Vendor details get collected, approved, and kept current. The risk is when records are wrong or change later, unnoticed",
       tasks: ["Collect, submit, and validate supplier details (forms, banking, tax IDs)", "Route for risk-based approval", "Create/update the vendor record"],
       painPoints: ["Bank-detail changes are the highest-cost failure point, misrouting a payment entirely.", "Duplicate entries create invoice exceptions, which lead to payment reissues", "Audit can't show how approval happened"]
     },
     {
       id: "capture-approve-bill", name: "Capture & Approve Bill", subheadline: "Capture, Validate, Route", driver: "ap-clerk", escalation: ["ap-manager", "department-heads", "finance-director"],
       // Real content — Notion "Journey — Step Content & Highlight Mapping" table, Capture & Approve Bill row
-      summary: "Bills come in any format or source, get checked, turned into data, and routed for approval. Any missed error stalls a bill's payment.",
+      summary: "Bills come in any format or source, get checked, turned into data, and routed for approval. Any missed error stalls a bill's payment",
       tasks: [
         "Receive invoices via email, mail, portal, EDI, or manual upload",
         "Confirm the invoice is addressed to the right entity",
@@ -76,7 +76,7 @@
     {
       id: "execute-payments", name: "Execute Payments", subheadline: "Set, Prioritize, Batch", driver: "ap-manager", escalation: ["finance-director"],
       // Real content — Notion "Journey — Step Content & Highlight Mapping" table, Execute Payments row
-      summary: "Approved bills are grouped into batches. Cost, timing, and terms get weighed against each other and the batch, before it can be scheduled.",
+      summary: "Approved bills are grouped into batches. Cost, timing, and terms get weighed against each other and the batch, before it can be scheduled",
       tasks: [
         "Set and prioritize bills to be included in each payment run",
         "Configure payment method, delivery, and deduction date, balancing them against due dates and cash flow protection",
@@ -95,7 +95,7 @@
     {
       id: "track-manage", name: "Track & Manage", subheadline: "Monitor, Flag, Resolve", driver: "ap-manager", escalation: ["finance-director"],
       // Real content — Notion "Journey — Step Content & Highlight Mapping" table, Track & Manage row
-      summary: "Failed payments sit blocked until corrected. Without knowing which bill or vendor caused it, and why, there's nothing to act on.",
+      summary: "Failed payments sit blocked until corrected. Without knowing which bill or vendor caused it, and why, there's nothing to act on",
       tasks: [
         "Check a payment's real time status and transaction history (scheduled → processing → sent → paid)",
         "Resolve a failed or returned payment: identify it, log it, contact the vendor, and reissue it",
@@ -111,7 +111,7 @@
     {
       id: "reconcile-comply", name: "Reconcile & Comply", subheadline: "Post, Archive, Audit", driver: "finance-director", escalation: [],
       // Real content — Notion "Journey — Step Content & Highlight Mapping" table, Reconcile & Comply row
-      summary: "Every paid bill gets posted and filed for record. Stale data can break that sync, and gaps in the trail mean manual digging later.",
+      summary: "Every paid bill gets posted and filed for record. Stale data can break that sync, and gaps in the trail mean manual digging later",
       tasks: [
         "Post/write approved invoice + payment status back to ERP; two-way sync (posting)",
         "Store invoice, PO, receipt, proof of payment; reconcile AP ledger; retain for audit (reconciliation/archival)",
@@ -423,12 +423,12 @@
       '<p class="cockpit-widget-subheader__title">Frictions</p><div class="cockpit-widget-subheader__divider"></div>';
     rightColumn.appendChild(painHeader);
 
-    var painList = document.createElement("ol");
-    painList.className = "cockpit-does-list";
+    var painList = document.createElement("div");
+    painList.className = "cockpit-journey-stage__tasks";
     step.painPoints.forEach(function (text) {
-      var li = document.createElement("li");
-      li.textContent = text;
-      painList.appendChild(li);
+      var p = document.createElement("p");
+      p.textContent = text;
+      painList.appendChild(p);
     });
     rightColumn.appendChild(painList);
 
