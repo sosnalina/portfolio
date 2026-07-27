@@ -6,11 +6,41 @@
   var PAIN_POINTS_HEADER_SPACE = 55; // header (31px) + its gap (24px) — the drawer's collapsed top offset
 
   var PERSONAS = [
-    { id: "finance-director", labelHtml: "Finance<br>Director", word: "cats", painPoints: ["Weak audit trail", "Failing on performance KPIs", "Missing early payment discounts", "Tool sets allow unauthorized edits", "Controls get worked around"] }, // Real content — Notion "Pain Point → Step Highlight Mapping" table, Finance Director rows
-    { id: "ap-manager", labelHtml: "AP<br>Manager", word: "dogs", painPoints: ["Missing visibility on approval audit", "One bad batch stalls the whole run", "Balancing conflicting priorities", "Vendor inquiries add overhead"] }, // Real content — Notion "Pain Point → Step Highlight Mapping" table, AP Manager rows
-    { id: "ap-clerk", labelHtml: "AP<br>Clerk", word: "elephant", painPoints: [3, 2, 4, 1, 3] },
-    { id: "department-heads", labelHtml: "Department Heads", word: "giraffe", painPoints: [3, 2, 4] },
-    { id: "procurement-manager", labelHtml: "Procurement Manager", word: "penguin", painPoints: [3, 2, 4, 1] }
+    {
+      id: "finance-director", labelHtml: "Finance<br>Director", word: "cats",
+      // Real content — Notion "Empathy — Persona Content" table, Finance Director row
+      does: ["Approve vendor activation", "Set escalation thresholds", "Set segregation of duties", "Clear escalated payments", "Oversee month-end close", "Supply audit evidence"],
+      quote: "Month-end, everything piles up at once, getting escalated. In most cases, that means a hole in the process that can't be enforced.",
+      painPoints: ["Weak audit trail", "Failing on performance KPIs", "Missing early payment discounts", "Tool sets allow unauthorized edits", "Controls get worked around"] // Real content — Notion "Pain Point → Step Highlight Mapping" table, Finance Director rows
+    },
+    {
+      id: "ap-manager", labelHtml: "AP<br>Manager", word: "dogs",
+      // Real content — Notion "Empathy — Persona Content" table, AP Manager row
+      does: ["Release payment runs", "Execute payment policies", "Escalate exceptions", "Handle vendor inquiries", "Solve approval bottlenecks"],
+      quote: "A fifth of my time goes to approvals. Almost another fifth is just vendors asking where their money is. That's before I've actually paid anything.",
+      painPoints: ["Missing visibility on approval audit", "One bad batch stalls the whole run", "Balancing conflicting priorities", "Vendor inquiries add overhead"] // Real content — Notion "Pain Point → Step Highlight Mapping" table, AP Manager rows
+    },
+    {
+      id: "ap-clerk", labelHtml: "AP<br>Clerk", word: "elephant",
+      // Real content — Notion "Empathy — Persona Content" table, AP Clerk row
+      does: ["Monitor inbound channels", "Capture & verify invoice", "Code to GL & cost center", "Match to PO/receipt", "Route to approvers", "Stage payment runs", "Resolve stalled bills"],
+      quote: "cats cats cats cats cats cats cats cats cats cats cats cats", // PLACEHOLDER — real quote incomplete in Notion source as of this build, pending Hadar's edit
+      painPoints: ["Tedious & error-prone manual work", "Constant context switching", "Troubleshooting doubles the work", "Chasing reroutes and approval requests", "Stuck fixing others' errors"] // Real content — Notion "Pain Point → Step Highlight Mapping" table, AP Clerk rows
+    },
+    {
+      id: "department-heads", labelHtml: "Department Heads", word: "giraffe",
+      // Real content — Notion "Empathy — Persona Content" table, Department Heads row
+      does: ["Verify business need", "Confirm receipt", "Confirm budget", "Approve/reject invoices"],
+      quote: "Half the time I'm pulled into fulfillment-clerk work. Sign here, don't ask why. No idea what's already been flagged or delayed before it lands on my desk.",
+      painPoints: ["Approval friction eats into strategic work time", "Approves without full context", "Frustrated acting as a rubber stamp"] // Real content — Notion "Pain Point → Step Highlight Mapping" table, Department Heads rows
+    },
+    {
+      id: "procurement-manager", labelHtml: "Procurement Manager", word: "penguin",
+      // Real content — Notion "Empathy — Persona Content" table, Procurement Manager row
+      does: ["Negotiate & sign contract", "Approve requisitions", "Issue purchase orders", "Hand off vendor info", "Weigh in on vendor setup", "Resolve PO mismatch & escalated invoices"],
+      quote: "I keep getting pulled back into things I thought were already closed. PRs sit in limbo for weeks, lost in a maze of email threads and manual sign-offs.",
+      painPoints: ["PR-to-AP disconnect", "No clear ownership of invoice disputes", "Pulled into unresolved escalations", "Late payments risk vendor relationship/terms"] // Real content — Notion "Pain Point → Step Highlight Mapping" table, Procurement Manager rows
+    }
   ];
 
   var STEPS = [
@@ -409,7 +439,7 @@
     quoteBlock.appendChild(quoteMark);
     var quoteText = document.createElement("p");
     quoteText.className = "cockpit-quote-text";
-    quoteText.textContent = repeatWord(word, 12);
+    quoteText.textContent = persona.quote;
     quoteBlock.appendChild(quoteText);
     bodyTop.appendChild(quoteBlock);
 
@@ -423,11 +453,11 @@
       '<div class="cockpit-widget-subheader"><p class="cockpit-widget-subheader__title">Does</p><div class="cockpit-widget-subheader__divider"></div></div>';
     var doesList = document.createElement("ol");
     doesList.className = "cockpit-does-list";
-    for (var i = 0; i < 7; i++) {
+    persona.does.forEach(function (text) {
       var li = document.createElement("li");
-      li.textContent = repeatWord(word, 3);
+      li.textContent = text;
       doesList.appendChild(li);
-    }
+    });
     doesColumn.appendChild(doesList);
     bodyTop.appendChild(doesColumn);
 
