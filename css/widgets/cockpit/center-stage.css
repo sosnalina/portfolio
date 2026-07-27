@@ -157,7 +157,8 @@
 
 .cockpit-journey-stage__body {
   position: relative;
-  flex: 1 1 auto;
+  flex: 0 0 auto;
+  height: 271px;
   min-height: 0;
   overflow-y: auto;
   scrollbar-width: none;
