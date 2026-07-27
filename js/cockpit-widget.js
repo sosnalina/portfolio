@@ -274,7 +274,7 @@
     if (activeRail) {
       if (state.painPointHover && state.painPointHover.strategic) {
         if (persona.id === state.empathySelectedPersona) {
-          return { stateClass: "selected", illustrationState: "driver", dimmed: false };
+          return { stateClass: "selected", illustrationState: "none", dimmed: false };
         }
         if (state.painPointHover.personas.indexOf(persona.id) !== -1) {
           return { stateClass: "strategic", illustrationState: "strategic", dimmed: false };
@@ -286,12 +286,12 @@
           return { stateClass: "hover", illustrationState: "none", dimmed: false };
         }
         if (persona.id === state.empathySelectedPersona) {
-          return { stateClass: "selected-hovering-other", illustrationState: "driver", dimmed: true };
+          return { stateClass: "selected-hovering-other", illustrationState: "none", dimmed: true };
         }
         return { stateClass: "none", illustrationState: "none", dimmed: true };
       }
       if (persona.id === state.empathySelectedPersona) {
-        return { stateClass: "selected", illustrationState: "driver", dimmed: false };
+        return { stateClass: "selected", illustrationState: "none", dimmed: false };
       }
       return { stateClass: "none", illustrationState: "none", dimmed: true };
     }
