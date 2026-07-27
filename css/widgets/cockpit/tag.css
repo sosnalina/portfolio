@@ -15,6 +15,11 @@
   white-space: nowrap;
 }
 
+.cockpit-tag:not(.cockpit-tag--number):hover {
+  background: var(--primitive-orange);
+  cursor: pointer;
+}
+
 .cockpit-tag--number {
   background: transparent;
   border: 1px solid var(--primitive-black);

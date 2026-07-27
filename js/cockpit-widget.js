@@ -132,10 +132,39 @@
     "procurement-manager": { driving: [], escalating: ["manage-vendors"] }
   };
 
+  // Real content — Notion "Pain Point → Step Highlight Mapping" table (Table 3):
+  // per-pain-point mapping of either the step(s) it affects, or, for strategic
+  // pain points, the persona(s) it strategically affects.
+  var PAIN_POINT_HOVER_MAP = {
+    "Approves without full context": { strategic: false, steps: ["Capture & Approve Bill"] },
+    "Weak audit trail": { strategic: false, steps: ["Manage Vendors", "Reconcile & Comply"] },
+    "Troubleshooting doubles the work": { strategic: false, steps: ["Execute Payments"] },
+    "Late payments risk vendor relationship/terms": { strategic: true, personas: ["procurement-manager"] },
+    "Approval friction eats into strategic work time": { strategic: true, personas: ["department-heads"] },
+    "Failing on performance KPIs": { strategic: true, personas: ["ap-manager", "ap-clerk", "finance-director"] },
+    "No clear ownership of invoice disputes": { strategic: false, steps: ["Manage Vendors", "Capture & Approve Bill"] },
+    "Missing early payment discounts": { strategic: true, personas: ["finance-director", "department-heads"] },
+    "PR-to-AP disconnect": { strategic: false, steps: ["Capture & Approve Bill"] },
+    "Missing visibility on approval audit": { strategic: false, steps: ["Execute Payments"] },
+    "Stuck fixing others' errors": { strategic: false, steps: ["Execute Payments"] },
+    "Tool sets allow unauthorized edits": { strategic: false, steps: ["Execute Payments"] },
+    "One bad batch stalls the whole run": { strategic: false, steps: ["Execute Payments"] },
+    "Tedious & error-prone manual work": { strategic: false, steps: ["Manage Vendors", "Capture & Approve Bill"] },
+    "Constant context switching": { strategic: false, steps: ["Manage Vendors", "Capture & Approve Bill"] },
+    "Controls get worked around": { strategic: false, steps: ["Capture & Approve Bill", "Execute Payments", "Manage Vendors"] },
+    "Pulled into unresolved escalations": { strategic: true, personas: ["procurement-manager"] },
+    "Balancing conflicting priorities": { strategic: false, steps: ["Execute Payments"] },
+    "Vendor inquiries add overhead": { strategic: true, personas: ["ap-manager"] },
+    "Frustrated acting as a rubber stamp": { strategic: true, personas: ["department-heads"] },
+    "Chasing reroutes and approval requests": { strategic: false, steps: ["Capture & Approve Bill", "Execute Payments"] }
+  };
+
   var personaById = {};
   PERSONAS.forEach(function (p) { personaById[p.id] = p; });
   var stepById = {};
   STEPS.forEach(function (s) { stepById[s.id] = s; });
+  var stepIdByName = {};
+  STEPS.forEach(function (s) { stepIdByName[s.name] = s.id; });
 
   var state = {
     mode: "journey",
@@ -143,7 +172,8 @@
     journeyHoverStep: null,
     empathySelectedPersona: null,
     empathyHoverPersona: null,
-    hasEnteredEmpathy: false
+    hasEnteredEmpathy: false,
+    painPointHover: null
   };
 
   var els = {};
@@ -161,6 +191,10 @@
       if (step.id === state.journeySelectedStep && state.journeyHoverStep && state.journeyHoverStep !== step.id) return "selected-hovering-other";
       if (step.id === state.journeySelectedStep) return "selected";
       return "normal";
+    }
+    if (state.painPointHover) {
+      if (state.painPointHover.strategic) return "normal";
+      if (state.painPointHover.stepIds.indexOf(step.id) !== -1) return "pain-point-hover";
     }
     var persona = state.empathySelectedPersona ? PERSONA_STEPS[state.empathySelectedPersona] : null;
     if (persona && persona.driving.indexOf(step.id) !== -1) return "driver";
@@ -238,6 +272,15 @@
 
   function memberVisualState(persona, activeRail) {
     if (activeRail) {
+      if (state.painPointHover && state.painPointHover.strategic) {
+        if (persona.id === state.empathySelectedPersona) {
+          return { stateClass: "selected", illustrationState: "driver", dimmed: false };
+        }
+        if (state.painPointHover.personas.indexOf(persona.id) !== -1) {
+          return { stateClass: "strategic", illustrationState: "strategic", dimmed: false };
+        }
+        return { stateClass: "none", illustrationState: "none", dimmed: true };
+      }
       if (state.empathyHoverPersona) {
         if (persona.id === state.empathyHoverPersona) {
           return { stateClass: "hover", illustrationState: "none", dimmed: false };
@@ -502,8 +545,36 @@
       return tag;
     }
 
+    var tagHoverLeaveTimer = null;
+
     tagTexts.forEach(function (text) {
-      expandedView.appendChild(makeTagEl(text));
+      var tagEl = makeTagEl(text);
+      tagEl.addEventListener("mouseenter", function () {
+        clearTimeout(tagHoverLeaveTimer);
+        var mapping = PAIN_POINT_HOVER_MAP[text];
+        if (!mapping) {
+          console.warn('No pain-point hover mapping found for: "' + text + '"');
+          return;
+        }
+        if (mapping.strategic) {
+          state.painPointHover = { strategic: true, personas: mapping.personas };
+        } else {
+          state.painPointHover = {
+            strategic: false,
+            stepIds: mapping.steps.map(function (name) { return stepIdByName[name]; })
+          };
+        }
+        updateStepClasses();
+        updateMemberClasses();
+      });
+      tagEl.addEventListener("mouseleave", function () {
+        tagHoverLeaveTimer = setTimeout(function () {
+          state.painPointHover = null;
+          updateStepClasses();
+          updateMemberClasses();
+        }, 120);
+      });
+      expandedView.appendChild(tagEl);
     });
 
     var shown = [];
