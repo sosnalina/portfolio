@@ -274,11 +274,13 @@
   function memberVisualState(persona, activeRail) {
     if (activeRail) {
       if (state.painPointHover && state.painPointHover.strategic) {
-        if (persona.id === state.empathySelectedPersona) {
-          return { stateClass: "selected", illustrationState: "none", dimmed: false };
+        var isSelected = persona.id === state.empathySelectedPersona;
+        var isStrategicMatch = state.painPointHover.personas.indexOf(persona.id) !== -1;
+        if (isStrategicMatch) {
+          return { stateClass: isSelected ? "selected-strategic" : "strategic", illustrationState: "strategic", dimmed: false };
         }
-        if (state.painPointHover.personas.indexOf(persona.id) !== -1) {
-          return { stateClass: "strategic", illustrationState: "strategic", dimmed: false };
+        if (isSelected) {
+          return { stateClass: "selected", illustrationState: "none", dimmed: false };
         }
         return { stateClass: "none", illustrationState: "none", dimmed: true };
       }
