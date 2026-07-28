@@ -19,6 +19,10 @@
   left: 0;
   width: 90.667px;
   height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--spacing-16);
   background: var(--primitive-green);
   border-radius: var(--spacing-12);
   transition: left 0.3s cubic-bezier(0.65, 0, 0.35, 1);
@@ -28,27 +32,33 @@
   left: 69.333px;
 }
 
-.cockpit-toggle__labels {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  width: 100%;
-  height: 100%;
+.cockpit-toggle__label--active {
+  flex: 1 0 0;
+  text-align: center;
+  color: var(--primitive-white);
+  font: var(--text-widget-tab-selected);
 }
 
-.cockpit-toggle__label {
-  flex: 1 0 0;
+.cockpit-toggle__label--inactive {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
   color: var(--primitive-grey-dark);
   font: var(--text-widget-tab-nonselected);
-  transition: color 0.3s ease;
 }
 
-.cockpit-toggle__track.journey #cockpit-toggle-label-journey,
-.cockpit-toggle__track.empathy #cockpit-toggle-label-empathy {
-  color: var(--primitive-white);
-  font: var(--text-widget-tab-selected);
+.cockpit-toggle__track.journey .cockpit-toggle__label--inactive {
+  left: 90.667px;
+  width: 69.333px;
+}
+
+.cockpit-toggle__track.empathy .cockpit-toggle__label--inactive {
+  left: 0;
+  width: 69.333px;
 }
 
 @keyframes thumbPeekLeft {
