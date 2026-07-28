@@ -205,7 +205,7 @@
   gap: 26px;
   width: 100%;
   padding-top: var(--spacing-16);
-  padding-bottom: var(--spacing-4);
+  padding-bottom: var(--spacing-32);
 }
 
 .cockpit-journey-stage__left-column {
