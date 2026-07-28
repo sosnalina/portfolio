@@ -4,7 +4,7 @@
   align-items: center;
   justify-content: center;
   height: 18px;
-  padding: 6px;
+  padding: 8px;
   background: var(--primitive-black);
   border-radius: var(--spacing-32);
 }
