@@ -195,6 +195,7 @@
     if (state.painPointHover) {
       if (state.painPointHover.strategic) return "normal";
       if (state.painPointHover.stepIds.indexOf(step.id) !== -1) return "pain-point-hover";
+      return "normal";
     }
     var persona = state.empathySelectedPersona ? PERSONA_STEPS[state.empathySelectedPersona] : null;
     if (persona && persona.driving.indexOf(step.id) !== -1) return "driver";
