@@ -173,6 +173,16 @@
   color: var(--primitive-black);
 }
 
+.cockpit-step--pain-point-hover .cockpit-step__title {
+  animation: colorWash 0.6s ease forwards;
+}
+
+@keyframes colorWash {
+  0%   { color: var(--primitive-black); }
+  40%  { color: var(--primitive-orange); }
+  100% { color: var(--primitive-black); }
+}
+
 .cockpit-step__subtitle {
   font: var(--text-widget-step-subheadline);
   color: var(--primitive-grey-dark);
