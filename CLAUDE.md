@@ -74,6 +74,16 @@ Before building any new component structure (not small tweaks — actual new lay
 
 Site-wrapper pages (landing, navigation, about, resume, project gallery) support both desktop and mobile per the verification checklist below. Case study article pages are desktop-only by design decision — do not build or verify mobile layouts for them. The checklist's mobile-match requirement and the Responsive section's mobile breakpoint rule below apply only to wrapper pages, not case studies.
 
+## Illustration bleed (hero images)
+
+Hero-section illustrations are exported from Figma as PNG files with transparent margin intentionally baked into the file around the artwork, equal to --spacing-32 (from tokens.css), so the image is larger than its visible layout "slot."
+
+- This margin is baked into the image file itself at export time, not a CSS value. Never add a spacing/margin/padding rule in CSS to reproduce it — it is already part of the image asset.
+- The image's layout container must use overflow: visible (not hidden), so the artwork's bled-out edges show past the container instead of being clipped.
+- The container's own defined width/height is unaffected and continues to drive surrounding layout (spacing to text below it, alignment with the adjacent column). Only the image visually bleeds — nothing else shifts.
+- This is intentional art direction (hand-drawn feel), not a bug. Do not crop, scale, or constrain the image to fit its container.
+- Applies to every case study's hero illustration, not just Bill Pay.
+
 ## Responsive — hard switch at 600px (wrapper pages only)
 
 "Slot gap" is a deliberate project term: it refers to the flex gap between child components inside a section's content slot.
