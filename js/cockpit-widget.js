@@ -642,8 +642,6 @@
     var isEmpathy = state.mode === "empathy";
     els.toggleTrack.classList.toggle("journey", !isEmpathy);
     els.toggleTrack.classList.toggle("empathy", isEmpathy);
-    els.toggleLabelActive.textContent = isEmpathy ? "Empathy" : "Journey";
-    els.toggleLabelInactive.textContent = isEmpathy ? "Journey" : "Empathy";
   }
 
   var thumbPeeking = false;
@@ -687,8 +685,6 @@
     els.right = document.getElementById("cockpit-right");
     els.toggleTrack = document.getElementById("cockpit-toggle-track");
     els.togglePill = document.querySelector(".cockpit-toggle__pill");
-    els.toggleLabelActive = document.getElementById("cockpit-toggle-label-active");
-    els.toggleLabelInactive = document.getElementById("cockpit-toggle-label-inactive");
 
     els.toggleTrack.addEventListener("click", function () {
       switchMode(state.mode === "journey" ? "empathy" : "journey");
