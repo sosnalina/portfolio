@@ -29,7 +29,7 @@ Two separate folders, so article-level and widget-level styles can never collide
 
 **Class naming rule:** widget CSS classes are prefixed with the widget name (e.g. `.cockpit-header`, not `.header`) so they can never accidentally override or collide with article-level classes, even if both are loaded on the same page.
 
-Reusability across widgets (e.g. whether Tag or the toggle tab styles get shared by a future second widget) is decided case by case as new widgets are built — see BP-COCKPIT.md §4 for the current undecided items.
+Reusability across widgets (e.g. whether Tag or the toggle tab styles get shared by a future second widget) is decided case by case as new widgets are built — see briefs/bill-pay/BP-COCKPIT.md §4 for the current undecided items.
 
 ## How to receive a task
 
