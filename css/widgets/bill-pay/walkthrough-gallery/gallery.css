@@ -1,0 +1,24 @@
+.gallery {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-64);
+  width: 100%;
+  height: 100%;
+}
+
+.gallery__navigation {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-32);
+  width: 159px;
+  flex-shrink: 0;
+}
+
+.gallery__interaction {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 19px;
+  width: 100%;
+}

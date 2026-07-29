@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Walkthrough Gallery</title>
+    <link rel="stylesheet" href="css/tokens.css" />
+    <link rel="stylesheet" href="css/reset.css" />
+    <link rel="stylesheet" href="css/widgets/bill-pay/walkthrough-gallery/gallery.css" />
+    <link rel="stylesheet" href="css/widgets/bill-pay/walkthrough-gallery/visual.css" />
+    <link rel="stylesheet" href="css/widgets/bill-pay/walkthrough-gallery/caption.css" />
+    <link rel="stylesheet" href="css/widgets/bill-pay/walkthrough-gallery/progress-bar.css" />
+    <link rel="stylesheet" href="css/widgets/bill-pay/walkthrough-gallery/legend.css" />
+    <style>
+      /* Test-harness only — stands in for the "existing 800px-wide host frame"
+         the spec describes; not part of the widget's own CSS, which stays
+         proportional to whatever width its real host frame provides. */
+      body {
+        display: flex;
+        justify-content: center;
+        padding: 64px 0;
+      }
+      .host-frame {
+        width: 800px;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="host-frame">
+      <div class="gallery">
+        <div class="gallery__visual"></div>
+        <div class="gallery__navigation">
+          <div class="gallery__caption" id="gallery-caption">
+            <p class="gallery__headline" id="gallery-headline"></p>
+            <p class="gallery__description" id="gallery-description"></p>
+          </div>
+          <div class="gallery__interaction">
+            <div class="gallery__progress-track">
+              <div class="gallery__progress-fill" id="gallery-progress-fill"></div>
+            </div>
+            <div class="gallery__legend">
+              <p class="gallery__counter" id="gallery-counter"></p>
+              <div class="gallery__buttons">
+                <button type="button" class="gallery__arrow" id="gallery-prev" aria-label="Previous step"></button>
+                <button type="button" class="gallery__arrow" id="gallery-next" aria-label="Next step"></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+    <script src="js/bill-pay/walkthrough-gallery.js"></script>
+  </body>
+</html>

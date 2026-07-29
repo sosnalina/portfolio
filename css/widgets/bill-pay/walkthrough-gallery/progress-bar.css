@@ -1,0 +1,27 @@
+.gallery__progress-track {
+  position: relative;
+  width: 100%;
+  height: 1px;
+  background: var(--primitive-disable);
+}
+
+.gallery__progress-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 0%;
+  background: var(--primitive-black);
+  animation-name: gallery-progress-fill;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+@keyframes gallery-progress-fill {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}

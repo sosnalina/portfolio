@@ -46,6 +46,8 @@
   --text-widget-tag: 500 8.5px/8px "Literata", Georgia, serif;
   --text-widget-stage-header: 300 16px/1.56 "Literata", Georgia, serif;
   --text-widget-legend: 500 13px/1.27 "Literata", Georgia, serif;
+  --text-widget-caption-description: 300 11px/13px "Literata", Georgia, serif;
+  --text-widget-counter: 800 12px/1 "Manrope", Arial, sans-serif;
 
   --tracking-widget-tight: -0.022em;
 
