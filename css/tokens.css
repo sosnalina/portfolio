@@ -31,6 +31,10 @@
   --text-body: 18px/1.7 "Literata", Georgia, serif;
   --text-number-section: 20px/1 "Manrope", Arial, sans-serif;
 
+  --text-hero-display: italic 62px/1.07 "Literata", Georgia, serif;
+  --text-hero-sub-headline: 20px/1.58 "Literata", Georgia, serif;
+  --text-hero-note: 12px/1.3 "Literata", Georgia, serif;
+
   --text-widget-header: 500 18px/1.3 "Literata", Georgia, serif;
   --text-widget-step-name: 400 14px/1 "Literata", Georgia, serif;
   --text-widget-step-subheadline: 300 11px/8px "Literata", Georgia, serif;
@@ -46,6 +50,7 @@
   --tracking-widget-tight: -0.022em;
 
   --font-weight-light: 300;
+  --font-weight-regular: 400;
   --font-weight-semibold: 600;
   --font-weight-extrabold: 800;
 }
