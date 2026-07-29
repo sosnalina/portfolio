@@ -101,7 +101,7 @@ Other Figma pages in the Portfolio file (case-study pages, payment-table mockups
 - Illustration stays as SVG/vector inside Figma — do not flatten.
 - **Exported as PNG @2x and committed directly to the repo.** The coding agent never fetches, exports, or otherwise interacts with Figma to obtain these — it just reads them from the repo like any other asset.
 - Naming convention: `{persona-slug}-{state}`.
-- **File location:** `assets/illustrations/cockpit-widget/{persona-slug}-{state}.png`. All 20 files are already in the repo at this path, named exactly per this convention — confirmed present: 5 personas (finance-director, ap-manager, ap-clerk, department-heads, procurement-manager) × 4 states (none, driver, escalation, strategic).
+- **File location:** `assets/illustrations/bill-pay/cockpit/{persona-slug}-{state}.png`. All 20 files are already in the repo at this path, named exactly per this convention — confirmed present: 5 personas (finance-director, ap-manager, ap-clerk, department-heads, procurement-manager) × 4 states (none, driver, escalation, strategic).
 - Journey mode: 15 variants (5 personas × none/driver/escalation). Strategic: 5 variants. Total: 20 illustration assets. Empathy mode reuses Journey's `driver`/`none` art via CSS opacity — no separate files.
 - **Design status:** Empathy mode illustrations complete, excluding the pain-point indicator asset (undesigned).
 

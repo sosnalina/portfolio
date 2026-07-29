@@ -1,5 +1,5 @@
 (function () {
-  var ILLUSTRATION_BASE = "assets/illustrations/cockpit-widget/";
+  var ILLUSTRATION_BASE = "assets/illustrations/bill-pay/cockpit/";
   var QUOTE_MARK_SRC = "assets/icons/quote-mark.svg";
   var ALERT_ICON_SRC = "assets/icons/alert.svg";
   var PAIN_POINTS_FIXED_HEIGHT = 73; // header (31px) + its gap (24px) + one collapsed tag row (18px) — the section's permanently fixed box

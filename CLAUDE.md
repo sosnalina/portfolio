@@ -25,7 +25,7 @@ Exception: decorative vector/illustration internals that are exported as a singl
 Two separate folders, so article-level and widget-level styles can never collide by filename or class name — mirrors the Figma-side split already in place (`desktop/articles/...` vs `desktop/widgets/...`).
 
 - **`css/components/`** — existing, reusable article/page-level components (`header.css`, `hero.css`, `section.css`, etc.), shared across case study pages. Mapped in COMPONENT-MAP.md.
-- **`css/widgets/{widget-name}/`** — one subfolder per interactive widget. Cockpit Widget's files live at `css/widgets/cockpit/` (e.g. `css/widgets/cockpit/members-rail.css`, `css/widgets/cockpit/steps-rail.css`).
+- **`css/widgets/{case-study}/{widget-name}/`** — one subfolder per interactive widget, nested under the case study it belongs to (so folder structure scales cleanly as more case studies are added, instead of accumulating a flat list of widget names with no indication of which case study owns them). Cockpit Widget belongs to Bill Pay, so its files live at `css/widgets/bill-pay/cockpit/` (e.g. `css/widgets/bill-pay/cockpit/members-rail.css`, `css/widgets/bill-pay/cockpit/steps-rail.css`).
 
 **Class naming rule:** widget CSS classes are prefixed with the widget name (e.g. `.cockpit-header`, not `.header`) so they can never accidentally override or collide with article-level classes, even if both are loaded on the same page.
 

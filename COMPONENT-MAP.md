@@ -15,7 +15,7 @@ When a new component is needed, add a row here first. Do not create a CSS file w
 | `Visual/video` | `video.css` |
 | `section` (platform=desktop/mobile, placement=Hero) | `hero.css` |
 | `section` (platform=desktop/mobile, placement=*) | `section.css` |
-| layout-master (Cockpit Widget, node 466:14209) | css/widgets/cockpit/ — split by sub-component (see BP-COCKPIT.md for the full breakdown: members-rail.css, steps-rail.css, toggle.css, tag.css, center-stage.css) |
+| layout-master (Cockpit Widget, node 466:14209) | css/widgets/bill-pay/cockpit/ — split by sub-component (see BP-COCKPIT.md for the full breakdown: members-rail.css, steps-rail.css, toggle.css, tag.css, center-stage.css) |
 
 ## Flagged — needs mapping before use
 
