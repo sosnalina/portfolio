@@ -1,4 +1,9 @@
+main {
+  counter-reset: section-header;
+}
+
 .section-header {
+  counter-increment: section-header;
   display: flex;
   flex-direction: column;
   gap: var(--spacing-16);
@@ -19,6 +24,10 @@
   font: var(--text-number-section);
   font-weight: var(--font-weight-extrabold);
   color: var(--primitive-black);
+}
+
+.section-header__badge-text::before {
+  content: counter(section-header, decimal-leading-zero) " /";
 }
 
 .section-header__heading {

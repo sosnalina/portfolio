@@ -9,7 +9,7 @@ When a new component is needed, add a row here first. Do not create a CSS file w
 
 | Figma name | CSS file |
 |---|---|
-| `section/header` | `header.css` |
+| `section/header` | `header.css` — badge number is CSS-generated (`counter-reset: section-header` on `main`, `counter-increment` on `.section-header`, `::before` on `.section-header__badge-text`), zero-padded via `decimal-leading-zero`. Increments only on actual `.section-header` instances, in document order — sections without a header (body-only sections, unheadered continuation blocks) don't consume a number or break the sequence. Never hardcode the badge number in markup; leave `.section-header__badge-text` empty and let the counter fill it. |
 | `section/sub-header` | `subheader.css` |
 | `text/body` | `body.css` |
 | `Visual/video` | `video.css` |

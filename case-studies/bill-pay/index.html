@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bill Pay — Case Study</title>
+    <link rel="stylesheet" href="../../css/tokens.css" />
+    <link rel="stylesheet" href="../../css/reset.css" />
+    <link rel="stylesheet" href="../../css/components/section.css" />
+    <link rel="stylesheet" href="../../css/components/hero.css" />
+    <link rel="stylesheet" href="../../css/components/header.css" />
+    <link rel="stylesheet" href="../../css/components/subheader.css" />
+    <link rel="stylesheet" href="../../css/components/body.css" />
+    <link rel="stylesheet" href="../../css/components/video.css" />
+    <link rel="stylesheet" href="../../css/widgets/bill-pay/walkthrough-gallery/gallery.css" />
+    <link rel="stylesheet" href="../../css/widgets/bill-pay/walkthrough-gallery/visual.css" />
+    <link rel="stylesheet" href="../../css/widgets/bill-pay/walkthrough-gallery/caption.css" />
+    <link rel="stylesheet" href="../../css/widgets/bill-pay/walkthrough-gallery/progress-bar.css" />
+    <link rel="stylesheet" href="../../css/widgets/bill-pay/walkthrough-gallery/legend.css" />
+    <link rel="stylesheet" href="../../css/widgets/bill-pay/cockpit/steps-rail.css" />
+    <link rel="stylesheet" href="../../css/widgets/bill-pay/cockpit/members-rail.css" />
+    <link rel="stylesheet" href="../../css/widgets/bill-pay/cockpit/toggle.css" />
+    <link rel="stylesheet" href="../../css/widgets/bill-pay/cockpit/tag.css" />
+    <link rel="stylesheet" href="../../css/widgets/bill-pay/cockpit/center-stage.css" />
+  </head>
+  <body>
+    <main>
+      <!-- 1. Hero -->
+      <section class="section section--hero section--green-light">
+        <div class="section__content">
+          <div class="section__slot">
+            <div class="section-hero">
+              <div class="section-hero__illustration-column">
+                <img class="section-hero__illustration" src="../../assets/illustrations/bill-pay/hero/bill-pay-hero-illustration.png" alt="" />
+                <p class="section-hero__note">Lorem ipsum is a dummy placeholder text <br /><br />It lets people view page layouts and fonts without getting </p>
+              </div>
+              <div class="section-hero__text-column">
+                <h1 class="section-hero__headline">Lorem ipsum dolor sit amet, consectetur adipiscing elit</h1>
+                <p class="section-hero__sub-headline">Lorem ipsum is a dummy placeholder text used in design and publishing. It lets people view page layouts and fonts without being distracted by real words.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. Plain section header + body, no visual -->
+      <section class="section">
+        <div class="section__content">
+          <div class="section__slot">
+            <div class="section-header">
+              <div class="section-header__badge">
+                <span class="section-header__badge-text"></span>
+              </div>
+              <h2 class="section-header__heading">Lorem ipsum dolor sit amet</h2>
+            </div>
+            <div class="section-body">
+              <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+              <p>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. Gallery section -->
+      <section class="section section--grey-light">
+        <div class="section__content">
+          <div class="section__slot">
+            <div class="section-header">
+              <div class="section-header__badge">
+                <span class="section-header__badge-text"></span>
+              </div>
+              <h2 class="section-header__heading">Lorem ipsum dolor sit amet</h2>
+            </div>
+            <div class="section-body">
+              <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua, ut enim ad minim veniam.</p>
+            </div>
+            <div class="gallery">
+              <div class="gallery__visual"></div>
+              <div class="gallery__navigation">
+                <div class="gallery__caption" id="gallery-caption">
+                  <p class="gallery__headline" id="gallery-headline"></p>
+                  <p class="gallery__description" id="gallery-description"></p>
+                </div>
+                <div class="gallery__interaction">
+                  <div class="gallery__progress-track">
+                    <div class="gallery__progress-fill" id="gallery-progress-fill"></div>
+                  </div>
+                  <div class="gallery__legend">
+                    <p class="gallery__counter" id="gallery-counter"></p>
+                    <div class="gallery__buttons">
+                      <button type="button" class="gallery__arrow" id="gallery-prev" aria-label="Previous step"></button>
+                      <button type="button" class="gallery__arrow" id="gallery-next" aria-label="Next step"></button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. Tipping Point — one section, two visual blocks (white then green) -->
+      <section class="section">
+        <div class="section__content">
+          <div class="section__slot">
+            <div class="section-subheader">
+              <h2 class="section-subheader__title">Tipping Point</h2>
+              <p class="section-subheader__subtitle">Lorem ipsum dolor sit amet</p>
+            </div>
+            <div class="section-body">
+              <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+            </div>
+            <div class="section-video section-video--placeholder"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section section--green-light">
+        <div class="section__content">
+          <div class="section__slot">
+            <div class="section-body">
+              <p>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore.</p>
+            </div>
+            <div class="section-video section-video--placeholder"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. Cockpit Widget section -->
+      <section class="section">
+        <div class="section__content">
+          <div class="section__slot">
+            <div class="section-header">
+              <div class="section-header__badge">
+                <span class="section-header__badge-text"></span>
+              </div>
+              <h2 class="section-header__heading">Lorem ipsum dolor sit amet</h2>
+            </div>
+            <div class="section-body">
+              <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+            </div>
+            <div class="cockpit-widget">
+              <div class="cockpit-left-nav">
+                <div class="cockpit-nav-panel">
+                  <div class="cockpit-headline-row">
+                    <h2 class="cockpit-headline">AP workflow, Journey & Empathy Mapping</h2>
+                  </div>
+                  <div class="cockpit-content-row">
+                    <div class="cockpit-steps-column-wrapper">
+                      <div class="cockpit-selected-bg" id="cockpit-selected-bg"></div>
+                      <div class="cockpit-connector-line"></div>
+                      <ol class="cockpit-steps-column" id="cockpit-steps-column"></ol>
+                    </div>
+                  </div>
+                </div>
+                <div class="cockpit-toggle-slot">
+                  <div class="cockpit-toggle" id="cockpit-toggle">
+                    <div class="cockpit-toggle__track journey" id="cockpit-toggle-track">
+                      <div class="cockpit-toggle__pill"></div>
+                      <p class="cockpit-toggle__label" id="cockpit-toggle-label-journey">Journey</p>
+                      <p class="cockpit-toggle__label" id="cockpit-toggle-label-empathy">Empathy</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="cockpit-right" id="cockpit-right">
+                <div class="cockpit-members-rail" id="cockpit-members-rail">
+                  <div class="cockpit-member-row" id="cockpit-member-row"></div>
+                  <div class="cockpit-highlight-track">
+                    <div class="cockpit-highlight-track__fill" id="cockpit-highlight-fill"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="section-body">
+              <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6. Section header + placeholder visual + body -->
+      <section class="section section--grey-light">
+        <div class="section__content">
+          <div class="section__slot">
+            <div class="section-header">
+              <div class="section-header__badge">
+                <span class="section-header__badge-text"></span>
+              </div>
+              <h2 class="section-header__heading">Lorem ipsum dolor sit amet</h2>
+            </div>
+            <div class="section-video section-video--placeholder"></div>
+            <div class="section-body">
+              <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 7. Section header + body + placeholder visual -->
+      <section class="section">
+        <div class="section__content">
+          <div class="section__slot">
+            <div class="section-header">
+              <div class="section-header__badge">
+                <span class="section-header__badge-text"></span>
+              </div>
+              <h2 class="section-header__heading">Lorem ipsum dolor sit amet</h2>
+            </div>
+            <div class="section-body">
+              <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+            </div>
+            <div class="section-video section-video--placeholder"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+    <script src="../../js/bill-pay/walkthrough-gallery.js"></script>
+    <script src="../../js/bill-pay/cockpit-widget.js"></script>
+  </body>
+</html>

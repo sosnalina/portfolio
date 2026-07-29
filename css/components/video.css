@@ -14,3 +14,7 @@
   object-fit: cover;
   opacity: 0.2;
 }
+
+.section-video--placeholder {
+  background: none;
+}

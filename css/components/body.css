@@ -5,6 +5,7 @@
   justify-content: flex-start;
   width: 100%;
   font: var(--text-body);
+  font-weight: var(--font-weight-light);
   color: var(--primitive-grey-dark);
   text-align: left;
 }
