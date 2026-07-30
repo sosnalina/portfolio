@@ -1,0 +1,20 @@
+{#
+  Shared outer shell every pattern sits inside:
+  <section class="section [modifiers]"><div class="section__content"><div class="section__slot"> ... </div></div></section>
+
+  modifiers: space-separated extra section-level classes, e.g. "section--hero section--green-light"
+  id: optional id attribute on the outer <section> (e.g. for anchor links)
+  Usage:
+    {% call section("section--grey-light", "pattern-foo") %}
+      ...pattern content...
+    {% endcall %}
+#}
+{% macro section(modifiers="", id="") %}
+<section{% if id %} id="{{ id }}"{% endif %} class="section{% if modifiers %} {{ modifiers }}{% endif %}">
+  <div class="section__content">
+    <div class="section__slot">
+      {{ caller() }}
+    </div>
+  </div>
+</section>
+{% endmacro %}

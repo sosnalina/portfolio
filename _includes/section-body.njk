@@ -1,0 +1,13 @@
+{#
+  Section-body pattern — one or more paragraphs of body copy.
+
+  Params:
+    paragraphs — array of raw HTML strings, one per <p>
+#}
+{% macro sectionBody(paragraphs) %}
+<div class="section-body">
+  {% for p in paragraphs %}
+  <p>{{ p | safe }}</p>
+  {% endfor %}
+</div>
+{% endmacro %}

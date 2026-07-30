@@ -8,26 +8,23 @@ All visual decisions must trace back only to the specified Figma frame or css/to
 
 Figma → CSS component mapping lives in COMPONENT-MAP.md, not here. Read it before touching any component.
 
-For HTML structure specifically: whenever a page needs the correct markup pattern for a shared component, copy the structure from `_template-reference.html` rather than reinventing it. This is a manual convention, not automatic inheritance — changes to the template do not propagate to other pages automatically; that's what the `Used by:` tracking and the three sync directions below are for (see Template sync convention).
+For HTML structure specifically: shared markup patterns are real, single-source components now — see Partial-based component architecture below. Never hand-copy a pattern's markup into a new page; import and call its partial instead.
 
-## Template sync convention
+## Partial-based component architecture
 
-Each structural pattern in `_template-reference.html` gets a `Used by:` comment listing every page/section currently using it, e.g.:
+The site is built with [Eleventy (11ty)](https://www.11ty.dev/) as a build step. This runs once, locally or at deploy time, before anything reaches a visitor — the shipped output is still plain static HTML + CSS, zero client-side JS added by the build step itself. `.njk` (Nunjucks) template sources are the source of truth; `_site/` is generated build output and is never committed (see `.gitignore`).
 
-```html
-<!-- PATTERN: section-header with subheading -->
-<!-- Used by: case-studies/bill-pay/index.html (sections 2, 5) -->
-```
+This replaces the old manual "Used by:" comment convention (previously documented in this section) — that system required manually re-applying every pattern fix to every consuming page by hand. Partials make that automatic: edit a pattern's `.njk` file once, every page that calls it regenerates correctly on the next build. Don't reintroduce the old comment-tracking system; if you find a page with hand-copied markup instead of a partial call, that's a bug — convert it.
 
-This is a manual, two-way sync — nothing here is enforced by tooling.
+**Where things live:**
 
-**Direction 1 — Template → pages.** Whenever a page adopts a pattern from the template (copies its markup), immediately update that pattern's `Used by:` comment in `_template-reference.html` to add the new consumer. This is mandatory, not optional — it's what makes Direction 2 possible without manually searching every brief doc each time.
+- `_includes/*.njk` — one file per reusable pattern (e.g. `hero.njk`, `section-header.njk`, `section-body.njk`, `section-visual.njk`, `two-block-subheader.njk`), each exporting a Nunjucks macro. `section.njk` is the shared outer shell (`.section > .section__content > .section__slot`) every pattern renders inside via `{% call %}`.
+- `case-studies/{name}/index.njk` — one template per case study, importing the macros it needs and passing in that case study's actual content as macro arguments. This is what used to be a plain `.html` file with hand-copied markup.
+- `_template-reference.njk` — still exists as a human-readable gallery of every available pattern (useful for seeing what each one looks like), but it is no longer the thing you copy from. The partials in `_includes/` are the actual source of truth; `_template-reference.njk` just calls the same macros a real page would.
 
-**Direction 2 — Template changes → notify consumers.** If a pattern in `_template-reference.html` changes structurally, read its `Used by:` comment to see exactly which pages/sections use it, and ask Hadar whether to apply the same change there.
+**Not every pattern needs a dedicated macro.** `section-header.njk` covers both "plain header" and "header with subheading" — subheading is an optional parameter, not a second component, since duplicating the badge/heading markup across two files would just be parallel implementations of the same thing. Similarly, the "header + body + visual container" pattern from the old template isn't its own macro — real pages vary too much in body/visual ordering and count (see `case-studies/bill-pay/index.njk`'s sections 5 and 6) to force into one rigid macro; it's composed per-page from `section()` + `sectionHeader()` + `sectionBody()` + `sectionVisual()` primitives instead.
 
-**Direction 3 — Pages → template (higher priority, flag proactively).** If a page diverges from how the template defines a pattern it's listed as a consumer of, flag this immediately and explicitly — don't wait to be asked. State clearly: "this page's version of [pattern] no longer matches the template — should the template be updated to match, or was this page-specific on purpose?"
-
-This scales automatically as new case studies (CP, Personetics, etc.) get built — no hardcoded file references needed, the template tracks its own consumers.
+**How to add a new article going forward:** create `case-studies/{name}/index.njk`, set its front-matter (`title`, `stylesheets`, `scripts`), `{% extends "base.njk" %}`, import the macros needed from `_includes/`, and call them with that case study's real content. Only add a new file to `_includes/` when a genuinely new structural pattern is needed that no existing macro/composition covers — check `_template-reference.njk` first.
 
 ## Naming convention
 

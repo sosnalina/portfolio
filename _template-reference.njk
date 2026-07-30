@@ -1,0 +1,65 @@
+---
+title: Template Reference
+permalink: /_template-reference.html
+stylesheets:
+  - css/tokens.css
+  - css/reset.css
+  - css/components/section.css
+  - css/components/hero.css
+  - css/components/header.css
+  - css/components/subheader.css
+  - css/components/body.css
+  - css/components/video.css
+scripts: []
+---
+{% extends "base.njk" %}
+{% from "hero.njk" import hero %}
+{% from "section.njk" import section %}
+{% from "section-header.njk" import sectionHeader %}
+{% from "section-body.njk" import sectionBody %}
+{% from "two-block-subheader.njk" import twoBlockSubheader %}
+
+{% block body %}
+<nav>
+  <p>Patterns in this reference — see CLAUDE.md "Partial-based component architecture":</p>
+  <ul>
+    <li><a href="#pattern-hero">Hero</a></li>
+    <li><a href="#pattern-header-subheading">Header with subheading</a></li>
+    <li><a href="#pattern-header-body-visual">Header + body + visual/placeholder box</a></li>
+    <li><a href="#pattern-two-block-subheader">Two-block section (shared subheader)</a></li>
+  </ul>
+</nav>
+<main>
+  {# PATTERN: hero — implemented by _includes/hero.njk #}
+  {{ hero(
+    "assets/illustrations/bill-pay/hero/bill-pay-hero-illustration.png",
+    "Lorem ipsum is a dummy placeholder text <br /><br />It lets people view page layouts and fonts without getting ",
+    'Lorem <span class="section-hero__headline-accent-strong section-hero__headline-accent">ipsum dolor</span><br /><span class="section-hero__headline-accent-strong">sit amet consectetur</span> <span class="section-hero__headline-accent">adipiscing elit</span>?',
+    "Lorem ipsum is a dummy placeholder text used in design and publishing. It lets people view page layouts and fonts without being distracted by real words.",
+    "pattern-hero"
+  ) }}
+
+  {# PATTERN: section-header with subheading — implemented by _includes/section-header.njk (subheading param) #}
+  {% call section("section--grey-light", "pattern-header-subheading") %}
+  {{ sectionHeader("Lorem ipsum dolor sit amet", "Lorem ipsum elephant") }}
+  {{ sectionBody(["Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."]) }}
+  {% endcall %}
+
+  {# PATTERN: header + body + visual container — composed from section-header.njk + section-body.njk + section-visual.njk #}
+  {% call section("", "pattern-header-body-visual") %}
+  {{ sectionHeader("Lorem ipsum dolor sit amet") }}
+  {{ sectionBody(["Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."]) }}
+  <div class="section-video section-video--placeholder"></div>
+  {% endcall %}
+
+  {# PATTERN: two-block section (shared subheader) — implemented by _includes/two-block-subheader.njk #}
+  {{ twoBlockSubheader(
+    "Lorem ipsum dolor sit amet",
+    "Lorem ipsum dolor sit amet",
+    ["Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."],
+    ["Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore."],
+    "section--green-light",
+    "pattern-two-block-subheader"
+  ) }}
+</main>
+{% endblock %}

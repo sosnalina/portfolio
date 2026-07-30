@@ -1,0 +1,25 @@
+{#
+  Section-header pattern — badge (auto-numbered via CSS counter, see
+  header.css) + heading, with an optional subheading.
+
+  This covers both the plain "header + body" pattern and the
+  "section-header with subheading" pattern from _template-reference.html —
+  same component, subheading is just an optional field, not a second
+  component. (Two separate files would duplicate the badge/heading markup
+  for no benefit; see build-step summary for the reasoning.)
+
+  Params:
+    heading     — raw HTML string for the h2
+    subheading  — optional raw HTML string; omit/empty for the no-subheading variant
+#}
+{% macro sectionHeader(heading, subheading="") %}
+<div class="section-header">
+  <div class="section-header__badge">
+    <span class="section-header__badge-text"></span>
+  </div>
+  <h2 class="section-header__heading">{{ heading | safe }}</h2>
+  {% if subheading %}
+  <p class="section-header__subheading">{{ subheading | safe }}</p>
+  {% endif %}
+</div>
+{% endmacro %}

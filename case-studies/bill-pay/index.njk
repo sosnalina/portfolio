@@ -1,0 +1,147 @@
+---
+title: Bill Pay — Case Study
+stylesheets:
+  - ../../css/tokens.css
+  - ../../css/reset.css
+  - ../../css/components/section.css
+  - ../../css/components/hero.css
+  - ../../css/components/header.css
+  - ../../css/components/subheader.css
+  - ../../css/components/body.css
+  - ../../css/components/video.css
+  - ../../css/widgets/bill-pay/walkthrough-gallery/gallery.css
+  - ../../css/widgets/bill-pay/walkthrough-gallery/visual.css
+  - ../../css/widgets/bill-pay/walkthrough-gallery/caption.css
+  - ../../css/widgets/bill-pay/walkthrough-gallery/progress-bar.css
+  - ../../css/widgets/bill-pay/walkthrough-gallery/legend.css
+  - ../../css/widgets/bill-pay/cockpit/steps-rail.css
+  - ../../css/widgets/bill-pay/cockpit/members-rail.css
+  - ../../css/widgets/bill-pay/cockpit/toggle.css
+  - ../../css/widgets/bill-pay/cockpit/tag.css
+  - ../../css/widgets/bill-pay/cockpit/center-stage.css
+scripts:
+  - ../../js/bill-pay/walkthrough-gallery.js
+  - ../../js/bill-pay/cockpit-widget.js
+---
+{% extends "base.njk" %}
+{% from "hero.njk" import hero %}
+{% from "section.njk" import section %}
+{% from "section-header.njk" import sectionHeader %}
+{% from "section-body.njk" import sectionBody %}
+{% from "section-visual.njk" import sectionVisual %}
+{% from "two-block-subheader.njk" import twoBlockSubheader %}
+
+{% block body %}
+<main>
+  {# 1. Hero #}
+  {{ hero(
+    "../../assets/illustrations/bill-pay/hero/bill-pay-hero-illustration.png",
+    "Lorem ipsum is a dummy placeholder text <br /><br />It lets people view page layouts and fonts without getting ",
+    "Lorem ipsum dolor sit amet, consectetur adipiscing elit",
+    "Lorem ipsum is a dummy placeholder text used in design and publishing. It lets people view page layouts and fonts without being distracted by real words."
+  ) }}
+
+  {# 2. Section header with subheading, no visual #}
+  {% call section() %}
+  {{ sectionHeader("Lorem ipsum dolor sit amet", "Lorem ipsum elephant") }}
+  {{ sectionBody([
+    "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+    "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore."
+  ]) }}
+  {% endcall %}
+
+  {# 3. Gallery section #}
+  {% call section("section--grey-light") %}
+  {{ sectionHeader("Lorem ipsum dolor sit amet", "Lorem ipsum elephant") }}
+  {{ sectionBody(["Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua, ut enim ad minim veniam."]) }}
+  {% call sectionVisual(true) %}
+  <div class="gallery">
+    <div class="gallery__visual"></div>
+    <div class="gallery__navigation">
+      <div class="gallery__caption" id="gallery-caption">
+        <p class="gallery__headline" id="gallery-headline"></p>
+        <p class="gallery__description" id="gallery-description"></p>
+      </div>
+      <div class="gallery__interaction">
+        <div class="gallery__progress-track">
+          <div class="gallery__progress-fill" id="gallery-progress-fill"></div>
+        </div>
+        <div class="gallery__legend">
+          <p class="gallery__counter" id="gallery-counter"></p>
+          <div class="gallery__buttons">
+            <button type="button" class="gallery__arrow" id="gallery-prev" aria-label="Previous step"></button>
+            <button type="button" class="gallery__arrow" id="gallery-next" aria-label="Next step"></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endcall %}
+  {% endcall %}
+
+  {# 4. Tipping Point — one section, two visual blocks (white then green) #}
+  {{ twoBlockSubheader(
+    "Tipping Point",
+    "Lorem ipsum dolor sit amet",
+    ["Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."],
+    ["Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore."]
+  ) }}
+
+  {# 5. Cockpit Widget section — header, body, widget, then a second trailing body #}
+  {% call section() %}
+  {{ sectionHeader("Lorem ipsum dolor sit amet", "Lorem ipsum elephant") }}
+  {{ sectionBody(["Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."]) }}
+  {% call sectionVisual(true) %}
+  <div class="cockpit-widget">
+    <div class="cockpit-left-nav">
+      <div class="cockpit-nav-panel">
+        <div class="cockpit-headline-row">
+          <h2 class="cockpit-headline">AP workflow, Journey & Empathy Mapping</h2>
+        </div>
+        <div class="cockpit-content-row">
+          <div class="cockpit-steps-column-wrapper">
+            <div class="cockpit-selected-bg" id="cockpit-selected-bg"></div>
+            <div class="cockpit-connector-line"></div>
+            <ol class="cockpit-steps-column" id="cockpit-steps-column"></ol>
+          </div>
+        </div>
+      </div>
+      <div class="cockpit-toggle-slot">
+        <div class="cockpit-toggle" id="cockpit-toggle">
+          <div class="cockpit-toggle__track journey" id="cockpit-toggle-track">
+            <div class="cockpit-toggle__pill"></div>
+            <p class="cockpit-toggle__label" id="cockpit-toggle-label-journey">Journey</p>
+            <p class="cockpit-toggle__label" id="cockpit-toggle-label-empathy">Empathy</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cockpit-right" id="cockpit-right">
+      <div class="cockpit-members-rail" id="cockpit-members-rail">
+        <div class="cockpit-member-row" id="cockpit-member-row"></div>
+        <div class="cockpit-highlight-track">
+          <div class="cockpit-highlight-track__fill" id="cockpit-highlight-fill"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endcall %}
+  {{ sectionBody(["Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident."]) }}
+  {% endcall %}
+
+  {# 6. Section header + placeholder visual + body #}
+  {% call section("section--grey-light") %}
+  {{ sectionHeader("Lorem ipsum dolor sit amet", "Lorem ipsum elephant") }}
+  {{ sectionVisual() }}
+  {{ sectionBody(["Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."]) }}
+  {% endcall %}
+
+  {# 7. Section header + body + placeholder visual #}
+  {% call section() %}
+  {{ sectionHeader("Lorem ipsum dolor sit amet", "Lorem ipsum elephant") }}
+  {{ sectionBody(["Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."]) }}
+  {{ sectionVisual() }}
+  {% endcall %}
+</main>
+{% endblock %}

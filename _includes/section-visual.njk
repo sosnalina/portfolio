@@ -1,0 +1,15 @@
+{#
+  Section-visual pattern — the placeholder/video box used in the
+  "header + body + visual container" pattern.
+
+  Two forms:
+    {{ sectionVisual() }}                     → empty placeholder box
+    {% call sectionVisual(true) %}...widget markup...{% endcall %}  → real content (e.g. an injected widget)
+#}
+{% macro sectionVisual(hasContent=false) %}
+{% if hasContent %}
+{{ caller() }}
+{% else %}
+<div class="section-video section-video--placeholder"></div>
+{% endif %}
+{% endmacro %}

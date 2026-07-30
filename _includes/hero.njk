@@ -1,0 +1,28 @@
+{#
+  Hero pattern — verbatim wrap of the markup currently live on main.
+  Structural rebuild of this section is paused/in progress separately;
+  this partial intentionally does not change its layout, spacing, or
+  markup, only makes it reusable.
+
+  Params:
+    illustrationSrc — path to the hero illustration PNG (page-relative)
+    note             — raw HTML string for the small note under the illustration
+    headline         — raw HTML string for the h1 (may contain accent spans)
+    subHeadline      — raw HTML string for the sub-headline paragraph
+    id               — optional id attribute on the outer <section>
+#}
+{% from "section.njk" import section %}
+{% macro hero(illustrationSrc, note, headline, subHeadline, id="") %}
+{% call section("section--hero section--green-light", id) %}
+<div class="section-hero">
+  <div class="section-hero__illustration-column">
+    <img class="section-hero__illustration" src="{{ illustrationSrc }}" alt="" />
+    <p class="section-hero__note">{{ note | safe }}</p>
+  </div>
+  <div class="section-hero__text-column">
+    <h1 class="section-hero__headline">{{ headline | safe }}</h1>
+    <p class="section-hero__sub-headline">{{ subHeadline | safe }}</p>
+  </div>
+</div>
+{% endcall %}
+{% endmacro %}

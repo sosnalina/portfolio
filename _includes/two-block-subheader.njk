@@ -1,0 +1,30 @@
+{#
+  Two-block section pattern (e.g. "Tipping Point") — one section-subheader
+  governs a section that spans two visual blocks (first block carries the
+  subheader, second is a continuation with a different background). See
+  CLAUDE.md: the subheader belongs to the whole section, not to each block.
+
+  Params:
+    title               — raw HTML for section-subheader__title
+    subtitle            — raw HTML for section-subheader__subtitle
+    firstParagraphs     — array of raw HTML strings for the first block's body
+    secondParagraphs    — array of raw HTML strings for the second block's body
+    secondModifiers     — extra section-level classes for the second block (default: continuation bg)
+    id                  — optional id attribute on the first block's outer <section>
+#}
+{% from "section.njk" import section %}
+{% from "section-body.njk" import sectionBody %}
+{% macro twoBlockSubheader(title, subtitle, firstParagraphs, secondParagraphs, secondModifiers="section--green-light", id="") %}
+{% call section("", id) %}
+<div class="section-subheader">
+  <h2 class="section-subheader__title">{{ title | safe }}</h2>
+  <p class="section-subheader__subtitle">{{ subtitle | safe }}</p>
+</div>
+{{ sectionBody(firstParagraphs) }}
+<div class="section-video section-video--placeholder"></div>
+{% endcall %}
+{% call section(secondModifiers) %}
+{{ sectionBody(secondParagraphs) }}
+<div class="section-video section-video--placeholder"></div>
+{% endcall %}
+{% endmacro %}
