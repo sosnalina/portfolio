@@ -8,6 +8,27 @@ All visual decisions must trace back only to the specified Figma frame or css/to
 
 Figma → CSS component mapping lives in COMPONENT-MAP.md, not here. Read it before touching any component.
 
+For HTML structure specifically: whenever a page needs the correct markup pattern for a shared component, copy the structure from `_template-reference.html` rather than reinventing it. This is a manual convention, not automatic inheritance — changes to the template do not propagate to other pages automatically; that's what the `Used by:` tracking and the three sync directions below are for (see Template sync convention).
+
+## Template sync convention
+
+Each structural pattern in `_template-reference.html` gets a `Used by:` comment listing every page/section currently using it, e.g.:
+
+```html
+<!-- PATTERN: section-header with subheading -->
+<!-- Used by: case-studies/bill-pay/index.html (sections 2, 5) -->
+```
+
+This is a manual, two-way sync — nothing here is enforced by tooling.
+
+**Direction 1 — Template → pages.** Whenever a page adopts a pattern from the template (copies its markup), immediately update that pattern's `Used by:` comment in `_template-reference.html` to add the new consumer. This is mandatory, not optional — it's what makes Direction 2 possible without manually searching every brief doc each time.
+
+**Direction 2 — Template changes → notify consumers.** If a pattern in `_template-reference.html` changes structurally, read its `Used by:` comment to see exactly which pages/sections use it, and ask Hadar whether to apply the same change there.
+
+**Direction 3 — Pages → template (higher priority, flag proactively).** If a page diverges from how the template defines a pattern it's listed as a consumer of, flag this immediately and explicitly — don't wait to be asked. State clearly: "this page's version of [pattern] no longer matches the template — should the template be updated to match, or was this page-specific on purpose?"
+
+This scales automatically as new case studies (CP, Personetics, etc.) get built — no hardcoded file references needed, the template tracks its own consumers.
+
 ## Naming convention
 
 All structural frames and layers use kebab-case names describing structural role — never Figma's auto-generated defaults (`Frame 1197135573`, `Group 1197132897`, etc.) and never placeholder content.
@@ -83,6 +104,10 @@ Hero-section illustrations are exported from Figma as PNG files with transparent
 - The container's own defined width/height is unaffected and continues to drive surrounding layout (spacing to text below it, alignment with the adjacent column). Only the image visually bleeds — nothing else shifts.
 - This is intentional art direction (hand-drawn feel), not a bug. Do not crop, scale, or constrain the image to fit its container.
 - Applies to every case study's hero illustration, not just Bill Pay.
+
+## Font weight verification
+
+When adding or changing a Google Fonts weight in tokens.css, don't just confirm the CSS declares the correct weight number — verify the actual font file downloaded is genuinely distinct per weight (e.g. via checksum comparison, not just visual guess or trusting the @import URL). Google Fonts can silently collapse multiple weights requested together in one @import into shared/duplicate files. This already happened once (Literata 300/400/500 all resolved to the same file) and wasn't caught by a static CSS audit — only a real rendered/downloaded-file check caught it. Any future font addition must be verified this same way before being considered done.
 
 ## Responsive — hard switch at 600px (wrapper pages only)
 
