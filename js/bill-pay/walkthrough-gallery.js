@@ -22,10 +22,6 @@
   var els = {};
   var autoAdvanceTimer = null;
 
-  function pad(n) {
-    return n < 10 ? "0" + n : String(n);
-  }
-
   // Toggle-off/reflow/toggle-on — the one retrigger pattern used for every
   // per-step animation (bloom on screen+caption, counter fade-slide). A class
   // added once and left in place would only ever play on its first attach.
@@ -53,7 +49,7 @@
 
     els.headline.textContent = step.headline;
     els.description.textContent = step.description;
-    els.counter.textContent = pad(index + 1) + " / " + pad(STEPS.length);
+    els.counter.textContent = (index + 1) + " / " + STEPS.length;
 
     retriggerAnimation(els.caption, "gallery__caption--blooming");
     retriggerAnimation(els.counter, "gallery__counter--animating");
