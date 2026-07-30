@@ -26,6 +26,10 @@ This replaces the old manual "Used by:" comment convention (previously documente
 
 **How to add a new article going forward:** create `case-studies/{name}/index.njk`, set its front-matter (`title`, `stylesheets`, `scripts`), `{% extends "base.njk" %}`, import the macros needed from `_includes/`, and call them with that case study's real content. Only add a new file to `_includes/` when a genuinely new structural pattern is needed that no existing macro/composition covers — check `_template-reference.njk` first.
 
+## Build/deploy safety
+
+Since this project now has a build step (Eleventy), any change affecting shared files/partials must go through a Vercel preview deploy first — never merge directly to main and deploy live without confirming the preview build succeeds and renders correctly. This protects the live site from a broken shared-component build taking down every page at once. Confirm the preview looks correct before merging to main.
+
 ## Naming convention
 
 All structural frames and layers use kebab-case names describing structural role — never Figma's auto-generated defaults (`Frame 1197135573`, `Group 1197132897`, etc.) and never placeholder content.
