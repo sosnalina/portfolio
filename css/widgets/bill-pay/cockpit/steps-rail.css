@@ -5,6 +5,7 @@
   width: 800px;
   background: var(--primitive-white);
   border-radius: var(--spacing-16);
+  box-shadow: var(--shadow-soft);
 }
 
 .cockpit-left-nav {

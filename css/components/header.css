@@ -35,3 +35,9 @@ main {
   font-weight: var(--font-weight-semibold);
   color: var(--primitive-black);
 }
+
+.section-header__subheading {
+  font: var(--text-section-subheading);
+  letter-spacing: var(--tracking-section-subheading);
+  color: var(--primitive-grey-dark);
+}

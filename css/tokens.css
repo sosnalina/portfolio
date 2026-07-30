@@ -1,4 +1,16 @@
-@import url('https://fonts.googleapis.com/css2?family=Literata:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Manrope:wght@800&display=swap');
+/* Each Literata weight/style is requested in its own @import — combining
+   multiple weights in one Google Fonts request was returning the same
+   physical file relabeled under different font-weight values (verified
+   by checksum: 300/400/500/600 and italic 300/400 collapsed to 2 shared
+   files instead of 6 distinct ones). Isolating each request is the only
+   combination confirmed to return genuinely distinct files. */
+@import url('https://fonts.googleapis.com/css2?family=Literata:wght@300&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Literata:wght@400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Literata:wght@500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Literata:wght@600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Literata:ital,wght@1,300&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Literata:ital,wght@1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@800&display=swap');
 
 :root {
   --primitive-black: #393a3d;
@@ -24,12 +36,12 @@
 
   --sizing-content-max: 1056px;
 
-  --text-display: 48px/1.32 "Literata", Georgia, serif;
   --text-heading1: 38px/1.2 "Literata", Georgia, serif;
-  --text-heading2: 22px/1.3 "Literata", Georgia, serif;
-  --text-heading3: 22px/1.3 "Literata", Georgia, serif;
+  --text-heading2: 20px/1.3 "Literata", Georgia, serif;
+  --text-heading3: 20px/1.3 "Literata", Georgia, serif;
   --text-body: 16px/1.76 "Literata", Georgia, serif;
   --text-number-section: 20px/1 "Manrope", Arial, sans-serif;
+  --text-section-subheading: 300 18px/1.5 "Literata", Georgia, serif;
 
   --text-hero-display: italic 62px/1.07 "Literata", Georgia, serif;
   --text-hero-sub-headline: 20px/1.58 "Literata", Georgia, serif;
@@ -37,19 +49,21 @@
 
   --text-widget-header: 500 18px/1.3 "Literata", Georgia, serif;
   --text-widget-step-name: 400 14px/1 "Literata", Georgia, serif;
-  --text-widget-step-subheadline: 300 11px/8px "Literata", Georgia, serif;
+  --text-widget-step-subheadline: 300 11px/11px "Literata", Georgia, serif;
   --text-widget-role: 500 12px/14px "Literata", Georgia, serif;
   --text-widget-quote: italic 300 14px/1.5 "Literata", Georgia, serif;
   --text-widget-line-item: 300 11px/var(--spacing-16) "Literata", Georgia, serif;
   --text-widget-tab-selected: 500 10px/8px "Literata", Georgia, serif;
   --text-widget-tab-nonselected: 300 10px/8px "Literata", Georgia, serif;
-  --text-widget-tag: 500 8.5px/8px "Literata", Georgia, serif;
-  --text-widget-stage-header: 300 16px/1.56 "Literata", Georgia, serif;
+  --text-widget-tag: 500 8.5px/var(--spacing-8) "Literata", Georgia, serif;
+  --text-widget-stage-header: 300 16px/1.46 "Literata", Georgia, serif;
   --text-widget-legend: 500 13px/1.27 "Literata", Georgia, serif;
-  --text-widget-caption-description: 300 11px/13px "Literata", Georgia, serif;
   --text-widget-counter: 800 12px/1 "Manrope", Arial, sans-serif;
 
   --tracking-widget-tight: -0.022em;
+  --tracking-section-subheading: 1px;
+
+  --shadow-soft: 0px 0px 30px color-mix(in srgb, var(--primitive-black) 10%, transparent);
 
   --font-weight-light: 300;
   --font-weight-regular: 400;
@@ -59,7 +73,6 @@
 
 @media (max-width: 600px) {
   :root {
-    --text-display: 30px/1.3 "Literata", Georgia, serif;
     --text-heading1: 24px/1.13 "Literata", Georgia, serif;
     --text-body: 18px/1.68 "Literata", Georgia, serif;
     --text-number-section: 16px/1 "Manrope", Arial, sans-serif;

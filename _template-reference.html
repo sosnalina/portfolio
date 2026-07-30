@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Case Study</title>
+    <title>Template Reference</title>
     <link rel="stylesheet" href="css/tokens.css" />
     <link rel="stylesheet" href="css/reset.css" />
     <link rel="stylesheet" href="css/components/section.css" />
@@ -14,8 +14,19 @@
     <link rel="stylesheet" href="css/components/video.css" />
   </head>
   <body>
+    <nav>
+      <p>Patterns in this reference — see CLAUDE.md "Template sync convention":</p>
+      <ul>
+        <li><a href="#pattern-hero">Hero</a></li>
+        <li><a href="#pattern-header-subheading">Header with subheading</a></li>
+        <li><a href="#pattern-header-body-visual">Header + body + visual/placeholder box</a></li>
+        <li><a href="#pattern-two-block-subheader">Two-block section (shared subheader)</a></li>
+      </ul>
+    </nav>
     <main>
-      <section class="section section--hero section--green-light">
+      <!-- PATTERN: hero -->
+      <!-- Used by: case-studies/bill-pay/index.html (hero) -->
+      <section id="pattern-hero" class="section section--hero section--green-light">
         <div class="section__content">
           <div class="section__slot">
             <div class="section-hero">
@@ -24,67 +35,68 @@
                 <p class="section-hero__note">Lorem ipsum is a dummy placeholder text <br /><br />It lets people view page layouts and fonts without getting </p>
               </div>
               <div class="section-hero__text-column">
-                <h1 class="section-hero__headline">Should <span class="section-hero__headline-accent">simplicity</span><br />always be the <span class="section-hero__headline-accent">right ux answer</span>?</h1>
-                <p class="section-hero__sub-headline">Lorem ipsum is a dummy placeholder text used in design and publishing. It lets people view page layouts and fonts without g by real words. It comes from a scrambled 45 BC Latin text by the Roman philosopher Cicero</p>
+                <h1 class="section-hero__headline">Lorem <span class="section-hero__headline-accent-strong section-hero__headline-accent">ipsum dolor</span><br /><span class="section-hero__headline-accent-strong">sit amet consectetur</span> <span class="section-hero__headline-accent">adipiscing elit</span>?</h1>
+                <p class="section-hero__sub-headline">Lorem ipsum is a dummy placeholder text used in design and publishing. It lets people view page layouts and fonts without being distracted by real words.</p>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      <section class="section">
+      <!-- PATTERN: section-header with subheading -->
+      <!-- Used by: case-studies/bill-pay/index.html (section 2) -->
+      <section id="pattern-header-subheading" class="section section--grey-light">
         <div class="section__content">
           <div class="section__slot">
             <div class="section-header">
               <div class="section-header__badge">
                 <span class="section-header__badge-text"></span>
               </div>
-              <h2 class="section-header__heading">Business background</h2>
+              <h2 class="section-header__heading">Lorem ipsum dolor sit amet</h2>
+              <p class="section-header__subheading">Lorem ipsum elephant</p>
             </div>
             <div class="section-body">
-              <p>QuickBooks is the backbone of financial operations for millions of US businesses.</p>
-              <p>While it has always been the industry leader for accounting, for years, the actual money movement happened elsewhere, through third-party tools, manual bank transfers, and paper checks.</p>
-              <p>This created a fragmented experience; customers struggled with sync-latency and data discrepancies that compromised their financial accuracy. QuickBooks identified an opportunity to close this gap by integrating bill payment capabilities directly into the platform, capturing the entire bill lifecycle within a single, seamless workflow.</p>
-            </div>
-            <div class="section-video">
-              <img class="section-video__image" src="https://www.figma.com/api/mcp/asset/6b4cf2f5-0644-4670-86a2-3748bff53eec" alt="" />
+              <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
             </div>
           </div>
         </div>
       </section>
 
-      <section class="section section--grey-light">
+      <!-- PATTERN: header + body + visual container -->
+      <!-- Used by: case-studies/bill-pay/index.html
+           - section 3: Gallery widget injected (see walkthrough-gallery.html)
+           - section 5: Cockpit Widget injected (see cockpit-widget.html)
+           - section 6, 7: empty placeholder, format undecided -->
+      <section id="pattern-header-body-visual" class="section">
         <div class="section__content">
           <div class="section__slot">
-            <div class="section-subheader">
-              <h2 class="section-subheader__title">The V1 experience</h2>
-              <p class="section-subheader__subtitle">One Bill, One payment</p>
+            <div class="section-header">
+              <div class="section-header__badge">
+                <span class="section-header__badge-text"></span>
+              </div>
+              <h2 class="section-header__heading">Lorem ipsum dolor sit amet</h2>
             </div>
             <div class="section-body">
-              <p>Launched in 2022 as a multi-step wizard, Bill Pay v1 was tailored to serve QuickBooks’ core audience of small businesses processing up to 30 bills per month.</p>
-              <p>The experience was rooted in a cognitive model of simplicity and clarity. By breaking down execution into sequential, guided steps, the product ensured that even non-professional users could navigate their payments with confidence and minimal friction.</p>
+              <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
             </div>
-            <div class="section-video">
-              <img class="section-video__image" src="https://www.figma.com/api/mcp/asset/6b4cf2f5-0644-4670-86a2-3748bff53eec" alt="" />
-            </div>
+            <div class="section-video section-video--placeholder"></div>
           </div>
         </div>
       </section>
 
-      <section class="section">
+      <!-- PATTERN: two-block section (shared subheader) -->
+      <!-- Used by: case-studies/bill-pay/index.html (Tipping Point) -->
+      <section id="pattern-two-block-subheader" class="section">
         <div class="section__content">
           <div class="section__slot">
             <div class="section-subheader">
-              <h2 class="section-subheader__title">Tipping Point</h2>
-              <p class="section-subheader__subtitle">Headline headline</p>
+              <h2 class="section-subheader__title">Lorem ipsum dolor sit amet</h2>
+              <p class="section-subheader__subtitle">Lorem ipsum dolor sit amet</p>
             </div>
             <div class="section-body">
-              <p>A year after launch, while Bill Pay was gaining traction with small businesses, data revealed a unique segment that promised to be a massive growth engine.</p>
-              <p>It was a classic “80/20 rule”, where a specific group, representing less than a quarter of the QuickBooks user base, was responsible for over 80% of the total potential payment volume.</p>
+              <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
             </div>
-            <div class="section-video">
-              <img class="section-video__image" src="https://www.figma.com/api/mcp/asset/6b4cf2f5-0644-4670-86a2-3748bff53eec" alt="" />
-            </div>
+            <div class="section-video section-video--placeholder"></div>
           </div>
         </div>
       </section>
@@ -92,50 +104,10 @@
       <section class="section section--green-light">
         <div class="section__content">
           <div class="section__slot">
-            <div class="section-subheader">
-              <h2 class="section-subheader__title">From SMB to Mid-Market</h2>
-              <p class="section-subheader__subtitle">Re-scoping the mission</p>
-            </div>
             <div class="section-body">
-              <p>High-volume Billers were Mid-Market companies processing hundreds and thousands of bills monthly. While they relied on QuickBooks for accounting records, they were “leaking” out of the ecosystem to execute payments through external solutions, as the existing experience couldn’t support their scale.</p>
-              <p>Now it was no longer just about enabling bill payments, it was about turning QuickBooks into a market-leading, end-to-end AP automation solution for Mid-Market.</p>
+              <p>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore.</p>
             </div>
-            <div class="section-video">
-              <img class="section-video__image" src="https://www.figma.com/api/mcp/asset/6b4cf2f5-0644-4670-86a2-3748bff53eec" alt="" />
-            </div>
-            <div class="section-body">
-              <p>Addressing the Mid-Market wasn’t just a Bill Pay challenge. It was a shift that required alignment across various touch-points in QuickBooks ecosystem, bringing multiple teams to join forces.</p>
-              <p>At this pivotal moment, I was brought in as Principal Designer to spearhead the strategy for this transition, collaborating with other design leads to rethink the core foundations needed to evolve from a simple payment tool into a comprehensive solution designed to meet Mid-Market needs</p>
-            </div>
-            <div class="section-body">
-              <p>role :</p>
-              <p>role:</p>
-              <p>role:</p>
-              <p>role:</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="section">
-        <div class="section__content">
-          <div class="section__slot">
-            <div class="section-header">
-              <div class="section-header__badge">
-                <span class="section-header__badge-text"></span>
-              </div>
-              <h2 class="section-header__heading">Problem Space</h2>
-            </div>
-            <div class="section-body">
-              <p>To navigate this, we initiated a cross-team research plan, interviewing over 40 AP stakeholders to uncover their operational workflows, pain points, and the gaps within their current toolsets. We then gathered for a workshop at Intuit’s Mountain View HQ to synthesize these findings, mapped the end-to-end AP lifecycle and the personas involved, and layered them against our existing experience.</p>
-              <p>This high-level view was a breakthrough as it moved us past “siloed” thinking and revealed the complex realities of Mid-Market operations, where unlike small businesses, multiple finance roles manage the process with specific constraints and expectations. This understanding allowed us to identify functional gaps and friction points in our existing experience.</p>
-            </div>
-            <div class="section-video">
-              <img class="section-video__image" src="https://www.figma.com/api/mcp/asset/6b4cf2f5-0644-4670-86a2-3748bff53eec" alt="" />
-            </div>
-            <div class="section-body">
-              <p>Now that we had our scope and priorities set, our collaborative efforts branched into specialized work-streams. While partner teams focused on upstream challenges like managing roles and permissions, mass bill ingestion and vendor onboarding, my mission was to reimagine the payment execution core, recognizing that simplicity at scale requires a different cognitive architecture.</p>
-            </div>
+            <div class="section-video section-video--placeholder"></div>
           </div>
         </div>
       </section>
