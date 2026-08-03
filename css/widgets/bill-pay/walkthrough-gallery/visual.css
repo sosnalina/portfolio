@@ -1,8 +1,11 @@
 .gallery__visual {
+  display: block;
   flex: 1 0 0;
   min-width: 0;
   aspect-ratio: 565 / 375;
+  border: none;
   border-radius: var(--spacing-8);
-  background: var(--primitive-black);
+  overflow: hidden;
+  background: var(--primitive-white);
   box-shadow: 0px 0px 30px color-mix(in srgb, var(--primitive-black) 15%, transparent);
 }

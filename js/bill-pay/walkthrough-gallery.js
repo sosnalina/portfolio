@@ -5,14 +5,21 @@
   var ARROW_ICON_PATH =
     "M9 0C13.9706 0 18 4.02944 18 9C18 13.9706 13.9706 18 9 18C4.02944 18 0 13.9706 0 9C0 4.02944 4.02944 0 9 0ZM9 1C4.58172 1 1 4.58172 1 9C1 13.4183 4.58172 17 9 17C13.4183 17 17 13.4183 17 9C17 4.58172 13.4183 1 9 1ZM8.93945 5.61621C9.15159 5.36165 9.52961 5.32693 9.78418 5.53906L13.3838 8.53906C13.5206 8.65306 13.5996 8.82193 13.5996 9C13.5996 9.17807 13.5206 9.34694 13.3838 9.46094L9.78418 12.4609C9.52961 12.6731 9.15159 12.6384 8.93945 12.3838C8.72736 12.1293 8.7612 11.7512 9.01562 11.5391L11.3428 9.60059H5C4.66876 9.60059 4.4006 9.33119 4.40039 9C4.4006 8.66881 4.66876 8.40039 5 8.40039H11.3438L9.01562 6.46094C8.7612 6.24877 8.72736 5.87073 8.93945 5.61621Z";
 
+  // Brief fallback only — used the instant a step renders, before that step's
+  // iframe reports its own real duration via postMessage (see
+  // handleVisualMessage). Never a value anyone hand-types per step.
   var DEFAULT_DURATION = 4000;
 
-  // Placeholder content — swap for real Bill Pay copy later, per spec.
+  // Placeholder headline/description copy — swap for real Bill Pay content
+  // later, per spec. `visual` paths are root-absolute, not relative: this
+  // script is shared between walkthrough-gallery.html (repo root) and
+  // case-studies/bill-pay/index.njk (two levels deep) — a relative path
+  // here would only resolve correctly for one of the two host pages.
   var STEPS = [
-    { headline: "Entry point — Bills page", description: "Choose a single bill from the unpaid tab", duration: DEFAULT_DURATION },
-    { headline: "Review payment details", description: "Confirm the amount and vendor info", duration: DEFAULT_DURATION },
-    { headline: "Select account & date", description: "Pick where the payment comes from", duration: DEFAULT_DURATION },
-    { headline: "Payment confirmed", description: "Done — the bill is on its way", duration: DEFAULT_DURATION }
+    { headline: "Entry point — Bills page", description: "Choose a single bill from the unpaid tab", visual: "/assets/walkthrough/bill-pay/step-1.html" },
+    { headline: "Review payment details", description: "Confirm the amount and vendor info", visual: "/assets/walkthrough/bill-pay/step-2.html" },
+    { headline: "Select account & date", description: "Pick where the payment comes from", visual: "/assets/walkthrough/bill-pay/step-3.html" },
+    { headline: "Payment confirmed", description: "Done — the bill is on its way", visual: "/assets/walkthrough/bill-pay/step-4.html" }
   ];
 
   var state = {
@@ -50,15 +57,36 @@
     els.headline.textContent = step.headline;
     els.description.textContent = step.description;
     els.counter.textContent = (index + 1) + " / " + STEPS.length;
+    els.visual.src = step.visual;
 
     retriggerAnimation(els.caption, "gallery__caption--blooming");
     retriggerAnimation(els.counter, "gallery__counter--animating");
 
     // Every step's bar starts empty and fills independently — never carries
-    // over or accumulates from the previous step.
-    retriggerProgressBar(step.duration);
+    // over or accumulates from the previous step. Start on the fallback
+    // duration immediately (so nothing sits frozen) — handleVisualMessage
+    // re-triggers both of these again, in place, once the new iframe's own
+    // dry-run measurement reports the real duration (normally within
+    // milliseconds, since the dry-run pass does no real animation work).
+    retriggerProgressBar(DEFAULT_DURATION);
+    scheduleAutoAdvance(DEFAULT_DURATION);
+  }
 
-    scheduleAutoAdvance(step.duration);
+  // Validates and applies a step iframe's self-reported duration. Guards
+  // against: (a) messages from any origin other than our own — this page
+  // and the walkthrough iframes are always same-origin, so anything else is
+  // rejected outright; (b) stale messages from a step the user has already
+  // navigated away from (e.g. rapid arrow clicks) — only a message whose
+  // source is literally the currently-mounted iframe is trusted.
+  function handleVisualMessage(event) {
+    if (event.origin !== window.location.origin) return;
+    if (event.source !== els.visual.contentWindow) return;
+
+    var data = event.data;
+    if (!data || data.type !== "walkthrough-duration" || typeof data.ms !== "number") return;
+
+    retriggerProgressBar(data.ms);
+    scheduleAutoAdvance(data.ms);
   }
 
   function scheduleAutoAdvance(duration) {
@@ -96,6 +124,7 @@
     els.caption = document.getElementById("gallery-caption");
     els.headline = document.getElementById("gallery-headline");
     els.description = document.getElementById("gallery-description");
+    els.visual = document.getElementById("gallery-visual");
     els.progressFill = document.getElementById("gallery-progress-fill");
     els.counter = document.getElementById("gallery-counter");
     els.prevButton = document.getElementById("gallery-prev");
@@ -110,6 +139,8 @@
     els.nextButton.addEventListener("click", function () {
       goToStep(state.stepIndex + 1);
     });
+
+    window.addEventListener("message", handleVisualMessage);
 
     renderStep(state.stepIndex);
   });
