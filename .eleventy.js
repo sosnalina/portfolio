@@ -5,6 +5,7 @@ module.exports = function (eleventyConfig) {
   eleventyConfig.addPassthroughCopy("assets");
   eleventyConfig.addPassthroughCopy("cockpit-widget.html");
   eleventyConfig.addPassthroughCopy("walkthrough-gallery.html");
+  eleventyConfig.addPassthroughCopy("accordion-gallery.html");
   eleventyConfig.addPassthroughCopy("figma_thumb.png");
 
   return {

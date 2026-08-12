@@ -1,0 +1,163 @@
+/* Bill Pay — Accordion Gallery widget. Figma: node 784:37330 (item states),
+   node 791:37546 (outer layout, "accordion" frame inside Slot 4 — the green
+   section background and the stray "image 209" node in that same frame are
+   demo-composition artifacts, not part of this component; deliberately not
+   reproduced here). Class names prefixed accordion-gallery-/accordion-item-
+   so they can never collide with article-level or other widget classes. */
+
+.accordion-gallery {
+  display: flex;
+  align-items: flex-start;
+  gap: 50px;
+  background: transparent;
+}
+
+/* ---- Nav column ---- */
+
+.accordion-gallery__nav {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  width: 210px;
+  height: 248px;
+}
+
+.accordion-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  padding: 0;
+  width: fit-content;
+  background: none;
+  border: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    gap 380ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    padding-bottom 380ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    width 380ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.accordion-item--open {
+  gap: 12px;
+  padding-bottom: 6px;
+  width: 210px;
+}
+
+/* Pill — closed/hover states are just this element; open state adds the
+   arrow (see .accordion-item__arrow-wrap) and the description block below
+   it, but the pill itself keeps the same 34px height / 40px radius always. */
+.accordion-item__pill {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  height: 34px;
+  padding: 0 15px;
+  border-radius: 40px;
+  background: var(--primitive-accent-green);
+  /* Reserved transparent border (not `border: none`) so the hover border
+     doesn't shift box size/layout when it appears — only the color changes. */
+  border: 1px solid transparent;
+  box-sizing: border-box;
+  transition:
+    gap 380ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    border-color 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.accordion-item--open .accordion-item__pill {
+  gap: 10px;
+}
+
+/* Hover border — closed items only, per spec ("never fires on the
+   currently-open item"). */
+.accordion-item:not(.accordion-item--open):hover .accordion-item__pill {
+  border-color: var(--primitive-white);
+}
+
+.accordion-item__label {
+  font-family: "Literata", Georgia, serif;
+  font-weight: 500; /* Literata Medium, per Figma font-['Literata:Medium'] */
+  font-size: 12px;
+  line-height: 1.27;
+  color: var(--primitive-black);
+  white-space: nowrap;
+}
+
+/* ---- Arrow (open state only, animated in/out) ---- */
+
+.accordion-item__arrow-wrap {
+  overflow: hidden;
+  width: 0;
+  opacity: 0;
+  transform: scale(0.6);
+  flex-shrink: 0;
+  transition:
+    width 380ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    opacity 320ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    transform 320ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.accordion-item--open .accordion-item__arrow-wrap {
+  width: 18px;
+  opacity: 1;
+  transform: scale(1);
+}
+
+.accordion-item__arrow-icon {
+  display: block;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+/* ---- Description block (grid-rows trick, no JS measurement) ---- */
+
+.accordion-item__description-wrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  width: 100%;
+  transition:
+    grid-template-rows 380ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    opacity 380ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.accordion-item--open .accordion-item__description-wrap {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.accordion-item__description-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding-left: 44px;
+  overflow: hidden;
+  min-height: 0; /* required for the grid-rows trick to actually collapse to 0 */
+}
+
+.accordion-item__description {
+  width: 166px;
+  font-family: "Literata", Georgia, serif;
+  font-weight: 300; /* Literata Light, per Figma font-['Literata:Light'] */
+  font-size: 10px;
+  line-height: normal;
+  color: var(--primitive-black);
+}
+
+/* ---- Image panel ---- */
+
+.accordion-gallery__visual {
+  display: block;
+  flex: 1 0 0;
+  min-width: 0;
+  aspect-ratio: 669 / 468;
+  border: none;
+  border-radius: 9.09px;
+  overflow: hidden;
+  box-shadow: 0px 0px 34.087px 0px color-mix(in srgb, var(--primitive-black) 15%, transparent);
+}

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Accordion Gallery — Placeholder Scene</title>
+<style>
+  /* Throwaway — deleted once the real scene HTML (built later, per the
+     accordion-gallery build brief) replaces this file. Full-viewport solid
+     background-color per scene, nothing else. */
+  html, body {
+    margin: 0;
+    height: 100%;
+  }
+</style>
+</head>
+<body>
+<script>
+  // Three throwaway, visually-distinguishable colors, one per scene index —
+  // no styling considerations, this file is deleted once the real scene
+  // HTML lands.
+  var COLORS = ["#ffadad", "#a0c4ff", "#caffbf"];
+
+  document.body.style.backgroundColor = COLORS[0];
+
+  // Deliberately does NOT fire 'accordion-scene-change' — this is what keeps
+  // the parent accordion in its 4-second timer fallback mode. The real scene
+  // HTML fires those events instead, and the parent switches modes on its
+  // own; no parent-side changes needed at handoff.
+  window.addEventListener("message", function (event) {
+    if (event.origin !== window.location.origin) return;
+
+    var data = event.data;
+    if (!data || data.type !== "accordion-jump-to-scene") return;
+    if (typeof data.index !== "number") return;
+    if (data.index < 0 || data.index > 2) return;
+
+    document.body.style.backgroundColor = COLORS[data.index];
+  });
+</script>
+</body>
+</html>

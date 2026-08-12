@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Accordion Gallery</title>
+    <link rel="stylesheet" href="css/tokens.css" />
+    <link rel="stylesheet" href="css/reset.css" />
+    <link rel="stylesheet" href="css/widgets/bill-pay/accordion-gallery/accordion-gallery.css" />
+    <style>
+      /* Test-harness only, not part of the widget's own CSS — same pattern
+         as walkthrough-gallery.html's host-frame. */
+      body {
+        display: flex;
+        justify-content: center;
+        padding: 64px 0;
+      }
+      .host-frame {
+        width: 800px;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="host-frame">
+      <!--
+        Hand-copied from _includes/accordion-gallery.njk's macro output —
+        this static demo page can't call a Nunjucks macro (only .njk files
+        go through Eleventy's templating, see .eleventy.js), so it mirrors
+        the markup by hand, same as walkthrough-gallery.html does for the
+        walkthrough gallery.
+      -->
+      <div class="accordion-gallery">
+        <div class="accordion-gallery__nav">
+          <button type="button" class="accordion-item accordion-item--open" data-accordion-index="0" aria-expanded="true">
+            <span class="accordion-item__pill">
+              <span class="accordion-item__arrow-wrap">
+                <svg class="accordion-item__arrow-icon" viewBox="0 0 18 18" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="9" cy="9" r="8.5" fill="var(--primitive-white)" stroke="var(--primitive-black)" />
+                  <g transform="translate(12.9996,5.9994) scale(-0.934826,0.833500)">
+                    <path d="M4.2 6.60002L0.6 3.60002L4.2 0.600015" stroke="var(--primitive-black)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />
+                    <line x1="1.2" y1="3.60002" x2="8.6" y2="3.60002" stroke="var(--primitive-black)" stroke-width="1.2" stroke-linecap="round" />
+                  </g>
+                </svg>
+              </span>
+              <span class="accordion-item__label">Batch & Bulk optimization</span>
+            </span>
+            <div class="accordion-item__description-wrap">
+              <div class="accordion-item__description-row">
+                <p class="accordion-item__description">Scan vendors and associated bills distinctly, High-density table, all critical factors, one scannable view</p>
+              </div>
+            </div>
+          </button>
+          <button type="button" class="accordion-item" data-accordion-index="1" aria-expanded="false">
+            <span class="accordion-item__pill">
+              <span class="accordion-item__arrow-wrap">
+                <svg class="accordion-item__arrow-icon" viewBox="0 0 18 18" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="9" cy="9" r="8.5" fill="var(--primitive-white)" stroke="var(--primitive-black)" />
+                  <g transform="translate(12.9996,5.9994) scale(-0.934826,0.833500)">
+                    <path d="M4.2 6.60002L0.6 3.60002L4.2 0.600015" stroke="var(--primitive-black)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />
+                    <line x1="1.2" y1="3.60002" x2="8.6" y2="3.60002" stroke="var(--primitive-black)" stroke-width="1.2" stroke-linecap="round" />
+                  </g>
+                </svg>
+              </span>
+              <span class="accordion-item__label">Item 2</span>
+            </span>
+            <div class="accordion-item__description-wrap">
+              <div class="accordion-item__description-row">
+                <p class="accordion-item__description">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+              </div>
+            </div>
+          </button>
+          <button type="button" class="accordion-item" data-accordion-index="2" aria-expanded="false">
+            <span class="accordion-item__pill">
+              <span class="accordion-item__arrow-wrap">
+                <svg class="accordion-item__arrow-icon" viewBox="0 0 18 18" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="9" cy="9" r="8.5" fill="var(--primitive-white)" stroke="var(--primitive-black)" />
+                  <g transform="translate(12.9996,5.9994) scale(-0.934826,0.833500)">
+                    <path d="M4.2 6.60002L0.6 3.60002L4.2 0.600015" stroke="var(--primitive-black)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />
+                    <line x1="1.2" y1="3.60002" x2="8.6" y2="3.60002" stroke="var(--primitive-black)" stroke-width="1.2" stroke-linecap="round" />
+                  </g>
+                </svg>
+              </span>
+              <span class="accordion-item__label">Item 3</span>
+            </span>
+            <div class="accordion-item__description-wrap">
+              <div class="accordion-item__description-row">
+                <p class="accordion-item__description">Ut enim ad minim veniam, quis nostrud exercitation ullamco.</p>
+              </div>
+            </div>
+          </button>
+        </div>
+        <iframe class="accordion-gallery__visual" id="accordion-gallery-visual" title="Accordion scene" src="/assets/accordion-gallery/bill-pay/placeholder-scene.html"></iframe>
+      </div>
+    </main>
+    <script src="js/bill-pay/accordion-gallery.js"></script>
+  </body>
+</html>

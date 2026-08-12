@@ -1,0 +1,94 @@
+{#
+  Bill Pay — Accordion Gallery. Figma: node 784:37330 (item states),
+  node 791:37546 (outer "accordion" frame layout inside Slot 4).
+
+  Standalone component — no section wrapper, no headline, no background.
+  Caller drops {{ accordionGallery() }} into its own content column.
+
+  Content is fixed for this first build (item 1 = real Figma copy, items 2/3
+  = placeholder). No parameters yet — add them when this gets wired into a
+  real section.
+#}
+{% macro accordionGallery() %}
+{% set items = [
+  {
+    label: "Batch & Bulk optimization",
+    description: "Scan vendors and associated bills distinctly, High-density table, all critical factors, one scannable view"
+  },
+  {
+    label: "Item 2",
+    description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit."
+  },
+  {
+    label: "Item 3",
+    description: "Ut enim ad minim veniam, quis nostrud exercitation ullamco."
+  }
+] %}
+<div class="accordion-gallery">
+  <div class="accordion-gallery__nav">
+    {% for item in items %}
+    <button
+      type="button"
+      class="accordion-item{% if loop.first %} accordion-item--open{% endif %}"
+      data-accordion-index="{{ loop.index0 }}"
+      aria-expanded="{{ 'true' if loop.first else 'false' }}"
+    >
+      <span class="accordion-item__pill">
+        <span class="accordion-item__arrow-wrap">
+          {#
+            Combined circle + arrow-glyph icon, flattened from Figma node
+            784:37315 ("arrow") into one inline SVG. The glyph group's
+            transform reproduces Figma's own layered composition exactly:
+            the glyph (native 9.2x7.2) is non-uniformly scaled to fit the
+            inset box Figma specified (inset: 33.33% 27.78% 33.33% 24.44% of
+            the 18x18 icon), then mirrored horizontally to point right. Not
+            simplified to a uniform/centered scale — those exact, slightly
+            asymmetric percentages are what Figma specifies, so reproduced
+            verbatim rather than "corrected" for visual symmetry.
+          #}
+          <svg
+            class="accordion-item__arrow-icon"
+            viewBox="0 0 18 18"
+            fill="none"
+            aria-hidden="true"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <circle cx="9" cy="9" r="8.5" fill="var(--primitive-white)" stroke="var(--primitive-black)" />
+            <g transform="translate(12.9996,5.9994) scale(-0.934826,0.833500)">
+              <path
+                d="M4.2 6.60002L0.6 3.60002L4.2 0.600015"
+                stroke="var(--primitive-black)"
+                stroke-width="1.2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <line
+                x1="1.2"
+                y1="3.60002"
+                x2="8.6"
+                y2="3.60002"
+                stroke="var(--primitive-black)"
+                stroke-width="1.2"
+                stroke-linecap="round"
+              />
+            </g>
+          </svg>
+        </span>
+        <span class="accordion-item__label">{{ item.label }}</span>
+      </span>
+      <div class="accordion-item__description-wrap">
+        <div class="accordion-item__description-row">
+          <p class="accordion-item__description">{{ item.description }}</p>
+        </div>
+      </div>
+    </button>
+    {% endfor %}
+  </div>
+  <iframe
+    class="accordion-gallery__visual"
+    id="accordion-gallery-visual"
+    title="Accordion scene"
+    src="/assets/accordion-gallery/bill-pay/placeholder-scene.html"
+  ></iframe>
+</div>
+{% endmacro %}
