@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bill Pay Mock Screen</title>
+    <style>
+      /* Test-harness only — loads the mock screen at its native, unscaled
+         1440px width for direct QA, same pattern as walkthrough-gallery.html
+         / accordion-gallery.html's host-frame. Not part of the widget's own
+         CSS, which lives entirely inside schedule-payment.html. */
+      body {
+        margin: 0;
+        display: flex;
+        justify-content: center;
+        background: #e4e5e7;
+        padding: 32px 0;
+      }
+      .host-frame {
+        width: 1440px;
+        background: #fff;
+        box-shadow: 0 0 40px rgba(0, 0, 0, 0.15);
+      }
+      iframe {
+        display: block;
+        width: 1440px;
+        height: 1000px;
+        border: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="host-frame">
+      <iframe src="assets/mock-screen/bill-pay/schedule-payment.html" title="Bill Pay — Schedule payment mock screen"></iframe>
+    </div>
+  </body>
+</html>

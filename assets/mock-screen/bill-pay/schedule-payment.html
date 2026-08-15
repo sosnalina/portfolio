@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Schedule bill payment (mock)</title>
+    <link rel="stylesheet" href="../../../css/tokens.css" />
+    <style>
+      /* ---- Avenir Next (self-hosted) — Figma "Roman"->400, "Medium"->500, "Bold"->700,
+         "Heavy"->800. This mock uses the Medium face for the vendor-name weight. ---- */
+      @font-face {
+        font-family: "Avenir Next";
+        src: url("../../fonts/avenir-next/Avenir_Next_Regular.otf") format("opentype");
+        font-weight: 400;
+        font-style: normal;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "Avenir Next";
+        src: url("../../fonts/avenir-next/Avenir_Next_Demi.otf") format("opentype");
+        font-weight: 600;
+        font-style: normal;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "Avenir Next";
+        src: url("../../fonts/avenir-next/Avenir_Next_Bold.otf") format("opentype");
+        font-weight: 700;
+        font-style: normal;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "Avenir Next";
+        src: url("../../fonts/avenir-next/Avenir_Next_Heavy.otf") format("opentype");
+        font-weight: 800;
+        font-style: normal;
+        font-display: swap;
+      }
+
+      :root {
+        /* ---- BP tokens — values pulled from Figma qfIgkJTuD0k956262uOUSp, values that
+           don't already exist as portfolio primitives in css/tokens.css. ---- */
+        --bp-font-body: "Avenir Next", system-ui, sans-serif;
+
+        --bp-color-action-green: #2ca01c;
+        --bp-color-border-input: #8d9096;
+        --bp-color-divider: #d4d7dc;
+        --bp-color-row-sub-bg: #f4f6f7;
+        --bp-color-scrollbar-track: transparent;
+        --bp-color-scrollbar-thumb: #d9d9d9;
+        --bp-color-focus-ring: #0077c5;
+
+        --bp-radius-input: 4px;
+        --bp-radius-switch-pill: 20px;
+        --bp-radius-subrow: 11.235px;
+        --bp-radius-full: 9999px;
+        --bp-radius-table-top: 26px;
+        --bp-radius-scrollbar: 10px;
+        --bp-radius-drawer-top: 30px;
+        --bp-radius-tab: 3px;
+        --bp-drawer-width: 435px;
+
+        --bp-shadow-switch-thumb: 0px 5px 10px rgba(0, 0, 0, 0.1), 0px 2px 2px rgba(0, 0, 0, 0.3);
+        --bp-shadow-table-body: 0px 4px 24px 0px rgba(0, 0, 0, 0.05);
+        --bp-shadow-drawer: 0px 4px 34px 0px rgba(0, 0, 0, 0.25);
+        --bp-shadow-tab-selected: 0px 4px 0px 0px #108000;
+        --bp-color-tab-border: #eceef1;
+
+        /* Type scale — every value + weight pulled directly from Figma text styles */
+        --bp-text-header-title: 600 34px/32px var(--bp-font-body);
+        --bp-text-total-label: 600 13px/24px var(--bp-font-body);
+        --bp-text-total-amount: 700 32px/1 var(--bp-font-body);
+        --bp-text-total-fee: 400 14px/20px var(--bp-font-body);
+        --bp-text-label: 400 14px/14px var(--bp-font-body);
+        --bp-text-label-strong: 600 14px/14px var(--bp-font-body);
+        --bp-text-cell-normal: 400 14px/14px var(--bp-font-body);
+        --bp-text-cell-strong: 600 15px/26.965px var(--bp-font-body);
+        --bp-text-cell-small: 400 12px/21.65px var(--bp-font-body);
+        --bp-text-cell-action: 600 14px/14px var(--bp-font-body);
+        --bp-text-table-header: 600 12px/20px var(--bp-font-body);
+        --bp-text-footer-num: 600 20px/20px var(--bp-font-body);
+        --bp-text-footer-label: 400 12px/12px var(--bp-font-body);
+        --bp-text-button-label: 400 16px/24px var(--bp-font-body);
+        --bp-text-badge: 400 12px/16px var(--bp-font-body);
+        --bp-text-drawer-heading: 600 24px/28px var(--bp-font-body);
+        --bp-text-drawer-total-label: 600 16px/36px var(--bp-font-body);
+        --bp-text-drawer-section-title: 600 18px/36px var(--bp-font-body);
+        --bp-text-drawer-note-title: 600 18px/36px var(--bp-font-body);
+        --bp-text-drawer-total: 600 32px/36px var(--bp-font-body);
+        --bp-text-drawer-meta: 400 14px/21.65px var(--bp-font-body);
+        --bp-text-radio-title: 600 16px/24px var(--bp-font-body);
+        --bp-text-radio-title-medium: 400 16px/24px var(--bp-font-body);
+        --bp-text-radio-subtitle: 400 14px/21.65px var(--bp-font-body);
+        --bp-text-radio-meta: 400 16px/21.65px var(--bp-font-body);
+        --bp-text-radio-fee: 600 16px/24px var(--bp-font-body);
+        --bp-text-tab-label: 800 12px/16px var(--bp-font-body);
+        --bp-text-tab-label-inactive: 400 12px/16px var(--bp-font-body);
+        --bp-text-field-label: 400 14px/20px var(--bp-font-body);
+        --bp-text-field-value: 400 16px/24px var(--bp-font-body);
+        --bp-text-field-helper: 400 14px/20px var(--bp-font-body);
+
+        /* Motion — the only source of truth for timing/easing (spec §7) */
+        --bp-ease-toggle: cubic-bezier(0.4, 0, 0.2, 1);
+        --bp-ease-expand: cubic-bezier(0, 0, 0.2, 1);
+        --bp-ease-collapse: cubic-bezier(0.4, 0, 1, 1);
+        --bp-ease-drawer-open: cubic-bezier(0, 0, 0.2, 1);
+        --bp-ease-drawer-close: cubic-bezier(0.4, 0, 0.6, 1);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background: var(--primitive-white);
+      }
+
+      body {
+        font-family: var(--bp-font-body);
+      }
+
+      .scaler {
+        width: 1440px;
+        transform-origin: top left;
+        position: relative;
+      }
+
+      /* ---- Screen shell ---- */
+
+      .bp-screen {
+        width: 1440px;
+        height: 1000px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      /* ---- Header ---- */
+
+      .bp-header {
+        width: 1440px;
+        height: 400px;
+        background: var(--primitive-grey-light);
+        position: relative;
+      }
+
+      .bp-header__title {
+        position: absolute;
+        left: 78px;
+        top: 51px;
+        margin: 0;
+        font: var(--bp-text-header-title);
+        color: var(--primitive-black);
+      }
+
+      .bp-header__close {
+        position: absolute;
+        top: 60px;
+        right: 44px;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        border: none;
+        background: none;
+        padding: 0;
+      }
+      .bp-header__close img {
+        width: 16px;
+        height: 16px;
+      }
+
+      .bp-header__row {
+        position: absolute;
+        left: 78px;
+        right: 119px;
+        top: 172px;
+        display: flex;
+        align-items: center;
+        gap: 52px;
+        transition: right 225ms var(--bp-ease-drawer-open);
+      }
+      .bp-screen--narrow .bp-header__row {
+        /* Previously added the closed-state 119px margin on top of the
+           drawer width, clamping the row far short of the drawer's actual
+           left edge and forcing the totals cluster to wrap. The row's right
+           edge should land exactly at the drawer's left edge (screen width
+           minus drawer width) — no extra margin stacked on top. */
+        right: var(--bp-drawer-width);
+        transition: right 195ms var(--bp-ease-drawer-close);
+      }
+
+      .bp-header__divider {
+        width: 1px;
+        height: 60px;
+        background: var(--bp-color-divider);
+        flex-shrink: 0;
+      }
+      /* Pushes the totals cluster (and its leading divider) to the right
+         edge of the row — mirrors Figma, where [Pay from + divider +
+         Combine] sit in a flex-grow:1 wrapper that consumes the remaining
+         space instead. */
+      .bp-header__divider:has(+ .bp-totals) {
+        margin-left: auto;
+      }
+
+      /* Pay from (dropdown — static, no interaction) */
+      .bp-pay-from {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        width: 250px;
+      }
+      .bp-pay-from__label {
+        margin: 0;
+        height: 20px;
+        font: var(--bp-text-label);
+        color: var(--primitive-black);
+      }
+      .bp-pay-from__field {
+        height: 36px;
+        border: 1px solid var(--bp-color-border-input);
+        border-radius: var(--bp-radius-input);
+        background: var(--primitive-white);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 8px;
+      }
+      .bp-pay-from__field span {
+        font: var(--bp-text-label);
+        color: var(--primitive-black);
+      }
+      .bp-pay-from__field img {
+        width: 14px;
+        height: 8px;
+      }
+
+      /* Combine multiple bills + toggle */
+      .bp-combine {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        height: 60px;
+      }
+      .bp-combine__label {
+        margin: 0;
+        font: var(--bp-text-label);
+        color: var(--primitive-black);
+      }
+      .bp-combine__row {
+        display: flex;
+        align-items: center;
+        gap: 22px;
+        height: 36px;
+      }
+      .bp-combine__toggle-label {
+        margin: 0;
+        font: var(--bp-text-label-strong);
+        font-weight: 600;
+        color: var(--primitive-black);
+        white-space: nowrap;
+      }
+
+      /* Switch (BP-prefix rule relaxed for shared primitives — styled via --bp-* tokens) */
+      .bp-switch {
+        width: 36px;
+        height: 20px;
+        border-radius: var(--bp-radius-switch-pill);
+        background: var(--bp-color-border-input);
+        padding: 1px;
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        border: none;
+        transition: background-color 300ms var(--bp-ease-toggle);
+      }
+      .bp-switch[aria-checked="true"] {
+        background: var(--bp-color-action-green);
+      }
+      .bp-switch__thumb {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: var(--primitive-white);
+        box-shadow: var(--bp-shadow-switch-thumb);
+        transform: translateX(0);
+        transition: transform 300ms var(--bp-ease-toggle);
+      }
+      .bp-switch[aria-checked="true"] .bp-switch__thumb {
+        transform: translateX(16px);
+      }
+      .bp-switch:hover .bp-switch__thumb {
+        transform: translateX(0) scale(0.95);
+      }
+      .bp-switch[aria-checked="true"]:hover .bp-switch__thumb {
+        transform: translateX(16px) scale(0.95);
+      }
+
+      /* Total amounts */
+      .bp-totals {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        flex-shrink: 0;
+      }
+      .bp-totals__label {
+        margin: 0 0 10px 0;
+        font: var(--bp-text-total-label);
+        font-weight: 600;
+        text-transform: uppercase;
+        color: var(--primitive-black);
+        white-space: nowrap;
+      }
+      .bp-totals__amount {
+        margin: 0;
+        font: var(--bp-text-total-amount);
+        font-weight: 700;
+        color: var(--primitive-black);
+        white-space: nowrap;
+      }
+      .bp-totals__fee {
+        margin: 0;
+        font: var(--bp-text-total-fee);
+        color: var(--primitive-black);
+        white-space: nowrap;
+      }
+
+      /* ---- Table body card ---- */
+
+      .bp-table-wrap {
+        position: absolute;
+        left: 74px;
+        top: 261px;
+        width: 1287px;
+        height: 676px;
+        padding-top: 40px;
+      }
+
+      .bp-table-body {
+        width: 100%;
+        height: 100%;
+        background: var(--primitive-white);
+        border-radius: var(--bp-radius-table-top) var(--bp-radius-table-top) 0 0;
+        box-shadow: var(--bp-shadow-table-body);
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .bp-header-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-shrink: 0;
+      }
+      .bp-header-row__cell {
+        display: flex;
+        align-items: flex-start;
+        padding: 17px 10px 0;
+        height: 60px;
+        overflow: hidden;
+        transition:
+          width 225ms var(--bp-ease-drawer-open),
+          padding 225ms var(--bp-ease-drawer-open);
+      }
+      .bp-header-row__cell span {
+        font: var(--bp-text-table-header);
+        font-weight: 600;
+        text-transform: uppercase;
+        color: var(--primitive-black);
+        white-space: nowrap;
+        opacity: 1;
+        transition: opacity 150ms linear;
+      }
+      .bp-screen--narrow .bp-header-row__cell {
+        transition:
+          width 195ms var(--bp-ease-drawer-close),
+          padding 195ms var(--bp-ease-drawer-close);
+      }
+      /* narrowable columns collapse to 0 */
+      .bp-screen--narrow .bp-header-row__cell[data-narrow-hide] {
+        width: 0 !important;
+        padding-left: 0;
+        padding-right: 0;
+      }
+      .bp-screen--narrow .bp-header-row__cell[data-narrow-hide] span {
+        opacity: 0;
+      }
+      /* Confirmed via Figma screenshot of batch-narrow (2967:603443): the
+         Action column's header label goes blank in narrow mode (rows still
+         show the icon), but — unlike Payment speed/Fee — the column itself
+         does not collapse width. */
+      .bp-screen--narrow .bp-header-row__cell[data-action-label] span {
+        opacity: 0;
+      }
+
+      .bp-rows-scroll {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        position: relative;
+      }
+      /* Soft fade at the top of the scroll viewport so row content doesn't
+         hard-crop as it scrolls past. position:sticky (not absolute) keeps
+         it pinned to the visible top edge as the user scrolls; margin-bottom
+         equal to its own negative height keeps it from taking up real
+         layout space (it would otherwise push the first row down as a
+         36px-tall flex item). Only shown once scrolled — see .is-scrolled,
+         toggled by the scroll listener in schedule-payment.js — so it
+         doesn't paint over the header-to-first-row divider at rest. */
+      .bp-rows-scroll::before {
+        content: "";
+        /* position:sticky was tried here but, as a ::before pseudo-element,
+           it's still a flex item of .bp-rows-scroll — even with a fully
+           canceling negative margin, the browser still reserves layout
+           space for it (interacting with the column's `gap`), which pushed
+           every row down. position:absolute is excluded from flex-item
+           participation entirely (spec-guaranteed zero footprint) while
+           producing the identical pinned-to-viewport visual result here,
+           since the scroll container itself never moves — only its content
+           scrolls internally. */
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 36px;
+        background: linear-gradient(to bottom, var(--primitive-white) 0%, transparent 100%);
+        pointer-events: none;
+        z-index: 2;
+        opacity: 0;
+        transition: opacity 150ms linear;
+      }
+      .bp-rows-scroll.is-scrolled::before {
+        opacity: 1;
+      }
+      .bp-vendor-group {
+        display: flex;
+        flex-direction: column;
+      }
+      .bp-expand-wrap {
+        margin-top: 0;
+      }
+      .bp-rows-scroll::-webkit-scrollbar {
+        width: 17px;
+      }
+      .bp-rows-scroll::-webkit-scrollbar-track {
+        background: var(--bp-color-scrollbar-track);
+      }
+      .bp-rows-scroll::-webkit-scrollbar-thumb {
+        background-color: var(--bp-color-scrollbar-thumb);
+        border-radius: var(--bp-radius-scrollbar);
+        border: 4px solid transparent;
+        background-clip: padding-box;
+      }
+
+      /* Hide scrollbar visually but keep scrolling (Firefox, IE/Edge, WebKit) */
+      .bp-rows-scroll {
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* IE and legacy Edge */
+      }
+      .bp-rows-scroll::-webkit-scrollbar {
+        display: none; /* Chrome, Safari, Opera */
+      }
+
+      .bp-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding-top: 9px;
+        background: var(--primitive-white);
+        border-top: 1px solid var(--bp-color-divider);
+      }
+      /* Every row — including the literal first one and every bulk vendor
+         row — carries its own top divider (matches Figma: even the first
+         row instance has border-t). No first-child suppression: with the
+         fade gradient hidden at rest (.is-scrolled toggle above), there's
+         no risk of a doubled-up line at the header/first-row boundary, and
+         bulk mode needs a divider between every vendor group too. */
+      .bp-row--sub {
+        background: var(--bp-color-row-sub-bg);
+        border-top: none;
+        border-radius: var(--bp-radius-subrow);
+        padding: 8px 0;
+        margin-top: 0;
+      }
+
+      .bp-cell {
+        display: flex;
+        align-items: center;
+        height: 60px;
+        padding: 0 10px;
+        flex-shrink: 0;
+        overflow: hidden;
+        transition:
+          width 225ms var(--bp-ease-drawer-open),
+          padding 225ms var(--bp-ease-drawer-open);
+      }
+      .bp-screen--narrow .bp-cell {
+        transition:
+          width 195ms var(--bp-ease-drawer-close),
+          padding 195ms var(--bp-ease-drawer-close);
+      }
+      .bp-cell > * {
+        transition: opacity 150ms linear;
+      }
+      .bp-screen--narrow .bp-cell[data-narrow-hide] {
+        width: 0 !important;
+        padding-left: 0;
+        padding-right: 0;
+      }
+      .bp-screen--narrow .bp-cell[data-narrow-hide] > * {
+        opacity: 0;
+      }
+
+      .bp-cell--vendor {
+        width: 230px;
+        padding-right: 12px;
+        padding-left: 0;
+      }
+      .bp-cell--bill {
+        width: 76px;
+      }
+      .bp-cell--status {
+        width: 106px;
+        gap: 6px;
+      }
+      .bp-cell--due {
+        width: 84px;
+      }
+      .bp-cell--speed {
+        width: 203px;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: center;
+      }
+      .bp-cell--fee {
+        width: 122px;
+        overflow: hidden;
+      }
+      .bp-cell--balance {
+        width: 115px;
+        overflow: hidden;
+      }
+      .bp-cell--amount {
+        width: 120px;
+        padding-left: 8px;
+      }
+      .bp-cell--action {
+        width: 106px;
+        overflow: hidden;
+        cursor: pointer;
+      }
+
+      .bp-vendor {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+        width: 100%;
+      }
+      .bp-vendor__chevron {
+        width: 20px;
+        height: 20px;
+        flex-shrink: 0;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 6px;
+        border: none;
+        background: none;
+        padding: 0;
+      }
+      .bp-vendor__chevron img {
+        width: 12px;
+        height: 6.86px;
+        transform: rotate(0deg);
+      }
+      .bp-vendor__chevron[data-expanded="true"] img {
+        transform: rotate(180deg);
+      }
+      .bp-vendor__chevron img {
+        transition: transform var(--bp-expand-duration, 225ms) var(--bp-ease-expand);
+      }
+      .bp-vendor__chevron[data-collapsing="true"] img {
+        transition: transform var(--bp-expand-duration, 225ms) var(--bp-ease-collapse);
+      }
+      .bp-vendor__body {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        width: 100%;
+      }
+      .bp-vendor__name {
+        margin: 0;
+        font: var(--bp-text-cell-strong);
+        font-weight: 600;
+        color: var(--primitive-black);
+      }
+      .bp-vendor__method {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        height: 24px;
+        margin-top: -2px;
+      }
+      .bp-vendor__method-icon {
+        width: 14px;
+        height: 14px;
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 0;
+      }
+      .bp-vendor__method-icon img {
+        display: block;
+        transform: translateY(1px);
+      }
+      .bp-vendor__method-text {
+        margin: 0;
+        font: var(--bp-text-cell-small);
+        color: var(--primitive-grey-dark);
+        white-space: nowrap;
+      }
+
+      .bp-cell--bill span,
+      .bp-cell--due span,
+      .bp-cell--balance span {
+        font: var(--bp-text-cell-normal);
+        color: var(--primitive-black);
+      }
+
+      .bp-status {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .bp-status__check {
+        width: 10px;
+        height: 10px;
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 0;
+      }
+      .bp-status__check img {
+        display: block;
+        transform: translateY(1px);
+      }
+      /* .bp-status was never actually applied to any element in the
+         rendered markup — the "Approved" text is a bare, unclassed <span>
+         inside .bp-cell--status, so ".bp-status span" never matched and it
+         was rendering with default (400) weight the whole time. Targeting
+         the real element directly via .bp-status-text (added in
+         schedule-payment.js), copying vendor-name's exact declarations. */
+      .bp-status-text {
+        margin: 0;
+        font: var(--bp-text-cell-strong);
+        font-weight: 600;
+        color: var(--primitive-black);
+      }
+
+      .bp-speed__top {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        height: 25px;
+      }
+      .bp-speed__label {
+        margin: 0;
+        font: var(--bp-text-cell-strong);
+        font-weight: 600;
+        color: var(--primitive-black);
+        white-space: nowrap;
+      }
+      .bp-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0 4px;
+        border-radius: var(--bp-radius-input);
+        background: var(--primitive-green);
+      }
+      .bp-badge span {
+        font: var(--bp-text-badge);
+        text-transform: uppercase;
+        color: var(--primitive-white);
+      }
+      .bp-speed__meta {
+        display: flex;
+        align-items: center;
+        gap: 3px;
+        height: 24px;
+        margin-top: -2px;
+      }
+      .bp-speed__meta span {
+        font: var(--bp-text-cell-small);
+        color: var(--primitive-grey-dark);
+        white-space: nowrap;
+      }
+      .bp-speed__meta img {
+        width: 18px;
+        height: 18px;
+      }
+
+      .bp-fee {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+      }
+      .bp-fee span {
+        font: var(--bp-text-cell-normal);
+        color: var(--primitive-black);
+      }
+      .bp-fee img {
+        width: 20px;
+        height: 20px;
+      }
+
+      .bp-amount-field {
+        width: 100px;
+        height: 36px;
+        background: var(--primitive-white);
+        border: 1px solid var(--bp-color-border-input);
+        border-radius: var(--bp-radius-input);
+        padding: 6px 8px;
+        display: flex;
+        align-items: center;
+      }
+      .bp-amount-field span {
+        font: var(--bp-text-cell-normal);
+        color: var(--primitive-black);
+      }
+
+      .bp-action-text {
+        font: var(--bp-text-cell-action);
+        font-weight: 600;
+        color: var(--bp-color-action-green);
+        white-space: nowrap;
+      }
+      .bp-action-icon {
+        width: 14px;
+        height: 14px;
+      }
+
+      /* ---- Footer ---- */
+
+      .bp-footer {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 1440px;
+        height: 100px;
+        background: var(--primitive-black);
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 20px;
+        padding: 0 100px;
+        z-index: 1;
+      }
+      .bp-footer__stats {
+        display: flex;
+        align-items: center;
+        gap: 120px;
+        flex: 1;
+      }
+      .bp-stat {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .bp-stat__num {
+        margin: 0;
+        font: var(--bp-text-footer-num);
+        color: var(--primitive-white);
+      }
+      .bp-stat__num {
+        margin-bottom: 1px;
+        margin-top: 2px;
+      }
+      .bp-stat__label {
+        margin: 0;
+        font: var(--bp-text-footer-label);
+        text-transform: uppercase;
+        color: var(--bp-color-divider);
+      }
+      .bp-stat__sub {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .bp-stat__sub img {
+        width: 10px;
+        height: 10px;
+      }
+      .bp-stat__sub span {
+        font: var(--bp-text-footer-label);
+        text-transform: none;
+        color: var(--bp-color-divider);
+      }
+      .bp-footer__buttons {
+        display: flex;
+        gap: 20px;
+      }
+      .bp-btn {
+        height: 36px;
+        min-width: 100px;
+        padding: 0 16px;
+        border-radius: var(--bp-radius-input);
+        font: var(--bp-text-button-label);
+        text-align: center;
+        cursor: pointer;
+        border: 2px solid transparent;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .bp-btn--cancel {
+        background: transparent;
+        border-color: var(--primitive-white);
+        color: var(--primitive-white);
+      }
+      .bp-btn--continue {
+        background: var(--bp-color-action-green);
+        border-color: var(--bp-color-action-green);
+        color: var(--primitive-white);
+      }
+
+      /* ---- Drawer ---- */
+
+      .bp-drawer {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: var(--bp-drawer-width);
+        height: 1000px;
+        background: var(--primitive-white);
+        border-radius: 0 var(--bp-radius-drawer-top) 0 0;
+        box-shadow: var(--bp-shadow-drawer);
+        transform: translate3d(100%, 0, 0);
+        transition: transform 195ms var(--bp-ease-drawer-close);
+        display: none;
+        flex-direction: column;
+        z-index: 5;
+      }
+      .bp-screen--narrow .bp-drawer {
+        display: flex;
+      }
+      .bp-screen--drawer-open .bp-drawer {
+        transform: translate3d(0, 0, 0);
+        transition: transform 225ms var(--bp-ease-drawer-open);
+      }
+
+      .bp-drawer__scroll {
+        flex: 1;
+        overflow-y: auto;
+        padding: 48px 30px 0;
+      }
+      .bp-drawer__inner {
+        transition: opacity 200ms var(--bp-ease-toggle);
+      }
+      .bp-drawer__inner[data-fading="true"] {
+        opacity: 0;
+      }
+
+      .bp-drawer__head-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+      }
+      .bp-drawer__back {
+        width: 24px;
+        height: 24px;
+        flex-shrink: 0;
+        margin-top: 3px;
+        margin-left: auto;
+        order: 2;
+        cursor: pointer;
+        border: none;
+        background: none;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .bp-drawer__back img {
+        max-width: 16px;
+        max-height: 16px;
+      }
+      .bp-drawer__vendor {
+        margin: 0;
+        font: var(--bp-text-drawer-heading);
+        font-weight: 600;
+        color: var(--primitive-black);
+      }
+      .bp-drawer__method {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        margin-top: 11px;
+      }
+      .bp-drawer__method img {
+        width: 15px;
+        height: 15px;
+      }
+      .bp-drawer__method span {
+        font: var(--bp-text-cell-small);
+        color: var(--primitive-grey-dark);
+      }
+      .bp-drawer__method a {
+        font: var(--bp-text-cell-action);
+        font-weight: 600;
+        color: var(--bp-color-action-green);
+        text-decoration: none;
+        cursor: pointer;
+        margin-left: 5px;
+      }
+
+      .bp-drawer__divider {
+        height: 1px;
+        background: var(--bp-color-divider);
+        margin: 24px 0;
+      }
+
+      .bp-drawer__total-label {
+        margin: 0;
+        font: var(--bp-text-drawer-total-label);
+        font-weight: 600;
+        color: var(--primitive-black);
+      }
+      .bp-drawer__total-amount {
+        margin: 0;
+        font: var(--bp-text-drawer-total);
+        font-weight: 600;
+        color: var(--primitive-black);
+      }
+      .bp-drawer__total-meta {
+        margin-top: 13px;
+        font: var(--bp-text-drawer-meta);
+        color: var(--primitive-black);
+      }
+
+      .bp-drawer__section-title {
+        margin: 0 0 24px;
+        padding-top: 6px;
+        font: var(--bp-text-drawer-section-title);
+        font-weight: 600;
+        color: var(--primitive-black);
+      }
+      .bp-drawer__section-title--note {
+        font: var(--bp-text-drawer-note-title);
+        font-weight: 600;
+      }
+
+      .bp-radio-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+        cursor: pointer;
+      }
+      .bp-radio-item--custom {
+        gap: 12px;
+      }
+      .bp-radio-group {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 29px;
+        width: 100%;
+      }
+      .bp-radio-group__divider {
+        height: 1px;
+        width: 100%;
+        background: var(--bp-color-divider);
+      }
+
+      /* Radio (shared UI primitive, BP-prefix rule relaxed — styled via --bp-* tokens) */
+      .bp-radio {
+        width: 20px;
+        height: 20px;
+        border-radius: var(--bp-radius-full);
+        border: 1px solid var(--bp-color-border-input);
+        background: var(--primitive-white);
+        flex-shrink: 0;
+        margin-top: 4px;
+        position: relative;
+      }
+      .bp-radio[data-checked="true"] {
+        border: none;
+      }
+      .bp-radio[data-checked="true"]::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: var(--bp-radius-full);
+        background: var(--bp-color-action-green);
+        box-shadow: inset 0 0 0 4px var(--primitive-white), 0 0 0 1px var(--bp-color-action-green);
+      }
+
+      .bp-radio-item__content {
+        flex: 1;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+      }
+      .bp-radio-item__text {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 7px;
+      }
+      .bp-radio-item__title-block {
+        display: flex;
+        flex-direction: column;
+      }
+      .bp-radio-item__title {
+        margin: 0;
+      }
+      .bp-radio-item__title strong {
+        font: var(--bp-text-radio-title);
+        font-weight: 600;
+        color: var(--primitive-black);
+      }
+      .bp-radio-item__title span {
+        font: var(--bp-text-radio-title-medium);
+        color: var(--primitive-black);
+      }
+      .bp-radio-item__subtitle {
+        margin: 0;
+        font: var(--bp-text-radio-subtitle);
+        color: var(--primitive-black);
+      }
+      .bp-radio-item__meta {
+        display: flex;
+        align-items: center;
+        gap: 3px;
+      }
+      .bp-radio-item__meta span {
+        font: var(--bp-text-radio-meta);
+        color: var(--primitive-grey-dark);
+      }
+      .bp-radio-item__meta img {
+        width: 18px;
+        height: 18px;
+      }
+      .bp-radio-item__fee {
+        margin: 0;
+        font: var(--bp-text-radio-fee);
+        font-weight: 600;
+        color: var(--primitive-black);
+        white-space: nowrap;
+      }
+
+      .bp-note-field {
+        width: 100%;
+        min-height: 189px;
+        border: 1px solid var(--bp-color-border-input);
+        border-radius: var(--bp-radius-input);
+        padding: 12px;
+        font: var(--bp-text-cell-normal);
+        color: var(--primitive-black);
+        resize: none;
+        font-family: var(--bp-font-body);
+      }
+
+      /* Bank-details content — gaps/sizes confirmed via get_design_context
+         on node 2926:28499 (Frame 1000002478): 41px tabs-to-fields, 30px
+         between field groups, 6px/4px label-field-helper, tab height 50px,
+         selected tab gets a green 4px bottom "shadow" accent (not a border). */
+      .bp-tabs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 41px;
+      }
+      .bp-tab {
+        flex: 1;
+        height: 50px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 4px;
+        padding-bottom: 4px;
+        background: var(--primitive-white);
+        border: 1px solid var(--bp-color-tab-border);
+        border-radius: var(--bp-radius-tab);
+        cursor: pointer;
+        box-shadow: none;
+      }
+      .bp-tab[data-active="true"] {
+        box-shadow: var(--bp-shadow-tab-selected);
+      }
+      .bp-tab span {
+        font: var(--bp-text-tab-label-inactive);
+        color: var(--primitive-black);
+      }
+      .bp-tab[data-active="true"] span {
+        font: var(--bp-text-tab-label);
+      }
+      .bp-field {
+        margin-top: 30px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .bp-field:first-of-type {
+        margin-top: 0;
+      }
+      .bp-field__label {
+        display: block;
+        font: var(--bp-text-field-label);
+        color: var(--primitive-grey-dark);
+      }
+      .bp-field__value-box {
+        width: 100%;
+        min-height: 36px;
+        border: 1px solid var(--bp-color-border-input);
+        border-radius: var(--bp-radius-input);
+        padding: 6px 8px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-sizing: border-box;
+      }
+      .bp-field--tall .bp-field__value-box {
+        min-height: 46px;
+      }
+      .bp-field__value-box span {
+        font: var(--bp-text-field-value);
+        color: var(--primitive-black);
+      }
+      .bp-field__helper {
+        margin: 4px 0 0;
+        font: var(--bp-text-field-helper);
+        color: var(--primitive-grey-dark);
+      }
+      .bp-field-row {
+        display: flex;
+        gap: 10px;
+        margin-top: 30px;
+      }
+      .bp-field-row .bp-field {
+        margin-top: 0;
+      }
+      .bp-field--zip {
+        width: 201px;
+        flex-shrink: 0;
+      }
+      .bp-field--state {
+        flex: 1;
+      }
+
+      .bp-drawer__footer {
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+        height: 94px;
+        border-top: 1px solid var(--bp-color-divider);
+      }
+      .bp-drawer__footer .bp-btn--cancel {
+        border-color: var(--bp-color-border-input);
+        color: var(--primitive-black);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="scaler">
+      <div class="bp-screen" id="bp-screen">
+        <header class="bp-header">
+          <h1 class="bp-header__title">Schedule bill payment</h1>
+          <button class="bp-header__close" type="button" aria-label="Close">
+            <img src="../../icons/bill-pay-mock/close.svg" alt="" />
+          </button>
+
+          <div class="bp-header__row">
+            <div class="bp-pay-from">
+              <p class="bp-pay-from__label">Pay from</p>
+              <div class="bp-pay-from__field">
+                <span>Chase checking (...1234)</span>
+                <img src="../../icons/bill-pay-mock/dropdown-chevron.svg" alt="" />
+              </div>
+            </div>
+
+            <div class="bp-header__divider"></div>
+
+            <div class="bp-combine">
+              <p class="bp-combine__label">Combine multiple bills</p>
+              <div class="bp-combine__row">
+                <p class="bp-combine__toggle-label">Make one payment per vendor</p>
+                <button class="bp-switch" id="bp-mode-toggle" type="button" role="switch" aria-checked="false" aria-label="Make one payment per vendor">
+                  <span class="bp-switch__thumb"></span>
+                </button>
+              </div>
+            </div>
+
+            <div class="bp-header__divider"></div>
+
+            <div class="bp-totals">
+              <div>
+                <p class="bp-totals__label">Total payment amount</p>
+                <p class="bp-totals__amount" id="bp-total-amount">$0.00</p>
+              </div>
+              <p class="bp-totals__fee" id="bp-total-fee">Total processing fees: $0.00</p>
+            </div>
+          </div>
+        </header>
+
+        <div class="bp-table-wrap">
+          <div class="bp-table-body">
+            <div class="bp-header-row" id="bp-header-row">
+              <div class="bp-header-row__cell" style="width: 230px"><span>Vendor</span></div>
+              <div class="bp-header-row__cell" style="width: 76px"><span>Bill</span></div>
+              <div class="bp-header-row__cell" style="width: 106px"><span>Status</span></div>
+              <div class="bp-header-row__cell" style="width: 84px"><span>Due date</span></div>
+              <div class="bp-header-row__cell" data-narrow-hide style="width: 203px"><span>Payment speed</span></div>
+              <div class="bp-header-row__cell" data-narrow-hide style="width: 122px"><span>Processing fee</span></div>
+              <div class="bp-header-row__cell" style="width: 115px"><span>Open balance</span></div>
+              <div class="bp-header-row__cell" style="width: 120px"><span>Amount</span></div>
+              <div class="bp-header-row__cell" data-action-label style="width: 106px"><span>Action</span></div>
+            </div>
+            <div class="bp-rows-scroll" id="bp-rows-scroll"></div>
+          </div>
+        </div>
+
+        <footer class="bp-footer">
+          <div class="bp-footer__stats">
+            <div class="bp-stat">
+                <p class="bp-stat__label">Bills</p>
+                <p class="bp-stat__num" id="bp-stat-bills">0</p>
+                <div class="bp-stat__sub"><img src="../../icons/bill-pay-mock/footer-check.svg" alt="" /><span>Approved</span></div>
+              </div>
+              <div class="bp-stat">
+                <p class="bp-stat__label">Vendors</p>
+                <p class="bp-stat__num" id="bp-stat-vendors">0</p>
+                <div class="bp-stat__sub"><img src="../../icons/bill-pay-mock/footer-check.svg" alt="" /><span>Authorized</span></div>
+              </div>
+              <div class="bp-stat">
+                <p class="bp-stat__label">Payments</p>
+                <p class="bp-stat__num" id="bp-stat-payments">0</p>
+                <div class="bp-stat__sub"><img src="../../icons/bill-pay-mock/footer-check.svg" alt="" /><span>Arrives on time</span></div>
+              </div>
+          </div>
+          <div class="bp-footer__buttons">
+            <button class="bp-btn bp-btn--cancel" type="button">Cancel</button>
+            <button class="bp-btn bp-btn--continue" type="button">Continue</button>
+          </div>
+        </footer>
+
+        <aside class="bp-drawer" id="bp-drawer">
+          <div class="bp-drawer__scroll">
+            <div class="bp-drawer__inner" id="bp-drawer-inner"></div>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <script src="schedule-payment.js"></script>
+  </body>
+</html>
