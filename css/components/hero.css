@@ -30,7 +30,7 @@
   width: 100%;
   font: var(--text-hero-sub-headline);
   font-weight: var(--font-weight-regular);
-  color: var(--primitive-grey-dark);
+  color: var(--primitive-black);
 }
 
 .section-hero__illustration-column {
@@ -46,8 +46,10 @@
 
 .section-hero__illustration {
   display: block;
+  align-self: flex-end;
   width: calc(269px + (2 * var(--spacing-32)));
   max-width: none;
+  margin-bottom: 10px;
 }
 
 .section-hero__note {

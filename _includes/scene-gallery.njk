@@ -1,0 +1,37 @@
+{#
+  Bill Pay — Scene gallery. Figma: node 856:9399 ("section" instance),
+  Portfolio file (3XG9JnADI2psNR3B7TwQdx). Replaces the earlier accordion-list
+  version (_includes/accordion-gallery.njk) in the last section of the Bill
+  Pay case study — that file is superseded and left in place unreferenced,
+  not deleted.
+
+  Layout shell: iframe stage (800x452, mock renders at 650 centered — the
+  remaining 150px of width is clearance for the row-lift-out scene
+  animation's overhang, up to 65px per side) + navigation (caption + the
+  shared gallery controls from gallery-navigation.njk), 650 wide to match.
+  Scene 1's content and animation live in
+  assets/scene-gallery/bill-pay/scenes.html; scenes 2/3 are still
+  placeholders.
+
+  Standalone component — no section wrapper, no headline, no background.
+  Caller drops {{ sceneGallery() }} into its own content column.
+#}
+{% from "gallery-navigation.njk" import galleryInteraction %}
+
+{% macro sceneGallery() %}
+<div class="scene-gallery">
+  <div class="scene-gallery__stage">
+    <iframe class="scene-gallery__visual" id="scene-gallery-visual" title="Bill Pay scene"></iframe>
+  </div>
+  <div class="scene-gallery__navigation">
+    <div class="scene-gallery__caption" id="scene-gallery-caption">
+      <div class="scene-gallery__icon" id="scene-gallery-icon" aria-hidden="true"></div>
+      <div class="scene-gallery__caption-column">
+        <p class="scene-gallery__headline" id="scene-gallery-headline"></p>
+        <p class="scene-gallery__description" id="scene-gallery-description"></p>
+      </div>
+    </div>
+    {{ galleryInteraction("scene-gallery") }}
+  </div>
+</div>
+{% endmacro %}

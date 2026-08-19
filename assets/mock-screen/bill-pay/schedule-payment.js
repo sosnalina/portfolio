@@ -89,13 +89,94 @@
   /* titleStrong (Avenir Heavy/800) + titleMedium (Avenir Medium, no matching
      self-hosted weight — substituted 400/Regular) reproduce Figma's real
      two-weight title run ("Standard" Heavy + " | 3-5 business days" Medium),
-     confirmed via get_design_context on the drawer container (2967:603486). */
+     confirmed via get_design_context on the drawer container (2967:603486).
+     withdraw/arrives are NOT static — §6.6 spec: arrival = bill's due date
+     minus 1 day (safety buffer, same across all 3 speed options), withdraw =
+     arrival minus `days` business days. Computed per-drawer in
+     renderRadioGroup() from the payload's real bill date(s). */
   var DELIVERY_OPTIONS = [
-    { key: "standard", titleStrong: "Standard", titleMedium: " | 3-5 business days", subtitle: "Maximum safety buffer", withdraw: "02/07", arrives: "02/12", fee: "$0.50 fee" },
-    { key: "latest-safe", titleStrong: "Latest Safe", titleMedium: " | 1-2 business days", subtitle: "Optimal cash flow", withdraw: "02/11", arrives: "02/12", fee: "$10.00 fee" },
-    { key: "expedited", titleStrong: "Expedited", titleMedium: " | Same day", subtitle: "Latest possible", withdraw: "02/12", arrives: "02/12", fee: "$15.00 fee" },
-    { key: "custom", titleStrong: "Custom", titleMedium: "", subtitle: "Choose specific dates and delivery speed", withdraw: null, arrives: null, fee: null }
+    { key: "standard", titleStrong: "Standard", titleMedium: " | 3-5 business days", subtitle: "Maximum safety buffer", fee: "$0.50 fee", days: 5 },
+    { key: "latest-safe", titleStrong: "Latest Safe", titleMedium: " | 1-2 business days", subtitle: "Optimal cash flow", fee: "$10.00 fee", days: 2 },
+    { key: "expedited", titleStrong: "Expedited", titleMedium: " | Same day", subtitle: "Latest possible", fee: "$15.00 fee", days: 1 },
+    { key: "custom", titleStrong: "Custom", titleMedium: "", subtitle: "Choose specific dates and delivery speed", fee: null, days: null }
   ];
+
+  /* Custom-view speed tabs (node 2922:165022) — a distinct 3-segment
+     button-group component from the DELIVERY_OPTIONS radios above (own
+     Figma copy: "Standard"/"Fast"/"Instant", not "Latest Safe"/"Expedited").
+     Same underlying business-day tiers (5/2/1) and fees ($0.50/$10/$15) as
+     the matching radio, per spec §6.6 "the first three names are the same
+     across both — radios are the preset picks, Custom tabs let the user
+     tweak within the same speed tier." */
+  var SPEED_TABS = [
+    { key: "standard", label: "Standard", fee: 0.5, days: 5 },
+    { key: "fast", label: "Fast", fee: 10.0, days: 2 },
+    { key: "instant", label: "Instant", fee: 15.0, days: 1 }
+  ];
+
+  /* Fixed 2-month range (no navigation) — matches the mock bill data's
+     due-date span (Aug 29 – Sep 27, 2025). */
+  var CALENDAR_MONTHS = [
+    { year: 2025, month: 7 },
+    { year: 2025, month: 8 }
+  ];
+  var MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  var MONTH_NAMES_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+  function pad2(n) {
+    return n < 10 ? "0" + n : "" + n;
+  }
+  function parseMMDDYY(s) {
+    var p = s.split("/");
+    return new Date(2000 + parseInt(p[2], 10), parseInt(p[0], 10) - 1, parseInt(p[1], 10));
+  }
+  function addDays(date, n) {
+    var d = new Date(date);
+    d.setDate(d.getDate() + n);
+    return d;
+  }
+  function isBusinessDay(d) {
+    var day = d.getDay();
+    return day !== 0 && day !== 6;
+  }
+  /* Steps `n` business days from `date` (n>0 forward, n<0 backward); `date`
+     itself is never counted, only days actually stepped onto. */
+  function addBusinessDays(date, n) {
+    var d = new Date(date);
+    var dir = n >= 0 ? 1 : -1;
+    var remaining = Math.abs(n);
+    while (remaining > 0) {
+      d.setDate(d.getDate() + dir);
+      if (isBusinessDay(d)) remaining--;
+    }
+    return d;
+  }
+  function fmtMD(d) {
+    return pad2(d.getMonth() + 1) + "/" + pad2(d.getDate());
+  }
+  function fmtLong(d) {
+    return MONTH_NAMES_SHORT[d.getMonth()] + " " + d.getDate() + ", " + d.getFullYear();
+  }
+  /* Batch drawer scope = the single clicked bill. Bulk drawer scope = every
+     bill under that vendor. Deduped + sorted per §6.6 collision rule (two
+     bills sharing a due date collapse to one calendar mark). */
+  function getDrawerDueDates(payload) {
+    var rows = payload.rows ? payload.rows : [payload];
+    var seen = {};
+    var out = [];
+    rows.forEach(function (r) {
+      var d = parseMMDDYY(r.due);
+      var k = d.getTime();
+      if (!seen[k]) {
+        seen[k] = true;
+        out.push(d);
+      }
+    });
+    out.sort(function (a, b) {
+      return a - b;
+    });
+    return out;
+  }
 
   function methodLabel(row) {
     if (row.method === "bank") return "Bank payment (ACH)..." + row.last4;
@@ -123,7 +204,14 @@
     mode: "batch", // batch | bulk
     narrow: false,
     expanded: {}, // vendor -> bool
-    drawer: { open: false, row: null, view: "default" } // view: default | bank-details
+    drawer: {
+      open: false,
+      row: null,
+      view: "default", // view: default | bank-details
+      delivery: "radios", // delivery: radios | custom
+      selectedRadio: "standard",
+      calendar: { tab: "standard", withdraw: null, arrival: null }
+    }
   };
 
   var els = {};
@@ -202,6 +290,21 @@
   function renderVendorRow(group) {
     var expanded = !!state.expanded[group.vendor];
     var narrowHideSpeed = rowCellsCommon(true);
+    // Aggregate values for the vendor row so bulk-mode vendor summaries
+    // show the same columns as batch rows (speed meta, open balance).
+    // Fee is NOT summed: one vendor = one payment = one $1.00 fee,
+    // regardless of how many bills are aggregated under it.
+    var feeTotal = 1.0;
+    var withdrawVals = group.rows.map(function (r) { return r.withdraw; }).filter(Boolean);
+    var arrivesVals = group.rows.map(function (r) { return r.arrives; }).filter(Boolean);
+    function dateKey(mmdd) {
+      if (!mmdd) return 999999;
+      var parts = mmdd.split('/');
+      return parseInt(parts[0], 10) * 100 + parseInt(parts[1], 10);
+    }
+    var earliestWithdraw = withdrawVals.length ? withdrawVals.reduce(function (a,b){ return dateKey(a) < dateKey(b) ? a : b; }) : '';
+    var latestArrives = arrivesVals.length ? arrivesVals.reduce(function (a,b){ return dateKey(a) > dateKey(b) ? a : b; }) : '';
+
     var vendorRowHtml =
       '<div class="bp-row" data-vendor-row="' + group.vendor + '">' +
         '<div class="bp-cell bp-cell--vendor">' +
@@ -223,9 +326,10 @@
         '<div class="bp-cell bp-cell--due" style="opacity:0"></div>' +
         '<div class="bp-cell bp-cell--speed"' + narrowHideSpeed + ">" +
           '<div class="bp-speed__top"><p class="bp-speed__label">Standard</p><span class="bp-badge"><span>On time</span></span></div>' +
+          '<div class="bp-speed__meta"><span>Withdraw ' + (earliestWithdraw || '') + "</span><span style=\"display:inline-flex\">" + GLYPH.arrow + "</span><span>Arrives " + (latestArrives || '') + "</span></div>" +
         "</div>" +
-        '<div class="bp-cell bp-cell--fee" style="opacity:0"' + narrowHideSpeed + "></div>" +
-        '<div class="bp-cell bp-cell--balance" style="opacity:0"></div>' +
+        '<div class="bp-cell bp-cell--fee"' + narrowHideSpeed + '><div class="bp-fee"><span>' + money(feeTotal) + "</span><span>" + GLYPH.info + "</span></div></div>" +
+        '<div class="bp-cell bp-cell--balance"><span>' + money(group.total) + "</span></div>" +
         '<div class="bp-cell bp-cell--amount"><div class="bp-amount-field"><span>' + money(group.total) + "</span></div></div>" +
         renderActionCell("Manage") +
       "</div>";
@@ -332,6 +436,10 @@
     state.drawer.open = true;
     state.drawer.row = payload;
     state.drawer.view = "default";
+    // §6.6: every drawer opens fresh with the 4 radios, Standard selected.
+    state.drawer.delivery = "radios";
+    state.drawer.selectedRadio = "standard";
+    state.drawer.calendar = { tab: "standard", withdraw: null, arrival: null };
     els.screen.classList.add("bp-screen--narrow");
     renderDrawer();
     requestAnimationFrame(function () {
@@ -359,6 +467,166 @@
     }
   }
 
+  /* ---- \u00a76.6 Custom payment delivery flow \u2014 calendar build ---- */
+
+  /* 6-row (42-cell) month grid, Sunday-first, with real adjacent-month
+     padding dates (not blank) \u2014 standard calendar construction. */
+  function buildMonthGrid(year, month) {
+    var first = new Date(year, month, 1);
+    var gridStart = addDays(first, -first.getDay());
+    var cells = [];
+    for (var i = 0; i < 42; i++) {
+      var d = addDays(gridStart, i);
+      cells.push({ date: d, col: i % 7, inMonth: d.getMonth() === month });
+    }
+    return cells;
+  }
+
+  /* Priority (highest first): adjacent-month padding -> exact marker date
+     (withdraw/arrival) -> mid-range fill (row-edge continuation gets
+     rounded mid-left/mid-right, per \u00a76.6's "each row's segment must abut
+     cleanly") -> due-date mark -> weekend (Past Month treatment) -> normal
+     clickable weekday. Due dates always fall on/after arrival by
+     construction (arrival = earliest due date - 1), so they never collide
+     with the withdraw/arrival markers or the gray range fill. */
+  function classifyCell(cell, withdraw, arrival, dueDates) {
+    if (!cell.inMonth) return { variant: "past", clickable: false };
+    var t = cell.date.getTime();
+    var w = withdraw.getTime();
+    var a = arrival.getTime();
+    if (t === w) return { variant: "start", clickable: true };
+    if (t === a) return { variant: "end", clickable: true };
+    if (t > w && t < a) {
+      if (cell.col === 0) return { variant: "mid-left", clickable: false };
+      if (cell.col === 6) return { variant: "mid-right", clickable: false };
+      return { variant: "range", clickable: false };
+    }
+    var isDue = dueDates.some(function (d) {
+      return d.getTime() === t;
+    });
+    if (isDue) return { variant: "due", clickable: true };
+    var isWeekend = cell.col === 0 || cell.col === 6;
+    if (isWeekend) return { variant: "past", clickable: false };
+    return { variant: "normal", clickable: true };
+  }
+
+  function renderCalendarCell(cell, v) {
+    var day = cell.date.getDate();
+    var iso = cell.date.getFullYear() + "-" + pad2(cell.date.getMonth() + 1) + "-" + pad2(cell.date.getDate());
+    var pick = v.clickable ? ' data-cal-pick="' + iso + '"' : "";
+    if (v.variant === "start" || v.variant === "end") {
+      return (
+        '<div class="bp-cal-day bp-cal-day--' + v.variant + '"' + pick + ">" +
+          '<span class="bp-cal-day__marker bp-cal-day__marker--' + v.variant + '">' +
+            '<span class="bp-cal-day__marker-num">' + day + "</span>" +
+          "</span>" +
+        "</div>"
+      );
+    }
+    if (v.variant === "due") {
+      return (
+        '<div class="bp-cal-day bp-cal-day--due"' + pick + ">" +
+          '<span class="bp-cal-day__due-wrap"><span class="bp-cal-day__num--due">' + day + "</span></span>" +
+        "</div>"
+      );
+    }
+    var numCls = v.variant === "past" ? "bp-cal-day__num bp-cal-day__num--past" : "bp-cal-day__num";
+    return '<div class="bp-cal-day bp-cal-day--' + v.variant + '"' + pick + '><span class="' + numCls + '">' + day + "</span></div>";
+  }
+
+  function renderCalendarColumn(year, month, withdraw, arrival, dueDates) {
+    var cells = buildMonthGrid(year, month);
+    var label = MONTH_NAMES[month] + " " + year;
+    return (
+      '<div class="bp-cal-column">' +
+        '<div class="bp-cal-months-header">' +
+          '<div class="bp-cal-nav" aria-hidden="true"><img src="' + ICONS + 'calendar/chevron-left.svg" alt="" /></div>' +
+          '<p class="bp-cal-months-header__title">' + label + "</p>" +
+          '<div class="bp-cal-nav" aria-hidden="true"><img src="' + ICONS + 'calendar/chevron-right.svg" alt="" /></div>' +
+        "</div>" +
+        '<div class="bp-cal-block">' +
+          '<div class="bp-cal-dow-header"><span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span></div>' +
+          '<div class="bp-cal-divider-h"></div>' +
+          '<div class="bp-cal-grid">' +
+            cells.map(function (c) { return renderCalendarCell(c, classifyCell(c, withdraw, arrival, dueDates)); }).join("") +
+          "</div>" +
+        "</div>" +
+      "</div>"
+    );
+  }
+
+  function renderDeliveryCalendar(dueDates) {
+    var cal = state.drawer.calendar;
+    var withdraw = cal.withdraw;
+    var arrival = cal.arrival;
+    return (
+      '<div class="bp-speed-tabs">' +
+        SPEED_TABS.map(function (t, i) {
+          var edgeCls = i === 0 ? " bp-speed-tab--start" : i === SPEED_TABS.length - 1 ? " bp-speed-tab--end" : " bp-speed-tab--mid";
+          return (
+            '<button type="button" class="bp-speed-tab' + edgeCls + '" data-cal-tab="' + t.key + '" data-active="' + (t.key === cal.tab) + '">' +
+              t.label + " " + money(t.fee) +
+            "</button>"
+          );
+        }).join("") +
+      "</div>" +
+      '<div class="bp-cal-row">' +
+        CALENDAR_MONTHS.map(function (m, idx) {
+          return renderCalendarColumn(m.year, m.month, withdraw, arrival, dueDates) + (idx === 0 ? '<div class="bp-cal-divider-v"></div>' : "");
+        }).join("") +
+      "</div>" +
+      '<div class="bp-cal-legend">' +
+        '<div class="bp-cal-legend__item"><span class="bp-cal-legend__dot bp-cal-legend__dot--withdraw"></span><p class="bp-cal-legend__text">Withdraw <span>' + fmtLong(withdraw) + "</span></p></div>" +
+        '<div class="bp-cal-legend__item"><span class="bp-cal-legend__dot bp-cal-legend__dot--arrival"></span><p class="bp-cal-legend__text">Est. arrival <span>' + fmtLong(arrival) + "</span></p></div>" +
+      "</div>"
+    );
+  }
+
+  function renderRadioGroup(dueDates) {
+    var earliestDue = dueDates[0];
+    var baseArrival = addDays(earliestDue, -1);
+    var selected = state.drawer.selectedRadio;
+    return (
+      '<div class="bp-radio-group">' +
+      DELIVERY_OPTIONS.map(function (opt) {
+        var checked = opt.key === selected;
+        var isCustom = opt.key === "custom";
+        var withdraw = isCustom ? null : addBusinessDays(baseArrival, -opt.days);
+        return (
+          (isCustom ? '<div class="bp-radio-group__divider"></div>' : "") +
+          '<div class="bp-radio-item' + (isCustom ? " bp-radio-item--custom" : "") + '" data-radio="' + opt.key + '">' +
+            '<div class="bp-radio" data-checked="' + checked + '"></div>' +
+            '<div class="bp-radio-item__content">' +
+              '<div class="bp-radio-item__text">' +
+                '<div class="bp-radio-item__title-block">' +
+                  '<p class="bp-radio-item__title"><strong>' + opt.titleStrong + "</strong><span>" + opt.titleMedium + "</span></p>" +
+                  '<p class="bp-radio-item__subtitle">' + opt.subtitle + "</p>" +
+                "</div>" +
+                (withdraw
+                  ? '<div class="bp-radio-item__meta"><span>Withdraw ' + fmtMD(withdraw) + "</span>" + GLYPH.arrow + "<span>Arrives " + fmtMD(baseArrival) + "</span></div>"
+                  : "") +
+              "</div>" +
+              (opt.fee ? '<p class="bp-radio-item__fee">' + opt.fee + "</p>" : "") +
+            "</div>" +
+          "</div>"
+        );
+      }).join("") +
+      "</div>"
+    );
+  }
+
+  /* bp-tool-tip (node 3013:121336) \u2014 structure only, per spec \u00a76.6: ready
+     to wire (CSS above + this render helper), intentionally not called
+     from anywhere yet. No hover trigger, no content logic in this pass. */
+  function renderTooltip(text, position) {
+    return (
+      '<div class="bp-tooltip bp-tooltip--' + position + '">' +
+        '<div class="bp-tooltip__bubble"><p class="bp-tooltip__text">' + text + "</p></div>" +
+        '<div class="bp-tooltip__beak-wrap"><img src="' + ICONS + 'calendar/tooltip-beak.svg" alt="" /></div>' +
+      "</div>"
+    );
+  }
+
   function renderDrawerDefault() {
     var payload = state.drawer.row;
     if (!payload) return;
@@ -367,6 +635,8 @@
     var last4 = payload.last4;
     var total = typeof payload.total === "number" ? payload.total : payload.amount;
     var billMeta = payload.bill ? "Bill no." + payload.bill + " \u2022 Payment No.348279" : payload.rows.length + " Bills \u2022 Payment No.348279";
+    var dueDates = getDrawerDueDates(payload);
+    var isCustomView = state.drawer.delivery === "custom";
 
     var html =
       '<div class="bp-drawer__head-row">' +
@@ -387,31 +657,11 @@
       '<p class="bp-drawer__total-amount">' + money(total) + "</p>" +
       '<p class="bp-drawer__total-meta">' + billMeta + "</p>" +
       '<div class="bp-drawer__divider"></div>' +
-      '<p class="bp-drawer__section-title">Payment delivery options</p>' +
-      '<div class="bp-radio-group">' +
-      DELIVERY_OPTIONS.map(function (opt, idx) {
-        var checked = idx === 0;
-        var isCustom = opt.key === "custom";
-        return (
-          (isCustom ? '<div class="bp-radio-group__divider"></div>' : "") +
-          '<div class="bp-radio-item' + (isCustom ? " bp-radio-item--custom" : "") + '" data-radio="' + opt.key + '">' +
-            '<div class="bp-radio" data-checked="' + checked + '"></div>' +
-            '<div class="bp-radio-item__content">' +
-              '<div class="bp-radio-item__text">' +
-                '<div class="bp-radio-item__title-block">' +
-                  '<p class="bp-radio-item__title"><strong>' + opt.titleStrong + "</strong><span>" + opt.titleMedium + "</span></p>" +
-                  '<p class="bp-radio-item__subtitle">' + opt.subtitle + "</p>" +
-                "</div>" +
-                (opt.withdraw
-                  ? '<div class="bp-radio-item__meta"><span>Withdraw ' + opt.withdraw + "</span>" + GLYPH.arrow + "<span>Arrives " + opt.arrives + "</span></div>"
-                  : "") +
-              "</div>" +
-              (opt.fee ? '<p class="bp-radio-item__fee">' + opt.fee + "</p>" : "") +
-            "</div>" +
-          "</div>"
-        );
-      }).join("") +
+      '<div class="bp-drawer__section-title-row">' +
+        '<p class="bp-drawer__section-title">Payment delivery options</p>' +
+        (isCustomView ? '<button type="button" class="bp-show-more" id="bp-show-more">Show more</button>' : "") +
       "</div>" +
+      (isCustomView ? renderDeliveryCalendar(dueDates) : renderRadioGroup(dueDates)) +
       '<div class="bp-drawer__divider"></div>' +
       '<p class="bp-drawer__section-title bp-drawer__section-title--note">Note to vendor</p>' +
       '<textarea class="bp-note-field" placeholder="Add a note (optional)"></textarea>' +
@@ -422,13 +672,59 @@
     q("#bp-drawer-edit").addEventListener("click", function () {
       swapDrawerContent("bank-details");
     });
-    var radios = els.drawerInner.querySelectorAll("[data-radio]");
-    for (var i = 0; i < radios.length; i++) {
-      radios[i].addEventListener("click", function (e) {
-        var all = els.drawerInner.querySelectorAll(".bp-radio");
-        for (var k = 0; k < all.length; k++) all[k].setAttribute("data-checked", "false");
-        e.currentTarget.querySelector(".bp-radio").setAttribute("data-checked", "true");
-      });
+
+    if (!isCustomView) {
+      var radios = els.drawerInner.querySelectorAll("[data-radio]");
+      for (var i = 0; i < radios.length; i++) {
+        radios[i].addEventListener("click", function (e) {
+          var key = e.currentTarget.getAttribute("data-radio");
+          if (key === "custom") {
+            var std = SPEED_TABS[0];
+            var earliestDue = dueDates[0];
+            var baseArrival = addDays(earliestDue, -1);
+            var withdraw = addBusinessDays(baseArrival, -std.days);
+            state.drawer.delivery = "custom";
+            state.drawer.calendar = { tab: std.key, withdraw: withdraw, arrival: addBusinessDays(withdraw, std.days) };
+            renderDrawerDefault();
+            return;
+          }
+          state.drawer.selectedRadio = key;
+          var all = els.drawerInner.querySelectorAll(".bp-radio");
+          for (var k = 0; k < all.length; k++) all[k].setAttribute("data-checked", "false");
+          e.currentTarget.querySelector(".bp-radio").setAttribute("data-checked", "true");
+        });
+      }
+    } else {
+      var showMoreBtn = q("#bp-show-more");
+      if (showMoreBtn) {
+        showMoreBtn.addEventListener("click", function () {
+          state.drawer.delivery = "radios";
+          state.drawer.selectedRadio = "standard";
+          renderDrawerDefault();
+        });
+      }
+      var tabs = els.drawerInner.querySelectorAll("[data-cal-tab]");
+      for (var ti = 0; ti < tabs.length; ti++) {
+        tabs[ti].addEventListener("click", function (e) {
+          var key = e.currentTarget.getAttribute("data-cal-tab");
+          var tabDef = SPEED_TABS.filter(function (t) { return t.key === key; })[0];
+          state.drawer.calendar.tab = key;
+          state.drawer.calendar.arrival = addBusinessDays(state.drawer.calendar.withdraw, tabDef.days);
+          renderDrawerDefault();
+        });
+      }
+      var pickable = els.drawerInner.querySelectorAll("[data-cal-pick]");
+      for (var pi = 0; pi < pickable.length; pi++) {
+        pickable[pi].addEventListener("click", function (e) {
+          var iso = e.currentTarget.getAttribute("data-cal-pick");
+          var parts = iso.split("-");
+          var picked = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+          var tabDef = SPEED_TABS.filter(function (t) { return t.key === state.drawer.calendar.tab; })[0];
+          state.drawer.calendar.withdraw = picked;
+          state.drawer.calendar.arrival = addBusinessDays(picked, tabDef.days);
+          renderDrawerDefault();
+        });
+      }
     }
   }
 
@@ -510,8 +806,18 @@
     state.mode = mode;
     state.expanded = {};
     els.toggle.setAttribute("aria-checked", mode === "bulk" ? "true" : "false");
+    // Temporarily suppress CSS transitions to avoid a visual 'jump'
+    // when swapping the rows DOM (reflows can animate width/padding).
+    document.documentElement.classList.add("bp-disable-transitions");
     renderRows();
     updateAggregates();
+    // Remove the disabling class after two frames so the layout can
+    // settle without transitions, then normal transitions resume.
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        document.documentElement.classList.remove("bp-disable-transitions");
+      });
+    });
   }
 
   /* ---- scale-to-fit (§4) ---- */

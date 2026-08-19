@@ -1,0 +1,13 @@
+.section-image-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-32);
+  width: 100%;
+}
+
+.section-image-group__image {
+  display: block;
+  width: 100%;
+  height: auto;
+}

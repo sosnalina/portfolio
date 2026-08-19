@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Scene Gallery — Scenes</title>
+<link rel="stylesheet" href="../../../css/tokens.css">
+<style>
+  /* ---- Avenir Next (self-hosted) — same 4 files/weights (400, 600, 700,
+     800) as assets/mock-screen/bill-pay/schedule-payment.html. Path is one
+     level further up from this file's own location but resolves to the
+     same assets/fonts/avenir-next/ target (both files sit two levels under
+     assets/). ---- */
+  @font-face {
+    font-family: "Avenir Next";
+    src: url("../../fonts/avenir-next/Avenir_Next_Regular.otf") format("opentype");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "Avenir Next";
+    src: url("../../fonts/avenir-next/Avenir_Next_Demi.otf") format("opentype");
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "Avenir Next";
+    src: url("../../fonts/avenir-next/Avenir_Next_Bold.otf") format("opentype");
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "Avenir Next";
+    src: url("../../fonts/avenir-next/Avenir_Next_Heavy.otf") format("opentype");
+    font-weight: 800;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  :root {
+    /* ---- BP tokens — the subset of assets/mock-screen/bill-pay's token
+       set actually used by the static batch-full header/table/footer
+       rendered here. Same values, same source (Figma qfIgkJTuD0k956262uOUSp) —
+       not re-derived. ---- */
+    --bp-font-body: "Avenir Next", system-ui, sans-serif;
+    --bp-color-action-green: #2ca01c;
+    --bp-color-border-input: #8d9096;
+    --bp-color-divider: #d4d7dc;
+    --bp-radius-input: 4px;
+    --bp-radius-switch-pill: 20px;
+    --bp-radius-table-top: 26px;
+    --bp-shadow-table-body: 0px 4px 24px 0px rgba(0, 0, 0, 0.05);
+
+    --bp-text-header-title: 600 34px/32px var(--bp-font-body);
+    --bp-text-total-label: 600 13px/24px var(--bp-font-body);
+    --bp-text-total-amount: 700 32px/1 var(--bp-font-body);
+    --bp-text-total-fee: 400 14px/20px var(--bp-font-body);
+    --bp-text-label: 400 14px/14px var(--bp-font-body);
+    --bp-text-label-strong: 600 14px/14px var(--bp-font-body);
+    --bp-text-cell-normal: 400 14px/14px var(--bp-font-body);
+    --bp-text-cell-strong: 600 15px/26.965px var(--bp-font-body);
+    --bp-text-cell-small: 400 12px/21.65px var(--bp-font-body);
+    --bp-text-cell-action: 600 14px/14px var(--bp-font-body);
+    --bp-text-table-header: 600 12px/20px var(--bp-font-body);
+    --bp-text-footer-num: 600 20px/20px var(--bp-font-body);
+    --bp-text-footer-label: 400 12px/12px var(--bp-font-body);
+    --bp-text-button-label: 400 16px/24px var(--bp-font-body);
+    --bp-text-badge: 400 12px/16px var(--bp-font-body);
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  /* No background here on purpose — the canvas margin around the mock
+     (and below it, now that the mock is shorter than the 452px stage)
+     must stay fully transparent so the case study section's own
+     background shows through. Only .bp-screen (the mock itself) paints a
+     background. All three scenes explicitly clear body's own background
+     override on entry (see renderAtTime) — a leftover from when scene 3
+     was still a solid-color placeholder with its own body background;
+     harmless now, but cheap insurance against anything future reusing
+     that pattern. */
+  html, body {
+    margin: 0;
+    width: 800px;
+    height: 452px;
+    overflow: hidden;
+  }
+
+  body {
+    font-family: var(--bp-font-body);
+  }
+
+  /* ---- Bill Pay mock, batch-full, static + row-travel callout. Scene 1
+     only — scenes 2 and 3 are placeholders (see .scene-placeholder below)
+     until their own content is built. No iframe: nesting one here would
+     clip the traveling card past the mock's edges, which is the entire
+     point of this scene (see the lift-layer below). Native build width is
+     1440px (matches the real mock screen); .mock-scaler scales that down
+     to the 650px display width this canvas uses, fixed (not responsive —
+     this canvas is a fixed 800x452, not a resizable container). 650/1440
+     is a pure scale-factor change — nothing in the mock's own layout
+     below (widths, type, padding, icons, row heights) is touched; it all
+     grows together with the transform. */
+  .scene-mock-wrap {
+    position: absolute;
+    inset: 0;
+    overflow: visible;
+  }
+
+  .mock-scaler {
+    position: absolute;
+    /* (800 - 650) / 2 — mock centered, 75px clear on each side */
+    left: 75px;
+    /* (452 - 1000*650/1440) / 2, i.e. vertically centered */
+    top: 0.3055555556px;
+    width: 1440px;
+    transform-origin: top left;
+    transform: scale(0.4513888889);
+  }
+
+  .bp-screen {
+    width: 1440px;
+    height: 1000px;
+    position: relative;
+    overflow: hidden;
+    /* 16px / (650/1440) — authored in native 1440 coordinates like
+       everything else on this screen, so it has to be inflated by the
+       inverse of .scene1-scaler's scale factor to render as a true 16px
+       at the mock's actual 650px display width. */
+    border-radius: 35.4461538462px;
+    background: var(--primitive-white);
+  }
+
+  /* Dimming is a same-size overlay stacked above .bp-screen, not opacity
+     on .bp-screen itself. Opacity on a container caps every descendant's
+     effective opacity at that same value — no child can read more opaque
+     than its dimmed parent — which is exactly what made the lifted row
+     (and, separately, whatever sat behind it) show a tint of whatever was
+     behind the screen instead of being genuinely opaque. .bp-screen now
+     always stays at opacity 1; this overlay's own opacity fades between 0
+     and the dim level instead. It sits above .bp-screen and below
+     .bp-lift-layer, so the lifted row's clone paints on top of the
+     overlay — fully opaque, untouched by the dim — while everything else
+     reads dimmed through it. */
+  .bp-dim-overlay {
+    position: absolute;
+    inset: 0;
+    /* Matches .bp-screen's radius exactly — this overlay sits directly on
+       top of it and needs the same corner shape, not a value of its own. */
+    border-radius: 35.4461538462px;
+    background: var(--primitive-green-light);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  /* Sibling of .bp-screen (not a descendant), so the source row's own
+     opacity fade (see renderScene1) is the only thing hiding it — nothing
+     here compounds onto the traveling card, which reads at a full 100%
+     regardless of the dim overlay above. Same .mock-scaler transform
+     context, so it aligns pixel-for-pixel with .bp-screen's own content
+     without any separate scale math. */
+  .bp-lift-layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 5;
+  }
+
+  .bp-row--lift-clone {
+    position: absolute;
+    box-sizing: border-box;
+    border-radius: 10px;
+    /* Both this clone and the flat row (.bp-row) optically center their
+       content, but via different math, because only the flat row has a
+       neighboring row to lean on: the flat row's padding-top (14px) is
+       set to match its padding-bottom (0) plus the 14px gap to the next
+       row (.bp-rows-scroll's own flex gap) — that gap IS its "space
+       below." This clone is an isolated, absolutely-positioned element
+       with no such neighboring gap, so it needs genuine equal top/bottom
+       padding instead. */
+    padding-top: 4.5px !important;
+    padding-bottom: 4.5px !important;
+    /* The row's own cells (flex-shrink:0) sum to ~11px wider than the
+       row's flex-stretched box — invisible in the flat table (white on
+       white, no edge to see), but the callout has a visible edge, so the
+       last cell's content ran past it. Clone width is sized to the row's
+       true (unclipped) content extent plus this padding — see
+       buildScene1Instance() — giving genuine, equal 10px clearance both
+       sides instead of the content touching the right edge. */
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+    will-change: transform;
+  }
+
+  /* ---- Header ---- */
+
+  .bp-header {
+    width: 1440px;
+    height: 400px;
+    background: var(--primitive-grey-light);
+    position: relative;
+  }
+  .bp-header__title {
+    position: absolute;
+    left: 78px;
+    top: 51px;
+    margin: 0;
+    font: var(--bp-text-header-title);
+    color: var(--primitive-black);
+  }
+  .bp-header__close {
+    position: absolute;
+    top: 60px;
+    right: 44px;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: none;
+    padding: 0;
+  }
+  .bp-header__close img {
+    width: 16px;
+    height: 16px;
+  }
+  .bp-header__row {
+    position: absolute;
+    left: 78px;
+    right: 119px;
+    top: 172px;
+    display: flex;
+    align-items: center;
+    gap: 52px;
+  }
+  .bp-header__divider {
+    width: 1px;
+    height: 60px;
+    background: var(--bp-color-divider);
+    flex-shrink: 0;
+  }
+  .bp-header__divider:has(+ .bp-totals) {
+    margin-left: auto;
+  }
+  .bp-pay-from {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 250px;
+  }
+  .bp-pay-from__label {
+    margin: 0;
+    height: 20px;
+    font: var(--bp-text-label);
+    color: var(--primitive-black);
+  }
+  .bp-pay-from__field {
+    height: 36px;
+    border: 1px solid var(--bp-color-border-input);
+    border-radius: var(--bp-radius-input);
+    background: var(--primitive-white);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 8px;
+  }
+  .bp-pay-from__field span {
+    font: var(--bp-text-label);
+    color: var(--primitive-black);
+  }
+  .bp-pay-from__field img {
+    width: 14px;
+    height: 8px;
+  }
+  .bp-combine {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    height: 60px;
+  }
+  .bp-combine__label {
+    margin: 0;
+    font: var(--bp-text-label);
+    color: var(--primitive-black);
+  }
+  .bp-combine__row {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    height: 36px;
+  }
+  .bp-combine__toggle-label {
+    margin: 0;
+    font: var(--bp-text-label-strong);
+    color: var(--primitive-black);
+    white-space: nowrap;
+  }
+  .bp-switch {
+    width: 36px;
+    height: 20px;
+    border-radius: var(--bp-radius-switch-pill);
+    background: var(--bp-color-border-input);
+    padding: 1px;
+    display: flex;
+    align-items: center;
+    border: none;
+  }
+  .bp-switch__thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--primitive-white);
+    box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.1), 0px 2px 2px rgba(0, 0, 0, 0.3);
+  }
+  .bp-totals {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .bp-totals__label {
+    margin: 0 0 10px 0;
+    font: var(--bp-text-total-label);
+    text-transform: uppercase;
+    color: var(--primitive-black);
+    white-space: nowrap;
+  }
+  .bp-totals__amount {
+    margin: 0;
+    font: var(--bp-text-total-amount);
+    color: var(--primitive-black);
+    white-space: nowrap;
+  }
+  .bp-totals__fee {
+    margin: 0;
+    font: var(--bp-text-total-fee);
+    color: var(--primitive-black);
+    white-space: nowrap;
+  }
+
+  /* ---- Table body card ---- */
+
+  .bp-table-wrap {
+    position: absolute;
+    left: 74px;
+    top: 261px;
+    width: 1287px;
+    height: 676px;
+    padding-top: 40px;
+  }
+  .bp-table-body {
+    width: 100%;
+    height: 100%;
+    background: var(--primitive-white);
+    border-radius: var(--bp-radius-table-top) var(--bp-radius-table-top) 0 0;
+    box-shadow: var(--bp-shadow-table-body);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    overflow: hidden;
+    position: relative;
+  }
+  .bp-header-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+  .bp-header-row__cell {
+    display: flex;
+    align-items: flex-start;
+    padding: 17px 10px 0;
+    height: 60px;
+    overflow: hidden;
+  }
+  .bp-header-row__cell span {
+    font: var(--bp-text-table-header);
+    text-transform: uppercase;
+    color: var(--primitive-black);
+    white-space: nowrap;
+  }
+  .bp-rows-scroll {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    overflow: hidden;
+    position: relative;
+  }
+  .bp-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-top: 14px;
+    background: var(--primitive-white);
+    border-top: 1px solid var(--bp-color-divider);
+  }
+  .bp-cell {
+    display: flex;
+    align-items: center;
+    height: 60px;
+    padding: 0 10px;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+  .bp-cell--vendor { width: 230px; padding-right: 12px; padding-left: 0; }
+  /* Card only — not the flat table, which keeps padding-left:0 above.
+     On the traveling card, the vendor content sits flush at this cell's
+     own left edge while the Action cell at the row's other end keeps its
+     own 10px padding plus unused space inside its fixed 106px column
+     (short "Manage"/"Review" text never fills it), so the card reads
+     left-heavy against its shell. 42.6875px is the measured gap on the
+     Action side (card's own 10px shell padding + Action cell's own 10px
+     padding + the Action cell's unused width past the text) minus the
+     10px the card already gives this side, landing both sides equal.
+     Higher-specificity selector, no !important needed. Deliberately not
+     applied to plain .bp-cell--vendor: at this width the flat table's
+     widest content ("Bluebird Office Supplies", the "Bank payment
+     (ACH)..." method label) would wrap/truncate. */
+  .bp-row--lift-clone .bp-cell--vendor { padding-left: 42.6875px; }
+  .bp-cell--bill { width: 76px; }
+  .bp-cell--status { width: 106px; gap: 6px; }
+  .bp-cell--due { width: 84px; }
+  .bp-cell--speed { width: 203px; flex-direction: column; align-items: flex-start; justify-content: center; }
+  .bp-cell--fee { width: 122px; overflow: hidden; }
+  .bp-cell--balance { width: 115px; overflow: hidden; }
+  .bp-cell--amount { width: 120px; padding-left: 8px; }
+  .bp-cell--action { width: 106px; overflow: hidden; }
+
+  .bp-vendor { display: flex; align-items: flex-start; gap: 16px; width: 100%; }
+  .bp-vendor__body { display: flex; flex-direction: column; gap: 0; width: 100%; }
+  .bp-vendor__name { margin: 0; font: var(--bp-text-cell-strong); color: var(--primitive-black); }
+  .bp-vendor__method { display: flex; align-items: center; gap: 7px; height: 24px; margin-top: -2px; }
+  .bp-vendor__method-icon { width: 14px; height: 14px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; line-height: 0; }
+  .bp-vendor__method-icon img { display: block; transform: translateY(1px); }
+  .bp-vendor__method-text { margin: 0; font: var(--bp-text-cell-small); color: var(--primitive-grey-dark); white-space: nowrap; }
+
+  .bp-cell--bill span, .bp-cell--due span, .bp-cell--balance span {
+    font: var(--bp-text-cell-normal);
+    color: var(--primitive-black);
+  }
+
+  .bp-status__check { width: 10px; height: 10px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; line-height: 0; }
+  .bp-status__check img { display: block; transform: translateY(1px); }
+  .bp-status-text { margin: 0; font: var(--bp-text-cell-strong); color: var(--primitive-black); }
+
+  .bp-speed__top { display: flex; align-items: center; gap: 7px; height: 25px; }
+  .bp-speed__label { margin: 0; font: var(--bp-text-cell-strong); color: var(--primitive-black); white-space: nowrap; }
+  .bp-badge { display: inline-flex; align-items: center; padding: 0 4px; border-radius: var(--bp-radius-input); background: var(--primitive-green); }
+  .bp-badge span { font: var(--bp-text-badge); text-transform: uppercase; color: var(--primitive-white); }
+  .bp-speed__meta { display: flex; align-items: center; gap: 3px; height: 24px; margin-top: -2px; }
+  .bp-speed__meta span { font: var(--bp-text-cell-small); color: var(--primitive-grey-dark); white-space: nowrap; }
+  .bp-speed__meta img { width: 18px; height: 18px; }
+
+  .bp-fee { display: flex; align-items: center; gap: 2px; }
+  .bp-fee span { font: var(--bp-text-cell-normal); color: var(--primitive-black); }
+  .bp-fee img { width: 20px; height: 20px; }
+
+  .bp-amount-field {
+    width: 100px;
+    height: 36px;
+    background: var(--primitive-white);
+    border: 1px solid var(--bp-color-border-input);
+    border-radius: var(--bp-radius-input);
+    padding: 6px 8px;
+    display: flex;
+    align-items: center;
+  }
+  .bp-amount-field span { font: var(--bp-text-cell-normal); color: var(--primitive-black); }
+
+  .bp-action-text { font: var(--bp-text-cell-action); color: var(--bp-color-action-green); white-space: nowrap; }
+
+  /* ---- Footer ---- */
+
+  .bp-footer {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 1440px;
+    height: 100px;
+    background: var(--primitive-black);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 20px;
+    padding: 0 100px;
+  }
+  .bp-footer__stats { display: flex; align-items: center; gap: 120px; flex: 1; }
+  .bp-stat { display: flex; flex-direction: column; gap: 4px; }
+  .bp-stat__num { margin: 2px 0 1px; font: var(--bp-text-footer-num); color: var(--primitive-white); }
+  .bp-stat__label { margin: 0; font: var(--bp-text-footer-label); text-transform: uppercase; color: var(--bp-color-divider); }
+  .bp-stat__sub { display: flex; align-items: center; gap: 5px; }
+  .bp-stat__sub img { width: 10px; height: 10px; }
+  .bp-stat__sub span { font: var(--bp-text-footer-label); color: var(--bp-color-divider); }
+  .bp-footer__buttons { display: flex; gap: 20px; }
+  .bp-btn {
+    height: 36px;
+    min-width: 100px;
+    padding: 0 16px;
+    border-radius: var(--bp-radius-input);
+    font: var(--bp-text-button-label);
+    text-align: center;
+    border: 2px solid transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .bp-btn--cancel { background: transparent; border-color: var(--primitive-white); color: var(--primitive-white); }
+  .bp-btn--continue { background: var(--bp-color-action-green); border-color: var(--bp-color-action-green); color: var(--primitive-white); }
+
+  /* ---- Scenes 2 & 3 — placeholder, no built content yet. ---- */
+  .scene-placeholder {
+    position: absolute;
+    inset: 0;
+    background: var(--primitive-grey-light);
+  }
+</style>
+</head>
+<body>
+  <div id="scene1-mock" class="scene-mock-wrap" style="display: none">
+    <div class="mock-scaler">
+      <div class="bp-screen" id="scene1-screen">
+        <header class="bp-header">
+          <h1 class="bp-header__title">Schedule bill payment</h1>
+          <button class="bp-header__close" type="button" aria-label="Close" tabindex="-1">
+            <img src="../../icons/bill-pay-mock/close.svg" alt="" />
+          </button>
+          <div class="bp-header__row">
+            <div class="bp-pay-from">
+              <p class="bp-pay-from__label">Pay from</p>
+              <div class="bp-pay-from__field">
+                <span>Chase checking (...1234)</span>
+                <img src="../../icons/bill-pay-mock/dropdown-chevron.svg" alt="" />
+              </div>
+            </div>
+            <div class="bp-header__divider"></div>
+            <div class="bp-combine">
+              <p class="bp-combine__label">Combine multiple bills</p>
+              <div class="bp-combine__row">
+                <p class="bp-combine__toggle-label">Make one payment per vendor</p>
+                <button class="bp-switch" type="button" role="switch" aria-checked="false" aria-label="Make one payment per vendor" tabindex="-1">
+                  <span class="bp-switch__thumb"></span>
+                </button>
+              </div>
+            </div>
+            <div class="bp-header__divider"></div>
+            <div class="bp-totals">
+              <div>
+                <p class="bp-totals__label">Total payment amount</p>
+                <p class="bp-totals__amount" id="scene1-total-amount">$0.00</p>
+              </div>
+              <p class="bp-totals__fee" id="scene1-total-fee">Total processing fees: $0.00</p>
+            </div>
+          </div>
+        </header>
+
+        <div class="bp-table-wrap">
+          <div class="bp-table-body">
+            <div class="bp-header-row">
+              <div class="bp-header-row__cell" style="width: 230px"><span>Vendor</span></div>
+              <div class="bp-header-row__cell" style="width: 76px"><span>Bill</span></div>
+              <div class="bp-header-row__cell" style="width: 106px"><span>Status</span></div>
+              <div class="bp-header-row__cell" style="width: 84px"><span>Due date</span></div>
+              <div class="bp-header-row__cell" style="width: 203px"><span>Payment speed</span></div>
+              <div class="bp-header-row__cell" style="width: 122px"><span>Processing fee</span></div>
+              <div class="bp-header-row__cell" style="width: 115px"><span>Open balance</span></div>
+              <div class="bp-header-row__cell" style="width: 120px"><span>Amount</span></div>
+              <div class="bp-header-row__cell" style="width: 106px"><span>Action</span></div>
+            </div>
+            <div class="bp-rows-scroll" id="scene1-rows-scroll"></div>
+          </div>
+        </div>
+
+        <footer class="bp-footer">
+          <div class="bp-footer__stats">
+            <div class="bp-stat">
+              <p class="bp-stat__label">Bills</p>
+              <p class="bp-stat__num" id="scene1-stat-bills">0</p>
+              <div class="bp-stat__sub"><img src="../../icons/bill-pay-mock/footer-check.svg" alt="" /><span>Approved</span></div>
+            </div>
+            <div class="bp-stat">
+              <p class="bp-stat__label">Vendors</p>
+              <p class="bp-stat__num" id="scene1-stat-vendors">0</p>
+              <div class="bp-stat__sub"><img src="../../icons/bill-pay-mock/footer-check.svg" alt="" /><span>Authorized</span></div>
+            </div>
+            <div class="bp-stat">
+              <p class="bp-stat__label">Payments</p>
+              <p class="bp-stat__num" id="scene1-stat-payments">0</p>
+              <div class="bp-stat__sub"><img src="../../icons/bill-pay-mock/footer-check.svg" alt="" /><span>Arrives on time</span></div>
+            </div>
+          </div>
+          <div class="bp-footer__buttons">
+            <button class="bp-btn bp-btn--cancel" type="button" tabindex="-1">Cancel</button>
+            <button class="bp-btn bp-btn--continue" type="button" tabindex="-1">Continue</button>
+          </div>
+        </footer>
+      </div>
+
+      <div class="bp-dim-overlay" id="scene1-dim-overlay"></div>
+      <div class="bp-lift-layer" id="scene1-lift-layer"></div>
+    </div>
+  </div>
+
+  <!-- Scene 2 — placeholder, no built content yet. -->
+  <div id="scene2-mock" class="scene-mock-wrap" style="display: none">
+    <div class="scene-placeholder"></div>
+  </div>
+
+  <!-- Scene 3 — placeholder, no built content yet. -->
+  <div id="scene3-mock" class="scene-mock-wrap" style="display: none">
+    <div class="scene-placeholder"></div>
+  </div>
+
+<script>
+  (function () {
+    // One continuous timeline for all 3 scenes, loaded once by the parent
+    // iframe and never reloaded. BOUNDARIES/TOTAL_DURATION must match
+    // SCENE_BOUNDARIES/TOTAL_DURATION in js/bill-pay/scene-gallery.js
+    // exactly. Scene 1 is the built row-travel animation; scenes 2 and 3
+    // are placeholders (see .scene-placeholder) — boundary math unchanged
+    // from before, since the scene count and per-scene duration didn't
+    // need to move.
+    var BOUNDARIES = [0, 6500, 13000];
+    var TOTAL_DURATION = 19500;
+
+    var body = document.body;
+    var epoch = performance.now();
+    var lastIndex = -1;
+
+    function sceneIndexForTime(ms) {
+      for (var i = BOUNDARIES.length - 1; i >= 0; i--) {
+        if (ms >= BOUNDARIES[i]) return i;
+      }
+      return 0;
+    }
+
+    // ============================================================
+    // Bill Pay mock (batch-full), static content + a single traveling row
+    // card (see computeTravel/renderScene1). Scene 1 builds and renders
+    // this; scenes 2 and 3 are placeholders. Everything below this point
+    // is either one-time DOM setup (build the 13 static rows, measure +
+    // clone row 1 into the traveling card once) or a pure function of
+    // elapsed ms (the actual animation) — no state is carried frame to
+    // frame, so seeking anywhere lands the correct frame without having
+    // played what came before.
+    // ============================================================
+
+    var ICONS = "../../icons/bill-pay-mock/";
+
+    function layeredIcon(size, layers) {
+      var inner = layers
+        .map(function (l) {
+          return '<span style="position:absolute;inset:' + l.inset + '"><img src="' + ICONS + l.src + '" alt="" style="display:block;width:100%;height:100%" /></span>';
+        })
+        .join("");
+      return '<span style="position:relative;display:inline-block;width:' + size + "px;height:" + size + 'px">' + inner + "</span>";
+    }
+
+    // Same real exported Figma vector layers as schedule-payment.js — not
+    // re-derived, this is the batch row's icon set (bank/check method,
+    // status check, withdraw-arrives arrow, fee info).
+    var GLYPH = {
+      bank: layeredIcon(14, [
+        { src: "bank-1.svg", inset: "4.36% 8.33% 8.33% 8.33%" },
+        { src: "bank-2.svg", inset: "20.83% 45.83% 70.83% 45.83%" }
+      ]),
+      check: layeredIcon(14, [
+        { src: "check-1.svg", inset: "20.81% 8.31% 20.79% 8.31%" },
+        { src: "check-2.svg", inset: "37.46% 41.67% 54.17% 20.83%" },
+        { src: "check-3.svg", inset: "37.54% 20.83% 54.13% 62.5%" },
+        { src: "check-4.svg", inset: "52.07% 20.84% 35.38% 45.79%" }
+      ]),
+      info: layeredIcon(20, [
+        { src: "info-circle-1.svg", inset: "45.83% 45.83% 33.33% 45.83%" },
+        { src: "info-circle-2.svg", inset: "33.33% 45.82% 58.33% 45.85%" },
+        { src: "info-circle-3.svg", inset: "8.33% 8.3% 8.33% 8.3%" }
+      ]),
+      arrow: layeredIcon(18, [{ src: "withdraw-arrives-arrow.svg", inset: "32.99% 16.69% 33.04% 16.67%" }]),
+      statusCheck: '<img src="' + ICONS + 'status-check.svg" alt="" style="display:block;width:100%;height:100%" />'
+    };
+
+    function money(n) {
+      return "$" + n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    // Source of truth is the batch-full Figma template (node 2964:601336) —
+    // identical data to assets/mock-screen/bill-pay/schedule-payment.js's
+    // ROWS, not re-derived.
+    var ROWS = [
+      { id: 1, vendor: "Barmett Lawn Care", method: "bank", last4: "3456", bill: "153", due: "08/29/25", withdraw: "08/25", arrives: "08/28", fee: 1.0, amount: 650.0, action: "Manage" },
+      { id: 2, vendor: "Bluebird Office Supplies", method: "check", last4: "", bill: "1764", due: "09/06/25", withdraw: "09/02", arrives: "09/05", fee: 1.0, amount: 385.0, action: "Manage" },
+      { id: 3, vendor: "Barmett Lawn Care", method: "bank", last4: "3456", bill: "154", due: "09/09/25", withdraw: "09/05", arrives: "09/08", fee: 1.0, amount: 725.0, action: "Manage" },
+      { id: 4, vendor: "Good Heart Catering", method: "check", last4: "", bill: "9092", due: "09/12/25", withdraw: "09/08", arrives: "09/11", fee: 1.0, amount: 1250.0, action: "Manage" },
+      { id: 5, vendor: "Greenfield Solutions", method: "bank", last4: "1278", bill: "7562", due: "09/14/25", withdraw: "09/10", arrives: "09/13", fee: 1.0, amount: 1800.0, action: "Manage" },
+      { id: 6, vendor: "Red Ocean Developer", method: "bank", last4: "7989", bill: "349", due: "09/15/25", withdraw: "09/11", arrives: "09/14", fee: 1.0, amount: 1500.0, action: "Manage" },
+      { id: 7, vendor: "Bluebird Office Supplies", method: "check", last4: "", bill: "1789", due: "09/16/25", withdraw: "09/12", arrives: "09/15", fee: 1.0, amount: 520.0, action: "Manage" },
+      { id: 8, vendor: "Greenfield Solutions", method: "bank", last4: "1278", bill: "7562", due: "09/19/25", withdraw: "09/15", arrives: "09/18", fee: 1.0, amount: 1950.0, action: "Manage" },
+      { id: 9, vendor: "Good Heart Catering", method: "check", last4: "", bill: "9095", due: "09/20/25", withdraw: "09/16", arrives: "09/19", fee: 1.0, amount: 875.0, action: "Manage" },
+      { id: 10, vendor: "Barmett Lawn Care", method: "bank", last4: "3456", bill: "155", due: "09/22/25", withdraw: "09/18", arrives: "09/21", fee: 1.0, amount: 580.0, action: "Manage" },
+      { id: 11, vendor: "Greenfield Solutions", method: "bank", last4: "1278", bill: "7589", due: "09/24/25", withdraw: "09/20", arrives: "09/23", fee: 1.0, amount: 1750.0, action: "Manage" },
+      { id: 12, vendor: "Red Ocean Developer", method: "bank", last4: "7989", bill: "354", due: "09/25/25", withdraw: "09/21", arrives: "09/24", fee: 1.0, amount: 1650.0, action: "Manage" },
+      { id: 13, vendor: "Bluebird Office Supplies", method: "check", last4: "", bill: "1790", due: "09/27/25", withdraw: "09/23", arrives: "09/26", fee: 1.0, amount: 290.0, action: "Manage" }
+    ];
+
+    function methodLabel(row) {
+      if (row.method === "bank") return "Bank payment (ACH)..." + row.last4;
+      return "Check";
+    }
+
+    // Identical markup to renderBatchRow() in schedule-payment.js (minus
+    // the narrow-mode branch, which never applies here — this scene never
+    // opens a drawer). Static: called once per row at load, never re-run.
+    function renderBatchRow(row) {
+      return (
+        '<div class="bp-row" data-row-id="' + row.id + '">' +
+          '<div class="bp-cell bp-cell--vendor">' +
+            '<div class="bp-vendor">' +
+              '<div class="bp-vendor__body">' +
+                '<p class="bp-vendor__name">' + row.vendor + "</p>" +
+                '<div class="bp-vendor__method">' +
+                  '<span class="bp-vendor__method-icon">' + GLYPH[row.method] + "</span>" +
+                  '<p class="bp-vendor__method-text">' + methodLabel(row) + "</p>" +
+                "</div>" +
+              "</div>" +
+            "</div>" +
+          "</div>" +
+          '<div class="bp-cell bp-cell--bill"><span>' + row.bill + "</span></div>" +
+          '<div class="bp-cell bp-cell--status"><span class="bp-status__check">' + GLYPH.statusCheck + '</span><span class="bp-status-text">Approved</span></div>' +
+          '<div class="bp-cell bp-cell--due"><span>' + row.due + "</span></div>" +
+          '<div class="bp-cell bp-cell--speed">' +
+            '<div class="bp-speed__top"><p class="bp-speed__label">Standard</p><span class="bp-badge"><span>On time</span></span></div>' +
+            '<div class="bp-speed__meta"><span>Withdraw ' + row.withdraw + "</span><span style=\"display:inline-flex\">" + GLYPH.arrow + "</span><span>Arrives " + row.arrives + "</span></div>" +
+          "</div>" +
+          '<div class="bp-cell bp-cell--fee"><div class="bp-fee"><span>' + money(row.fee) + "</span><span>" + GLYPH.info + "</span></div></div>" +
+          '<div class="bp-cell bp-cell--balance"><span>' + money(row.amount) + "</span></div>" +
+          '<div class="bp-cell bp-cell--amount"><div class="bp-amount-field"><span>' + money(row.amount) + "</span></div></div>" +
+          '<div class="bp-cell bp-cell--action"><span class="bp-action-text">' + row.action + "</span></div>" +
+        "</div>"
+      );
+    }
+
+    // Just the cells, not a new outer row wrapper — used to swap the
+    // traveling card's content without touching the card element itself
+    // (its own classes, transform, opacity, etc. all stay put).
+    function rowInnerHTML(row) {
+      var tmp = document.createElement("div");
+      tmp.innerHTML = renderBatchRow(row);
+      return tmp.firstChild.innerHTML;
+    }
+
+    var scene1 = { instance: null };
+    var scene2Wrap = document.getElementById("scene2-mock");
+    var scene3Wrap = document.getElementById("scene3-mock");
+
+    // Scene 1's build: one persistent traveling card (not a fixed clone
+    // per row) plus references to all 5 real rows (to toggle which one is
+    // suppressed) and their measured native-space top positions (to
+    // interpolate between while traveling). One-time measure-then-hide
+    // setup, run lazily on first visit.
+    function buildScene1Instance() {
+      var idPrefix = "scene1";
+      var mockWrap = document.getElementById(idPrefix + "-mock");
+      var rowsScroll = document.getElementById(idPrefix + "-rows-scroll");
+      rowsScroll.innerHTML = ROWS.map(renderBatchRow).join("");
+
+      var vendors = {};
+      var totalAmount = 0;
+      ROWS.forEach(function (r) {
+        vendors[r.vendor] = true;
+        totalAmount += r.amount;
+      });
+      var vendorCount = Object.keys(vendors).length;
+      document.getElementById(idPrefix + "-total-amount").textContent = money(totalAmount);
+      document.getElementById(idPrefix + "-total-fee").textContent = "Total processing fees: " + money(ROWS.length * 1.0);
+      document.getElementById(idPrefix + "-stat-bills").textContent = ROWS.length;
+      document.getElementById(idPrefix + "-stat-vendors").textContent = vendorCount;
+      document.getElementById(idPrefix + "-stat-payments").textContent = ROWS.length;
+
+      var screenEl = document.getElementById(idPrefix + "-screen");
+      var dimOverlay = document.getElementById(idPrefix + "-dim-overlay");
+      var liftLayer = document.getElementById(idPrefix + "-lift-layer");
+
+      mockWrap.style.display = "block";
+      mockWrap.style.visibility = "hidden";
+
+      var scale = 0.4513888889; // 650 / 1440, same as .mock-scaler
+      var screenRect = screenEl.getBoundingClientRect();
+
+      var sources = [];
+      var rowTops = [];
+      var restWidthNative, contentWidthNative, baseLeftNative, baseTopNative;
+
+      for (var i = 1; i <= 5; i++) {
+        var rowEl = rowsScroll.querySelector('[data-row-id="' + i + '"]');
+        var rowRect = rowEl.getBoundingClientRect();
+        sources.push(rowEl);
+        rowTops.push((rowRect.top - screenRect.top) / scale);
+        if (i === 1) {
+          // Card sizing/centering is measured from row 1 only — every row
+          // shares the same fixed-width columns, so row 1's true content
+          // width (see the .bp-row--lift-clone comment above) applies for
+          // the whole journey; the card's width never changes.
+          restWidthNative = rowRect.width / scale;
+          contentWidthNative = rowEl.scrollWidth + 20;
+          baseLeftNative = (rowRect.left - screenRect.left) / scale - (contentWidthNative - restWidthNative) / 2;
+          baseTopNative = rowTops[0];
+        }
+      }
+
+      var card = sources[0].cloneNode(true);
+      card.className = "bp-row bp-row--lift-clone";
+      card.style.top = baseTopNative + "px";
+      card.style.left = baseLeftNative + "px";
+      card.style.width = contentWidthNative + "px";
+      card.style.transformOrigin = "center center";
+      liftLayer.appendChild(card);
+
+      mockWrap.style.visibility = "";
+      mockWrap.style.display = "none";
+
+      return {
+        mockWrap: mockWrap,
+        screenEl: screenEl,
+        dimOverlay: dimOverlay,
+        card: card,
+        cardCells: card.querySelectorAll(".bp-cell"),
+        sources: sources,
+        rowTops: rowTops,
+        baseTopNative: baseTopNative,
+        lastContentRow: -1 // guarantees the first render() call populates real content
+      };
+    }
+
+    // ---- Scene 1 timing (all ms, relative to the scene's own start = 0) ----
+    // Row travel: the card rises out of row 1, holds and moves row by row
+    // down to row 5, then drops back in. Pure function of t — lands on the
+    // correct frame from a cold seek.
+
+    // cubic-bezier evaluator, evaluated numerically (Newton-Raphson) so
+    // it's a pure function of x — safe to call for any t, including an
+    // arbitrary mid-animation seek.
+    function makeEaseOut(p1x, p1y, p2x, p2y) {
+      function a(x1, x2) { return 1 - 3 * x2 + 3 * x1; }
+      function b(x1, x2) { return 3 * x2 - 6 * x1; }
+      function c(x1) { return 3 * x1; }
+      function bezier(t, x1, x2) { return ((a(x1, x2) * t + b(x1, x2)) * t + c(x1)) * t; }
+      function slope(t, x1, x2) { return 3 * a(x1, x2) * t * t + 2 * b(x1, x2) * t + c(x1); }
+      function tForX(x) {
+        var t = x;
+        for (var i = 0; i < 8; i++) {
+          var d = slope(t, p1x, p2x);
+          if (Math.abs(d) < 1e-6) break;
+          t -= (bezier(t, p1x, p2x) - x) / d;
+        }
+        return t;
+      }
+      return function (x) {
+        if (x <= 0) return 0;
+        if (x >= 1) return 1;
+        return bezier(tForX(x), p1y, p2y);
+      };
+    }
+    // cubic-bezier(0.23, 1, 0.32, 1) — strong ease-out. Used by the card's
+    // rise and by the screen-dim fade.
+    var easeOut = makeEaseOut(0.23, 1, 0.32, 1);
+
+    function clamp01(x) {
+      return x < 0 ? 0 : x > 1 ? 1 : x;
+    }
+
+    // The fall's own curve — distinct from the rise's easeOut above, not a
+    // mirror of it. cubic-bezier(0.32, 0.72, 0, 1) is the iOS/Ionic drawer
+    // "dismiss" curve: quicker and more decisive than easeOut's long settle,
+    // which is the point — a release should read differently from a reveal.
+    var easeRelease = makeEaseOut(0.32, 0.72, 0, 1);
+
+    // Runs the same 0..1 span faster, then holds at 1 — used to make a
+    // property finish ahead of the phase's primary curve instead of
+    // exactly with it (e.g. opacity resolving before scale is done
+    // settling). factor > 1: how much faster.
+    function leadOut(localT, factor) {
+      return clamp01(localT * factor);
+    }
+
+    // Holds at 0 through the first `delay` fraction of the phase, then
+    // covers the remaining 0..1 span in what's left — used to make a
+    // property start late but still land exactly on the phase boundary
+    // (e.g. shadow trailing scale on the way up), so nothing jumps at the
+    // rise/hold or hold/fall seam.
+    function lagIn(localT, delay) {
+      return clamp01((localT - delay) / (1 - delay));
+    }
+
+    // Left-to-right, one at a time, accelerating — cells are already
+    // visible; this only nudges them up and back, it never touches
+    // opacity. clamp() at both ends keeps this 0 outside the cell's own
+    // window, so it's a no-op for every other frame in the scene.
+    function applyCellBounce(clone, t, base, delays, dur) {
+      for (var i = 0; i < clone.cells.length; i++) {
+        var cellStart = base + (delays[i] || 0);
+        var p = clamp01((t - cellStart) / dur);
+        var y = -7 * Math.sin(Math.PI * p);
+        clone.cells[i].style.transform = "translateY(" + y + "px)";
+      }
+    }
+
+    // ---- Scene 1 (row travel) ----
+    // One card. It rises out of row 1, holds, travels to row 2's position,
+    // holds, travels to row 3, and so on through row 5, then drops back
+    // into the table. Elevation (scale/shadow) is constant for the entire
+    // middle journey — it only changes once at the start and once at the
+    // end — so it reads as one object being relocated, not five pops
+    // stitched together. Hold and travel durations are uniform across rows
+    // 1-4 on purpose: an even cadence reads as controlled, a varying one
+    // reads as a rhythm the animation is performing. Row 5's hold is the
+    // one exception — it has to be long enough to host the cell-bounce
+    // sequence below, plus a further still beat once the last cell has
+    // settled, before the card drops back in.
+    var TRAVEL_RISE = 300;
+    var TRAVEL_FALL = 200;
+    var TRAVEL_HOLD_SHORT = 577; // rows 1-4 — trimmed to make room for row 5's longer hold below
+    var TRAVEL_HOLD_ROW5 = 1691; // cell-bounce cascade (1291ms) + 400ms motionless hold after the last bump
+    var TRAVEL_MOVE = 500; // uniform, all 4 segments
+    var TRAVEL_CONTENT_MIN = 0.35; // content dip floor — never fully gone
+    var TRAVEL_CELL_BUMP_DELAYS = [0, 234, 426, 584, 712, 818, 904, 974, 1031]; // left to right, accelerating
+    var TRAVEL_CELL_BUMP_DUR = 260;
+
+    // cubic-bezier(0.77, 0, 0.175, 1) — strong ease-in-out, the codebase's
+    // curve for "moving on screen" (as opposed to entering/exiting, which
+    // use easeOut/easeRelease above). Apple's own equivalent for
+    // repositioning an object is a critically-damped spring (no bounce);
+    // this is the deterministic version of that same quality — it can't
+    // be a real spring, because a spring can't be recomputed exactly from
+    // an arbitrary timestamp, and every value here still has to be.
+    var easeInOut = makeEaseOut(0.77, 0, 0.175, 1);
+
+    // Segment end times, computed once. 5 holds (index 0-4, one per row)
+    // and 4 moves (between consecutive holds) alternate after the rise;
+    // the fall follows the 5th hold. Rows 1-4 hold 577ms each; row 5 holds
+    // 1691ms — the cell-bounce cascade plus a 400ms motionless hold after
+    // it — so the whole sequence still fits the scene's 6500ms.
+    var T_RISE_END = TRAVEL_RISE;
+    var T_HOLD_ENDS = [];
+    var T_MOVE_ENDS = [];
+    (function () {
+      var t = T_RISE_END;
+      var holds = [TRAVEL_HOLD_SHORT, TRAVEL_HOLD_SHORT, TRAVEL_HOLD_SHORT, TRAVEL_HOLD_SHORT, TRAVEL_HOLD_ROW5];
+      for (var i = 0; i < 5; i++) {
+        t += holds[i];
+        T_HOLD_ENDS.push(t);
+        if (i < 4) {
+          t += TRAVEL_MOVE;
+          T_MOVE_ENDS.push(t);
+        }
+      }
+    })();
+    // When the card arrives/settles at row 5 — i.e. hold 4's start.
+    var TRAVEL_CELL_BUMP_BASE = T_MOVE_ENDS[3];
+    var T_FALL_END = T_HOLD_ENDS[4] + TRAVEL_FALL;
+
+    // Pure function of t. Returns null outside the whole sequence (before
+    // it starts, or once it's fully back at rest) — the caller treats that
+    // as "nothing to show." Otherwise returns everything renderScene1()
+    // needs: rowPos (0-4, fractional while traveling — the two nearest
+    // rows to interpolate between), the card's own scale/shadow/rule/shell
+    // opacity, the content dip amount, and which row's data should
+    // currently be showing.
+    function computeTravel(t) {
+      if (t <= 0) return null;
+
+      if (t < T_RISE_END) {
+        var lt = clamp01(t / TRAVEL_RISE);
+        var scaleT = easeOut(lt);
+        var opacityT = easeOut(leadOut(lt, 1.35));
+        var shadowT = easeOut(lagIn(lt, 0.15));
+        return {
+          rowPos: 0,
+          scale: 1 + 0.20 * scaleT,
+          shellOpacity: opacityT,
+          shadowAlpha: 0.28 * shadowT,
+          ruleOpacity: 1 - scaleT,
+          contentOpacity: 1,
+          contentRow: 0
+        };
+      }
+
+      for (var i = 0; i < 5; i++) {
+        if (t < T_HOLD_ENDS[i]) {
+          return { rowPos: i, scale: 1.20, shellOpacity: 1, shadowAlpha: 0.28, ruleOpacity: 0, contentOpacity: 1, contentRow: i };
+        }
+        if (i < 4 && t < T_MOVE_ENDS[i]) {
+          var mt = clamp01((t - T_HOLD_ENDS[i]) / TRAVEL_MOVE);
+          var posT = easeInOut(mt);
+          // Content legibility dips to TRAVEL_CONTENT_MIN at the segment's
+          // midpoint (sine, so it's 1 at both ends) — the hard data swap
+          // happens exactly there, while the card is least legible, never
+          // while two states could read as overlapping.
+          var dip = 1 - (1 - TRAVEL_CONTENT_MIN) * Math.sin(Math.PI * mt);
+          return {
+            rowPos: i + posT,
+            scale: 1.20,
+            shellOpacity: 1,
+            shadowAlpha: 0.28,
+            ruleOpacity: 0,
+            contentOpacity: dip,
+            contentRow: mt < 0.5 ? i : i + 1
+          };
+        }
+      }
+
+      if (t < T_FALL_END) {
+        var ft = clamp01((t - T_HOLD_ENDS[4]) / TRAVEL_FALL);
+        var scaleF = easeRelease(ft);
+        var opacityF = easeRelease(leadOut(ft, 1.35));
+        var shadowF = easeRelease(leadOut(ft, 1.35));
+        return {
+          rowPos: 4,
+          scale: 1.20 - 0.20 * scaleF,
+          shellOpacity: 1 - opacityF,
+          shadowAlpha: 0.28 * (1 - shadowF),
+          ruleOpacity: scaleF,
+          contentOpacity: 1,
+          contentRow: 4
+        };
+      }
+
+      return null;
+    }
+
+    // Renders scene 1's single traveling card at scene-local time t.
+    function renderScene1(instance, t) {
+      var travel = computeTravel(t);
+
+      if (!travel) {
+        instance.dimOverlay.style.opacity = 0;
+        instance.card.style.opacity = 0;
+        for (var s0 = 0; s0 < instance.sources.length; s0++) instance.sources[s0].style.opacity = 1;
+        return;
+      }
+
+      // Dim: up during the rise, flat for the entire journey (every hold
+      // and every move), down during the fall — one continuous dimmed
+      // span, not five separate ones.
+      var dimP;
+      if (t < T_RISE_END) dimP = easeOut(clamp01(t / TRAVEL_RISE));
+      else if (t < T_HOLD_ENDS[4]) dimP = 1;
+      else dimP = 1 - easeOut(clamp01((t - T_HOLD_ENDS[4]) / TRAVEL_FALL));
+      instance.dimOverlay.style.opacity = 0.4 * clamp01(dimP);
+
+      // Position: interpolate between the two nearest measured row tops.
+      var lowIdx = Math.min(4, Math.floor(travel.rowPos));
+      var highIdx = Math.min(4, lowIdx + 1);
+      var frac = travel.rowPos - lowIdx;
+      var top = instance.rowTops[lowIdx] + (instance.rowTops[highIdx] - instance.rowTops[lowIdx]) * frac;
+      var deltaY = top - instance.baseTopNative;
+
+      instance.card.style.transform = "translateY(" + deltaY + "px) scale(" + travel.scale + ")";
+      instance.card.style.opacity = travel.shellOpacity;
+      instance.card.style.boxShadow = "0 14px 28px rgba(0,0,0," + travel.shadowAlpha + ")";
+      instance.card.style.borderTopColor = "color-mix(in srgb, var(--bp-color-divider) " + Math.round(travel.ruleOpacity * 100) + "%, transparent)";
+
+      // Content swap: only touches the DOM when the target row actually
+      // changes (not every frame) — a performance cache only, never a
+      // source of truth, since contentRow above is freshly recomputed
+      // from t on every call. Re-query cells immediately after, since the
+      // old ones are now detached.
+      if (instance.lastContentRow !== travel.contentRow) {
+        instance.card.innerHTML = rowInnerHTML(ROWS[travel.contentRow]);
+        instance.cardCells = instance.card.querySelectorAll(".bp-cell");
+        instance.lastContentRow = travel.contentRow;
+      }
+      for (var c = 0; c < instance.cardCells.length; c++) {
+        instance.cardCells[c].style.opacity = travel.contentOpacity;
+      }
+
+      // Cells bump left to right, once, while the card holds at row 5.
+      // Outside that window this is a no-op: applyCellBounce's own clamp
+      // keeps every cell at y=0 for any t far from TRAVEL_CELL_BUMP_BASE,
+      // so it's safe to call unconditionally.
+      applyCellBounce({ cells: instance.cardCells }, t, TRAVEL_CELL_BUMP_BASE, TRAVEL_CELL_BUMP_DELAYS, TRAVEL_CELL_BUMP_DUR);
+
+      // Exactly one source row suppressed at any instant — whichever the
+      // card currently represents — tied to the card's own shell opacity
+      // so it fades in/out in lockstep during the rise/fall, and is a
+      // clean hard 0/1 the rest of the time (shellOpacity is a constant 1
+      // through every hold and move).
+      for (var r = 0; r < instance.sources.length; r++) {
+        instance.sources[r].style.opacity = (r === travel.contentRow) ? (1 - travel.shellOpacity) : 1;
+      }
+    }
+
+    // Hides scene 1's mock instance when another scene is active (a no-op
+    // if it hasn't been built yet — build is lazy, on first visit — since
+    // an unbuilt instance is still display:none from markup).
+    function hideMock(instance) {
+      if (instance) instance.mockWrap.style.display = "none";
+    }
+
+    // Derives the full visual state from ms alone — nothing carried over
+    // from the previous frame. Required so a seek can land directly on any
+    // scene, at any point within it, and render correctly without having
+    // played what came before.
+    function renderAtTime(ms) {
+      var index = sceneIndexForTime(ms);
+      if (index === 0) {
+        if (!scene1.instance) scene1.instance = buildScene1Instance();
+        scene1.instance.mockWrap.style.display = "block";
+        scene2Wrap.style.display = "none";
+        scene3Wrap.style.display = "none";
+        body.style.backgroundColor = "";
+        renderScene1(scene1.instance, ms - BOUNDARIES[0]);
+      } else if (index === 1) {
+        hideMock(scene1.instance);
+        scene2Wrap.style.display = "block";
+        scene3Wrap.style.display = "none";
+        body.style.backgroundColor = "";
+      } else {
+        hideMock(scene1.instance);
+        scene2Wrap.style.display = "none";
+        scene3Wrap.style.display = "block";
+        body.style.backgroundColor = "";
+      }
+      return index;
+    }
+
+    function announce(ms, index) {
+      parent.postMessage(
+        { type: "scene-gallery-state", ms: ms, sceneIndex: index },
+        window.location.origin
+      );
+    }
+
+    // Plays continuously; only announces to the parent when the scene
+    // index actually changes (boundary crossed, including the wrap back
+    // to 0 at the end of the timeline via the modulo below) — the parent
+    // drives the progress line's visible fill itself via CSS, so a
+    // per-frame announcement isn't needed for that.
+    function tick() {
+      var elapsed = (performance.now() - epoch) % TOTAL_DURATION;
+      var index = renderAtTime(elapsed);
+      if (index !== lastIndex) {
+        lastIndex = index;
+        announce(elapsed, index);
+      }
+      requestAnimationFrame(tick);
+    }
+
+    window.addEventListener("message", function (event) {
+      if (event.origin !== window.location.origin) return;
+
+      var data = event.data;
+      if (!data || data.type !== "scene-gallery-seek" || typeof data.ms !== "number") return;
+
+      // Re-anchor the clock so playback continues forward from the seeked
+      // point — no reload, no replaying what came before.
+      epoch = performance.now() - data.ms;
+      var index = renderAtTime(data.ms);
+      lastIndex = index;
+      announce(data.ms, index);
+    });
+
+    var initialIndex = renderAtTime(0);
+    lastIndex = initialIndex;
+    announce(0, initialIndex);
+    requestAnimationFrame(tick);
+  })();
+</script>
+</body>
+</html>

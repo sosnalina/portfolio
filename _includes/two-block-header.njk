@@ -1,12 +1,13 @@
 {#
-  Two-block section pattern (e.g. "Tipping Point") — one section-subheader
+  Two-block section pattern with the BIG standard sectionHeader (as opposed
+  to two-block-subheader.njk's small section-subheader) — one sectionHeader
   governs a section that spans two visual blocks (first block carries the
-  subheader, second is a continuation with a different background). See
-  CLAUDE.md: the subheader belongs to the whole section, not to each block.
+  header, second is a continuation with a different background). See
+  CLAUDE.md: the header belongs to the whole section, not to each block.
 
   Params:
-    title               — raw HTML for section-subheader__title
-    subtitle            — raw HTML for section-subheader__subtitle
+    heading             — raw HTML for sectionHeader's heading
+    subheading          — raw HTML for sectionHeader's optional subheading (omit/empty for none)
     firstParagraphs     — array of raw HTML strings for the first block's body
     secondParagraphs    — array of raw HTML strings for the second block's body
                            (ignored when called with {% call %} — see below)
@@ -17,21 +18,19 @@
 
   The second block defaults to body-paragraphs + a placeholder box. When a
   page's second block needs something else (real content doesn't always fit
-  that shape — see case-studies/bill-pay/index.njk's Tipping Point section),
-  call with {% call %} to replace the second block's entire inner content:
+  that shape), call with {% call %} to replace the second block's entire
+  inner content:
 
-    {% call twoBlockSubheader(title, subtitle, firstParagraphs) %}
+    {% call twoBlockHeader(heading, subheading, firstParagraphs) %}
       ...anything...
     {% endcall %}
 #}
 {% from "section.njk" import section %}
+{% from "section-header.njk" import sectionHeader %}
 {% from "section-body.njk" import sectionBody %}
-{% macro twoBlockSubheader(title, subtitle, firstParagraphs, secondParagraphs=[], secondModifiers="section--green-light", id="", firstExtra="") %}
+{% macro twoBlockHeader(heading, subheading, firstParagraphs, secondParagraphs=[], secondModifiers="section--green-light", id="", firstExtra="") %}
 {% call section("", id) %}
-<div class="section-subheader">
-  <h2 class="section-subheader__title">{{ title | safe }}</h2>
-  <p class="section-subheader__subtitle">{{ subtitle | safe }}</p>
-</div>
+{{ sectionHeader(heading, subheading) }}
 {{ sectionBody(firstParagraphs) }}
 {% if firstExtra %}
 {{ firstExtra | safe }}

@@ -1,0 +1,41 @@
+{#
+  Shared gallery controls — progress line + counter + prev/next buttons.
+  Used by both the walkthrough gallery and the scene gallery (Figma: node
+  609:30266 "gallery" frame for the control shapes/timing; reused verbatim
+  by node 856:9399 "section", which specs the same interaction block at
+  identical dimensions). idPrefix namespaces element ids per caller so each
+  gallery's own JS can target its own instance
+  (e.g. "gallery" -> #gallery-counter, "scene-gallery" -> #scene-gallery-counter).
+
+  galleryNavigation() additionally wraps a caption (headline + description)
+  above the controls — this is the walkthrough gallery's own shape
+  (previously hand-copied inline in case-studies/bill-pay/index.njk, now
+  extracted here unchanged). The scene gallery's caption differs (adds an
+  icon, different fixed heights per its own spec) so it does not use this
+  wrapper — it calls galleryInteraction() directly and builds its own
+  caption markup.
+#}
+{% macro galleryInteraction(idPrefix) %}
+<div class="gallery__interaction">
+  <div class="gallery__progress-track">
+    <div class="gallery__progress-fill" id="{{ idPrefix }}-progress-fill"></div>
+  </div>
+  <div class="gallery__legend">
+    <p class="gallery__counter" id="{{ idPrefix }}-counter"></p>
+    <div class="gallery__buttons">
+      <button type="button" class="gallery__arrow" id="{{ idPrefix }}-prev" aria-label="Previous"></button>
+      <button type="button" class="gallery__arrow" id="{{ idPrefix }}-next" aria-label="Next"></button>
+    </div>
+  </div>
+</div>
+{% endmacro %}
+
+{% macro galleryNavigation(idPrefix) %}
+<div class="gallery__navigation">
+  <div class="gallery__caption" id="{{ idPrefix }}-caption">
+    <p class="gallery__headline" id="{{ idPrefix }}-headline"></p>
+    <p class="gallery__description" id="{{ idPrefix }}-description"></p>
+  </div>
+  {{ galleryInteraction(idPrefix) }}
+</div>
+{% endmacro %}

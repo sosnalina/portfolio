@@ -66,6 +66,18 @@
         --bp-shadow-tab-selected: 0px 4px 0px 0px #108000;
         --bp-color-tab-border: #eceef1;
 
+        /* Custom payment delivery calendar (node 3014:150949 / 2198:158509 /
+           2926:28267) — values pulled directly from Figma, distinct from the
+           bank-details tabs above (different component, different tokens). */
+        --bp-color-calendar-range-bg: #e3e3e3;
+        --bp-color-calendar-text: #3c3844;
+        --bp-color-calendar-past-text: #9c9c9c;
+        --bp-color-calendar-divider: #babec5;
+        --bp-color-calendar-due: #ff8d28;
+        --bp-calendar-letter-spacing: 0.22px;
+        --bp-radius-calendar-marker: 12px;
+        --bp-radius-calendar-mid: 15px;
+
         /* Type scale — every value + weight pulled directly from Figma text styles */
         --bp-text-header-title: 600 34px/32px var(--bp-font-body);
         --bp-text-total-label: 600 13px/24px var(--bp-font-body);
@@ -98,6 +110,19 @@
         --bp-text-field-label: 400 14px/20px var(--bp-font-body);
         --bp-text-field-value: 400 16px/24px var(--bp-font-body);
         --bp-text-field-helper: 400 14px/20px var(--bp-font-body);
+
+        /* Custom payment delivery calendar type scale — Figma "Medium"/"Light"/
+           "Book"/"Roman" all substitute to 400 (no matching self-hosted weight,
+           same established convention as DELIVERY_OPTIONS titleMedium above);
+           "Heavy" substitutes to 800, matching the rest of this file. */
+        --bp-text-calendar-month: 600 14px/20px var(--bp-font-body);
+        --bp-text-calendar-dow: 400 12px/16px var(--bp-font-body);
+        --bp-text-calendar-date: 400 12px/22px var(--bp-font-body);
+        --bp-text-calendar-date-strong: 600 12px/22px var(--bp-font-body);
+        --bp-text-speed-tab: 400 14px/24px var(--bp-font-body);
+        --bp-text-legend: 400 13px/1.5 var(--bp-font-body);
+        --bp-text-show-more: 600 14px/20px var(--bp-font-body);
+        --bp-text-tooltip: 400 12px/16px var(--bp-font-body);
 
         /* Motion — the only source of truth for timing/easing (spec §7) */
         --bp-ease-toggle: cubic-bezier(0.4, 0, 0.2, 1);
@@ -185,13 +210,13 @@
         gap: 52px;
         transition: right 225ms var(--bp-ease-drawer-open);
       }
+      /* header row uses flex flow; totals are pushed with auto margin. */
       .bp-screen--narrow .bp-header__row {
-        /* Previously added the closed-state 119px margin on top of the
-           drawer width, clamping the row far short of the drawer's actual
-           left edge and forcing the totals cluster to wrap. The row's right
-           edge should land exactly at the drawer's left edge (screen width
-           minus drawer width) — no extra margin stacked on top. */
-        right: var(--bp-drawer-width);
+        /* When drawer opens, move the whole header row left so there's
+           fixed white space between the totals cluster and the drawer
+           edge. This avoids per-element margins that trigger reflow when
+           row content changes (prevents the 'jump'). */
+        right: calc(var(--bp-drawer-width) + 52px);
         transition: right 195ms var(--bp-ease-drawer-close);
       }
 
@@ -207,6 +232,24 @@
          space instead. */
       .bp-header__divider:has(+ .bp-totals) {
         margin-left: auto;
+      }
+
+      /* Helper: temporarily disable transitions during JS-driven mode
+         swaps to avoid visible layout jumps when rows are re-rendered. */
+      .bp-disable-transitions .bp-header__row,
+      .bp-disable-transitions .bp-header-row__cell,
+      .bp-disable-transitions .bp-cell,
+      .bp-disable-transitions .bp-cell > *,
+      .bp-disable-transitions .bp-row,
+      .bp-disable-transitions .bp-rows-scroll,
+      .bp-disable-transitions .bp-expand-wrap,
+      .bp-disable-transitions .bp-header__divider,
+      .bp-disable-transitions .bp-totals,
+      .bp-disable-transitions .bp-totals__label,
+      .bp-disable-transitions .bp-totals__amount,
+      .bp-disable-transitions .bp-totals__fee {
+        transition: none !important;
+        animation: none !important;
       }
 
       /* Pay from (dropdown — static, no interaction) */
@@ -309,6 +352,14 @@
         gap: 8px;
         flex-shrink: 0;
       }
+      /* Totals cluster: default flow-controlled sizing (no absolute
+         anchoring). */
+      .bp-totals {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        flex-shrink: 0;
+      }
       .bp-totals__label {
         margin: 0 0 10px 0;
         font: var(--bp-text-total-label);
@@ -330,6 +381,11 @@
         color: var(--primitive-black);
         white-space: nowrap;
       }
+      /* fee amount uses inline text; no reserved numeric span in this
+        original layout. */
+      /* Removed per-element right margin in favor of shifting the entire
+        header row in narrow mode (see .bp-screen--narrow .bp-header__row)
+        so content reflows don't animate the divider. */
 
       /* ---- Table body card ---- */
 
@@ -478,7 +534,7 @@
         display: flex;
         align-items: center;
         gap: 12px;
-        padding-top: 9px;
+        padding-top: 14px;
         background: var(--primitive-white);
         border-top: 1px solid var(--bp-color-divider);
       }
@@ -577,7 +633,8 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        margin-top: 6px;
+        /* Vertically center the chevron within the vendor cell */
+        align-self: center;
         border: none;
         background: none;
         padding: 0;
@@ -865,9 +922,43 @@
       }
 
       .bp-drawer__scroll {
+        position: relative;
         flex: 1;
         overflow-y: auto;
         padding: 48px 30px 0;
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* IE and Edge */
+      }
+      .bp-drawer__scroll::-webkit-scrollbar {
+        width: 0 !important;
+        height: 0 !important;
+        background: transparent !important;
+      }
+      .bp-drawer__scroll::-webkit-scrollbar-thumb { background: transparent !important; }
+      /* Also target the drawer element itself as some browsers render
+         scrollbars on the container element rather than the inner scroll
+         box. */
+      #bp-drawer::-webkit-scrollbar {
+        width: 0 !important;
+        height: 0 !important;
+        background: transparent !important;
+      }
+      #bp-drawer::-webkit-scrollbar-thumb { background: transparent !important; }
+
+      /* Overlay to visually mask persistent scrollbars (pointer-events:none
+         so it doesn't interfere with scroll gestures). This ensures the
+         drawer content appears to use the full width even when the UA
+         paints an overlay scrollbar. */
+      .bp-drawer__scroll::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 16px;
+        height: 100%;
+        background: var(--primitive-white);
+        pointer-events: none;
+        z-index: 3;
       }
       .bp-drawer__inner {
         transition: opacity 200ms var(--bp-ease-toggle);
@@ -1062,6 +1153,333 @@
         font-weight: 600;
         color: var(--primitive-black);
         white-space: nowrap;
+      }
+
+      /* ---- §6.6 Custom payment delivery flow — section title row + Show more ---- */
+      .bp-drawer__section-title-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-top: 6px;
+        margin: 0 0 24px;
+      }
+      .bp-drawer__section-title-row .bp-drawer__section-title {
+        margin: 0;
+        padding-top: 0;
+      }
+      .bp-show-more {
+        font: var(--bp-text-show-more);
+        color: var(--bp-color-action-green);
+        background: none;
+        border: none;
+        padding: 0;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+
+      /* ---- Speed tabs (Standard/Fast/Instant — node 2922:165022; distinct
+         3-segment button-group component from the bank-details bp-tab cards
+         above: border-overlap technique, no card shadow/radius per side). ---- */
+      .bp-speed-tabs {
+        display: flex;
+        width: 100%;
+        margin-bottom: 20px;
+      }
+      .bp-speed-tab {
+        position: relative;
+        flex: 1 1 0;
+        min-width: 0;
+        box-sizing: border-box;
+        padding: 6px 12px;
+        border: 2px solid var(--bp-color-border-input);
+        background: transparent;
+        font: var(--bp-text-speed-tab);
+        color: var(--primitive-black);
+        text-align: center;
+        cursor: pointer;
+      }
+      .bp-speed-tab--start {
+        border-radius: var(--bp-radius-input) 0 0 var(--bp-radius-input);
+        margin-right: -2px;
+        z-index: 3;
+      }
+      .bp-speed-tab--mid {
+        margin-right: -2px;
+        z-index: 2;
+      }
+      .bp-speed-tab--end {
+        border-radius: 0 var(--bp-radius-input) var(--bp-radius-input) 0;
+        z-index: 1;
+      }
+      .bp-speed-tab[data-active="true"] {
+        background: var(--bp-color-action-green);
+        border-color: var(--bp-color-action-green);
+        color: var(--primitive-white);
+        z-index: 4;
+      }
+
+      /* ---- Calendar pair (node 2926:28267) ---- */
+      .bp-cal-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 20px;
+        width: 100%;
+      }
+      .bp-cal-column {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+        flex: 1 1 0;
+        min-width: 0;
+      }
+      .bp-cal-divider-v {
+        width: 1px;
+        align-self: stretch;
+        background: var(--bp-color-calendar-divider);
+        flex-shrink: 0;
+      }
+      .bp-cal-months-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        box-sizing: border-box;
+        padding-bottom: 10px;
+      }
+      .bp-cal-nav {
+        width: 24px;
+        height: 24px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .bp-cal-nav img {
+        display: block;
+        width: 24px;
+        height: 24px;
+      }
+      .bp-cal-months-header__title {
+        margin: 0;
+        flex: 1 1 0;
+        min-width: 0;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font: var(--bp-text-calendar-month);
+        color: var(--primitive-black);
+        white-space: nowrap;
+      }
+
+      /* bp-calander (node 3014:150949) — days-of-week header + divider + grid. */
+      .bp-cal-block {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 3px;
+        width: 172px;
+      }
+      .bp-cal-dow-header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        width: 100%;
+        box-sizing: border-box;
+        padding: 0 7px 2px 6px;
+      }
+      .bp-cal-dow-header span {
+        flex: 1 1 0;
+        min-width: 0;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font: var(--bp-text-calendar-dow);
+        color: var(--primitive-black);
+      }
+      .bp-cal-divider-h {
+        width: 100%;
+        height: 1px;
+        background: var(--bp-color-calendar-divider);
+        flex-shrink: 0;
+      }
+
+      /* bp-calander-days (node 2198:158509) — 8 date-cell variants. */
+      .bp-cal-grid {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        grid-auto-rows: 24px;
+        row-gap: 4px;
+        column-gap: 0;
+        width: 100%;
+      }
+      .bp-cal-day {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-sizing: border-box;
+      }
+      .bp-cal-day[data-cal-pick] {
+        cursor: pointer;
+      }
+      .bp-cal-day__num {
+        font: var(--bp-text-calendar-date);
+        letter-spacing: var(--bp-calendar-letter-spacing);
+        color: var(--bp-color-calendar-text);
+      }
+      .bp-cal-day__num--past {
+        color: var(--bp-color-calendar-past-text);
+      }
+      .bp-cal-day--range,
+      .bp-cal-day--mid-left,
+      .bp-cal-day--mid-right {
+        background: var(--bp-color-calendar-range-bg);
+      }
+      .bp-cal-day--mid-left {
+        border-radius: var(--bp-radius-calendar-mid) 0 0 var(--bp-radius-calendar-mid);
+      }
+      .bp-cal-day--mid-right {
+        border-radius: 0 var(--bp-radius-calendar-mid) var(--bp-radius-calendar-mid) 0;
+      }
+      .bp-cal-day--start,
+      .bp-cal-day--end {
+        background: var(--bp-color-calendar-range-bg);
+      }
+      .bp-cal-day--start {
+        border-radius: var(--bp-radius-calendar-marker) 0 0 var(--bp-radius-calendar-marker);
+      }
+      .bp-cal-day--end {
+        border-radius: 0 var(--bp-radius-calendar-marker) var(--bp-radius-calendar-marker) 0;
+      }
+      .bp-cal-day__marker {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        box-sizing: border-box;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .bp-cal-day__marker--start {
+        background: var(--bp-color-action-green);
+      }
+      .bp-cal-day__marker--end {
+        background: var(--primitive-white);
+        border: 1px solid var(--bp-color-action-green);
+      }
+      .bp-cal-day__marker-num {
+        font: var(--bp-text-calendar-date-strong);
+        letter-spacing: var(--bp-calendar-letter-spacing);
+      }
+      .bp-cal-day__marker--start .bp-cal-day__marker-num {
+        color: var(--primitive-white);
+      }
+      .bp-cal-day__marker--end .bp-cal-day__marker-num {
+        color: var(--bp-color-action-green);
+      }
+      .bp-cal-day__due-wrap {
+        width: 24px;
+        height: 24px;
+        border-radius: var(--bp-radius-calendar-marker);
+        box-sizing: border-box;
+        background: var(--primitive-white);
+        border: 1px solid var(--bp-color-calendar-due);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2px 5px 2px 6px;
+      }
+      .bp-cal-day__num--due {
+        font: var(--bp-text-calendar-date-strong);
+        letter-spacing: var(--bp-calendar-letter-spacing);
+        color: var(--bp-color-calendar-due);
+        white-space: nowrap;
+      }
+
+      /* ---- Legend (node 2922:167483) ---- */
+      .bp-cal-legend {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        padding: 8px 0;
+        margin-top: 20px;
+      }
+      .bp-cal-legend__item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .bp-cal-legend__dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        box-sizing: border-box;
+        flex-shrink: 0;
+      }
+      .bp-cal-legend__dot--withdraw {
+        background: var(--bp-color-action-green);
+      }
+      .bp-cal-legend__dot--arrival {
+        background: var(--primitive-white);
+        border: 1px solid var(--bp-color-action-green);
+      }
+      .bp-cal-legend__text {
+        margin: 0;
+        font: var(--bp-text-legend);
+        color: var(--primitive-black);
+      }
+      .bp-cal-legend__text span {
+        color: var(--primitive-grey-dark);
+        font: var(--bp-text-calendar-date-strong);
+      }
+
+      /* ---- bp-tool-tip (node 3013:121336) — structure only, per spec §6.6
+         this pass builds the component ready to wire but does not attach
+         hover triggers/content/display logic. Unused until a future pass. ---- */
+      .bp-tooltip {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 71px;
+      }
+      .bp-tooltip__bubble {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 4px;
+        border-radius: 5px;
+        background: var(--primitive-black);
+      }
+      .bp-tooltip__text {
+        margin: 0;
+        font: var(--bp-text-tooltip);
+        color: var(--primitive-white);
+        white-space: nowrap;
+      }
+      .bp-tooltip__beak-wrap {
+        display: flex;
+        align-items: center;
+        height: 6px;
+        width: 100%;
+        box-sizing: border-box;
+        padding: 0 15px;
+      }
+      .bp-tooltip__beak-wrap img {
+        display: block;
+        width: 9px;
+        height: 6px;
+      }
+      .bp-tooltip--left .bp-tooltip__beak-wrap {
+        justify-content: flex-start;
+      }
+      .bp-tooltip--middle .bp-tooltip__beak-wrap {
+        justify-content: center;
+      }
+      .bp-tooltip--right .bp-tooltip__beak-wrap {
+        justify-content: flex-end;
       }
 
       .bp-note-field {

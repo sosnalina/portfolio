@@ -1,0 +1,102 @@
+/* Bill Pay — Scene Gallery widget. Figma: node 856:9399 ("section" instance),
+   Portfolio file. Shared controls (.gallery__interaction and everything
+   inside it) come from css/widgets/bill-pay/walkthrough-gallery/{gallery,
+   legend,progress-bar}.css — not duplicated here, see gallery-navigation.njk.
+   Class names prefixed scene-gallery-/scene-gallery__ so they can never
+   collide with the superseded css/widgets/bill-pay/accordion-gallery/
+   classes if that file is ever linked again for reference. */
+
+.scene-gallery {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-32);
+  width: 100%;
+}
+
+/* Stage is 800px (the full slot width) on purpose, not sized to the 650px
+   mock — the scene animation lifts a table row out past the mock's edges
+   (up to 65px each side) and that overhang paints inside this wider
+   canvas, in the space between the mock and the stage edge. The mock
+   itself is centered by each scene document, not by this wrapper. Height
+   is 452px (mock is 650 wide, proportionally scaled from its 1440x1000
+   native size — height follows) rather than the mock's exact 451.39px, so
+   scenes.html can center it with a hair of slack, same as before. */
+.scene-gallery__stage {
+  width: 100%;
+  height: 452px;
+}
+
+.scene-gallery__visual {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.scene-gallery__navigation {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-32);
+  width: 650px;
+  height: 129px;
+  margin: 0 auto;
+}
+
+.scene-gallery__caption {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-24);
+  width: 100%;
+  height: 60px;
+}
+
+.scene-gallery__caption--blooming {
+  /* Reuses the @keyframes gallery-bloom defined in
+     css/widgets/bill-pay/walkthrough-gallery/caption.css, which this page
+     also links — same bloom the walkthrough gallery uses on caption swap. */
+  animation: gallery-bloom 380ms cubic-bezier(0.4, 0, 0.2, 1) 100ms both;
+}
+
+.scene-gallery__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 60px;
+  flex-shrink: 0;
+  background: var(--primitive-disable);
+  font: var(--text-widget-counter);
+  color: var(--primitive-black);
+}
+
+.scene-gallery__caption-column {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  /* 650 nav width - 54 icon - 24 gap. Type sizes are unchanged — only this
+     width grows to follow the wider navigation; headline/description are
+     width:100% of this and follow automatically. */
+  width: 572px;
+  min-width: 0;
+}
+
+.scene-gallery__headline {
+  width: 100%;
+  height: 17px;
+  font: var(--text-widget-legend);
+  color: var(--primitive-black);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.scene-gallery__description {
+  width: 100%;
+  height: 32px;
+  font: var(--text-widget-step-subheadline);
+  color: var(--primitive-black);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
