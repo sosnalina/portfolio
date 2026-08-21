@@ -48,9 +48,11 @@
     --bp-color-action-green: #2ca01c;
     --bp-color-border-input: #8d9096;
     --bp-color-divider: #d4d7dc;
+    --bp-color-row-sub-bg: #f4f6f7;
     --bp-radius-input: 4px;
     --bp-radius-switch-pill: 20px;
     --bp-radius-table-top: 26px;
+    --bp-radius-subrow: 11.235px;
     --bp-shadow-table-body: 0px 4px 24px 0px rgba(0, 0, 0, 0.05);
 
     --bp-text-header-title: 600 34px/32px var(--bp-font-body);
@@ -169,6 +171,59 @@
     inset: 0;
     pointer-events: none;
     z-index: 5;
+  }
+
+  /* ---- Scene 2 — cursor + click ripple ----
+     Ported from assets/walkthrough/bill-pay/step-1.html / step-2.html:
+     same 30px-at-real-scale visual (arrow SVG, drop-shadow; ripple disc,
+     radial-gradient), same relative proportions, translated to this
+     file's native 1440x1000 coordinate space instead of that file's
+     percentage-of-stage positioning. Both sit above everything else in
+     the mock (z-index 9/10, above .bp-lift-layer's 5) and start hidden —
+     renderScene2 is what shows them. */
+  .scene2-cursor {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 48px;
+    height: 48px;
+    transform: translate(-4px, -3px);
+    pointer-events: none;
+    z-index: 10;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.35));
+    opacity: 0;
+  }
+  .scene2-cursor svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  .scene2-ripple {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+    z-index: 9;
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.35));
+  }
+  .scene2-ripple__disc {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: radial-gradient(
+      circle,
+      rgba(255, 255, 255, 0.95) 0%,
+      rgba(255, 255, 255, 0.75) 40%,
+      rgba(255, 255, 255, 0.25) 72%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.02);
   }
 
   .bp-row--lift-clone {
@@ -311,13 +366,16 @@
     align-items: center;
     border: none;
   }
+  .bp-switch[aria-checked="true"] { background: var(--bp-color-action-green); }
   .bp-switch__thumb {
     width: 18px;
     height: 18px;
     border-radius: 50%;
     background: var(--primitive-white);
     box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.1), 0px 2px 2px rgba(0, 0, 0, 0.3);
+    transform: translateX(0);
   }
+  .bp-switch[aria-checked="true"] .bp-switch__thumb { transform: translateX(16px); }
   .bp-totals {
     display: flex;
     flex-direction: column;
@@ -394,6 +452,30 @@
     overflow: hidden;
     position: relative;
   }
+  /* Pinned independent of scroll position — sibling of .bp-rows-scroll,
+     not a descendant, so its own internal scroll can never carry this
+     away. Rows keep scrolling underneath it; this always marks the
+     boundary between the column header and the scroll area, matching
+     the real product. An absolutely positioned child's containing block
+     is its ancestor's padding edge, not its content edge, so this still
+     has to account for .bp-table-body's own 20px padding itself:
+     top:94px = padding-top (20px) + the header row's own height (60px)
+     + .bp-table-body's own gap (14px) — the exact y where .bp-rows-scroll
+     begins. left/right:20px mirrors that same padding so the line spans
+     the same width as the header cells and rows. z-index:3 matches
+     schedule-payment.html's own value, kept the same here for
+     consistency even though this file has no equivalent of that file's
+     scroll-fade overlay to sit above. */
+  .bp-rows-top-divider {
+    position: absolute;
+    top: 94px;
+    left: 20px;
+    right: 20px;
+    height: 1px;
+    background: var(--bp-color-divider);
+    pointer-events: none;
+    z-index: 3;
+  }
   .bp-row {
     display: flex;
     align-items: center;
@@ -401,6 +483,13 @@
     padding-top: 14px;
     background: var(--primitive-white);
     border-top: 1px solid var(--bp-color-divider);
+  }
+  .bp-row--sub {
+    background: var(--bp-color-row-sub-bg);
+    border-top: none;
+    border-radius: var(--bp-radius-subrow);
+    padding: 8px 0;
+    margin-top: 0;
   }
   .bp-cell {
     display: flex;
@@ -433,8 +522,26 @@
   .bp-cell--balance { width: 115px; overflow: hidden; }
   .bp-cell--amount { width: 120px; padding-left: 8px; }
   .bp-cell--action { width: 106px; overflow: hidden; }
+  /* Needed for renderSubRow's close-icon action cell (ported from
+     schedule-payment.html, where this class is already defined). */
+  .bp-action-icon { width: 14px; height: 14px; }
 
   .bp-vendor { display: flex; align-items: flex-start; gap: 16px; width: 100%; }
+  .bp-vendor__chevron {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Vertically center the chevron within the vendor cell */
+    align-self: center;
+    border: none;
+    background: none;
+    padding: 0;
+  }
+  .bp-vendor__chevron img { width: 12px; height: 6.86px; transform: rotate(0deg); }
+  .bp-vendor__chevron[data-expanded="true"] img { transform: rotate(180deg); }
   .bp-vendor__body { display: flex; flex-direction: column; gap: 0; width: 100%; }
   .bp-vendor__name { margin: 0; font: var(--bp-text-cell-strong); color: var(--primitive-black); }
   .bp-vendor__method { display: flex; align-items: center; gap: 7px; height: 24px; margin-top: -2px; }
@@ -524,9 +631,15 @@
 </style>
 </head>
 <body>
-  <div id="scene1-mock" class="scene-mock-wrap" style="display: none">
+  <!-- The mock screen — one shared instance for every scene that needs it
+       (currently scenes 1 and 2). Same position, same size, same DOM;
+       scenes change its state (buildMockInstance/renderScene1/
+       renderScene2), they do not rebuild it. IDs are "mock-*", not
+       scene-numbered — nothing here belongs to one scene. Scene 3 has no
+       content yet and stays a separate, simpler placeholder below. -->
+  <div id="mock-wrap" class="scene-mock-wrap" style="display: none">
     <div class="mock-scaler">
-      <div class="bp-screen" id="scene1-screen">
+      <div class="bp-screen" id="mock-screen">
         <header class="bp-header">
           <h1 class="bp-header__title">Schedule bill payment</h1>
           <button class="bp-header__close" type="button" aria-label="Close" tabindex="-1">
@@ -545,7 +658,7 @@
               <p class="bp-combine__label">Combine multiple bills</p>
               <div class="bp-combine__row">
                 <p class="bp-combine__toggle-label">Make one payment per vendor</p>
-                <button class="bp-switch" type="button" role="switch" aria-checked="false" aria-label="Make one payment per vendor" tabindex="-1">
+                <button class="bp-switch" id="mock-mode-toggle" type="button" role="switch" aria-checked="false" aria-label="Make one payment per vendor" tabindex="-1">
                   <span class="bp-switch__thumb"></span>
                 </button>
               </div>
@@ -554,9 +667,9 @@
             <div class="bp-totals">
               <div>
                 <p class="bp-totals__label">Total payment amount</p>
-                <p class="bp-totals__amount" id="scene1-total-amount">$0.00</p>
+                <p class="bp-totals__amount" id="mock-total-amount">$0.00</p>
               </div>
-              <p class="bp-totals__fee" id="scene1-total-fee">Total processing fees: $0.00</p>
+              <p class="bp-totals__fee" id="mock-total-fee">Total processing fees: $0.00</p>
             </div>
           </div>
         </header>
@@ -574,7 +687,8 @@
               <div class="bp-header-row__cell" style="width: 120px"><span>Amount</span></div>
               <div class="bp-header-row__cell" style="width: 106px"><span>Action</span></div>
             </div>
-            <div class="bp-rows-scroll" id="scene1-rows-scroll"></div>
+            <div class="bp-rows-top-divider"></div>
+            <div class="bp-rows-scroll" id="mock-rows-scroll"></div>
           </div>
         </div>
 
@@ -582,17 +696,17 @@
           <div class="bp-footer__stats">
             <div class="bp-stat">
               <p class="bp-stat__label">Bills</p>
-              <p class="bp-stat__num" id="scene1-stat-bills">0</p>
+              <p class="bp-stat__num" id="mock-stat-bills">0</p>
               <div class="bp-stat__sub"><img src="../../icons/bill-pay-mock/footer-check.svg" alt="" /><span>Approved</span></div>
             </div>
             <div class="bp-stat">
               <p class="bp-stat__label">Vendors</p>
-              <p class="bp-stat__num" id="scene1-stat-vendors">0</p>
+              <p class="bp-stat__num" id="mock-stat-vendors">0</p>
               <div class="bp-stat__sub"><img src="../../icons/bill-pay-mock/footer-check.svg" alt="" /><span>Authorized</span></div>
             </div>
             <div class="bp-stat">
               <p class="bp-stat__label">Payments</p>
-              <p class="bp-stat__num" id="scene1-stat-payments">0</p>
+              <p class="bp-stat__num" id="mock-stat-payments">0</p>
               <div class="bp-stat__sub"><img src="../../icons/bill-pay-mock/footer-check.svg" alt="" /><span>Arrives on time</span></div>
             </div>
           </div>
@@ -603,14 +717,25 @@
         </footer>
       </div>
 
-      <div class="bp-dim-overlay" id="scene1-dim-overlay"></div>
-      <div class="bp-lift-layer" id="scene1-lift-layer"></div>
-    </div>
-  </div>
+      <div class="bp-dim-overlay" id="mock-dim-overlay"></div>
+      <div class="bp-lift-layer" id="mock-lift-layer"></div>
 
-  <!-- Scene 2 — placeholder, no built content yet. -->
-  <div id="scene2-mock" class="scene-mock-wrap" style="display: none">
-    <div class="scene-placeholder"></div>
+      <!-- Scene 2 only — cursor + click ripple. Sit in the same native
+           1440x1000 coordinate space as the rest of .mock-scaler's
+           children (dim-overlay, lift-layer), positioned in native px by
+           renderScene2, not percentages (unlike the walkthrough gallery
+           this is ported from) — consistent with how this file already
+           positions everything else. Hidden (opacity:0) at rest so they
+           never show during scene 1 or scene 3. -->
+      <div class="scene2-cursor" id="scene2-cursor">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 2 L4 20 L8.5 16.5 L11.2 22 L14 20.6 L11.3 15.2 L17 15 Z" fill="white" stroke="black" stroke-width="1.2" stroke-linejoin="round" />
+        </svg>
+      </div>
+      <div class="scene2-ripple" id="scene2-ripple">
+        <div class="scene2-ripple__disc"></div>
+      </div>
+    </div>
   </div>
 
   <!-- Scene 3 — placeholder, no built content yet. -->
@@ -623,12 +748,13 @@
     // One continuous timeline for all 3 scenes, loaded once by the parent
     // iframe and never reloaded. BOUNDARIES/TOTAL_DURATION must match
     // SCENE_BOUNDARIES/TOTAL_DURATION in js/bill-pay/scene-gallery.js
-    // exactly. Scene 1 is the built row-travel animation; scenes 2 and 3
-    // are placeholders (see .scene-placeholder) — boundary math unchanged
-    // from before, since the scene count and per-scene duration didn't
-    // need to move.
-    var BOUNDARIES = [0, 6500, 13000];
-    var TOTAL_DURATION = 19500;
+    // exactly. Scene 1 (row travel) and scene 2 (bulk payment cursor
+    // demo) are both built; scene 3 is still a placeholder (see
+    // .scene-placeholder). Scene 2's own length (10660ms) is computed by
+    // buildScene2Segments — kept in sync here by hand, same as every
+    // other cross-file duration in this project.
+    var BOUNDARIES = [0, 6500, 15910];
+    var TOTAL_DURATION = 22410;
 
     var body = document.body;
     var epoch = performance.now();
@@ -694,16 +820,16 @@
     // identical data to assets/mock-screen/bill-pay/schedule-payment.js's
     // ROWS, not re-derived.
     var ROWS = [
-      { id: 1, vendor: "Barmett Lawn Care", method: "bank", last4: "3456", bill: "153", due: "08/29/25", withdraw: "08/25", arrives: "08/28", fee: 1.0, amount: 650.0, action: "Manage" },
+      { id: 1, vendor: "Barnett Lawn Care", method: "bank", last4: "3456", bill: "153", due: "08/29/25", withdraw: "08/25", arrives: "08/28", fee: 1.0, amount: 650.0, action: "Manage" },
       { id: 2, vendor: "Bluebird Office Supplies", method: "check", last4: "", bill: "1764", due: "09/06/25", withdraw: "09/02", arrives: "09/05", fee: 1.0, amount: 385.0, action: "Manage" },
-      { id: 3, vendor: "Barmett Lawn Care", method: "bank", last4: "3456", bill: "154", due: "09/09/25", withdraw: "09/05", arrives: "09/08", fee: 1.0, amount: 725.0, action: "Manage" },
+      { id: 3, vendor: "Barnett Lawn Care", method: "bank", last4: "3456", bill: "154", due: "09/09/25", withdraw: "09/05", arrives: "09/08", fee: 1.0, amount: 725.0, action: "Manage" },
       { id: 4, vendor: "Good Heart Catering", method: "check", last4: "", bill: "9092", due: "09/12/25", withdraw: "09/08", arrives: "09/11", fee: 1.0, amount: 1250.0, action: "Manage" },
       { id: 5, vendor: "Greenfield Solutions", method: "bank", last4: "1278", bill: "7562", due: "09/14/25", withdraw: "09/10", arrives: "09/13", fee: 1.0, amount: 1800.0, action: "Manage" },
       { id: 6, vendor: "Red Ocean Developer", method: "bank", last4: "7989", bill: "349", due: "09/15/25", withdraw: "09/11", arrives: "09/14", fee: 1.0, amount: 1500.0, action: "Manage" },
       { id: 7, vendor: "Bluebird Office Supplies", method: "check", last4: "", bill: "1789", due: "09/16/25", withdraw: "09/12", arrives: "09/15", fee: 1.0, amount: 520.0, action: "Manage" },
       { id: 8, vendor: "Greenfield Solutions", method: "bank", last4: "1278", bill: "7562", due: "09/19/25", withdraw: "09/15", arrives: "09/18", fee: 1.0, amount: 1950.0, action: "Manage" },
       { id: 9, vendor: "Good Heart Catering", method: "check", last4: "", bill: "9095", due: "09/20/25", withdraw: "09/16", arrives: "09/19", fee: 1.0, amount: 875.0, action: "Manage" },
-      { id: 10, vendor: "Barmett Lawn Care", method: "bank", last4: "3456", bill: "155", due: "09/22/25", withdraw: "09/18", arrives: "09/21", fee: 1.0, amount: 580.0, action: "Manage" },
+      { id: 10, vendor: "Barnett Lawn Care", method: "bank", last4: "3456", bill: "155", due: "09/22/25", withdraw: "09/18", arrives: "09/21", fee: 1.0, amount: 580.0, action: "Manage" },
       { id: 11, vendor: "Greenfield Solutions", method: "bank", last4: "1278", bill: "7589", due: "09/24/25", withdraw: "09/20", arrives: "09/23", fee: 1.0, amount: 1750.0, action: "Manage" },
       { id: 12, vendor: "Red Ocean Developer", method: "bank", last4: "7989", bill: "354", due: "09/25/25", withdraw: "09/21", arrives: "09/24", fee: 1.0, amount: 1650.0, action: "Manage" },
       { id: 13, vendor: "Bluebird Office Supplies", method: "check", last4: "", bill: "1790", due: "09/27/25", withdraw: "09/23", arrives: "09/26", fee: 1.0, amount: 290.0, action: "Manage" }
@@ -755,37 +881,211 @@
       return tmp.firstChild.innerHTML;
     }
 
-    var scene1 = { instance: null };
-    var scene2Wrap = document.getElementById("scene2-mock");
+    // ---- Bulk mode (ported from schedule-payment.js, not redesigned) ----
+    // Adds the capability to render bulk mode; nothing here is wired to
+    // the scene timeline yet, and the toggle stays non-interactive — no
+    // click listener anywhere in this file. state only carries the
+    // fields these ported functions actually read — no drawer/narrow-
+    // toggle state, since neither exists in this file.
+    var state = {
+      mode: "batch", // batch | bulk
+      narrow: false,
+      expanded: {} // vendor -> bool
+    };
+
+    // Verbatim from schedule-payment.js.
+    function vendorGroups() {
+      var order = [];
+      var map = {};
+      ROWS.forEach(function (r) {
+        if (!map[r.vendor]) {
+          map[r.vendor] = { vendor: r.vendor, method: r.method, last4: r.last4, rows: [] };
+          order.push(r.vendor);
+        }
+        map[r.vendor].rows.push(r);
+      });
+      return order.map(function (v) {
+        var g = map[v];
+        g.total = g.rows.reduce(function (s, r) { return s + r.amount; }, 0);
+        return g;
+      });
+    }
+
+    // Verbatim from schedule-payment.js.
+    function rowCellsCommon(narrowAttr) {
+      return narrowAttr ? " data-narrow-hide" : "";
+    }
+
+    // Verbatim from schedule-payment.js. state.narrow is always false here
+    // (no drawer/narrow mode in this file) — kept for fidelity, not dead:
+    // renderVendorRow calls this exactly as schedule-payment.js does.
+    function renderActionCell(action, isSub) {
+      if (state.narrow) {
+        return (
+          '<div class="bp-cell bp-cell--action" data-action="' + action + '">' +
+          '<img class="bp-action-icon" src="' + ICONS + "narrow-action.svg" + '" alt="" />' +
+          "</div>"
+        );
+      }
+      return (
+        '<div class="bp-cell bp-cell--action" data-action="' + action + '">' +
+        '<span class="bp-action-text">' + action + "</span>" +
+        "</div>"
+      );
+    }
+
+    // Verbatim from schedule-payment.js. Bulk sub-rows do NOT have a
+    // Manage/Review action, but the action cell isn't empty — it's the
+    // shared "close" icon component, present in Figma's sub-row variants in
+    // both full and narrow width. narrow-action.svg's viewBox (14.0445 x
+    // 14.0552) matches this exact Figma icon box to the sub-pixel, so it's
+    // reused here rather than the larger/darker close.svg (header/drawer
+    // close) or inventing a duplicate asset.
+    function renderSubRow(row) {
+      return (
+        '<div class="bp-row bp-row--sub" data-row-id="' + row.id + '">' +
+          '<div class="bp-cell bp-cell--vendor" style="opacity:0"></div>' +
+          '<div class="bp-cell bp-cell--bill"><span>' + row.bill + "</span></div>" +
+          '<div class="bp-cell bp-cell--status"><span class="bp-status__check">' + GLYPH.statusCheck + '</span><span class="bp-status-text">Approved</span></div>' +
+          '<div class="bp-cell bp-cell--due"><span>' + row.due + "</span></div>" +
+          '<div class="bp-cell bp-cell--speed" data-narrow-hide style="opacity:0"></div>' +
+          '<div class="bp-cell bp-cell--fee" data-narrow-hide style="opacity:0"></div>' +
+          '<div class="bp-cell bp-cell--balance" style="opacity:0"></div>' +
+          '<div class="bp-cell bp-cell--amount"><div class="bp-amount-field"><span>' + money(row.amount) + "</span></div></div>" +
+          '<div class="bp-cell bp-cell--action"><img class="bp-action-icon" src="' + ICONS + 'narrow-action.svg" alt="" /></div>' +
+        "</div>"
+      );
+    }
+
+    // Verbatim from schedule-payment.js.
+    function renderVendorRow(group) {
+      var expanded = !!state.expanded[group.vendor];
+      var narrowHideSpeed = rowCellsCommon(true);
+      // Fee is NOT summed: one vendor = one payment = one $1.00 fee,
+      // regardless of how many bills are aggregated under it.
+      var feeTotal = 1.0;
+      var withdrawVals = group.rows.map(function (r) { return r.withdraw; }).filter(Boolean);
+      var arrivesVals = group.rows.map(function (r) { return r.arrives; }).filter(Boolean);
+      function dateKey(mmdd) {
+        if (!mmdd) return 999999;
+        var parts = mmdd.split('/');
+        return parseInt(parts[0], 10) * 100 + parseInt(parts[1], 10);
+      }
+      var earliestWithdraw = withdrawVals.length ? withdrawVals.reduce(function (a,b){ return dateKey(a) < dateKey(b) ? a : b; }) : '';
+      var latestArrives = arrivesVals.length ? arrivesVals.reduce(function (a,b){ return dateKey(a) > dateKey(b) ? a : b; }) : '';
+
+      var vendorRowHtml =
+        '<div class="bp-row" data-vendor-row="' + group.vendor + '">' +
+          '<div class="bp-cell bp-cell--vendor">' +
+            '<div class="bp-vendor">' +
+              '<button class="bp-vendor__chevron" type="button" data-chevron data-expanded="' + expanded + '" aria-label="Expand vendor">' +
+                '<img src="' + ICONS + 'dropdown-chevron.svg" alt="" />' +
+              "</button>" +
+              '<div class="bp-vendor__body">' +
+                '<p class="bp-vendor__name">' + group.vendor + "</p>" +
+                '<div class="bp-vendor__method">' +
+                  '<span class="bp-vendor__method-icon">' + GLYPH[group.method] + "</span>" +
+                  '<p class="bp-vendor__method-text">' + methodLabel(group) + "</p>" +
+                "</div>" +
+              "</div>" +
+            "</div>" +
+          "</div>" +
+          '<div class="bp-cell bp-cell--bill"><span>' + group.rows.length + "</span></div>" +
+          '<div class="bp-cell bp-cell--status" style="opacity:0"></div>' +
+          '<div class="bp-cell bp-cell--due" style="opacity:0"></div>' +
+          '<div class="bp-cell bp-cell--speed"' + narrowHideSpeed + ">" +
+            '<div class="bp-speed__top"><p class="bp-speed__label">Standard</p><span class="bp-badge"><span>On time</span></span></div>' +
+            '<div class="bp-speed__meta"><span>Withdraw ' + (earliestWithdraw || '') + "</span><span style=\"display:inline-flex\">" + GLYPH.arrow + "</span><span>Arrives " + (latestArrives || '') + "</span></div>" +
+          "</div>" +
+          '<div class="bp-cell bp-cell--fee"' + narrowHideSpeed + '><div class="bp-fee"><span>' + money(feeTotal) + "</span><span>" + GLYPH.info + "</span></div></div>" +
+          '<div class="bp-cell bp-cell--balance"><span>' + money(group.total) + "</span></div>" +
+          '<div class="bp-cell bp-cell--amount"><div class="bp-amount-field"><span>' + money(group.total) + "</span></div></div>" +
+          // Confirmed against Figma: Manage is present on the vendor row in
+          // bulk-full but structurally absent in bulk-narrow. state.narrow
+          // is always false in this file (no drawer here), so this is a
+          // no-op today — kept for parity with schedule-payment.js.
+          (state.narrow ? "" : renderActionCell("Manage")) +
+        "</div>";
+      var expandWrapHtml =
+        '<div class="bp-expand-wrap" data-expand-wrap="' + group.vendor + '" style="overflow:hidden;height:' + (expanded ? "auto" : "0") + ";margin-top:" + (expanded ? "14px" : "0") + '">' +
+          '<div class="bp-expand-inner" style="display:flex;flex-direction:column;gap:14px">' + (expanded ? group.rows.map(renderSubRow).join("") : "") + "</div>" +
+        "</div>";
+      return '<div class="bp-vendor-group">' + vendorRowHtml + expandWrapHtml + "</div>";
+    }
+
+    // Mirrors schedule-payment.js's renderRows(), minus bindRowEvents() —
+    // this file has no click interactivity anywhere (chevrons/actions
+    // included), so there's nothing to bind.
+    function renderRows(rowsScroll) {
+      if (state.mode === "batch") {
+        rowsScroll.innerHTML = ROWS.map(renderBatchRow).join("");
+      } else {
+        rowsScroll.innerHTML = vendorGroups().map(renderVendorRow).join("");
+      }
+    }
+
+    // Mirrors schedule-payment.js's updateAggregates(), adapted to this
+    // file's own getElementById-by-idPrefix convention instead of a
+    // cached els object (this file never built one).
+    function updateAggregates(idPrefix) {
+      var bills = ROWS.length;
+      var groups = vendorGroups();
+      var vendors = groups.length;
+      var payments = state.mode === "batch" ? bills : vendors;
+      var totalAmount = ROWS.reduce(function (s, r) { return s + r.amount; }, 0);
+      var totalFee = 1.0 * payments; // $1.00 processing fee per payment made
+      document.getElementById(idPrefix + "-total-amount").textContent = money(totalAmount);
+      document.getElementById(idPrefix + "-total-fee").textContent = "Total processing fees: " + money(totalFee);
+      document.getElementById(idPrefix + "-stat-bills").textContent = bills;
+      document.getElementById(idPrefix + "-stat-vendors").textContent = vendors;
+      document.getElementById(idPrefix + "-stat-payments").textContent = payments;
+    }
+
+    // Mirrors schedule-payment.js's setMode(), minus the
+    // bp-disable-transitions dance — nothing in this file's .bp-cell/etc.
+    // has a CSS transition to suppress (that's a schedule-payment.html-
+    // only, narrow-mode-drawer feature). Not wired to a click listener —
+    // the toggle stays non-interactive — but scene 2's regroup transition
+    // does call this directly, at its own dip-through trough (see
+    // renderScene2's REGROUP section).
+    function setMode(mode) {
+      state.mode = mode;
+      state.expanded = {};
+      var toggle = document.getElementById("mock-mode-toggle");
+      if (toggle) toggle.setAttribute("aria-checked", mode === "bulk" ? "true" : "false");
+      renderRows(document.getElementById("mock-rows-scroll"));
+      updateAggregates("mock");
+    }
+
+    var sharedMock = { instance: null };
     var scene3Wrap = document.getElementById("scene3-mock");
 
-    // Scene 1's build: one persistent traveling card (not a fixed clone
-    // per row) plus references to all 5 real rows (to toggle which one is
-    // suppressed) and their measured native-space top positions (to
-    // interpolate between while traveling). One-time measure-then-hide
-    // setup, run lazily on first visit.
-    function buildScene1Instance() {
-      var idPrefix = "scene1";
-      var mockWrap = document.getElementById(idPrefix + "-mock");
-      var rowsScroll = document.getElementById(idPrefix + "-rows-scroll");
-      rowsScroll.innerHTML = ROWS.map(renderBatchRow).join("");
+    // The one shared mock instance — built once, lazily, on first visit
+    // to either scene 1 or scene 2, then reused. Returns everything
+    // either scene's render function needs: scene 1's persistent
+    // traveling card (built exactly as before, just against the shared
+    // screen instead of its own copy), plus scene 2's cursor/ripple
+    // element refs and every position it points at, pre-measured here so
+    // renderScene2 itself only ever does arithmetic, never DOM queries.
+    // Same one-time measure-then-hide discipline as before, just with
+    // more to measure — including a temporary detour through bulk mode
+    // (Barnett expanded) to measure its own row positions, reverted
+    // before returning so the shared instance comes back in the state
+    // scene 1 expects (batch, collapsed, unscrolled).
+    function buildMockInstance() {
+      var mockWrap = document.getElementById("mock-wrap");
+      var rowsScroll = document.getElementById("mock-rows-scroll");
+      var screenEl = document.getElementById("mock-screen");
+      var dimOverlay = document.getElementById("mock-dim-overlay");
+      var liftLayer = document.getElementById("mock-lift-layer");
+      var cursorEl = document.getElementById("scene2-cursor");
+      var rippleEl = document.getElementById("scene2-ripple");
+      var rippleDisc = rippleEl.querySelector(".scene2-ripple__disc");
 
-      var vendors = {};
-      var totalAmount = 0;
-      ROWS.forEach(function (r) {
-        vendors[r.vendor] = true;
-        totalAmount += r.amount;
-      });
-      var vendorCount = Object.keys(vendors).length;
-      document.getElementById(idPrefix + "-total-amount").textContent = money(totalAmount);
-      document.getElementById(idPrefix + "-total-fee").textContent = "Total processing fees: " + money(ROWS.length * 1.0);
-      document.getElementById(idPrefix + "-stat-bills").textContent = ROWS.length;
-      document.getElementById(idPrefix + "-stat-vendors").textContent = vendorCount;
-      document.getElementById(idPrefix + "-stat-payments").textContent = ROWS.length;
-
-      var screenEl = document.getElementById(idPrefix + "-screen");
-      var dimOverlay = document.getElementById(idPrefix + "-dim-overlay");
-      var liftLayer = document.getElementById(idPrefix + "-lift-layer");
+      state.mode = "batch";
+      state.expanded = {};
+      renderRows(rowsScroll);
+      updateAggregates("mock");
 
       mockWrap.style.display = "block";
       mockWrap.style.visibility = "hidden";
@@ -793,12 +1093,33 @@
       var scale = 0.4513888889; // 650 / 1440, same as .mock-scaler
       var screenRect = screenEl.getBoundingClientRect();
 
+      // Native-px rect of el, relative to refRect's top-left — the same
+      // math buildScene1Instance always used for row positions, just
+      // factored out since scene 2 needs it for many more elements.
+      function nativeRect(el, refRect) {
+        var r = el.getBoundingClientRect();
+        return {
+          left: (r.left - refRect.left) / scale,
+          top: (r.top - refRect.top) / scale,
+          right: (r.right - refRect.left) / scale,
+          bottom: (r.bottom - refRect.top) / scale,
+          width: r.width / scale,
+          height: r.height / scale,
+          centerX: (r.left + r.width / 2 - refRect.left) / scale,
+          centerY: (r.top + r.height / 2 - refRect.top) / scale
+        };
+      }
+      function rowById(id) {
+        return rowsScroll.querySelector('[data-row-id="' + id + '"]');
+      }
+
+      // ---- Scene 1's traveling card (unchanged from before) ----
       var sources = [];
       var rowTops = [];
       var restWidthNative, contentWidthNative, baseLeftNative, baseTopNative;
 
       for (var i = 1; i <= 5; i++) {
-        var rowEl = rowsScroll.querySelector('[data-row-id="' + i + '"]');
+        var rowEl = rowById(i);
         var rowRect = rowEl.getBoundingClientRect();
         sources.push(rowEl);
         rowTops.push((rowRect.top - screenRect.top) / scale);
@@ -820,7 +1141,56 @@
       card.style.left = baseLeftNative + "px";
       card.style.width = contentWidthNative + "px";
       card.style.transformOrigin = "center center";
+      // Explicit default (rather than relying on renderScene1 to set it
+      // on first frame) — the shared instance can now be built on first
+      // visit to EITHER scene, and if that first visit is scene 2,
+      // renderScene1 never runs, so nothing else would ever clear this.
+      card.style.opacity = "0";
       liftLayer.appendChild(card);
+
+      // ---- Scene 2's targets — batch mode, at rest ----
+      // statBillsEl/statPaymentsEl are the figures themselves — used only
+      // to measure where the circle gesture goes (it circles the number,
+      // not the whole block). statBillsBlockEl/statPaymentsBlockEl are
+      // their containing .bp-stat (label + figure + status line) — the
+      // element that actually gets scaled during the pop.
+      var statBillsEl = document.getElementById("mock-stat-bills");
+      var statPaymentsEl = document.getElementById("mock-stat-payments");
+      var statBillsBlockEl = statBillsEl.closest(".bp-stat");
+      var statPaymentsBlockEl = statPaymentsEl.closest(".bp-stat");
+      var toggleEl = document.getElementById("mock-mode-toggle");
+      var s2 = {
+        row1Vendor: nativeRect(sources[0].querySelector(".bp-vendor__name"), screenRect),
+        statsBills: nativeRect(statBillsEl, screenRect),
+        statsPayments: nativeRect(statPaymentsEl, screenRect),
+        toggleLabel: nativeRect(document.querySelector(".bp-combine__toggle-label"), screenRect),
+        toggle: nativeRect(document.getElementById("mock-mode-toggle"), screenRect)
+      };
+
+      // ---- Bulk mode, Barnett expanded — measured in a temporary detour,
+      // reverted below before returning. ----
+      state.mode = "bulk";
+      var barnettVendor = vendorGroups().filter(function (g) { return g.vendor === "Barnett Lawn Care"; })[0].vendor;
+      state.expanded = {};
+      state.expanded[barnettVendor] = true;
+      renderRows(rowsScroll);
+      var barnettRowEl = rowsScroll.querySelector('[data-vendor-row="' + barnettVendor + '"]');
+      var barnettGroupEl = barnettRowEl.parentElement;
+      var subRows = barnettGroupEl.querySelectorAll(".bp-row--sub");
+      var s2Bulk = {
+        vendor: nativeRect(barnettRowEl.querySelector(".bp-vendor__name"), screenRect),
+        subBillCenterY: Array.prototype.map.call(subRows, function (r) {
+          return nativeRect(r.querySelector(".bp-cell--bill span"), screenRect).centerY;
+        }),
+        subBillCenterX: nativeRect(subRows[0].querySelector(".bp-cell--bill span"), screenRect).centerX
+      };
+
+      // Revert to scene 1's expected default before returning.
+      state.mode = "batch";
+      state.expanded = {};
+      renderRows(rowsScroll);
+      updateAggregates("mock");
+      rowsScroll.scrollTop = 0;
 
       mockWrap.style.visibility = "";
       mockWrap.style.display = "none";
@@ -829,12 +1199,25 @@
         mockWrap: mockWrap,
         screenEl: screenEl,
         dimOverlay: dimOverlay,
+        rowsScroll: rowsScroll,
         card: card,
         cardCells: card.querySelectorAll(".bp-cell"),
         sources: sources,
         rowTops: rowTops,
         baseTopNative: baseTopNative,
-        lastContentRow: -1 // guarantees the first render() call populates real content
+        lastContentRow: -1, // guarantees the first render() call populates real content
+        cursorEl: cursorEl,
+        rippleEl: rippleEl,
+        rippleDisc: rippleDisc,
+        s2: s2,
+        statBillsEl: statBillsEl,
+        statPaymentsEl: statPaymentsEl,
+        statBillsBlockEl: statBillsBlockEl,
+        toggleEl: toggleEl,
+        statPaymentsBlockEl: statPaymentsBlockEl,
+        s2Bulk: s2Bulk,
+        barnettVendor: barnettVendor,
+        s2LastContentMode: "batch" // scene 2's own DOM-swap cache, independent of scene 1's lastContentRow
       };
     }
 
@@ -1036,6 +1419,20 @@
 
     // Renders scene 1's single traveling card at scene-local time t.
     function renderScene1(instance, t) {
+      // Rebuilt from scratch every frame, not carried forward — hides
+      // whatever scene 2 may have left behind (its cursor, its ripple)
+      // and forces the shared table back to the flat batch content this
+      // scene's card and source-row suppression assume, regardless of
+      // how the timeline arrived here (a seek, prev/next, anything).
+      // ensureScene2Phase is cache-guarded, so this is a no-op once the
+      // table is already in batch mode — not a rebuild every frame.
+      instance.cursorEl.style.opacity = 0;
+      instance.rippleDisc.style.opacity = 0;
+      instance.rowsScroll.style.opacity = 1;
+      instance.rowsScroll.scrollTop = 0;
+      instance.toggleEl.setAttribute("aria-checked", "false");
+      ensureScene2Phase(instance, "batch");
+
       var travel = computeTravel(t);
 
       if (!travel) {
@@ -1096,9 +1493,402 @@
       }
     }
 
-    // Hides scene 1's mock instance when another scene is active (a no-op
-    // if it hasn't been built yet — build is lazy, on first visit — since
-    // an unbuilt instance is still display:none from markup).
+    // ============================================================
+    // Scene 2 — bulk payment optimization. No lifted card; rows stay
+    // flat and a cursor does the pointing. Gesture mechanics (easing,
+    // circle/sweep math, click-ripple visual) are ported from
+    // assets/walkthrough/bill-pay/step-1.html's cursor system — that
+    // file drives them with real-time async/rAF chains, which can't be
+    // seeked, so every function below is the same math as a pure
+    // function of local elapsed ms instead. The one substantive change:
+    // the walkthrough seeds its hand-drawn wobble with Math.random() per
+    // play; here every wobble seed is a fixed constant per gesture, so
+    // the same timestamp always draws the same shape.
+    // ============================================================
+
+    // Ported verbatim from step-1.html/step-2.html — their own easing,
+    // not this file's makeEaseOut-based curves, to genuinely match "same
+    // speed and feel" rather than something that only looks similar.
+    function easeInOutCubic(x) {
+      return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+    }
+    // cubic-bezier(.25,.7,.3,1) — the click ripple's own curve, ported
+    // from step-2.html's discGrow keyframe timing-function. Reuses the
+    // existing bezier solver rather than inventing a new one.
+    var easeRipple = makeEaseOut(0.25, 0.7, 0.3, 1);
+
+    function moveTo2(localT, duration, from, to) {
+      var e = easeInOutCubic(clamp01(localT / duration));
+      return { x: from.x + (to.x - from.x) * e, y: from.y + (to.y - from.y) * e };
+    }
+
+    // Continuous parametric ellipse, one revolution starting at the top,
+    // plus a low-frequency wobble on the radius — ported from step-1
+    // .html's circleSweep. seedA/seedB replace its Math.random() seeding.
+    function computeCircle(localT, duration, p) {
+      var e = easeInOutCubic(clamp01(localT / duration));
+      var angle = -Math.PI / 2 + e * Math.PI * 2;
+      var rxJ = p.rx * (1 + 0.10 * Math.sin(angle * 2.3 + p.seedA));
+      var ryJ = p.ry * (1 + 0.09 * Math.sin(angle * 1.7 + p.seedB));
+      return { x: p.cx + Math.cos(angle) * rxJ, y: p.cy + Math.sin(angle) * ryJ };
+    }
+
+    // Left to right and back, one continuous sweep — only overall
+    // start/end easing, no deceleration at the turnaround — same
+    // cumulative-distance technique as step-1.html's sweepPath, extended
+    // to a there-and-back path with a small perpendicular wobble.
+    function computeUnderline(localT, duration, p) {
+      var e = easeInOutCubic(clamp01(localT / duration));
+      var half = p.x2 - p.x1;
+      var dist = e * half * 2;
+      var x = dist <= half ? p.x1 + dist : p.x2 - (dist - half);
+      var y = p.y + 1.6 * Math.sin(e * Math.PI * 5 + p.seed);
+      return { x: x, y: y };
+    }
+
+    // Passes down through a sequence of y-positions at one continuous
+    // speed — same waypoint/cumulative-distance mechanic as sweepPath,
+    // vertical instead of horizontal, same wobble treatment (perpendicular
+    // = horizontal here).
+    function computeVerticalTravel(localT, duration, p) {
+      var e = easeInOutCubic(clamp01(localT / duration));
+      var ys = p.ys;
+      var dists = [0];
+      for (var i = 1; i < ys.length; i++) dists.push(dists[i - 1] + Math.abs(ys[i] - ys[i - 1]));
+      var total = dists[dists.length - 1] || 1;
+      var targetDist = e * total;
+      var idx = 0;
+      while (idx < dists.length - 2 && dists[idx + 1] < targetDist) idx++;
+      var segLen = (dists[idx + 1] - dists[idx]) || 1;
+      var segT = clamp01((targetDist - dists[idx]) / segLen);
+      var y = ys[idx] + (ys[idx + 1] - ys[idx]) * segT;
+      var x = p.x + 1.4 * Math.sin(e * Math.PI * 4 + p.seed);
+      return { x: x, y: y };
+    }
+
+    // Ported from step-2.html's @keyframes discGrow: scale runs 0%→55%→
+    // 100% (.05 → .95 → 1.3), opacity runs 0%→18%→55%→100% (0 → .95 →
+    // .85 → 0) — two independently-keyed properties, exactly as the
+    // original CSS keyframes defined them (opacity gets an extra stop
+    // scale doesn't). cubic-bezier(.25,.7,.3,1) eases the overall
+    // timeline; interpolation between stops is linear, same as CSS.
+    var RIPPLE_SCALE_STOPS = [{ p: 0, v: 0.05 }, { p: 0.55, v: 0.95 }, { p: 1, v: 1.3 }];
+    var RIPPLE_OPACITY_STOPS = [{ p: 0, v: 0 }, { p: 0.18, v: 0.95 }, { p: 0.55, v: 0.85 }, { p: 1, v: 0 }];
+    function lerpStops(stops, e) {
+      var i = 0;
+      while (i < stops.length - 2 && stops[i + 1].p < e) i++;
+      var a = stops[i], b = stops[i + 1];
+      var segT = (e - a.p) / (b.p - a.p || 1);
+      return a.v + (b.v - a.v) * segT;
+    }
+    function computeClickRipple(localT, duration) {
+      var e = easeRipple(clamp01(localT / duration));
+      return { scale: lerpStops(RIPPLE_SCALE_STOPS, e), opacity: lerpStops(RIPPLE_OPACITY_STOPS, e) };
+    }
+
+    // A footer stat block (label + figure + status line, as one unit)
+    // popping forward — the same gesture vocabulary as scene 1's row lift
+    // (computeTravel's rise/fall): the same 1.20 max scale, the same
+    // easeOut rise / easeRelease fall curves, applied to the whole block
+    // instead of a whole row. Scale only — no elevation, no glow, no
+    // background of any kind; simpler than the row lift, which had a
+    // shadow to convey lift because it had a divider rule to clear. t is
+    // local to the pop's own start (0 = not yet risen); holdDur is the
+    // caller's circle duration, so the block stays fully popped for
+    // exactly as long as the cursor is circling the figure inside it.
+    function computeNumberPop(t, riseDur, holdDur, fallDur) {
+      var riseEnd = riseDur, holdEnd = riseDur + holdDur, fallEnd = holdEnd + fallDur;
+      if (t <= 0) return { scale: 1 };
+      if (t < riseEnd) {
+        return { scale: 1 + 0.20 * easeOut(clamp01(t / riseDur)) };
+      }
+      if (t < holdEnd) return { scale: 1.20 };
+      if (t < fallEnd) {
+        return { scale: 1.20 - 0.20 * easeRelease(clamp01((t - holdEnd) / fallDur)) };
+      }
+      return { scale: 1 };
+    }
+
+    // Derives a circle gesture's params from a measured rect — loose,
+    // not tight, per spec ("draws a loose ellipse around a piece of
+    // text"): half the rect's own size plus a fixed margin.
+    function circleParamsFor(rect, seedA, seedB) {
+      return { cx: rect.centerX, cy: rect.centerY, rx: rect.width / 2 + 14, ry: rect.height / 2 + 11, seedA: seedA, seedB: seedB };
+    }
+    // Derives an underline gesture's params from a measured rect.
+    function underlineParamsFor(rect, seed) {
+      return { x1: rect.left - 3, x2: rect.right + 3, y: rect.bottom + 4, seed: seed };
+    }
+    function circleTop(p) { return { x: p.cx, y: p.cy - p.ry }; }
+    function underlineStart(p) { return { x: p.x1, y: p.y }; }
+
+    // Builds scene 2's full segment list + cumulative boundaries once,
+    // from the shared instance's own measurements (buildMockInstance),
+    // and caches it on the instance — the values never change once
+    // measured, so there's no reason to rebuild ~40 small objects on
+    // every frame. An array of {type, dur, ...} instead of scene 1's
+    // named-constant style: scene 1 has 11 segments where hand-naming
+    // each boundary reads fine; scene 2 has far more, and hand-naming
+    // that many invites an arithmetic mistake a computed sum can't make.
+    // The point of the scene: BILLS is established, then PAYMENTS is
+    // established, both untouched — then, after the regroup, the cursor
+    // returns to the exact same two figures. Bills reads the same;
+    // payments reads reduced. Every other beat (the down-column travel,
+    // the toggle, the regroup, Barnett opening) is setup for that
+    // contrast, not content in its own right.
+    function buildScene2Segments(instance) {
+      var s2 = instance.s2, sb = instance.s2Bulk;
+
+      var pBills = circleParamsFor(s2.statsBills, 0.6, 2.1);
+      var pPayments = circleParamsFor(s2.statsPayments, 4.2, 1.1);
+      var pToggleLabel = underlineParamsFor(s2.toggleLabel, 1.7);
+      var pToggleClick = { x: s2.toggle.centerX, y: s2.toggle.centerY };
+      var pVendorGrouped = circleParamsFor(sb.vendor, 5.5, 0.3);
+      var pVertical = { x: sb.subBillCenterX, ys: sb.subBillCenterY, seed: 2.2 };
+
+      var OFF_STAGE = { x: -90, y: s2.row1Vendor.centerY };
+      var EXIT_STAGE = { x: 1530, y: pPayments.cy };
+
+      // riseDur + circleDur + fallDur, packaged as one lifecycle so the
+      // number stays popped for exactly as long as the circle takes —
+      // see computeNumberPop.
+      function popCircleSeg(riseDur, circleDur, fallDur, p, numEl) {
+        return { type: "popCircle", dur: riseDur + circleDur + fallDur, riseDur: riseDur, circleDur: circleDur, fallDur: fallDur, p: p, numEl: numEl };
+      }
+
+      var seg = [
+        // 1-2. Enter, hold at the first row, then straight down the
+        // vendor column to the footer.
+        { type: "enter", dur: 280, from: OFF_STAGE, to: { x: s2.row1Vendor.centerX, y: s2.row1Vendor.centerY } },
+        { type: "hold", dur: 300, at: { x: s2.row1Vendor.centerX, y: s2.row1Vendor.centerY } },
+        { type: "verticalTravel", dur: 750, p: { x: s2.row1Vendor.centerX, ys: [s2.row1Vendor.centerY, s2.statsBills.centerY], seed: 1.3 } },
+        { type: "move", dur: 150, from: { x: s2.row1Vendor.centerX, y: s2.statsBills.centerY }, to: circleTop(pBills) },
+        { type: "hold", dur: 300, at: circleTop(pBills) },
+        // 3. BILLS pops, gets circled, settles back — establishing.
+        popCircleSeg(230, 650, 190, pBills, instance.statBillsBlockEl),
+        // 4. PAYMENTS — same treatment, established.
+        { type: "move", dur: 260, from: circleTop(pBills), to: circleTop(pPayments) },
+        popCircleSeg(220, 480, 190, pPayments, instance.statPaymentsBlockEl),
+        // 5. Up to the toggle, underline the label, then straight into the
+        // click — no dwell, the cursor commits the moment it arrives.
+        { type: "move", dur: 280, from: circleTop(pPayments), to: underlineStart(pToggleLabel) },
+        { type: "underline", dur: 400, p: pToggleLabel },
+        { type: "move", dur: 120, from: underlineStart(pToggleLabel), to: pToggleClick },
+        // 6. Click — regroup transition (existing, unchanged).
+        { type: "click", dur: 220, at: pToggleClick },
+        { type: "regroupFadeOut", dur: 130, at: pToggleClick },
+        { type: "regroupSwap", dur: 0, at: pToggleClick },
+        { type: "regroupFadeIn", dur: 130, at: pToggleClick },
+        { type: "hold", dur: 110, at: pToggleClick },
+        // 7. Barnett's group opens (existing expand mechanics, unchanged).
+        { type: "expand", dur: 300, at: pToggleClick },
+        // 8. Arrive at Barnett's vendor name — no circling — then travel
+        // down through its three bill numbers. Fee is never touched.
+        { type: "move", dur: 260, from: pToggleClick, to: { x: pVendorGrouped.cx, y: pVendorGrouped.cy } },
+        { type: "hold", dur: 60, at: { x: pVendorGrouped.cx, y: pVendorGrouped.cy } },
+        { type: "move", dur: 130, from: { x: pVendorGrouped.cx, y: pVendorGrouped.cy }, to: { x: pVertical.x, y: pVertical.ys[0] } },
+        { type: "verticalTravel", dur: 550, p: pVertical },
+        { type: "hold", dur: 60, at: { x: pVertical.x, y: pVertical.ys[pVertical.ys.length - 1] } },
+        // 9. Back to the footer — the payoff. Bills unchanged, payments
+        // reduced.
+        { type: "move", dur: 320, from: { x: pVertical.x, y: pVertical.ys[pVertical.ys.length - 1] }, to: circleTop(pBills) },
+        popCircleSeg(220, 460, 190, pBills, instance.statBillsBlockEl),
+        { type: "move", dur: 260, from: circleTop(pBills), to: circleTop(pPayments) },
+        popCircleSeg(220, 520, 190, pPayments, instance.statPaymentsBlockEl),
+        // 10. Exit.
+        { type: "exit", dur: 280, from: circleTop(pPayments), to: EXIT_STAGE }
+      ];
+
+      var starts = [], ends = [], acc = 0, marks = {};
+      for (var i = 0; i < seg.length; i++) {
+        starts.push(acc);
+        acc += seg[i].dur;
+        ends.push(acc);
+        if (seg[i].type === "click") marks.clickAt = starts[i];
+        if (seg[i].type === "regroupFadeOut") marks.fadeOutStart = starts[i], marks.fadeOutEnd = ends[i];
+        if (seg[i].type === "regroupSwap") marks.swapAt = starts[i];
+        if (seg[i].type === "regroupFadeIn") marks.fadeInStart = starts[i], marks.fadeInEnd = ends[i];
+        if (seg[i].type === "expand") marks.expandStart = starts[i], marks.expandEnd = ends[i];
+      }
+
+      return { seg: seg, starts: starts, ends: ends, total: acc, marks: marks };
+    }
+
+    // dur was 160 against a 60ms stagger — a 100ms overlap window kept 2-3
+    // rows fading simultaneously almost the whole time, so the cascade
+    // read as one blurred wash instead of distinct one-after-another pops.
+    // Shortening dur so each row is mostly finished before the next starts
+    // reads as a real, legible stagger while still landing faster overall.
+    var SUB_ROW_STAGGER = 60;
+    var SUB_ROW_DUR = 110;
+
+    // Ensures the table DOM matches whichever "phase" t calls for
+    // (batch / bulk-collapsed / bulk-with-Barnett-mounted) — checked and
+    // corrected on every call, not just on the way forward, so a cold
+    // seek into the middle of the expand (or beyond) still lands on the
+    // right DOM without having played the regroup step first. Rebuilds
+    // only when the phase actually changes (cheap cache, same pattern as
+    // renderScene1's lastContentRow) — never on every frame.
+    function ensureScene2Phase(instance, phase) {
+      if (instance.s2Phase === phase) return;
+      if (phase === "batch") {
+        state.mode = "batch";
+        state.expanded = {};
+        renderRows(instance.rowsScroll);
+        updateAggregates("mock");
+      } else if (phase === "bulkCollapsed") {
+        state.mode = "bulk";
+        state.expanded = {};
+        renderRows(instance.rowsScroll);
+        updateAggregates("mock");
+        instance.rowsScroll.scrollTop = 0;
+      } else {
+        state.mode = "bulk";
+        state.expanded = {};
+        state.expanded[instance.barnettVendor] = true;
+        renderRows(instance.rowsScroll);
+        updateAggregates("mock");
+        instance.rowsScroll.scrollTop = 0;
+        var rowEl = instance.rowsScroll.querySelector('[data-vendor-row="' + instance.barnettVendor + '"]');
+        var wrapEl = rowEl.parentElement.querySelector(".bp-expand-wrap");
+        var subRows = wrapEl.querySelectorAll(".bp-row--sub");
+        // renderVendorRow's own expanded:true markup sets height:auto,
+        // margin-top:14px (fully open) — measure that natural height
+        // first (native px, unaffected by .mock-scaler's transform, same
+        // as scrollWidth elsewhere in this file), then collapse both back
+        // to 0 so the expand segment can animate them from a real,
+        // measured starting point instead of a guessed one.
+        instance.s2ExpandNatural = wrapEl.scrollHeight;
+        wrapEl.style.height = "0px";
+        wrapEl.style.marginTop = "0px";
+        for (var i = 0; i < subRows.length; i++) {
+          subRows[i].style.opacity = "0";
+          subRows[i].style.transform = "translateY(6px)";
+        }
+        instance.s2SubRows = subRows;
+      }
+      instance.s2Phase = phase;
+    }
+
+    function renderScene2(instance, t) {
+      // Rebuilt from scratch every frame, not carried forward — hides
+      // whatever scene 1 may have left behind (its traveling card, a
+      // suppressed source row) regardless of how the timeline arrived
+      // here. Source rows may currently be detached (table content
+      // already swapped to bulk/grouped markup) — setting style on a
+      // detached node is harmless, so this is safe to do unconditionally.
+      instance.card.style.opacity = 0;
+      for (var s1 = 0; s1 < instance.sources.length; s1++) instance.sources[s1].style.opacity = 1;
+
+      // Same reasoning, for this scene's own popCircle blocks: reset to
+      // neutral every frame, regardless of which segment (if any) last
+      // touched them — a cold seek to a point before either figure has
+      // popped must not show a stale pop from a previous render.
+      instance.statBillsBlockEl.style.transform = "scale(1)";
+      instance.statPaymentsBlockEl.style.transform = "scale(1)";
+
+      if (!instance.s2Segments) instance.s2Segments = buildScene2Segments(instance);
+      var S = instance.s2Segments;
+      var marks = S.marks;
+
+      instance.dimOverlay.style.opacity = 0; // scene 2 never dims the screen
+
+      // Toggle state is driven directly by the click's own start time, not
+      // by the table's regroup phase (marks.swapAt, ~350ms later) — it must
+      // flip on the same frame the cursor clicks, not when the content
+      // underneath finishes swapping.
+      instance.toggleEl.setAttribute("aria-checked", t >= marks.clickAt ? "true" : "false");
+
+      if (t <= 0 || t >= S.total) {
+        instance.cursorEl.style.opacity = 0;
+        instance.rippleDisc.style.opacity = 0;
+        ensureScene2Phase(instance, "batch");
+        instance.rowsScroll.style.opacity = 1;
+        instance.rowsScroll.scrollTop = 0;
+        return;
+      }
+
+      // ---- Table phase + continuous state (fade, expand) ----
+      var phase = t < marks.swapAt ? "batch" : t < marks.expandStart ? "bulkCollapsed" : "bulkExpanded";
+      ensureScene2Phase(instance, phase);
+
+      // This scene never scrolls the table — reset unconditionally
+      // rather than trusting it's already 0, same reasoning as above.
+      if (phase === "batch") instance.rowsScroll.scrollTop = 0;
+
+      var rowsOpacity = 1;
+      if (t >= marks.fadeOutStart && t < marks.fadeOutEnd) {
+        rowsOpacity = 1 - clamp01((t - marks.fadeOutStart) / (marks.fadeOutEnd - marks.fadeOutStart));
+      } else if (t >= marks.fadeOutEnd && t < marks.fadeInEnd) {
+        rowsOpacity = t < marks.fadeInStart ? 0 : clamp01((t - marks.fadeInStart) / (marks.fadeInEnd - marks.fadeInStart));
+      }
+      instance.rowsScroll.style.opacity = rowsOpacity;
+
+      if (phase === "bulkExpanded" && instance.s2SubRows) {
+        var expandLocal = t - marks.expandStart;
+        var rowEl2 = instance.rowsScroll.querySelector('[data-vendor-row="' + instance.barnettVendor + '"]');
+        var wrapEl2 = rowEl2.parentElement.querySelector(".bp-expand-wrap");
+        var heightP = easeOut(clamp01(expandLocal / (marks.expandEnd - marks.expandStart)));
+        wrapEl2.style.height = (heightP * instance.s2ExpandNatural) + "px";
+        wrapEl2.style.marginTop = (heightP * 14) + "px";
+        for (var si = 0; si < instance.s2SubRows.length; si++) {
+          var rowLocal = expandLocal - si * SUB_ROW_STAGGER;
+          var rowP = easeOut(clamp01(rowLocal / SUB_ROW_DUR));
+          instance.s2SubRows[si].style.opacity = rowP;
+          instance.s2SubRows[si].style.transform = "translateY(" + (6 * (1 - rowP)) + "px)";
+        }
+      }
+
+      // ---- Cursor + ripple ----
+      var idx = 0;
+      while (idx < S.seg.length - 1 && S.ends[idx] <= t) idx++;
+      var segment = S.seg[idx];
+      var localT = t - S.starts[idx];
+      var pos, cursorOpacity = 1, rippleOpacity = 0, rippleScale = 1;
+
+      if (segment.type === "enter") {
+        pos = moveTo2(localT, segment.dur, segment.from, segment.to);
+        cursorOpacity = clamp01(localT / segment.dur);
+      } else if (segment.type === "exit") {
+        pos = moveTo2(localT, segment.dur, segment.from, segment.to);
+        cursorOpacity = 1 - clamp01(localT / segment.dur);
+      } else if (segment.type === "move") {
+        pos = moveTo2(localT, segment.dur, segment.from, segment.to);
+      } else if (segment.type === "hold" || segment.type === "regroupFadeOut" || segment.type === "regroupSwap" || segment.type === "regroupFadeIn") {
+        pos = segment.at;
+      } else if (segment.type === "circle") {
+        pos = computeCircle(localT, segment.dur, segment.p);
+      } else if (segment.type === "underline") {
+        pos = computeUnderline(localT, segment.dur, segment.p);
+      } else if (segment.type === "verticalTravel") {
+        pos = computeVerticalTravel(localT, segment.dur, segment.p);
+      } else if (segment.type === "expand") {
+        pos = segment.at;
+      } else if (segment.type === "popCircle") {
+        var pop = computeNumberPop(localT, segment.riseDur, segment.circleDur, segment.fallDur);
+        segment.numEl.style.transform = "scale(" + pop.scale + ")";
+        pos = (localT < segment.riseDur || localT >= segment.riseDur + segment.circleDur)
+          ? circleTop(segment.p)
+          : computeCircle(localT - segment.riseDur, segment.circleDur, segment.p);
+      } else if (segment.type === "click") {
+        pos = segment.at;
+        var r = computeClickRipple(localT, segment.dur);
+        rippleOpacity = r.opacity;
+        rippleScale = r.scale;
+      }
+
+      instance.cursorEl.style.left = pos.x + "px";
+      instance.cursorEl.style.top = pos.y + "px";
+      instance.cursorEl.style.opacity = cursorOpacity;
+      instance.rippleEl.style.left = pos.x + "px";
+      instance.rippleEl.style.top = pos.y + "px";
+      instance.rippleDisc.style.opacity = rippleOpacity;
+      instance.rippleDisc.style.transform = "translate(-50%, -50%) scale(" + rippleScale + ")";
+    }
+
+    // Hides the shared mock when scene 3 is active (a no-op if it hasn't
+    // been built yet — build is lazy, on first visit to either scene 1 or
+    // 2 — since an unbuilt instance is still display:none from markup).
     function hideMock(instance) {
       if (instance) instance.mockWrap.style.display = "none";
     }
@@ -1109,21 +1899,18 @@
     // played what came before.
     function renderAtTime(ms) {
       var index = sceneIndexForTime(ms);
-      if (index === 0) {
-        if (!scene1.instance) scene1.instance = buildScene1Instance();
-        scene1.instance.mockWrap.style.display = "block";
-        scene2Wrap.style.display = "none";
+      if (index === 0 || index === 1) {
+        if (!sharedMock.instance) sharedMock.instance = buildMockInstance();
+        sharedMock.instance.mockWrap.style.display = "block";
         scene3Wrap.style.display = "none";
         body.style.backgroundColor = "";
-        renderScene1(scene1.instance, ms - BOUNDARIES[0]);
-      } else if (index === 1) {
-        hideMock(scene1.instance);
-        scene2Wrap.style.display = "block";
-        scene3Wrap.style.display = "none";
-        body.style.backgroundColor = "";
+        if (index === 0) {
+          renderScene1(sharedMock.instance, ms - BOUNDARIES[0]);
+        } else {
+          renderScene2(sharedMock.instance, ms - BOUNDARIES[1]);
+        }
       } else {
-        hideMock(scene1.instance);
-        scene2Wrap.style.display = "none";
+        hideMock(sharedMock.instance);
         scene3Wrap.style.display = "block";
         body.style.backgroundColor = "";
       }

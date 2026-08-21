@@ -31,7 +31,9 @@
 {% macro twoBlockHeader(heading, subheading, firstParagraphs, secondParagraphs=[], secondModifiers="section--green-light", id="", firstExtra="") %}
 {% call section("", id) %}
 {{ sectionHeader(heading, subheading) }}
+{% if firstParagraphs.length %}
 {{ sectionBody(firstParagraphs) }}
+{% endif %}
 {% if firstExtra %}
 {{ firstExtra | safe }}
 {% else %}

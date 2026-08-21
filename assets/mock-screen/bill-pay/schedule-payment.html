@@ -57,14 +57,13 @@
         --bp-radius-table-top: 26px;
         --bp-radius-scrollbar: 10px;
         --bp-radius-drawer-top: 30px;
-        --bp-radius-tab: 3px;
         --bp-drawer-width: 435px;
 
         --bp-shadow-switch-thumb: 0px 5px 10px rgba(0, 0, 0, 0.1), 0px 2px 2px rgba(0, 0, 0, 0.3);
         --bp-shadow-table-body: 0px 4px 24px 0px rgba(0, 0, 0, 0.05);
         --bp-shadow-drawer: 0px 4px 34px 0px rgba(0, 0, 0, 0.25);
-        --bp-shadow-tab-selected: 0px 4px 0px 0px #108000;
-        --bp-color-tab-border: #eceef1;
+        --bp-color-footer-bg: #f4f5f8;
+        --bp-footer-button-width: 145px;
 
         /* Custom payment delivery calendar (node 3014:150949 / 2198:158509 /
            2926:28267) — values pulled directly from Figma, distinct from the
@@ -95,18 +94,22 @@
         --bp-text-button-label: 400 16px/24px var(--bp-font-body);
         --bp-text-badge: 400 12px/16px var(--bp-font-body);
         --bp-text-drawer-heading: 600 24px/28px var(--bp-font-body);
-        --bp-text-drawer-total-label: 600 16px/36px var(--bp-font-body);
         --bp-text-drawer-section-title: 600 18px/36px var(--bp-font-body);
         --bp-text-drawer-note-title: 600 18px/36px var(--bp-font-body);
         --bp-text-drawer-total: 600 32px/36px var(--bp-font-body);
         --bp-text-drawer-meta: 400 14px/21.65px var(--bp-font-body);
+        /* Drawer upper-section update (node 3068:151634) — default-view-only
+           styles, kept separate from the shared --bp-text-drawer-heading /
+           .bp-drawer__back (still used by the bank-details view, unverified
+           against this update, left untouched). Figma "Black" -> 800 per
+           the project's established Black-substitutes-Heavy convention. */
+        --bp-text-drawer-title: 600 24px/28px var(--bp-font-body);
+        --bp-text-drawer-edit-link: 600 14px/20px var(--bp-font-body);
         --bp-text-radio-title: 600 16px/24px var(--bp-font-body);
         --bp-text-radio-title-medium: 400 16px/24px var(--bp-font-body);
         --bp-text-radio-subtitle: 400 14px/21.65px var(--bp-font-body);
         --bp-text-radio-meta: 400 16px/21.65px var(--bp-font-body);
         --bp-text-radio-fee: 600 16px/24px var(--bp-font-body);
-        --bp-text-tab-label: 800 12px/16px var(--bp-font-body);
-        --bp-text-tab-label-inactive: 400 12px/16px var(--bp-font-body);
         --bp-text-field-label: 400 14px/20px var(--bp-font-body);
         --bp-text-field-value: 400 16px/24px var(--bp-font-body);
         --bp-text-field-helper: 400 14px/20px var(--bp-font-body);
@@ -397,7 +400,6 @@
         height: 676px;
         padding-top: 40px;
       }
-
       .bp-table-body {
         width: 100%;
         height: 100%;
@@ -467,6 +469,55 @@
         overflow-y: auto;
         overflow-x: hidden;
         position: relative;
+      }
+      /* Narrow mode (drawer open): the white table-body panel (and
+         .bp-table-wrap) stays full width and continues behind the drawer —
+         only the row content narrows, via this element (rows/sub-rows
+         stretch to match it, being its own flex children). Left edge is
+         fixed (table-body's own left padding edge never moves), so only
+         the width needs to shrink as the drawer widens/narrows. Target:
+         row right edge sits 29px from the drawer's left edge, per Figma
+         (bulk-narrow row right edge 976 vs drawer left edge 1005, node
+         2926:18517). Width = target right edge (1440 - drawer width - 29)
+         minus the fixed left edge (74 table-wrap left + 20 table-body
+         padding = 94): 1440 - 94 - 29 - drawer width = 1317 - drawer width. */
+      .bp-screen--narrow .bp-rows-scroll {
+        width: calc(1317px - var(--bp-drawer-width));
+      }
+      /* Pinned independent of scroll position — sibling of .bp-rows-scroll,
+         not a descendant, so its own internal scroll can never carry this
+         away. Rows keep scrolling underneath it; this always marks the
+         boundary between the column header and the scroll area, matching
+         the real product. An absolutely positioned child's containing
+         block is its ancestor's padding edge, not its content edge, so
+         this still has to account for .bp-table-body's own 20px padding
+         itself: top:94px = padding-top (20px) + the header row's own
+         height (60px) + .bp-table-body's own gap (14px) — the exact y
+         where .bp-rows-scroll begins. left/right:20px mirrors that same
+         padding so the line spans the same width as the header cells and
+         rows. z-index:3, above the scroll-fade ::before below (z-index:2)
+         — that fade is fully opaque white at its own top edge once
+         .is-scrolled, which would otherwise paint over and hide this line
+         the moment scrolling starts. */
+      .bp-rows-top-divider {
+        position: absolute;
+        top: 94px;
+        left: 20px;
+        right: 20px;
+        height: 1px;
+        background: var(--bp-color-divider);
+        pointer-events: none;
+        z-index: 3;
+      }
+      /* Narrow mode: this divider is positioned relative to .bp-table-body
+         (its nearest positioned ancestor), which stays full width — so its
+         own right:20px (above) would otherwise still reach that unnarrowed
+         edge. Re-anchor its right edge to match .bp-rows-scroll's narrowed
+         right edge (976 screen-x, see above) instead: table-body's own
+         right edge is a fixed 1361 (74 table-wrap left + 1287 width), so
+         right = 1361 - (1440 - drawer width - 29) = drawer width - 50. */
+      .bp-screen--narrow .bp-rows-top-divider {
+        right: calc(var(--bp-drawer-width) - 50px);
       }
       /* Soft fade at the top of the scroll viewport so row content doesn't
          hard-crop as it scrolls past. position:sticky (not absolute) keeps
@@ -967,18 +1018,29 @@
         opacity: 0;
       }
 
-      .bp-drawer__head-row {
-        display: flex;
-        align-items: flex-start;
-        gap: 12px;
+      /* ---- Drawer head (node 2926:28489 for the drilldown layout; vendor
+         name/subtitle typography match node 3068:151634, the step-1 head).
+         One persistent block shared by both drawer steps (built once in
+         markup, never re-rendered) so the vendor name/subtitle genuinely
+         move and cross-fade instead of being destroyed and recreated —
+         see schedule-payment.js's swapDrawerContent(). Close (X) and back
+         (chevron) are both always in the DOM, absolutely positioned at
+         their own Figma spots, opacity-toggled by .bp-drawer__head's own
+         state class; only .bp-drawer__head-text (title+subtitle) actually
+         translates. */
+      .bp-drawer__head {
+        position: relative;
+        width: 100%;
       }
-      .bp-drawer__back {
-        width: 24px;
+      .bp-drawer__chevron {
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 19px;
         height: 24px;
-        flex-shrink: 0;
-        margin-top: 3px;
-        margin-left: auto;
-        order: 2;
+        opacity: 0;
+        pointer-events: none;
         cursor: pointer;
         border: none;
         background: none;
@@ -986,38 +1048,88 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        transition: opacity 180ms var(--bp-ease-toggle);
       }
-      .bp-drawer__back img {
-        max-width: 16px;
-        max-height: 16px;
+      .bp-drawer__head--drilldown .bp-drawer__chevron {
+        opacity: 1;
+        pointer-events: auto;
+        transition: opacity 180ms var(--bp-ease-toggle) 40ms;
       }
-      .bp-drawer__vendor {
+      .bp-drawer__head-text {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+        width: 100%;
+        transform: translateX(0);
+        transition: transform 180ms var(--bp-ease-toggle);
+      }
+      /* 43px = chevron width (19px) + the row's 24px gap (node 2926:28489),
+         i.e. exactly the space the chevron occupies once visible — moves
+         the text right by that same amount so it lands flush after it. */
+      .bp-drawer__head--drilldown .bp-drawer__head-text {
+        transform: translateX(43px);
+      }
+      /* Reduced motion: keep the opacity fades (chevron/close/subtitle -
+         they aid comprehension of the state change) but drop the position
+         slide, per spec. */
+      @media (prefers-reduced-motion: reduce) {
+        .bp-drawer__head-text {
+          transition: none;
+        }
+      }
+      .bp-drawer__title {
         margin: 0;
-        font: var(--bp-text-drawer-heading);
-        font-weight: 600;
+        font: var(--bp-text-drawer-title);
         color: var(--primitive-black);
       }
+      .bp-drawer__close {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 36px;
+        height: 36px;
+        padding: 6px;
+        border-radius: 4px;
+        border: none;
+        background: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        opacity: 1;
+        transition: opacity 180ms var(--bp-ease-toggle);
+      }
+      .bp-drawer__head--drilldown .bp-drawer__close {
+        opacity: 0;
+        pointer-events: none;
+      }
+      .bp-drawer__meta {
+        margin: 0;
+        font: var(--bp-text-drawer-meta);
+        color: var(--primitive-grey-dark);
+      }
+
       .bp-drawer__method {
         display: flex;
         align-items: center;
-        gap: 5px;
-        margin-top: 11px;
+        gap: 7px;
+        width: 100%;
+        height: 24px;
       }
       .bp-drawer__method img {
         width: 15px;
         height: 15px;
       }
       .bp-drawer__method span {
-        font: var(--bp-text-cell-small);
+        font: var(--bp-text-drawer-meta);
         color: var(--primitive-grey-dark);
       }
       .bp-drawer__method a {
-        font: var(--bp-text-cell-action);
-        font-weight: 600;
+        font: var(--bp-text-drawer-edit-link);
         color: var(--bp-color-action-green);
-        text-decoration: none;
+        text-decoration: underline;
         cursor: pointer;
-        margin-left: 5px;
       }
 
       .bp-drawer__divider {
@@ -1026,24 +1138,12 @@
         margin: 24px 0;
       }
 
-      .bp-drawer__total-label {
-        margin: 0;
-        font: var(--bp-text-drawer-total-label);
-        font-weight: 600;
-        color: var(--primitive-black);
-      }
       .bp-drawer__total-amount {
-        margin: 0;
+        margin: 24px 0 0;
         font: var(--bp-text-drawer-total);
         font-weight: 600;
         color: var(--primitive-black);
       }
-      .bp-drawer__total-meta {
-        margin-top: 13px;
-        font: var(--bp-text-drawer-meta);
-        color: var(--primitive-black);
-      }
-
       .bp-drawer__section-title {
         margin: 0 0 24px;
         padding-top: 6px;
@@ -1177,9 +1277,10 @@
         white-space: nowrap;
       }
 
-      /* ---- Speed tabs (Standard/Fast/Instant — node 2922:165022; distinct
-         3-segment button-group component from the bank-details bp-tab cards
-         above: border-overlap technique, no card shadow/radius per side). ---- */
+      /* ---- Speed tabs (node 2922:165022): border-overlap technique, no
+         card shadow/radius per side. Used both by the calendar's Custom
+         view (Standard/Fast/Instant, 3 segments) and by the bank-details
+         Bank payment/Paper check pair (2 segments, --start/--end only). ---- */
       .bp-speed-tabs {
         display: flex;
         width: 100%;
@@ -1496,37 +1597,19 @@
 
       /* Bank-details content — gaps/sizes confirmed via get_design_context
          on node 2926:28499 (Frame 1000002478): 41px tabs-to-fields, 30px
-         between field groups, 6px/4px label-field-helper, tab height 50px,
-         selected tab gets a green 4px bottom "shadow" accent (not a border). */
-      .bp-tabs {
-        display: flex;
-        gap: 8px;
+         between field groups, 6px/4px label-field-helper. The Bank
+         payment/Paper check tabs reuse .bp-speed-tabs/.bp-speed-tab (the
+         calendar's Custom-view tab component, defined further up) instead
+         of a dedicated bp-tabs/bp-tab pair — only the spacing around it is
+         specific to this context, scoped via :first-child so the
+         calendar's own instance (never the first child of #bp-drawer-inner)
+         is untouched: margin-top 24px (Figma's head-to-tabs gap, node
+         2926:28489) + 20px requested extra spacing = 44px; margin-bottom
+         41px (tabs-to-fields, node 2926:28499) overrides the shared
+         component's own 20px. */
+      #bp-drawer-inner > .bp-speed-tabs:first-child {
+        margin-top: 44px;
         margin-bottom: 41px;
-      }
-      .bp-tab {
-        flex: 1;
-        height: 50px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: flex-end;
-        gap: 4px;
-        padding-bottom: 4px;
-        background: var(--primitive-white);
-        border: 1px solid var(--bp-color-tab-border);
-        border-radius: var(--bp-radius-tab);
-        cursor: pointer;
-        box-shadow: none;
-      }
-      .bp-tab[data-active="true"] {
-        box-shadow: var(--bp-shadow-tab-selected);
-      }
-      .bp-tab span {
-        font: var(--bp-text-tab-label-inactive);
-        color: var(--primitive-black);
-      }
-      .bp-tab[data-active="true"] span {
-        font: var(--bp-text-tab-label);
       }
       .bp-field {
         margin-top: 30px;
@@ -1544,7 +1627,7 @@
       }
       .bp-field__value-box {
         width: 100%;
-        min-height: 36px;
+        height: 46px;
         border: 1px solid var(--bp-color-border-input);
         border-radius: var(--bp-radius-input);
         padding: 6px 8px;
@@ -1552,9 +1635,6 @@
         align-items: center;
         justify-content: space-between;
         box-sizing: border-box;
-      }
-      .bp-field--tall .bp-field__value-box {
-        min-height: 46px;
       }
       .bp-field__value-box span {
         font: var(--bp-text-field-value);
@@ -1587,12 +1667,23 @@
         align-items: center;
         justify-content: center;
         gap: 20px;
-        height: 94px;
-        border-top: 1px solid var(--bp-color-divider);
+        height: 100px;
+        background: var(--bp-color-footer-bg);
+      }
+      /* Both buttons share one fixed width — Cancel's own text is shorter
+         than "Apply changes", so it's sized up to match rather than the
+         two buttons differing. */
+      .bp-drawer__footer .bp-btn {
+        width: var(--bp-footer-button-width);
       }
       .bp-drawer__footer .bp-btn--cancel {
         border-color: var(--bp-color-border-input);
         color: var(--primitive-black);
+      }
+      .bp-drawer__footer .bp-btn--continue {
+        background: transparent;
+        border-color: var(--bp-color-action-green);
+        color: var(--bp-color-action-green);
       }
     </style>
   </head>
@@ -1651,6 +1742,7 @@
               <div class="bp-header-row__cell" style="width: 120px"><span>Amount</span></div>
               <div class="bp-header-row__cell" data-action-label style="width: 106px"><span>Action</span></div>
             </div>
+            <div class="bp-rows-top-divider"></div>
             <div class="bp-rows-scroll" id="bp-rows-scroll"></div>
           </div>
         </div>
@@ -1681,7 +1773,25 @@
 
         <aside class="bp-drawer" id="bp-drawer">
           <div class="bp-drawer__scroll">
+            <div class="bp-drawer__head" id="bp-drawer-head">
+              <button class="bp-drawer__chevron" type="button" id="bp-drawer-back" aria-label="Back">
+                <span style="display: inline-flex; transform: rotate(90deg)">
+                  <img src="../../icons/bill-pay-mock/dropdown-chevron.svg" alt="" style="display: block; width: 12px; height: 6.86px" />
+                </span>
+              </button>
+              <div class="bp-drawer__head-text">
+                <p class="bp-drawer__title" id="bp-drawer-vendor-name"></p>
+                <p class="bp-drawer__meta" id="bp-drawer-subtitle"></p>
+              </div>
+              <button class="bp-drawer__close" type="button" id="bp-drawer-close" aria-label="Close">
+                <img class="bp-action-icon" src="../../icons/bill-pay-mock/narrow-action.svg" alt="" />
+              </button>
+            </div>
             <div class="bp-drawer__inner" id="bp-drawer-inner"></div>
+          </div>
+          <div class="bp-drawer__footer" id="bp-drawer-footer" style="display: none">
+            <button class="bp-btn bp-btn--cancel" type="button">Cancel</button>
+            <button class="bp-btn bp-btn--continue" type="button" id="bp-drawer-apply">Apply changes</button>
           </div>
         </aside>
       </div>

@@ -15,9 +15,10 @@
   // iframe document. The iframe owns the actual clock (it plays
   // continuously and never reloads); this array is only what the parent
   // needs to know a scene's duration and to compute seek targets. Scene 1
-  // is the built row-travel animation; scenes 2 and 3 are placeholders.
-  var SCENE_BOUNDARIES = [0, 6500, 13000];
-  var TOTAL_DURATION = 19500;
+  // (row travel) and scene 2 (bulk payment cursor demo) are both built;
+  // scene 3 is still a placeholder.
+  var SCENE_BOUNDARIES = [0, 6500, 15910];
+  var TOTAL_DURATION = 22410;
 
   // Layout shell only — no scene animation, no real icons yet (per spec).
   // Placeholder copy; swap for real Bill Pay content when scenes are built.

@@ -35,32 +35,7 @@
     ]),
     arrow: layeredIcon(18, [{ src: "withdraw-arrives-arrow.svg", inset: "32.99% 16.69% 33.04% 16.67%" }]),
     statusCheck: '<img src="' + ICONS + 'status-check.svg" alt="" style="display:block;width:100%;height:100%" />',
-    chevron: '<img src="' + ICONS + 'dropdown-chevron.svg" alt="" style="display:block;width:12px;height:6.86px" />',
-    /* Bank-transfer / paper-check TAB ILLUSTRATIONS (Payment Tabs, bank-details
-       view): Figma composes these from real exported layers, but nested 3-4
-       levels deep inside `display:contents` grouping frames — each layer's
-       inset% is relative to its own contents-frame, not the outer icon box,
-       so naively re-flattening the raw percentages onto one box would place
-       them wrong. Rather than fabricate incorrect precise coordinates, this
-       renders the same real downloaded layers centered/stacked at a best-
-       effort approximate scale — flagged in the build report as the one
-       intentional icon-fidelity gap in this pass. */
-    tabBank:
-      '<span style="position:relative;display:inline-block;width:34px;height:34px">' +
-      ["l1", "l2", "l3", "l4", "l5", "l6", "l7", "l8"]
-        .map(function (l) {
-          return '<img src="' + ICONS + "tab-bank/" + l + '.svg" alt="" style="position:absolute;inset:12%;width:76%;height:76%" />';
-        })
-        .join("") +
-      "</span>",
-    tabCheck:
-      '<span style="position:relative;display:inline-block;width:24px;height:24px">' +
-      ["l1", "l2", "l3", "l4"]
-        .map(function (l) {
-          return '<img src="' + ICONS + "tab-check/" + l + '.svg" alt="" style="position:absolute;inset:15%;width:70%;height:70%" />';
-        })
-        .join("") +
-      "</span>"
+    chevron: '<img src="' + ICONS + 'dropdown-chevron.svg" alt="" style="display:block;width:12px;height:6.86px" />'
   };
 
   function money(n) {
@@ -68,19 +43,18 @@
   }
 
   /* ---- Row data — source of truth is the batch-full Figma template
-     (node 2964:601336). All 13 rows, verbatim (including "Barmett" spelling
-     as it appears in the real row instances, not the generic placeholder). */
+     (node 2964:601336). All 13 rows, verbatim. */
   var ROWS = [
-    { id: 1, vendor: "Barmett Lawn Care", method: "bank", last4: "3456", bill: "153", due: "08/29/25", withdraw: "08/25", arrives: "08/28", fee: 1.0, amount: 650.0, action: "Manage" },
+    { id: 1, vendor: "Barnett Lawn Care", method: "bank", last4: "3456", bill: "153", due: "08/29/25", withdraw: "08/25", arrives: "08/28", fee: 1.0, amount: 650.0, action: "Manage" },
     { id: 2, vendor: "Bluebird Office Supplies", method: "check", last4: "", bill: "1764", due: "09/06/25", withdraw: "09/02", arrives: "09/05", fee: 1.0, amount: 385.0, action: "Manage" },
-    { id: 3, vendor: "Barmett Lawn Care", method: "bank", last4: "3456", bill: "154", due: "09/09/25", withdraw: "09/05", arrives: "09/08", fee: 1.0, amount: 725.0, action: "Manage" },
+    { id: 3, vendor: "Barnett Lawn Care", method: "bank", last4: "3456", bill: "154", due: "09/09/25", withdraw: "09/05", arrives: "09/08", fee: 1.0, amount: 725.0, action: "Manage" },
     { id: 4, vendor: "Good Heart Catering", method: "check", last4: "", bill: "9092", due: "09/12/25", withdraw: "09/08", arrives: "09/11", fee: 1.0, amount: 1250.0, action: "Manage" },
     { id: 5, vendor: "Greenfield Solutions", method: "bank", last4: "1278", bill: "7562", due: "09/14/25", withdraw: "09/10", arrives: "09/13", fee: 1.0, amount: 1800.0, action: "Manage" },
     { id: 6, vendor: "Red Ocean Developer", method: "bank", last4: "7989", bill: "349", due: "09/15/25", withdraw: "09/11", arrives: "09/14", fee: 1.0, amount: 1500.0, action: "Manage" },
     { id: 7, vendor: "Bluebird Office Supplies", method: "check", last4: "", bill: "1789", due: "09/16/25", withdraw: "09/12", arrives: "09/15", fee: 1.0, amount: 520.0, action: "Manage" },
     { id: 8, vendor: "Greenfield Solutions", method: "bank", last4: "1278", bill: "7562", due: "09/19/25", withdraw: "09/15", arrives: "09/18", fee: 1.0, amount: 1950.0, action: "Manage" },
     { id: 9, vendor: "Good Heart Catering", method: "check", last4: "", bill: "9095", due: "09/20/25", withdraw: "09/16", arrives: "09/19", fee: 1.0, amount: 875.0, action: "Manage" },
-    { id: 10, vendor: "Barmett Lawn Care", method: "bank", last4: "3456", bill: "155", due: "09/22/25", withdraw: "09/18", arrives: "09/21", fee: 1.0, amount: 580.0, action: "Manage" },
+    { id: 10, vendor: "Barnett Lawn Care", method: "bank", last4: "3456", bill: "155", due: "09/22/25", withdraw: "09/18", arrives: "09/21", fee: 1.0, amount: 580.0, action: "Manage" },
     { id: 11, vendor: "Greenfield Solutions", method: "bank", last4: "1278", bill: "7589", due: "09/24/25", withdraw: "09/20", arrives: "09/23", fee: 1.0, amount: 1750.0, action: "Manage" },
     { id: 12, vendor: "Red Ocean Developer", method: "bank", last4: "7989", bill: "354", due: "09/25/25", withdraw: "09/21", arrives: "09/24", fee: 1.0, amount: 1650.0, action: "Manage" },
     { id: 13, vendor: "Bluebird Office Supplies", method: "check", last4: "", bill: "1790", due: "09/27/25", withdraw: "09/23", arrives: "09/26", fee: 1.0, amount: 290.0, action: "Manage" }
@@ -210,7 +184,10 @@
       view: "default", // view: default | bank-details
       delivery: "radios", // delivery: radios | custom
       selectedRadio: "standard",
-      calendar: { tab: "standard", withdraw: null, arrival: null }
+      calendar: { tab: "standard", withdraw: null, arrival: null },
+      billMeta: "", // current subtitle text for the "default" step, restored on transition back
+      transitioning: false, // guards swapDrawerContent() against re-entrant clicks mid-transition
+      subtitleSwapTimer: null
     }
   };
 
@@ -268,9 +245,17 @@
   }
 
   /* Spec correction: bulk sub-rows do NOT have a Manage/Review action —
-     only the vendor summary row does. Confirmed via individual pulls of all
-     4 Figma sub-row variants (Component 25/26/27/28), which are otherwise
-     byte-identical in structure — none render an action cell. */
+     only the vendor summary row does. But the action cell isn't empty
+     either: re-pulling all 4 Figma sub-row variants (Component 25/26/27/28)
+     shows each ends in a "T Action>Mangae" cell whose content is the
+     shared "close" icon component (node I2913:147954;141:141702), not
+     text — present in BOTH bulk-full (2913:147101) and bulk-narrow
+     (2926:18524), so it's not a narrow-mode-only affordance. That icon is
+     already in this codebase as narrow-action.svg (currently only used by
+     renderActionCell's narrow branch below) — its viewBox (14.0445 x
+     14.0552) matches this exact Figma icon box (24px, inset
+     20.63/20.67/20.81/20.81%) to the sub-pixel, confirming it's the same
+     asset, not the larger/darker close.svg used for header/drawer close. */
   function renderSubRow(row) {
     return (
       '<div class="bp-row bp-row--sub" data-row-id="' + row.id + '">' +
@@ -282,7 +267,7 @@
         '<div class="bp-cell bp-cell--fee" data-narrow-hide style="opacity:0"></div>' +
         '<div class="bp-cell bp-cell--balance" style="opacity:0"></div>' +
         '<div class="bp-cell bp-cell--amount"><div class="bp-amount-field"><span>' + money(row.amount) + "</span></div></div>" +
-        '<div class="bp-cell bp-cell--action"></div>' +
+        '<div class="bp-cell bp-cell--action"><img class="bp-action-icon" src="' + ICONS + 'narrow-action.svg" alt="" /></div>' +
       "</div>"
     );
   }
@@ -331,7 +316,12 @@
         '<div class="bp-cell bp-cell--fee"' + narrowHideSpeed + '><div class="bp-fee"><span>' + money(feeTotal) + "</span><span>" + GLYPH.info + "</span></div></div>" +
         '<div class="bp-cell bp-cell--balance"><span>' + money(group.total) + "</span></div>" +
         '<div class="bp-cell bp-cell--amount"><div class="bp-amount-field"><span>' + money(group.total) + "</span></div></div>" +
-        renderActionCell("Manage") +
+        /* Confirmed against Figma: the vendor summary row's Manage action
+           is present in bulk-full (node 2207:169585, "T Action>Mangae"
+           cell renders "Manage") but structurally absent — no action cell
+           at all, not even collapsed — in bulk-narrow (node 2926:18517's
+           "bp-Table row" instances end at the Amount cell). */
+        (state.narrow ? "" : renderActionCell("Manage")) +
       "</div>";
     var expandWrapHtml =
       '<div class="bp-expand-wrap" data-expand-wrap="' + group.vendor + '" style="overflow:hidden;height:' + (expanded ? "auto" : "0") + ";margin-top:" + (expanded ? "14px" : "0") + '">' +
@@ -440,6 +430,29 @@
     state.drawer.delivery = "radios";
     state.drawer.selectedRadio = "standard";
     state.drawer.calendar = { tab: "standard", withdraw: null, arrival: null };
+    state.narrow = true;
+
+    /* Drawer head (vendor name + subtitle + close/back) is a persistent
+       block — see the "Drawer head" markup in schedule-payment.html and
+       swapDrawerContent() below — so it never gets destroyed/recreated
+       across steps within one drawer session. Every fresh open still
+       needs its own vendor name + subtitle text and a hard reset to the
+       non-drilldown resting state (no transition — this is a cold open,
+       not a step transition). "Payment No.XXXXXX" is gone from the
+       updated layout (node 3068:151634) — the bulk case reads "2 Bills •
+       Total Amount:" there. The batch (single-bill) wording isn't shown
+       in that node (only a bulk vendor drawer was updated); "Bill
+       no.153 • Total Amount:" mechanically mirrors the existing
+       bill-no/bills-count split with the new suffix — flagged in the
+       build report as an inference, not a directly-read Figma value. */
+    state.drawer.billMeta = payload.bill
+      ? "Bill no." + payload.bill + " • Total Amount:"
+      : payload.rows.length + " Bills • Total Amount:";
+    els.drawerHead.classList.remove("bp-drawer__head--drilldown");
+    els.drawerVendorName.textContent = payload.vendor;
+    els.drawerSubtitle.textContent = state.drawer.billMeta;
+    els.drawerFooter.style.display = "none";
+
     els.screen.classList.add("bp-screen--narrow");
     renderDrawer();
     requestAnimationFrame(function () {
@@ -452,6 +465,7 @@
     els.screen.classList.remove("bp-screen--drawer-open");
     var onEnd = function () {
       els.screen.classList.remove("bp-screen--narrow");
+      state.narrow = false;
       state.drawer.open = false;
       els.drawer.removeEventListener("transitionend", onEnd);
       renderRows();
@@ -630,32 +644,22 @@
   function renderDrawerDefault() {
     var payload = state.drawer.row;
     if (!payload) return;
-    var vendor = payload.vendor;
     var method = payload.method;
     var last4 = payload.last4;
     var total = typeof payload.total === "number" ? payload.total : payload.amount;
-    var billMeta = payload.bill ? "Bill no." + payload.bill + " \u2022 Payment No.348279" : payload.rows.length + " Bills \u2022 Payment No.348279";
     var dueDates = getDrawerDueDates(payload);
     var isCustomView = state.drawer.delivery === "custom";
 
+    /* Head (vendor name, subtitle, close/back) is persistent markup, set up
+       in openDrawer() and animated in swapDrawerContent() - not rendered here. */
     var html =
-      '<div class="bp-drawer__head-row">' +
-        '<button class="bp-drawer__back" type="button" id="bp-drawer-close" aria-label="Close">' +
-          '<img src="' + ICONS + 'close.svg" alt="" />' +
-        "</button>" +
-        "<div>" +
-          '<p class="bp-drawer__vendor">' + vendor + "</p>" +
-          '<div class="bp-drawer__method">' +
-            '<span style="display:inline-flex;width:15px;height:15px">' + GLYPH[method] + "</span>" +
-            "<span>" + methodLabel({ method: method, last4: last4 }) + "</span>" +
-            '<a id="bp-drawer-edit">Edit</a>' +
-          "</div>" +
-        "</div>" +
-      "</div>" +
-      '<div class="bp-drawer__divider"></div>' +
-      '<p class="bp-drawer__total-label">Total amount paid:</p>' +
       '<p class="bp-drawer__total-amount">' + money(total) + "</p>" +
-      '<p class="bp-drawer__total-meta">' + billMeta + "</p>" +
+      '<div class="bp-drawer__divider"></div>' +
+      '<div class="bp-drawer__method">' +
+        '<span style="display:inline-flex;width:15px;height:15px">' + GLYPH[method] + "</span>" +
+        "<span>" + methodLabel({ method: method, last4: last4 }) + "</span>" +
+        '<a id="bp-drawer-edit">Edit</a>' +
+      "</div>" +
       '<div class="bp-drawer__divider"></div>' +
       '<div class="bp-drawer__section-title-row">' +
         '<p class="bp-drawer__section-title">Payment delivery options</p>' +
@@ -668,7 +672,6 @@
       '<div style="height:32px"></div>';
 
     els.drawerInner.innerHTML = html;
-    q("#bp-drawer-close").addEventListener("click", closeDrawer);
     q("#bp-drawer-edit").addEventListener("click", function () {
       swapDrawerContent("bank-details");
     });
@@ -736,53 +739,89 @@
   function renderDrawerBankDetails() {
     var payload = state.drawer.row;
     var vendor = payload ? payload.vendor : "";
-    var emailGuess = vendor.split(" ")[0].toLowerCase() + "@example.com";
+    /* Head (vendor name, subtitle, close/back) is persistent markup, set up
+       in openDrawer() and animated in swapDrawerContent() - not rendered here. */
+    /* Reuses the same speed-tabs component the delivery calendar's Custom
+       view uses (.bp-speed-tabs / .bp-speed-tab, node 2922:165022) instead
+       of the old icon-illustrated bp-tabs/bp-tab pair - plain text labels,
+       2-segment border-overlap. Only 2 segments here (vs. the calendar's
+       3), so just --start/--end, no --mid. */
     var html =
-      '<div class="bp-drawer__head-row">' +
-        '<button class="bp-drawer__back" type="button" id="bp-drawer-back" aria-label="Back">' +
-          '<span style="display:inline-flex;transform:rotate(90deg)">' + GLYPH.chevron + "</span>" +
-        "</button>" +
-        "<div>" +
-          '<p class="bp-drawer__vendor">' + vendor + "</p>" +
-          '<p class="bp-drawer__total-meta" style="margin-top:6px">Delivery method</p>' +
-        "</div>" +
+      '<div class="bp-speed-tabs">' +
+        '<button type="button" class="bp-speed-tab bp-speed-tab--start" data-active="true">Bank payment (ACH)</button>' +
+        '<button type="button" class="bp-speed-tab bp-speed-tab--end" data-active="false">Paper check</button>' +
       "</div>" +
-      '<div class="bp-tabs">' +
-        '<div class="bp-tab" data-active="true">' + GLYPH.tabBank + "<span>Bank payment (ACH)</span></div>" +
-        '<div class="bp-tab" data-active="false">' + GLYPH.tabCheck + "<span>Paper check</span></div>" +
-      "</div>" +
-      '<div class="bp-field bp-field--tall"><label class="bp-field__label">Pay to</label><div class="bp-field__value-box"><span>' + vendor + "</span></div></div>" +
+      '<div class="bp-field"><label class="bp-field__label">Pay to</label><div class="bp-field__value-box"><span>' + vendor + "</span></div></div>" +
       '<div class="bp-field">' +
         '<label class="bp-field__label">Email</label>' +
-        '<div class="bp-field__value-box"><span>' + emailGuess + "</span></div>" +
+        '<div class="bp-field__value-box"><span>billing@barnettlawncare.com</span></div>' +
         '<p class="bp-field__helper">We’ll email them with payment status updates.</p>' +
       "</div>" +
       '<div class="bp-field-row">' +
-        '<div class="bp-field bp-field--zip"><label class="bp-field__label">Vendor’s ZIP code</label><div class="bp-field__value-box"><span>12345-1234</span></div></div>' +
+        '<div class="bp-field bp-field--zip"><label class="bp-field__label">Vendor’s ZIP code</label><div class="bp-field__value-box"><span>02903</span></div></div>' +
         '<div class="bp-field bp-field--state"><label class="bp-field__label">State</label><div class="bp-field__value-box"><span>RI</span>' + GLYPH.chevron + "</div></div>" +
       "</div>" +
       '<div class="bp-field">' +
         '<label class="bp-field__label">Bank account number (5-17 digits)</label>' +
-        '<div class="bp-field__value-box"><span>12345678910</span></div>' +
+        '<div class="bp-field__value-box"><span>4419827365</span></div>' +
         '<p class="bp-field__helper">Double-check the bank info to avoid loss of funds.</p>' +
       "</div>" +
-      '<div class="bp-field"><label class="bp-field__label">Routing number (9 digits)</label><div class="bp-field__value-box"><span>123456789</span></div></div>';
+      '<div class="bp-field"><label class="bp-field__label">Routing number (9 digits)</label><div class="bp-field__value-box"><span>011500120</span></div></div>';
 
     els.drawerInner.innerHTML = html;
-    q("#bp-drawer-back").addEventListener("click", function () {
-      swapDrawerContent("default");
-    });
   }
 
-  /* ---- §6.4 / §7.4 bank-details crossfade ---- */
+  /* ---- §6.4 / §7.4 default ↔ bank-details transition ----
+     Two independent things change together, on the same clock:
+     1. The BODY (#bp-drawer-inner: amount+method row, or tabs+fields) is
+        unrelated content between the two steps, so it keeps the existing
+        fade-out/swap/fade-in crossfade (200ms out, 200ms in) - untouched,
+        this predates this pass.
+     2. The HEAD (vendor name, subtitle, close/back) is persistent markup
+        (see openDrawer()) that never gets destroyed/recreated, so it
+        genuinely animates instead of cutting:
+          - .bp-drawer__head--drilldown toggles the CSS transitions already
+            defined on .bp-drawer__chevron / .bp-drawer__head-text /
+            .bp-drawer__close (opacity + translateX, 180ms, --bp-ease-toggle,
+            the same curve the body crossfade already uses) - X fades out,
+            the vendor name+subtitle block slides sideways to its Figma
+            position (node 2926:28489), the chevron fades in ~40ms later.
+          - The subtitle's TEXT itself can't be transitioned (no interpolating
+            between two strings), so it gets scene 1's technique adapted to a
+            one-shot transition instead of a continuous scrub: fade to 0,
+            swap textContent at the trough, fade back to 1 - same idea as
+            scene 1's opacity dip masking its mid-flight row-data swap, just
+            without a floor since this isn't a continuous scrub. */
+  var DRAWER_HEAD_EASE = "var(--bp-ease-toggle)";
+  var DRAWER_HEAD_MS = 180;
+
   function swapDrawerContent(view) {
+    if (state.drawer.transitioning) return;
+    state.drawer.transitioning = true;
+
+    var toDrilldown = view === "bank-details";
+    els.drawerHead.classList.toggle("bp-drawer__head--drilldown", toDrilldown);
+
+    var subtitleText = toDrilldown ? "Delivery method" : state.drawer.billMeta;
+    els.drawerSubtitle.style.transition = "opacity " + DRAWER_HEAD_MS / 2 + "ms " + DRAWER_HEAD_EASE;
+    els.drawerSubtitle.style.opacity = "0";
+    clearTimeout(state.drawer.subtitleSwapTimer);
+    state.drawer.subtitleSwapTimer = setTimeout(function () {
+      els.drawerSubtitle.textContent = subtitleText;
+      els.drawerSubtitle.style.opacity = "1";
+    }, DRAWER_HEAD_MS / 2);
+
     els.drawerInner.setAttribute("data-fading", "true");
     setTimeout(function () {
       state.drawer.view = view;
       renderDrawer();
+      els.drawerFooter.style.display = toDrilldown ? "flex" : "none";
       requestAnimationFrame(function () {
         els.drawerInner.removeAttribute("data-fading");
       });
+      setTimeout(function () {
+        state.drawer.transitioning = false;
+      }, DRAWER_HEAD_MS);
     }, 200);
   }
 
@@ -842,9 +881,27 @@
     els.statPayments = q("#bp-stat-payments");
     els.drawer = q("#bp-drawer");
     els.drawerInner = q("#bp-drawer-inner");
+    els.drawerHead = q("#bp-drawer-head");
+    els.drawerVendorName = q("#bp-drawer-vendor-name");
+    els.drawerSubtitle = q("#bp-drawer-subtitle");
+    els.drawerFooter = q("#bp-drawer-footer");
 
     els.toggle.addEventListener("click", function () {
       setMode(state.mode === "batch" ? "bulk" : "batch");
+    });
+
+    /* Head close (X) / back (chevron) are persistent elements (never
+       destroyed/recreated across drawer steps - see openDrawer() and
+       swapDrawerContent()), so their listeners are bound once here rather
+       than re-bound on every renderDrawer() call. */
+    q("#bp-drawer-close").addEventListener("click", closeDrawer);
+    q("#bp-drawer-back").addEventListener("click", function () {
+      swapDrawerContent("default");
+    });
+    /* "Apply changes" (bank-details footer) returns to the drawer's
+       previous step - same navigation as the back chevron, not a submit. */
+    q("#bp-drawer-apply").addEventListener("click", function () {
+      swapDrawerContent("default");
     });
 
     /* ---- top-of-scroll fade gradient: only shown once there's content

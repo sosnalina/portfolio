@@ -66,6 +66,10 @@ scripts:
     {{ galleryNavigation("gallery") }}
   </div>
   {% endcall %}
+  {{ sectionBody([
+    "Bill Pay V1 was designed to meet the needs of QuickBooks's core audience, small business owners, handling their own books, and processing up to 30 bills a month.",
+    "The overhead of moving money was wrapped inside a friendly, linear wizard with clean UI and low cognitive load. Paying a bill to a vendor was easy like ordering pizza. It was also totally unprepared for its next growth opportunity, already hiding inside the ecosystem."
+  ]) }}
   {% endcall %}
 
   {# 4. Tipping Point — one section, two visual blocks (white then green).
@@ -74,9 +78,8 @@ scripts:
      Green block: real team-members image, unchanged. #}
   {% set statBlock %}
   {{ sectionBody([
-    "Lorem ipsum dolor sit amet",
-    "Consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua, ut enim ad minim veniam.",
-    "A year after launch, money was moving comfortably on rails, the product was buzzing and gaining traction with small businesses. The team was high-fiving Bill Pay’s success, when, one day, product analysts walked into the room, slid a laptop across the table, and pointed to a single statistic that changed the conversation."
+    "A year after V1's launch, money was moving comfortably on rails, the product was buzzing and gaining traction with small businesses, when, one day, product analysts walked into the room, and pointed to a single statistic that changed the conversation.",
+    "It was a classic 80/20 rule in its most painful version. A tiny group of customers, representing less than a quarter of the platform base, was sitting on more than 90% of the total potential payment volume. The potential was obvious, so was the problem, as these weren't the customers Bill Pay had been built for."
   ]) }}
   <div class="section-image-group">
     <img class="section-image-group__image" src="../../assets/illustrations/bill-pay/bill-pay-stat.png" alt="" />
@@ -84,25 +87,25 @@ scripts:
   {% endset %}
   {% call twoBlockHeader(
     "Tipping Point",
-    "Lorem ipsum dolor sit amet",
-    ["Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."],
+    "Mission & Scope",
+    [],
     [],
     "section--green-light",
     "",
     statBlock
   ) %}
   {{ sectionBody([
-    "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-    "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur excepteur sint occaecat.",
-    "Cupidatat non proident, sunt in culpa qui officia deserunt."
+    "High-Value Billers were Mid-Market companies processing hundreds, even thousands, of bills monthly. They used QuickBooks for accounting, and were recording their bills on the platform, but still were leaking out to execute payments, as the product could not support their scale.",
+    "The team went on an early discovery, trying to map out the gaps. They met with AP teams who walked them through their bill-payment workflows, and reviewed the current solution. The interviewees looked at that beautiful, sequential, multi-step wizard and said, \"Guys, we love you, but we're not going to use your payment product.\""
   ]) }}
   <div class="section-image-group">
     <img class="section-image-group__image" src="../../assets/illustrations/bill-pay/team-members.png" alt="" />
   </div>
   {{ sectionBody([
-    "Mollit anim id est laborum sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium totam rem aperiam eaque ipsa quae ab illo inventore veritatis.",
-    "Et quasi architecto beatae vitae dicta sunt explicabo nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit.",
-    "Aut fugit sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt neque porro quisquam est qui dolorem."
+    "Two things became clear. First, a linear flow was like asking them to fill an Olympic pool with a spoon. Second, and most importantly, payment execution at scale meant a multi-seat operation and segregation of duty. So what would it take to scale this lightweight payment feature into a Mid-Market AP machine?",
+    "The required capabilities were scattered across legacy domains, none of them were built to work together the way this workflow demanded, and they were guarded by different teams and organizations across QuickBooks. Building all these capabilities went far beyond Bill Pay.",
+    "Now, the team also had to drive this alignment puzzle, where multiple teams, each with their own metrics and roadmaps, needs to move in the same direction at the same time.",
+    "Leadership said go, and I was brought in as Principal Designer. My mission was to partner with design and cross-functional leads across QuickBooks, to rethink our core capabilities, while building a new Bill Pay experience that serves payment execution at scale."
   ]) }}
   {{ sectionBody(["role:", "role:", "role:", "role:"]) }}
   {% endcall %}
