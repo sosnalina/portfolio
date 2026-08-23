@@ -547,9 +547,29 @@
   .bp-vendor__method { display: flex; align-items: center; gap: 7px; height: 24px; margin-top: -2px; }
   .bp-vendor__method-icon { width: 14px; height: 14px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; line-height: 0; }
   .bp-vendor__method-icon img { display: block; transform: translateY(1px); }
+  /* Alert icon renders at 12px here, not the bank/check icons' 14px (task spec). */
+  .bp-vendor__method-icon--alert { width: 12px; height: 12px; }
   .bp-vendor__method-text { margin: 0; font: var(--bp-text-cell-small); color: var(--primitive-grey-dark); white-space: nowrap; }
 
-  .bp-cell--bill span, .bp-cell--due span, .bp-cell--balance span {
+  /* Good Heart Catering's method line carries both its alert and resolved
+     variants at once (renderVendorMethod() below), toggled via
+     data-vendor-state — this file has no click interactivity anywhere, so
+     this only makes the resolved state available for a future scene to
+     switch to; ported verbatim from schedule-payment.html's own version of
+     this pattern (see that file for the fuller comment). Split by tag name
+     so the icon span keeps the inline-flex its own internal centering
+     needs. */
+  .bp-vendor__method[data-vendor-state] > [data-state] { display: none; }
+  .bp-vendor__method[data-vendor-state="alert"] > span[data-state="alert"],
+  .bp-vendor__method[data-vendor-state="resolved"] > span[data-state="resolved"] { display: inline-flex; }
+  .bp-vendor__method[data-vendor-state="alert"] > p[data-state="alert"],
+  .bp-vendor__method[data-vendor-state="resolved"] > p[data-state="resolved"] { display: block; }
+
+  /* .bp-cell--amount > span: vendor row's Amount cell only - the sub-rows'
+     and batch rows' Amount cells nest their span inside .bp-amount-field
+     instead, one level deeper, so this direct-child selector doesn't
+     touch them. Same text styling as Open balance beside it. */
+  .bp-cell--bill span, .bp-cell--due span, .bp-cell--balance span, .bp-cell--amount > span {
     font: var(--bp-text-cell-normal);
     color: var(--primitive-black);
   }
@@ -606,6 +626,19 @@
   .bp-stat__sub { display: flex; align-items: center; gap: 5px; }
   .bp-stat__sub img { width: 10px; height: 10px; }
   .bp-stat__sub span { font: var(--bp-text-footer-label); color: var(--bp-color-divider); }
+
+  /* Vendors stat's alert/resolved toggle — ported verbatim from
+     schedule-payment.html (see that file for the fuller comment). Scoped
+     to Vendors only: Bills/Payments never carry data-vendor-state. */
+  .bp-stat__sub[data-vendor-state] > [data-state] { display: none; }
+  .bp-stat__sub[data-vendor-state="alert"] > [data-state="alert"],
+  .bp-stat__sub[data-vendor-state="resolved"] > [data-state="resolved"] { display: inline; }
+  /* "1 needs delivery details" underlines on hover only, as one unit (the
+     alert icon beside it is a sibling, never included). .is-hover lets a
+     scripted scene (a synthetic cursor) apply the same visual without a
+     real :hover. */
+  .bp-hover-underline { text-decoration: none; }
+  .bp-hover-underline:hover, .bp-hover-underline.is-hover { text-decoration: underline; }
   .bp-footer__buttons { display: flex; gap: 20px; }
   .bp-btn {
     height: 36px;
@@ -702,7 +735,12 @@
             <div class="bp-stat">
               <p class="bp-stat__label">Vendors</p>
               <p class="bp-stat__num" id="mock-stat-vendors">0</p>
-              <div class="bp-stat__sub"><img src="../../icons/bill-pay-mock/footer-check.svg" alt="" /><span>Authorized</span></div>
+              <div class="bp-stat__sub" data-vendor-state="alert">
+                <img data-state="resolved" src="../../icons/bill-pay-mock/footer-check.svg" alt="" />
+                <span data-state="resolved">Authorized</span>
+                <img data-state="alert" src="../../icons/bill-pay-mock/alert-circle.svg" alt="" />
+                <span data-state="alert" class="bp-hover-underline">1 needs delivery details</span>
+              </div>
             </div>
             <div class="bp-stat">
               <p class="bp-stat__label">Payments</p>
@@ -809,7 +847,8 @@
         { src: "info-circle-3.svg", inset: "8.33% 8.3% 8.33% 8.3%" }
       ]),
       arrow: layeredIcon(18, [{ src: "withdraw-arrives-arrow.svg", inset: "32.99% 16.69% 33.04% 16.67%" }]),
-      statusCheck: '<img src="' + ICONS + 'status-check.svg" alt="" style="display:block;width:100%;height:100%" />'
+      statusCheck: '<img src="' + ICONS + 'status-check.svg" alt="" style="display:block;width:100%;height:100%" />',
+      alertCircle: '<img src="' + ICONS + 'alert-circle.svg" alt="" style="display:block;width:100%;height:100%" />'
     };
 
     function money(n) {
@@ -840,6 +879,34 @@
       return "Check";
     }
 
+    // Good Heart Catering is missing delivery details (Figma node
+    // 3092:155767) — ported verbatim from schedule-payment.js's own
+    // renderVendorMethod() (see that file for the fuller comment). Both
+    // the alert markup and its resolved counterpart are built into the DOM
+    // together, toggled via data-vendor-state; this file has no click
+    // interactivity anywhere, so this only makes the resolved state
+    // available for a future scene to switch to.
+    var ALERTED_VENDOR = "Good Heart Catering";
+
+    function renderVendorMethod(vendorName, method, last4) {
+      if (vendorName === ALERTED_VENDOR) {
+        return (
+          '<div class="bp-vendor__method" data-vendor-state="alert">' +
+            '<span class="bp-vendor__method-icon bp-vendor__method-icon--alert" data-state="alert">' + GLYPH.alertCircle + "</span>" +
+            '<p class="bp-vendor__method-text" data-state="alert">Add delivery details</p>' +
+            '<span class="bp-vendor__method-icon" data-state="resolved">' + GLYPH.bank + "</span>" +
+            '<p class="bp-vendor__method-text" data-state="resolved">Bank payment (ACH)</p>' +
+          "</div>"
+        );
+      }
+      return (
+        '<div class="bp-vendor__method">' +
+          '<span class="bp-vendor__method-icon">' + GLYPH[method] + "</span>" +
+          '<p class="bp-vendor__method-text">' + methodLabel({ method: method, last4: last4 }) + "</p>" +
+        "</div>"
+      );
+    }
+
     // Identical markup to renderBatchRow() in schedule-payment.js (minus
     // the narrow-mode branch, which never applies here — this scene never
     // opens a drawer). Static: called once per row at load, never re-run.
@@ -850,10 +917,7 @@
             '<div class="bp-vendor">' +
               '<div class="bp-vendor__body">' +
                 '<p class="bp-vendor__name">' + row.vendor + "</p>" +
-                '<div class="bp-vendor__method">' +
-                  '<span class="bp-vendor__method-icon">' + GLYPH[row.method] + "</span>" +
-                  '<p class="bp-vendor__method-text">' + methodLabel(row) + "</p>" +
-                "</div>" +
+                renderVendorMethod(row.vendor, row.method, row.last4) +
               "</div>" +
             "</div>" +
           "</div>" +
@@ -950,7 +1014,7 @@
           '<div class="bp-cell bp-cell--due"><span>' + row.due + "</span></div>" +
           '<div class="bp-cell bp-cell--speed" data-narrow-hide style="opacity:0"></div>' +
           '<div class="bp-cell bp-cell--fee" data-narrow-hide style="opacity:0"></div>' +
-          '<div class="bp-cell bp-cell--balance" style="opacity:0"></div>' +
+          '<div class="bp-cell bp-cell--balance"><span>' + money(row.amount) + "</span></div>" +
           '<div class="bp-cell bp-cell--amount"><div class="bp-amount-field"><span>' + money(row.amount) + "</span></div></div>" +
           '<div class="bp-cell bp-cell--action"><img class="bp-action-icon" src="' + ICONS + 'narrow-action.svg" alt="" /></div>' +
         "</div>"
@@ -983,10 +1047,7 @@
               "</button>" +
               '<div class="bp-vendor__body">' +
                 '<p class="bp-vendor__name">' + group.vendor + "</p>" +
-                '<div class="bp-vendor__method">' +
-                  '<span class="bp-vendor__method-icon">' + GLYPH[group.method] + "</span>" +
-                  '<p class="bp-vendor__method-text">' + methodLabel(group) + "</p>" +
-                "</div>" +
+                renderVendorMethod(group.vendor, group.method, group.last4) +
               "</div>" +
             "</div>" +
           "</div>" +
@@ -999,7 +1060,10 @@
           "</div>" +
           '<div class="bp-cell bp-cell--fee"' + narrowHideSpeed + '><div class="bp-fee"><span>' + money(feeTotal) + "</span><span>" + GLYPH.info + "</span></div></div>" +
           '<div class="bp-cell bp-cell--balance"><span>' + money(group.total) + "</span></div>" +
-          '<div class="bp-cell bp-cell--amount"><div class="bp-amount-field"><span>' + money(group.total) + "</span></div></div>" +
+          // Amount is an aggregate (sum of the group's bill sub-rows), not
+          // a directly editable value - plain text like Open balance
+          // beside it, not the sub-rows' .bp-amount-field input look.
+          '<div class="bp-cell bp-cell--amount"><span>' + money(group.total) + "</span></div>" +
           // Confirmed against Figma: Manage is present on the vendor row in
           // bulk-full but structurally absent in bulk-narrow. state.narrow
           // is always false in this file (no drawer here), so this is a

@@ -842,6 +842,12 @@
         display: block;
         transform: translateY(1px);
       }
+      /* Alert icon renders at 12px here, not the bank/check icons' 14px
+         (task spec — reads better at that size). */
+      .bp-vendor__method-icon--alert {
+        width: 12px;
+        height: 12px;
+      }
       .bp-vendor__method-text {
         margin: 0;
         font: var(--bp-text-cell-small);
@@ -849,9 +855,37 @@
         white-space: nowrap;
       }
 
+      /* Good Heart Catering's method line (renderVendorMethod() in
+         schedule-payment.js) carries both its alert and resolved variants
+         at once, toggled via data-vendor-state — not wired to any click
+         (nothing in this mock is interactive), just made available for a
+         future scene to switch. Default/base rule hides every tagged
+         variant; the two "show" rules below re-enable only the one whose
+         data-state matches the parent's own data-vendor-state. Split by
+         tag name (span vs p) rather than one shared rule, so the icon span
+         gets back the inline-flex it needs for its own internal centering
+         (.bp-vendor__method-icon above) instead of a generic display value
+         clobbering it. */
+      .bp-vendor__method[data-vendor-state] > [data-state] {
+        display: none;
+      }
+      .bp-vendor__method[data-vendor-state="alert"] > span[data-state="alert"],
+      .bp-vendor__method[data-vendor-state="resolved"] > span[data-state="resolved"] {
+        display: inline-flex;
+      }
+      .bp-vendor__method[data-vendor-state="alert"] > p[data-state="alert"],
+      .bp-vendor__method[data-vendor-state="resolved"] > p[data-state="resolved"] {
+        display: block;
+      }
+
       .bp-cell--bill span,
       .bp-cell--due span,
-      .bp-cell--balance span {
+      .bp-cell--balance span,
+      /* Vendor row's Amount cell only (a direct child span - the sub-rows'
+         and batch rows' Amount cells nest their span inside
+         .bp-amount-field instead, one level deeper, so this doesn't touch
+         them). Same text styling as Open balance beside it. */
+      .bp-cell--amount > span {
         font: var(--bp-text-cell-normal);
         color: var(--primitive-black);
       }
@@ -1024,6 +1058,38 @@
         font: var(--bp-text-footer-label);
         text-transform: none;
         color: var(--bp-color-divider);
+      }
+
+      /* Vendors stat's sub-line carries both its alert and resolved
+         variants at once (markup below, in the footer), toggled via
+         data-vendor-state on .bp-stat__sub — not wired to any click
+         (nothing in this mock is interactive), just made available for a
+         future scene to switch. Default/base rule hides every tagged
+         variant; the "show" rules re-enable only the one whose data-state
+         matches the parent's own data-vendor-state. Plain `inline` is
+         sufficient here (unlike the row's own version of this pattern
+         above) — .bp-stat__sub's img/span children have no internal
+         flex layout of their own to preserve, and both are flex-item
+         children of .bp-stat__sub regardless of their own declared
+         display. Bills/Payments' own .bp-stat__sub instances never carry
+         data-vendor-state, so this is scoped to Vendors only. */
+      .bp-stat__sub[data-vendor-state] > [data-state] {
+        display: none;
+      }
+      .bp-stat__sub[data-vendor-state="alert"] > [data-state="alert"],
+      .bp-stat__sub[data-vendor-state="resolved"] > [data-state="resolved"] {
+        display: inline;
+      }
+      /* "1 needs delivery details" underlines on hover only, as one unit
+         (the alert icon beside it is a sibling, never included). .is-hover
+         lets a scripted scene (a synthetic cursor, not a real pointer)
+         apply the same visual without ever triggering a real :hover. */
+      .bp-hover-underline {
+        text-decoration: none;
+      }
+      .bp-hover-underline:hover,
+      .bp-hover-underline.is-hover {
+        text-decoration: underline;
       }
       .bp-footer__buttons {
         display: flex;
@@ -1901,7 +1967,12 @@
               <div class="bp-stat">
                 <p class="bp-stat__label">Vendors</p>
                 <p class="bp-stat__num" id="bp-stat-vendors">0</p>
-                <div class="bp-stat__sub"><img src="../../icons/bill-pay-mock/footer-check.svg" alt="" /><span>Authorized</span></div>
+                <div class="bp-stat__sub" data-vendor-state="alert">
+                  <img data-state="resolved" src="../../icons/bill-pay-mock/footer-check.svg" alt="" />
+                  <span data-state="resolved">Authorized</span>
+                  <img data-state="alert" src="../../icons/bill-pay-mock/alert-circle.svg" alt="" />
+                  <span data-state="alert" class="bp-hover-underline">1 needs delivery details</span>
+                </div>
               </div>
               <div class="bp-stat">
                 <p class="bp-stat__label">Payments</p>

@@ -35,7 +35,8 @@
     ]),
     arrow: layeredIcon(18, [{ src: "withdraw-arrives-arrow.svg", inset: "32.99% 16.69% 33.04% 16.67%" }]),
     statusCheck: '<img src="' + ICONS + 'status-check.svg" alt="" style="display:block;width:100%;height:100%" />',
-    chevron: '<img src="' + ICONS + 'dropdown-chevron.svg" alt="" style="display:block;width:12px;height:6.86px" />'
+    chevron: '<img src="' + ICONS + 'dropdown-chevron.svg" alt="" style="display:block;width:12px;height:6.86px" />',
+    alertCircle: '<img src="' + ICONS + 'alert-circle.svg" alt="" style="display:block;width:100%;height:100%" />'
   };
 
   function money(n) {
@@ -157,6 +158,37 @@
     return "Check";
   }
 
+  /* Good Heart Catering is missing delivery details (node 3092:155767) —
+     its payment-method line (batch row and bulk vendor-summary row alike)
+     is replaced with the same orange alert icon used by the footer's
+     Vendors stat below, at 12px rather than the bank/check icons' 14px
+     (reads better at that size — spec §2). Both the alert markup and its
+     resolved counterpart ("Bank payment (ACH)" + bank icon, per spec §4)
+     are built into the DOM together and toggled via data-vendor-state —
+     this mock has no click behavior anywhere (scenes drive everything),
+     so this only makes the resolved state available for a future scene to
+     switch to; the mock's own default is the alert state. */
+  var ALERTED_VENDOR = "Good Heart Catering";
+
+  function renderVendorMethod(vendorName, method, last4) {
+    if (vendorName === ALERTED_VENDOR) {
+      return (
+        '<div class="bp-vendor__method" data-vendor-state="alert">' +
+          '<span class="bp-vendor__method-icon bp-vendor__method-icon--alert" data-state="alert">' + GLYPH.alertCircle + "</span>" +
+          '<p class="bp-vendor__method-text" data-state="alert">Add delivery details</p>' +
+          '<span class="bp-vendor__method-icon" data-state="resolved">' + GLYPH.bank + "</span>" +
+          '<p class="bp-vendor__method-text" data-state="resolved">Bank payment (ACH)</p>' +
+        "</div>"
+      );
+    }
+    return (
+      '<div class="bp-vendor__method">' +
+        '<span class="bp-vendor__method-icon">' + GLYPH[method] + "</span>" +
+        '<p class="bp-vendor__method-text">' + methodLabel({ method: method, last4: last4 }) + "</p>" +
+      "</div>"
+    );
+  }
+
   function vendorGroups() {
     var order = [];
     var map = {};
@@ -223,10 +255,7 @@
           '<div class="bp-vendor">' +
             '<div class="bp-vendor__body">' +
               '<p class="bp-vendor__name">' + row.vendor + "</p>" +
-              '<div class="bp-vendor__method">' +
-                '<span class="bp-vendor__method-icon">' + GLYPH[row.method] + "</span>" +
-                '<p class="bp-vendor__method-text">' + methodLabel(row) + "</p>" +
-              "</div>" +
+              renderVendorMethod(row.vendor, row.method, row.last4) +
             "</div>" +
           "</div>" +
         "</div>" +
@@ -266,7 +295,7 @@
         '<div class="bp-cell bp-cell--due"><span>' + row.due + "</span></div>" +
         '<div class="bp-cell bp-cell--speed" data-narrow-hide style="opacity:0"></div>' +
         '<div class="bp-cell bp-cell--fee" data-narrow-hide style="opacity:0"></div>' +
-        '<div class="bp-cell bp-cell--balance" style="opacity:0"></div>' +
+        '<div class="bp-cell bp-cell--balance"><span>' + money(row.amount) + "</span></div>" +
         '<div class="bp-cell bp-cell--amount"><div class="bp-amount-field"><span>' + money(row.amount) + "</span></div></div>" +
         '<div class="bp-cell bp-cell--action"><img class="bp-action-icon" src="' + ICONS + 'narrow-action.svg" alt="" /></div>' +
       "</div>"
@@ -311,10 +340,7 @@
             "</button>" +
             '<div class="bp-vendor__body">' +
               '<p class="bp-vendor__name">' + group.vendor + "</p>" +
-              '<div class="bp-vendor__method">' +
-                '<span class="bp-vendor__method-icon">' + GLYPH[group.method] + "</span>" +
-                '<p class="bp-vendor__method-text">' + methodLabel(group) + "</p>" +
-              "</div>" +
+              renderVendorMethod(group.vendor, group.method, group.last4) +
             "</div>" +
           "</div>" +
         "</div>" +
@@ -327,7 +353,10 @@
         "</div>" +
         '<div class="bp-cell bp-cell--fee"' + narrowHideSpeed + '><div class="bp-fee"><span>' + money(feeTotal) + "</span><span>" + GLYPH.info + "</span></div></div>" +
         '<div class="bp-cell bp-cell--balance"><span>' + money(group.total) + "</span></div>" +
-        '<div class="bp-cell bp-cell--amount"><div class="bp-amount-field"><span>' + money(group.total) + "</span></div></div>" +
+        /* Amount is an aggregate (sum of the group's bill sub-rows), not a
+           directly editable value - plain text like Open balance beside
+           it, not the sub-rows' .bp-amount-field input look. */
+        '<div class="bp-cell bp-cell--amount"><span>' + money(group.total) + "</span></div>" +
         /* Confirmed against Figma: the vendor summary row's Manage action
            is present in bulk-full (node 2207:169585, "T Action>Mangae"
            cell renders "Manage") but structurally absent — no action cell
@@ -896,6 +925,7 @@
   function renderDrawerBankDetails() {
     var payload = state.drawer.row;
     var vendor = payload ? payload.vendor : "";
+    var isAlerted = vendor === ALERTED_VENDOR;
     /* Head (vendor name, subtitle, close/back) is persistent markup, set up
        in openDrawer() and animated in swapDrawerContent() - not rendered here. */
     /* Reuses the same speed-tabs component the delivery calendar's Custom
@@ -903,27 +933,48 @@
        of the old icon-illustrated bp-tabs/bp-tab pair - plain text labels,
        2-segment border-overlap. Only 2 segments here (vs. the calendar's
        3), so just --start/--end, no --mid. */
+    /* Good Heart Catering has no delivery details on file — every value
+       box below renders completely empty (§3), including the State
+       dropdown (chevron stays, nothing reads as selected). Labels and
+       helper text are unaffected. */
     var html =
       '<div class="bp-speed-tabs">' +
         '<button type="button" class="bp-speed-tab bp-speed-tab--start" data-active="true">Bank payment (ACH)</button>' +
         '<button type="button" class="bp-speed-tab bp-speed-tab--end" data-active="false">Paper check</button>' +
       "</div>" +
-      '<div class="bp-field"><label class="bp-field__label">Pay to</label><div class="bp-field__value-box"><span>' + vendor + "</span></div></div>" +
-      '<div class="bp-field">' +
-        '<label class="bp-field__label">Email</label>' +
-        '<div class="bp-field__value-box"><span>billing@barnettlawncare.com</span></div>' +
-        '<p class="bp-field__helper">We’ll email them with payment status updates.</p>' +
-      "</div>" +
-      '<div class="bp-field-row">' +
-        '<div class="bp-field bp-field--zip"><label class="bp-field__label">Vendor’s ZIP code</label><div class="bp-field__value-box"><span>02903</span></div></div>' +
-        '<div class="bp-field bp-field--state"><label class="bp-field__label">State</label><div class="bp-field__value-box"><span>RI</span>' + GLYPH.chevron + "</div></div>" +
-      "</div>" +
-      '<div class="bp-field">' +
-        '<label class="bp-field__label">Bank account number (5-17 digits)</label>' +
-        '<div class="bp-field__value-box"><span>4419827365</span></div>' +
-        '<p class="bp-field__helper">Double-check the bank info to avoid loss of funds.</p>' +
-      "</div>" +
-      '<div class="bp-field"><label class="bp-field__label">Routing number (9 digits)</label><div class="bp-field__value-box"><span>011500120</span></div></div>';
+      (isAlerted
+        ? '<div class="bp-field"><label class="bp-field__label">Pay to</label><div class="bp-field__value-box"></div></div>' +
+          '<div class="bp-field">' +
+            '<label class="bp-field__label">Email</label>' +
+            '<div class="bp-field__value-box"></div>' +
+            '<p class="bp-field__helper">We’ll email them with payment status updates.</p>' +
+          "</div>" +
+          '<div class="bp-field-row">' +
+            '<div class="bp-field bp-field--zip"><label class="bp-field__label">Vendor’s ZIP code</label><div class="bp-field__value-box"></div></div>' +
+            '<div class="bp-field bp-field--state"><label class="bp-field__label">State</label><div class="bp-field__value-box">' + GLYPH.chevron + "</div></div>" +
+          "</div>" +
+          '<div class="bp-field">' +
+            '<label class="bp-field__label">Bank account number (5-17 digits)</label>' +
+            '<div class="bp-field__value-box"></div>' +
+            '<p class="bp-field__helper">Double-check the bank info to avoid loss of funds.</p>' +
+          "</div>" +
+          '<div class="bp-field"><label class="bp-field__label">Routing number (9 digits)</label><div class="bp-field__value-box"></div></div>'
+        : '<div class="bp-field"><label class="bp-field__label">Pay to</label><div class="bp-field__value-box"><span>' + vendor + "</span></div></div>" +
+          '<div class="bp-field">' +
+            '<label class="bp-field__label">Email</label>' +
+            '<div class="bp-field__value-box"><span>billing@barnettlawncare.com</span></div>' +
+            '<p class="bp-field__helper">We’ll email them with payment status updates.</p>' +
+          "</div>" +
+          '<div class="bp-field-row">' +
+            '<div class="bp-field bp-field--zip"><label class="bp-field__label">Vendor’s ZIP code</label><div class="bp-field__value-box"><span>02903</span></div></div>' +
+            '<div class="bp-field bp-field--state"><label class="bp-field__label">State</label><div class="bp-field__value-box"><span>RI</span>' + GLYPH.chevron + "</div></div>" +
+          "</div>" +
+          '<div class="bp-field">' +
+            '<label class="bp-field__label">Bank account number (5-17 digits)</label>' +
+            '<div class="bp-field__value-box"><span>4419827365</span></div>' +
+            '<p class="bp-field__helper">Double-check the bank info to avoid loss of funds.</p>' +
+          "</div>" +
+          '<div class="bp-field"><label class="bp-field__label">Routing number (9 digits)</label><div class="bp-field__value-box"><span>011500120</span></div></div>');
 
     els.drawerInner.innerHTML = html;
   }
