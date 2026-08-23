@@ -181,6 +181,7 @@
     drawer: {
       open: false,
       row: null,
+      revealed: false, // whether the selected row's own state (card, chevron, expand) has resolved - see openDrawer()/closeDrawer()
       view: "default", // view: default | bank-details
       delivery: "radios", // delivery: radios | custom
       selectedRadio: "standard",
@@ -275,6 +276,17 @@
   function renderVendorRow(group) {
     var expanded = !!state.expanded[group.vendor];
     var narrowHideSpeed = rowCellsCommon(true);
+    // The vendor row the open drawer refers to, AND whose own selected
+    // state has resolved (state.drawer.revealed - see openDrawer()'s
+    // reveal, deferred until the drawer's own opening motion settles).
+    // Its group is forced open and can't be collapsed from here while
+    // selected, so its chevron is hidden via CSS (opacity+visibility, not
+    // display - keeps its space reserved so the vendor name doesn't
+    // shift; see .bp-vendor__chevron[data-selected]). Gating on `revealed`
+    // (not just `open`) matters for renderRows() calls that happen WHILE
+    // already revealed (setMode(), etc.) - those should render the
+    // already-resolved end state directly, not the pre-reveal one.
+    var isSelected = !!(state.drawer.open && state.drawer.revealed && state.drawer.row && state.drawer.row.vendor === group.vendor);
     // Aggregate values for the vendor row so bulk-mode vendor summaries
     // show the same columns as batch rows (speed meta, open balance).
     // Fee is NOT summed: one vendor = one payment = one $1.00 fee,
@@ -294,7 +306,7 @@
       '<div class="bp-row" data-vendor-row="' + group.vendor + '">' +
         '<div class="bp-cell bp-cell--vendor">' +
           '<div class="bp-vendor">' +
-            '<button class="bp-vendor__chevron" type="button" data-chevron data-expanded="' + expanded + '" aria-label="Expand vendor">' +
+            '<button class="bp-vendor__chevron" type="button" data-chevron data-expanded="' + expanded + '"' + (isSelected ? ' data-selected="true"' : "") + ' aria-label="Expand vendor">' +
               '<img src="' + ICONS + 'dropdown-chevron.svg" alt="" />' +
             "</button>" +
             '<div class="bp-vendor__body">' +
@@ -340,6 +352,61 @@
     bindRowEvents();
   }
 
+  /* Keeps the selected-row card (see .bp-row-card-layer / .bp-row-selected-
+     card in schedule-payment.html) locked to its row's live position, and
+     toggles its visibility. Re-run whenever anything could move that row
+     OR change whether it should be visible: selection changes (openDrawer/
+     closeDrawer/setMode), scrolling, window resize (the whole mock
+     rescales - see applyScale()), and another row's expand/collapse
+     finishing (which can shift this row up/down if it sits below the one
+     that (dis)expanded).
+
+     Position and visibility are separate concerns on purpose. The card's
+     position is kept current the moment a row is known to be selected
+     (state.drawer.open + .row), even before state.drawer.revealed flips
+     true - so when it does become visible (see openDrawer()'s deferred
+     reveal), it fades in already in the right place instead of jumping
+     there. Visibility (the [data-visible] attribute, opacity-transitioned
+     in CSS) tracks state.drawer.revealed, which openDrawer()/closeDrawer()
+     control directly to sequence the reveal against the drawer's own
+     motion - see those functions for why.
+
+     Math mirrors scenes.html's nativeRect(): getBoundingClientRect()
+     returns already-scaled (visual) pixels, but this card's own top/left/
+     width are read by the browser BEFORE .scaler's transform is applied
+     (the card lives inside that same scaled subtree), so the raw pixel
+     difference has to be divided by the current scale factor before being
+     written back as a plain CSS px value - otherwise the position would be
+     right at 100% width and increasingly wrong at any other size. */
+  function updateSelectedRowCard() {
+    var hasSelection = state.mode === "bulk" && state.drawer.open && !!state.drawer.row;
+    var rowEl = hasSelection
+      ? els.rowsScroll.querySelector('.bp-row[data-vendor-row="' + cssEscape(state.drawer.row.vendor) + '"]')
+      : null;
+    if (!rowEl) {
+      els.rowCard.removeAttribute("data-visible");
+      return;
+    }
+    var scale = document.documentElement.clientWidth / 1440;
+    var rowRect = rowEl.getBoundingClientRect();
+    var layerRect = els.rowCardLayer.getBoundingClientRect();
+    var nativeTop = (rowRect.top - layerRect.top) / scale;
+    var nativeLeft = (rowRect.left - layerRect.left) / scale;
+    var nativeWidth = rowRect.width / scale;
+    // +11 optically centers the fixed 68px card on the row's 60px content
+    // band (content sits 15px down from the row's own top, flush to its
+    // bottom) - identical geometry to the row-relative version this
+    // overlay replaces.
+    els.rowCard.style.top = nativeTop + 11 + "px";
+    els.rowCard.style.left = nativeLeft + "px";
+    els.rowCard.style.width = nativeWidth + "px";
+    if (state.drawer.revealed) {
+      els.rowCard.setAttribute("data-visible", "true");
+    } else {
+      els.rowCard.removeAttribute("data-visible");
+    }
+  }
+
   function bindRowEvents() {
     var chevrons = els.rowsScroll.querySelectorAll("[data-chevron]");
     for (var i = 0; i < chevrons.length; i++) {
@@ -352,6 +419,43 @@
   }
 
   /* ---- §7.2 bulk expand/collapse ---- */
+  /* Animates a group open: measures its natural height, then transitions
+     0 -> natural (--bp-ease-expand, duration scaled to content so short
+     and long lists both feel proportionate - see the Math.max/min below).
+     Shared by two callers: a manual chevron click (onChevronClick), and
+     openDrawer()'s automatic expand-on-select (see revealSelectedRow()) -
+     both need the identical animation, just triggered differently, so
+     this is the one place it's implemented rather than two. */
+  function expandGroupAnimated(vendor) {
+    var wrap = els.rowsScroll.querySelector('[data-expand-wrap="' + cssEscape(vendor) + '"]');
+    var btn = els.rowsScroll.querySelector('.bp-row[data-vendor-row="' + cssEscape(vendor) + '"] [data-chevron]');
+    if (!wrap) return;
+    var group = vendorGroups().filter(function (g) { return g.vendor === vendor; })[0];
+    wrap.querySelector(".bp-expand-inner").innerHTML = group.rows.map(renderSubRow).join("");
+    var natural = wrap.querySelector(".bp-expand-inner").scrollHeight;
+    var duration = Math.max(225, Math.min(15 * natural, 375));
+    wrap.style.height = "0px";
+    wrap.style.marginTop = "14px";
+    if (btn) {
+      btn.setAttribute("data-expanded", "true");
+      btn.removeAttribute("data-collapsing");
+      btn.style.setProperty("--bp-expand-duration", duration + "ms");
+    }
+    wrap.style.transition = "height " + duration + "ms var(--bp-ease-expand)";
+    requestAnimationFrame(function () {
+      wrap.style.height = natural + "px";
+    });
+    state.expanded[vendor] = true;
+    var onEnd = function () {
+      wrap.style.height = "auto";
+      wrap.removeEventListener("transitionend", onEnd);
+      // This expand can shift a DIFFERENT (selected) row up/down if it
+      // sits below `vendor` in the list.
+      updateSelectedRowCard();
+    };
+    wrap.addEventListener("transitionend", onEnd);
+  }
+
   function onChevronClick(e) {
     var btn = e.currentTarget;
     var row = btn.closest(".bp-row");
@@ -360,26 +464,7 @@
     var expanded = !!state.expanded[vendor];
 
     if (!expanded) {
-      // mount content BEFORE expand starts
-      var group = vendorGroups().filter(function (g) { return g.vendor === vendor; })[0];
-      wrap.querySelector(".bp-expand-inner").innerHTML = group.rows.map(renderSubRow).join("");
-      var natural = wrap.querySelector(".bp-expand-inner").scrollHeight;
-      var duration = Math.max(225, Math.min(15 * natural, 375));
-      wrap.style.height = "0px";
-      wrap.style.marginTop = "14px";
-      btn.setAttribute("data-expanded", "true");
-      btn.removeAttribute("data-collapsing");
-      btn.style.setProperty("--bp-expand-duration", duration + "ms");
-      wrap.style.transition = "height " + duration + "ms var(--bp-ease-expand)";
-      requestAnimationFrame(function () {
-        wrap.style.height = natural + "px";
-      });
-      state.expanded[vendor] = true;
-      var onEnd1 = function () {
-        wrap.style.height = "auto";
-        wrap.removeEventListener("transitionend", onEnd1);
-      };
-      wrap.addEventListener("transitionend", onEnd1);
+      expandGroupAnimated(vendor);
     } else {
       var current = wrap.scrollHeight;
       var dur = Math.max(225, Math.min(15 * current, 375));
@@ -398,6 +483,7 @@
         wrap.style.marginTop = "0";
         btn.removeAttribute("data-collapsing");
         wrap.removeEventListener("transitionend", onEnd2);
+        updateSelectedRowCard();
       };
       wrap.addEventListener("transitionend", onEnd2);
     }
@@ -421,10 +507,32 @@
     openDrawer(payload);
   }
 
+  /* Resolves the row's own selected state once the drawer's opening
+     motion has finished (see openDrawer()'s transitionend listener) - the
+     card, the chevron-hide, and (conditionally) the group expand all
+     start together at this one moment, rather than each waiting on the
+     others. They're independent visual facts about the same row ("this
+     one", "can't be toggled from here", "already showing its bills") -
+     staggering them further would read as choreography, not response.
+     alreadyExpanded is measured back in openDrawer() BEFORE this fires,
+     so a group that was already open stays exactly as it was - no expand
+     animation runs for it. */
+  function revealSelectedRow(payload, alreadyExpanded) {
+    var rowEl = els.rowsScroll.querySelector('.bp-row[data-vendor-row="' + cssEscape(payload.vendor) + '"]');
+    if (!rowEl) return;
+    var chevron = rowEl.querySelector(".bp-vendor__chevron");
+    if (chevron) chevron.setAttribute("data-selected", "true");
+    updateSelectedRowCard();
+    if (!payload.bill && !alreadyExpanded) {
+      expandGroupAnimated(payload.vendor);
+    }
+  }
+
   /* ---- §7.3 drawer + column collapse (unified motion) ---- */
   function openDrawer(payload) {
     state.drawer.open = true;
     state.drawer.row = payload;
+    state.drawer.revealed = false;
     state.drawer.view = "default";
     // §6.6: every drawer opens fresh with the 4 radios, Standard selected.
     state.drawer.delivery = "radios";
@@ -448,6 +556,10 @@
     state.drawer.billMeta = payload.bill
       ? "Bill no." + payload.bill + " • Total Amount:"
       : payload.rows.length + " Bills • Total Amount:";
+    // Measured here, before anything changes it, so revealSelectedRow()
+    // (fired later, after the drawer settles) knows whether to animate
+    // the group open or leave it exactly as it already was.
+    var alreadyExpanded = !payload.bill && !!state.expanded[payload.vendor];
     els.drawerHead.classList.remove("bp-drawer__head--drilldown");
     els.drawerVendorName.textContent = payload.vendor;
     els.drawerSubtitle.textContent = state.drawer.billMeta;
@@ -458,10 +570,51 @@
     requestAnimationFrame(function () {
       els.screen.classList.add("bp-screen--drawer-open");
     });
+    // Rows render now in their PRE-selection state (state.drawer.revealed
+    // is still false - renderVendorRow's isSelected gate) - the chevron
+    // is visible, and an unexpanded group stays unexpanded, until the
+    // reveal below fires.
     renderRows();
+    updateSelectedRowCard();
+
+    /* The drawer opens first; the row's own selected state resolves only
+       once that motion has actually finished - not at the same moment,
+       and not on a guessed delay. Listening for the drawer's own
+       transitionend (rather than duplicating its 225ms) means this stays
+       correct even if that duration ever changes. Guarded against the
+       drawer having already closed, or moved on to a different row,
+       before its opening transition finished (fast repeated clicks). */
+    var onDrawerOpenEnd = function () {
+      els.drawer.removeEventListener("transitionend", onDrawerOpenEnd);
+      if (!state.drawer.open || !state.drawer.row || state.drawer.row.vendor !== payload.vendor) return;
+      state.drawer.revealed = true;
+      revealSelectedRow(payload, alreadyExpanded);
+    };
+    els.drawer.addEventListener("transitionend", onDrawerOpenEnd);
   }
 
+  /* Closing doesn't replay the opening sequence backwards. On open, the
+     row's own state deliberately waits for the drawer to finish arriving
+     before it resolves (see openDrawer()) - but gating the reverse the
+     same way would make the row block its own exit, sitting there
+     un-reverting while the drawer that referred to it is already most of
+     the way gone. An exit should read as everything retreating at once,
+     not a graceful multi-stage unwind, so the card fade-out and chevron
+     fade-back-in start immediately here, concurrent with the drawer's own
+     195ms close-slide, rather than waiting on it. The group's expanded
+     state is left alone either way - it was never tied to selection in
+     the first place, only its entry into that state was (see
+     revealSelectedRow()); collapsing it back is a separate, manual action
+     via the now-visible-again chevron. */
   function closeDrawer() {
+    state.drawer.revealed = false;
+    if (state.drawer.row) {
+      var rowEl = els.rowsScroll.querySelector('.bp-row[data-vendor-row="' + cssEscape(state.drawer.row.vendor) + '"]');
+      var chevron = rowEl ? rowEl.querySelector(".bp-vendor__chevron") : null;
+      if (chevron) chevron.removeAttribute("data-selected");
+    }
+    updateSelectedRowCard();
+
     els.screen.classList.remove("bp-screen--drawer-open");
     var onEnd = function () {
       els.screen.classList.remove("bp-screen--narrow");
@@ -469,6 +622,7 @@
       state.drawer.open = false;
       els.drawer.removeEventListener("transitionend", onEnd);
       renderRows();
+      updateSelectedRowCard();
     };
     els.drawer.addEventListener("transitionend", onEnd);
   }
@@ -662,7 +816,10 @@
       "</div>" +
       '<div class="bp-drawer__divider"></div>' +
       '<div class="bp-drawer__section-title-row">' +
-        '<p class="bp-drawer__section-title">Payment delivery options</p>' +
+        '<div class="bp-drawer__section-title-group">' +
+          '<p class="bp-drawer__section-title">Payment delivery options</p>' +
+          (isCustomView ? "" : '<span class="bp-badge"><span>On time</span></span>') +
+        "</div>" +
         (isCustomView ? '<button type="button" class="bp-show-more" id="bp-show-more">Show more</button>' : "") +
       "</div>" +
       (isCustomView ? renderDeliveryCalendar(dueDates) : renderRadioGroup(dueDates)) +
@@ -850,6 +1007,7 @@
     document.documentElement.classList.add("bp-disable-transitions");
     renderRows();
     updateAggregates();
+    updateSelectedRowCard();
     // Remove the disabling class after two frames so the layout can
     // settle without transitions, then normal transitions resume.
     requestAnimationFrame(function () {
@@ -866,6 +1024,9 @@
     els.scaler.style.transform = "scale(" + scale + ")";
     var h = els.screen.scrollHeight;
     document.body.style.height = h * scale + "px";
+    // The scale factor itself changed - the selected-row card's native-px
+    // position depends on it directly (see updateSelectedRowCard()).
+    updateSelectedRowCard();
   }
 
   function init() {
@@ -885,6 +1046,8 @@
     els.drawerVendorName = q("#bp-drawer-vendor-name");
     els.drawerSubtitle = q("#bp-drawer-subtitle");
     els.drawerFooter = q("#bp-drawer-footer");
+    els.rowCardLayer = q("#bp-row-card-layer");
+    els.rowCard = q("#bp-row-selected-card");
 
     els.toggle.addEventListener("click", function () {
       setMode(state.mode === "batch" ? "bulk" : "batch");
@@ -908,6 +1071,7 @@
        scrolled away above the visible area ---- */
     els.rowsScroll.addEventListener("scroll", function () {
       els.rowsScroll.classList.toggle("is-scrolled", els.rowsScroll.scrollTop > 0);
+      updateSelectedRowCard();
     });
 
     renderRows();

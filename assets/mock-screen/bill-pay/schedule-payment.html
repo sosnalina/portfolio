@@ -62,6 +62,7 @@
         --bp-shadow-switch-thumb: 0px 5px 10px rgba(0, 0, 0, 0.1), 0px 2px 2px rgba(0, 0, 0, 0.3);
         --bp-shadow-table-body: 0px 4px 24px 0px rgba(0, 0, 0, 0.05);
         --bp-shadow-drawer: 0px 4px 34px 0px rgba(0, 0, 0, 0.25);
+        --bp-shadow-row-card: 0px 0px 16px 0px rgba(0, 0, 0, 0.13);
         --bp-color-footer-bg: #f4f5f8;
         --bp-footer-button-width: 145px;
 
@@ -104,7 +105,6 @@
            against this update, left untouched). Figma "Black" -> 800 per
            the project's established Black-substitutes-Heavy convention. */
         --bp-text-drawer-title: 600 24px/28px var(--bp-font-body);
-        --bp-text-drawer-edit-link: 600 14px/20px var(--bp-font-body);
         --bp-text-radio-title: 600 16px/24px var(--bp-font-body);
         --bp-text-radio-title-medium: 400 16px/24px var(--bp-font-body);
         --bp-text-radio-subtitle: 400 14px/21.65px var(--bp-font-body);
@@ -603,6 +603,90 @@
         margin-top: 0;
       }
 
+      /* Bulk-mode vendor row, selected (its drawer is open): a raised-card
+         shadow, rendered in a dedicated overlay layer rather than inside
+         the row itself.
+
+         Previous approach (a descendant of the row, negative z-index to
+         sit behind the row's own text) worked for layout - selecting a
+         row never changed the row's own box or pushed rows below it - but
+         .bp-rows-scroll (overflow-x:hidden, overflow-y:auto) clipped the
+         shadow: the card spans the row's FULL width, identical to
+         .bp-rows-scroll's own left/right edges, so the shadow's horizontal
+         bleed had nowhere to go and was cut flush on every row; vertically,
+         any row whose shadow reached the scroll viewport's own top or
+         bottom edge (the first row today, or whichever row sits there once
+         the list scrolls) got clipped there too.
+
+         Fix: .bp-row-card-layer is a sibling of .bp-table-body inside
+         .bp-table-wrap (position:absolute, overflow:visible) - the same
+         technique scenes.html uses for .bp-lift-layer, a positioned layer
+         outside the clipped scroll region. top:40px (not 0) accounts for
+         .bp-table-wrap's own padding-top: absolute-positioning offsets are
+         measured from the containing block's PADDING box, so an unadjusted
+         inset:0 would start at .bp-table-wrap's raw top edge, 40px above
+         where .bp-table-body (and this layer) actually needs to begin.
+         With that offset, this layer's box exactly matches .bp-table-body's
+         own rendered box - its own overflow:hidden re-establishes a clip,
+         but a much looser one (the whole white table panel) instead of
+         each row's own edges, satisfying "don't spill past the table" while
+         letting the shadow bleed freely between rows.
+
+         The card itself has no background fill. Every pixel behind it was
+         already white (the row, .bp-rows-scroll's gaps, and
+         .bp-table-body's own background all are), so a fill was always
+         redundant - box-shadow renders from an element's border-radius
+         regardless of its own background. In this new position a fill
+         would be actively wrong, not just redundant: this layer is a
+         LATER sibling of .bp-table-body (paints on top of it, by plain DOM
+         order - needed so the shadow isn't buried under .bp-table-body's
+         own background), so an opaque card here would sit on top of the
+         row's real text instead of behind it. No fill means there's
+         nothing in this layer to cover the text with.
+
+         The card's own top/left/width are set inline by
+         updateSelectedRowCard() (schedule-payment.js), computed from the
+         selected row's live getBoundingClientRect() - not a fixed CSS rule,
+         because the row's position isn't static (narrow mode's width
+         change, scrolling, another row's expand/collapse). +11 in that
+         function is the same "optically centered 68px card on the row's
+         60px content band" math as before: content sits 15px down from the
+         row's own top (1px border + 14px padding-top) and runs flush to
+         the row's own bottom, so centering a 68px card on it needs 4px of
+         clearance on each side - the card's top lands at row-top+11, its
+         bottom 4px past the row's own bottom edge into the 14px flex gap
+         (harmless - the card doesn't participate in that layout at all). */
+      .bp-row-card-layer {
+        position: absolute;
+        top: 40px;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        overflow: hidden;
+        pointer-events: none;
+      }
+      /* Hidden by default (opacity, not display - display:none can't be
+         transitioned, and this card needs to fade). Made visible by
+         schedule-payment.js's updateSelectedRowCard() via [data-visible],
+         timed by openDrawer()/closeDrawer() to resolve after the drawer's
+         own motion on open, and immediately/concurrently with it on close
+         - see those functions for why. --bp-ease-toggle/180ms is this
+         file's existing curve for small state-driven fades tied to the
+         drawer (already used by the drawer head's own opacity toggles in
+         swapDrawerContent()) - reused here rather than inventing a
+         second "quiet fade" value. */
+      .bp-row-selected-card {
+        position: absolute;
+        height: 68px;
+        border-radius: var(--bp-radius-subrow);
+        box-shadow: var(--bp-shadow-row-card);
+        opacity: 0;
+        transition: opacity 180ms var(--bp-ease-toggle);
+      }
+      .bp-row-selected-card[data-visible="true"] {
+        opacity: 1;
+      }
+
       .bp-cell {
         display: flex;
         align-items: center;
@@ -689,6 +773,28 @@
         border: none;
         background: none;
         padding: 0;
+        opacity: 1;
+        /* No visibility here (only on the [data-selected] rule below) -
+           see that rule's comment for why the asymmetry matters. */
+        transition: opacity 180ms var(--bp-ease-toggle);
+      }
+      /* Selected row (its drawer is open, and its own reveal has resolved
+         - see schedule-payment.js's revealSelectedRow()): the group is
+         forced expanded and can't be collapsed from here, so the chevron
+         fades out. visibility:hidden (not display:none) once fully faded
+         keeps its 20px width + the row's gap reserved, so .bp-vendor__body
+         (and the vendor name) never shifts - but only once it's actually
+         invisible, hence the delay: transitioning visibility instantly
+         would remove it from hit-testing at the START of the fade, and
+         delaying it in the OTHER direction (fading back in on deselect)
+         would leave it invisible for the full 180ms then pop in at the
+         very end. Declaring the delay only here (the hide-direction rule)
+         and leaving it un-delayed on the base rule above gives each
+         direction the timing it actually needs. */
+      .bp-vendor__chevron[data-selected="true"] {
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 180ms var(--bp-ease-toggle), visibility 0ms linear 180ms;
       }
       .bp-vendor__chevron img {
         width: 12px;
@@ -1126,9 +1232,9 @@
         color: var(--primitive-grey-dark);
       }
       .bp-drawer__method a {
-        font: var(--bp-text-drawer-edit-link);
+        margin-left: auto;
+        font: var(--bp-text-show-more);
         color: var(--bp-color-action-green);
-        text-decoration: underline;
         cursor: pointer;
       }
 
@@ -1267,6 +1373,31 @@
         margin: 0;
         padding-top: 0;
       }
+      /* Groups the heading with its ON TIME badge (.bp-badge, reused as-is
+         from the table's Payment speed column) so they sit adjacent with a
+         fixed 8px gap - .bp-drawer__section-title-row's own
+         justify-content:space-between is for pushing "Show more" to the
+         far right, not for spacing the heading from the badge. */
+      .bp-drawer__section-title-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      /* align-items:center above centers the badge against the heading's
+         LINE BOX (36px, from --bp-text-drawer-section-title's line-height),
+         not its visible glyphs - measured via a pixel scan of the rendered
+         text, the actual ink sits 11.43px below the line box's own top and
+         only 6.48px above its own bottom (typical of a line-height much
+         taller than the font size: the extra leading isn't split evenly
+         around the glyphs). Centering the badge on the ink instead of the
+         box means nudging it 2.5px down from where align-items:center
+         alone would put it. Scoped to this drawer instance only - the
+         shared .bp-badge component (also used in the table's Payment
+         speed column) is untouched. */
+      .bp-drawer__section-title-group .bp-badge {
+        position: relative;
+        top: 2.5px;
+      }
       .bp-show-more {
         font: var(--bp-text-show-more);
         color: var(--bp-color-action-green);
@@ -1285,6 +1416,16 @@
         display: flex;
         width: 100%;
         margin-bottom: 20px;
+      }
+      /* Calendar's own tabs instance only (immediately follows the
+         "Payment delivery options" heading row, unlike the bank-details
+         pair - scoped the same way that instance already is, via
+         structural context rather than a dedicated class). Measured: the
+         gap above the tabs (heading row's own 24px margin-bottom) was 4px
+         more than the base 20px margin-bottom below them - raising this to
+         24px matches it, rather than shrinking the gap above. */
+      .bp-drawer__section-title-row + .bp-speed-tabs {
+        margin-bottom: 24px;
       }
       .bp-speed-tab {
         position: relative;
@@ -1744,6 +1885,9 @@
             </div>
             <div class="bp-rows-top-divider"></div>
             <div class="bp-rows-scroll" id="bp-rows-scroll"></div>
+          </div>
+          <div class="bp-row-card-layer" id="bp-row-card-layer">
+            <div class="bp-row-selected-card" id="bp-row-selected-card"></div>
           </div>
         </div>
 
