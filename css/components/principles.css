@@ -21,8 +21,11 @@
 
 .principles-icon {
   flex-shrink: 0;
-  width: 100px;
-  height: 100px;
+  width: 90px;
+  height: 90px;
+}
+
+div.principles-icon {
   background: var(--primitive-grey-medium);
 }
 

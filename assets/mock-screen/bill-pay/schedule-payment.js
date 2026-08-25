@@ -71,16 +71,20 @@
      renderRadioGroup() from the payload's real bill date(s). */
   var DELIVERY_OPTIONS = [
     { key: "standard", titleStrong: "Standard", titleMedium: " | 3-5 business days", subtitle: "Maximum safety buffer", fee: "$0.50 fee", days: 5 },
-    { key: "latest-safe", titleStrong: "Latest Safe", titleMedium: " | 1-2 business days", subtitle: "Optimal cash flow", fee: "$10.00 fee", days: 2 },
-    { key: "expedited", titleStrong: "Expedited", titleMedium: " | Same day", subtitle: "Latest possible", fee: "$15.00 fee", days: 1 },
+    { key: "latest-safe", titleStrong: "Fast", titleMedium: " | 1-2 business days", subtitle: "Optimal cash flow", fee: "$10.00 fee", days: 2 },
+    { key: "expedited", titleStrong: "Instant", titleMedium: " | Same day", subtitle: "Latest possible", fee: "$15.00 fee", days: 1 },
     { key: "custom", titleStrong: "Custom", titleMedium: "", subtitle: "Choose specific dates and delivery speed", fee: null, days: null }
   ];
 
   /* Custom-view speed tabs (node 2922:165022) — a distinct 3-segment
-     button-group component from the DELIVERY_OPTIONS radios above (own
-     Figma copy: "Standard"/"Fast"/"Instant", not "Latest Safe"/"Expedited").
-     Same underlying business-day tiers (5/2/1) and fees ($0.50/$10/$15) as
-     the matching radio, per spec §6.6 "the first three names are the same
+     button-group component from the DELIVERY_OPTIONS radios above. Now
+     genuinely the same 3 names ("Standard"/"Fast"/"Instant") on both —
+     previously the radios read "Standard"/"Latest Safe"/"Expedited" while
+     the tabs already read "Standard"/"Fast"/"Instant", an inconsistency
+     fixed by renaming the radios' titleStrong only (`key` is untouched, so
+     nothing that reads DELIVERY_OPTIONS[i].key elsewhere breaks). Same
+     underlying business-day tiers (5/2/1) and fees ($0.50/$10/$15) as the
+     matching radio, per spec §6.6 "the first three names are the same
      across both — radios are the preset picks, Custom tabs let the user
      tweak within the same speed tier." */
   var SPEED_TABS = [

@@ -19,12 +19,13 @@
   var SCENE_BOUNDARIES = [0, 6500, 15910];
   var TOTAL_DURATION = 29631;
 
-  // Layout shell only — no scene animation, no real icons yet (per spec).
-  // Placeholder copy; swap for real Bill Pay content when scenes are built.
+  // "# Volume_Productivity |" is fixed markup in scene-gallery.njk, not
+  // per-scene data — it's identical across all three scenes and never
+  // transitions. headlineVariant is only the part that actually changes.
   var SCENES = [
-    { headline: "Lorem ipsum dolor sit amet", description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore." },
-    { headline: "Consectetur adipiscing elit", description: "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo." },
-    { headline: "Duis aute irure dolor", description: "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim." }
+    { headlineVariant: "Flat architecture", description: "High-density table, all critical factors, one scannable view" },
+    { headlineVariant: "Batch & bulk optimization", description: "Vendors and bills scanned distinctly, payments merged to save fees" },
+    { headlineVariant: "In-Flow Continuity", description: "Contextual actions, no blocking modals, no stop–restart friction" }
   ];
 
   var state = {
@@ -62,12 +63,15 @@
     var scene = SCENES[index];
     state.sceneIndex = index;
 
-    els.icon.textContent = index + 1;
-    els.headline.textContent = scene.headline;
+    els.headlineVariant.textContent = scene.headlineVariant;
     els.description.textContent = scene.description;
     els.counter.textContent = (index + 1) + " / " + SCENES.length;
 
-    retriggerAnimation(els.caption, "scene-gallery__caption--blooming");
+    // Staggered: the headline's changing half blooms first, the
+    // description follows shortly after (see the two --blooming rules'
+    // animation-delay in scene-gallery.css for the actual 80ms offset).
+    retriggerAnimation(els.headlineVariant, "scene-gallery__headline-variant--blooming");
+    retriggerAnimation(els.description, "scene-gallery__description--blooming");
     retriggerAnimation(els.counter, "gallery__counter--animating");
 
     retriggerProgressBar(sceneDuration(index));
@@ -123,9 +127,7 @@
   }
 
   document.addEventListener("DOMContentLoaded", function () {
-    els.caption = document.getElementById("scene-gallery-caption");
-    els.icon = document.getElementById("scene-gallery-icon");
-    els.headline = document.getElementById("scene-gallery-headline");
+    els.headlineVariant = document.getElementById("scene-gallery-headline-variant");
     els.description = document.getElementById("scene-gallery-description");
     els.visual = document.getElementById("scene-gallery-visual");
     els.progressFill = document.getElementById("scene-gallery-progress-fill");
