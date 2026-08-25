@@ -70,6 +70,40 @@
     --bp-text-footer-label: 400 12px/12px var(--bp-font-body);
     --bp-text-button-label: 400 16px/24px var(--bp-font-body);
     --bp-text-badge: 400 12px/16px var(--bp-font-body);
+
+    /* ---- Drawer tokens — ported from schedule-payment.html's own :root
+       (same source, qfIgkJTuD0k956262uOUSp), the subset the ported drawer
+       (scene 3) actually uses. Radios/fields/footer only — the Custom
+       calendar view and its own token set are out of scope (scene 3 never
+       reaches that step, and Part 1 only asks for the drawer's first step
+       + drill-down step, not every sub-view within them). ---- */
+    --bp-color-focus-ring: #0077c5;
+    --bp-radius-full: 9999px;
+    --bp-radius-drawer-top: 30px;
+    --bp-drawer-width: 435px;
+    --bp-shadow-drawer: 0px 4px 34px 0px rgba(0, 0, 0, 0.25);
+    --bp-shadow-row-card: 0px 0px 16px 0px rgba(0, 0, 0, 0.13);
+    --bp-color-footer-bg: #f4f5f8;
+    --bp-footer-button-width: 145px;
+    --bp-ease-drawer-open: cubic-bezier(0, 0, 0.2, 1);
+    --bp-ease-drawer-close: cubic-bezier(0.4, 0, 0.6, 1);
+    --bp-ease-expand: cubic-bezier(0, 0, 0.2, 1);
+    --bp-ease-collapse: cubic-bezier(0.4, 0, 1, 1);
+    --bp-ease-toggle: cubic-bezier(0.4, 0, 0.2, 1);
+
+    --bp-text-drawer-title: 600 24px/28px var(--bp-font-body);
+    --bp-text-drawer-total: 600 32px/36px var(--bp-font-body);
+    --bp-text-drawer-section-title: 600 18px/36px var(--bp-font-body);
+    --bp-text-drawer-note-title: 600 18px/36px var(--bp-font-body);
+    --bp-text-drawer-meta: 400 14px/21.65px var(--bp-font-body);
+    --bp-text-radio-title: 600 16px/24px var(--bp-font-body);
+    --bp-text-radio-title-medium: 400 16px/24px var(--bp-font-body);
+    --bp-text-radio-subtitle: 400 14px/21.65px var(--bp-font-body);
+    --bp-text-radio-meta: 400 16px/21.65px var(--bp-font-body);
+    --bp-text-radio-fee: 600 16px/24px var(--bp-font-body);
+    --bp-text-field-label: 400 14px/20px var(--bp-font-body);
+    --bp-text-field-value: 400 16px/24px var(--bp-font-body);
+    --bp-text-field-helper: 400 14px/20px var(--bp-font-body);
   }
 
   * {
@@ -96,11 +130,12 @@
     font-family: var(--bp-font-body);
   }
 
-  /* ---- Bill Pay mock, batch-full, static + row-travel callout. Scene 1
-     only — scenes 2 and 3 are placeholders (see .scene-placeholder below)
-     until their own content is built. No iframe: nesting one here would
-     clip the traveling card past the mock's edges, which is the entire
-     point of this scene (see the lift-layer below). Native build width is
+  /* ---- Bill Pay mock, batch-full, static + row-travel callout — the one
+     shared instance scenes 1, 2, and 3 all render into (see
+     buildMockInstance() / renderScene1/2/3 in the script below). No
+     iframe: nesting one here would clip the traveling card past the
+     mock's edges, which is the entire point of scene 1 (see the
+     lift-layer below). Native build width is
      1440px (matches the real mock screen); .mock-scaler scales that down
      to the 650px display width this canvas uses, fixed (not responsive —
      this canvas is a fixed 800x452, not a resizable container). 650/1440
@@ -449,8 +484,36 @@
     display: flex;
     flex-direction: column;
     gap: 14px;
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
     position: relative;
+  }
+  .bp-rows-scroll::-webkit-scrollbar { display: none; }
+  .bp-rows-scroll { scrollbar-width: none; -ms-overflow-style: none; }
+  /* Scene 3 (only place this file scrolls the table). Soft fade at the top
+     of the scroll viewport, shown only once scrolled (.is-scrolled) — same
+     technique and z-index as schedule-payment.html's own version (see that
+     file for the fuller comment on why position:absolute + sticky doesn't
+     work here). Ported because scene 3's own scroll (Good Heart's reveal)
+     lands at a position where the topmost visible row's own border-top and
+     the pinned .bp-rows-top-divider below fall ~1 native px apart — this
+     opaque-at-its-own-top-edge fade paints over that seam exactly the way
+     it already does in the standalone mock; without it (as this file was
+     until scene 3 needed real scrolling) the seam reads as a doubled hairline. */
+  .bp-rows-scroll::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 36px;
+    background: linear-gradient(to bottom, var(--primitive-white) 0%, transparent 100%);
+    pointer-events: none;
+    z-index: 2;
+    opacity: 0;
+  }
+  .bp-rows-scroll.is-scrolled::before {
+    opacity: 1;
   }
   /* Pinned independent of scroll position — sibling of .bp-rows-scroll,
      not a descendant, so its own internal scroll can never carry this
@@ -604,6 +667,292 @@
 
   .bp-action-text { font: var(--bp-text-cell-action); color: var(--bp-color-action-green); white-space: nowrap; }
 
+  /* ---- Scene 3 — amount-field editing state. Not present in either
+     source mock (both render the amount field as static text) — this is
+     new content Part 2 requires (the cursor typing a new bill amount).
+     Kept minimal on purpose: the field's own border simply switches to
+     the project's existing focus-ring color (no new color invented) and
+     a thin caret bar sits after the typed digits. No blink — the caret's
+     visibility is a plain function of the current frame's typing state
+     (see renderScene3), not a CSS animation, so a seek always lands on
+     the exact right caret state instead of an indeterminate blink phase. */
+  .bp-amount-field--editing {
+    border-color: var(--bp-color-focus-ring);
+  }
+  .bp3-caret {
+    display: inline-block;
+    width: 1px;
+    height: 14px;
+    margin-left: 1px;
+    background: var(--bp-color-focus-ring);
+    vertical-align: middle;
+  }
+
+  /* ---- Narrow mode (drawer open) — column collapse. Ported from
+     schedule-payment.html, minus every `transition:` declaration: that
+     file animates these via CSS transitions triggered by class toggles,
+     but scene 3 drives the open/close motion itself as a pure function of
+     t (see renderScene3 / applyDrawerProgress) so it can be seeked to any
+     frame — these rules only supply the two end states (0 and 1) that the
+     JS interpolates between, never an animation of their own.
+     Deliberately no `!important` on width, unlike schedule-payment.html's
+     own copy of this rule — that file needs it there, to beat a static
+     inline width="203px" baked into ITS OWN markup with nothing else ever
+     overriding it. Here, s3ApplyNarrowProgress sets a genuine inline
+     width on every frame, which already beats a plain class rule on its
+     own; `!important` would instead make this class's own end value win
+     over every one of JS's own intermediate frames, snapping the column
+     shut the instant the class is added instead of letting JS interpolate
+     it — and forcing getBoundingClientRect() to report the class's
+     narrowed width instead of the element's true natural one on
+     whichever frame happens to measure it first, permanently corrupting
+     s3CollapseCells' own __s3FullWidth cache (see that function). */
+  .bp-screen--narrow .bp-header-row__cell[data-narrow-hide] {
+    width: 0;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .bp-screen--narrow .bp-header-row__cell[data-narrow-hide] span { opacity: 0; }
+  .bp-screen--narrow .bp-header-row__cell[data-action-label] span { opacity: 0; }
+  .bp-screen--narrow .bp-cell[data-narrow-hide] {
+    width: 0;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .bp-screen--narrow .bp-cell[data-narrow-hide] > * { opacity: 0; }
+  /* Width = 1317 - drawer width, same formula/derivation as
+     schedule-payment.html's own .bp-screen--narrow .bp-rows-scroll (see
+     that file's comment for the full math — row right edge 29px clear of
+     the drawer's left edge, per Figma). */
+  .bp-screen--narrow .bp-rows-scroll { width: calc(1317px - var(--bp-drawer-width)); }
+  .bp-screen--narrow .bp-rows-top-divider { right: calc(var(--bp-drawer-width) - 50px); }
+
+  /* ---- Selected-row card (bulk mode, vendor row whose drawer is open) —
+     ported verbatim from schedule-payment.html's own .bp-row-card-layer /
+     .bp-row-selected-card (see that file for the full derivation of the
+     +11px offset and why this lives in its own overlay layer rather than
+     inside the row). Position/size are set inline by renderScene3, same
+     technique as updateSelectedRowCard() — no transition here either, the
+     card's opacity is set directly per frame. */
+  .bp-row-card-layer {
+    position: absolute;
+    top: 40px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .bp-row-selected-card {
+    position: absolute;
+    height: 68px;
+    border-radius: var(--bp-radius-subrow);
+    box-shadow: var(--bp-shadow-row-card);
+    opacity: 0;
+  }
+
+  /* ---- Drawer — ported from schedule-payment.html. First step (total +
+     method + delivery radios + note) and the drill-down payment-method
+     step (speed tabs + fields, including the empty/alerted variant) only
+     — the Custom calendar view within the first step is a further,
+     optional sub-view scene 3 never reaches, so it's out of scope (see
+     Part 1's own list: "the drawer itself, its first step, its drill-down
+     payment-method step, the empty-form state, the footer buttons, the
+     selected-row card"). No `transition:` anywhere in this block, same
+     reasoning as the narrow-mode rules above — scene 3 computes the
+     drawer's slide/fade progress itself from t. */
+  .bp-drawer {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: var(--bp-drawer-width);
+    height: 1000px;
+    background: var(--primitive-white);
+    border-radius: 0 var(--bp-radius-drawer-top) 0 0;
+    box-shadow: var(--bp-shadow-drawer);
+    display: none;
+    flex-direction: column;
+    z-index: 5;
+  }
+  .bp-drawer__scroll {
+    position: relative;
+    flex: 1;
+    overflow-y: auto;
+    padding: 48px 30px 0;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .bp-drawer__scroll::-webkit-scrollbar { width: 0 !important; height: 0 !important; background: transparent !important; }
+  .bp-drawer__scroll::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 16px;
+    height: 100%;
+    background: var(--primitive-white);
+    pointer-events: none;
+    z-index: 3;
+  }
+  .bp-drawer__inner {}
+  .bp-drawer__head { position: relative; width: 100%; }
+  .bp-drawer__chevron {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 19px;
+    height: 24px;
+    opacity: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: none;
+    padding: 0;
+  }
+  .bp-drawer__head--drilldown .bp-drawer__chevron { opacity: 1; }
+  .bp-drawer__head-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    width: 100%;
+    transform: translateX(0);
+  }
+  .bp-drawer__head--drilldown .bp-drawer__head-text { transform: translateX(43px); }
+  .bp-drawer__title { margin: 0; font: var(--bp-text-drawer-title); color: var(--primitive-black); }
+  .bp-drawer__close {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 36px;
+    height: 36px;
+    padding: 6px;
+    border-radius: 4px;
+    border: none;
+    background: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 1;
+  }
+  .bp-drawer__head--drilldown .bp-drawer__close { opacity: 0; }
+  .bp-drawer__meta { margin: 0; font: var(--bp-text-drawer-meta); color: var(--primitive-grey-dark); }
+  .bp-drawer__method { display: flex; align-items: center; gap: 7px; width: 100%; height: 24px; }
+  .bp-drawer__method img { width: 15px; height: 15px; }
+  .bp-drawer__method span { font: var(--bp-text-drawer-meta); color: var(--primitive-grey-dark); }
+  .bp-drawer__divider { height: 1px; background: var(--bp-color-divider); margin: 24px 0; }
+  .bp-drawer__total-amount { margin: 24px 0 0; font: var(--bp-text-drawer-total); color: var(--primitive-black); }
+  .bp-drawer__section-title { margin: 0 0 24px; padding-top: 6px; font: var(--bp-text-drawer-section-title); color: var(--primitive-black); }
+  .bp-drawer__section-title-row { display: flex; align-items: center; justify-content: space-between; padding-top: 6px; margin: 0 0 24px; }
+  .bp-drawer__section-title-row .bp-drawer__section-title { margin: 0; padding-top: 0; }
+  .bp-drawer__section-title-group { display: flex; align-items: center; gap: 8px; }
+  .bp-drawer__section-title-group .bp-badge { position: relative; top: 2.5px; }
+
+  .bp-radio-group { display: flex; flex-direction: column; align-items: flex-start; gap: 29px; width: 100%; }
+  .bp-radio-item { display: flex; align-items: flex-start; gap: 16px; }
+  .bp-radio {
+    width: 20px;
+    height: 20px;
+    border-radius: var(--bp-radius-full);
+    border: 1px solid var(--bp-color-border-input);
+    background: var(--primitive-white);
+    flex-shrink: 0;
+    margin-top: 4px;
+    position: relative;
+  }
+  .bp-radio[data-checked="true"] { border: none; }
+  .bp-radio[data-checked="true"]::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: var(--bp-radius-full);
+    background: var(--bp-color-action-green);
+    box-shadow: inset 0 0 0 4px var(--primitive-white), 0 0 0 1px var(--bp-color-action-green);
+  }
+  .bp-radio-item__content { flex: 1; display: flex; align-items: flex-start; justify-content: space-between; }
+  .bp-radio-item__text { display: flex; flex-direction: column; align-items: flex-start; gap: 7px; }
+  .bp-radio-item__title-block { display: flex; flex-direction: column; }
+  .bp-radio-item__title { margin: 0; }
+  .bp-radio-item__title strong { font: var(--bp-text-radio-title); color: var(--primitive-black); }
+  .bp-radio-item__title span { font: var(--bp-text-radio-title-medium); color: var(--primitive-black); }
+  .bp-radio-item__subtitle { margin: 0; font: var(--bp-text-radio-subtitle); color: var(--primitive-black); }
+  .bp-radio-item__meta { display: flex; align-items: center; gap: 3px; }
+  .bp-radio-item__meta span { font: var(--bp-text-radio-meta); color: var(--primitive-grey-dark); }
+  .bp-radio-item__meta img { width: 18px; height: 18px; }
+  .bp-radio-item__fee { margin: 0; font: var(--bp-text-radio-fee); color: var(--primitive-black); white-space: nowrap; }
+
+  .bp-note-field {
+    width: 100%;
+    min-height: 189px;
+    border: 1px solid var(--bp-color-border-input);
+    border-radius: var(--bp-radius-input);
+    padding: 12px;
+    font: var(--bp-text-cell-normal);
+    color: var(--primitive-black);
+    resize: none;
+    font-family: var(--bp-font-body);
+  }
+
+  /* ---- Drill-down payment-method step: speed tabs (ACH/Paper check) +
+     fields, including the empty/alerted variant. Gaps confirmed against
+     schedule-payment.html's own node reference (2926:28499). ---- */
+  .bp-speed-tabs { display: flex; width: 100%; margin-bottom: 20px; }
+  #mock-drawer-inner > .bp-speed-tabs:first-child { margin-top: 44px; margin-bottom: 41px; }
+  .bp-speed-tab {
+    position: relative;
+    flex: 1 1 0;
+    min-width: 0;
+    box-sizing: border-box;
+    padding: 6px 12px;
+    border: 2px solid var(--bp-color-border-input);
+    background: transparent;
+    font: 400 14px/24px var(--bp-font-body);
+    color: var(--primitive-black);
+    text-align: center;
+  }
+  .bp-speed-tab--start { border-radius: var(--bp-radius-input) 0 0 var(--bp-radius-input); margin-right: -2px; z-index: 3; }
+  .bp-speed-tab--end { border-radius: 0 var(--bp-radius-input) var(--bp-radius-input) 0; z-index: 1; }
+  .bp-speed-tab[data-active="true"] { background: var(--bp-color-action-green); border-color: var(--bp-color-action-green); color: var(--primitive-white); z-index: 4; }
+
+  .bp-field { margin-top: 30px; display: flex; flex-direction: column; gap: 6px; }
+  .bp-field:first-of-type { margin-top: 0; }
+  .bp-field__label { display: block; font: var(--bp-text-field-label); color: var(--primitive-grey-dark); }
+  .bp-field__value-box {
+    width: 100%;
+    height: 46px;
+    border: 1px solid var(--bp-color-border-input);
+    border-radius: var(--bp-radius-input);
+    padding: 6px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-sizing: border-box;
+  }
+  /* Same editing-state treatment as the table's own amount field above —
+     new content for scene 3, reusing the identical focus-ring color. */
+  .bp-field__value-box--editing { border-color: var(--bp-color-focus-ring); }
+  .bp-field__value-box span { font: var(--bp-text-field-value); color: var(--primitive-black); }
+  .bp-field__helper { margin: 4px 0 0; font: var(--bp-text-field-helper); color: var(--primitive-grey-dark); }
+  .bp-field-row { display: flex; gap: 10px; margin-top: 30px; }
+  .bp-field-row .bp-field { margin-top: 0; }
+  .bp-field--zip { width: 201px; flex-shrink: 0; }
+  .bp-field--state { flex: 1; }
+
+  .bp-drawer__footer {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    height: 100px;
+    background: var(--bp-color-footer-bg);
+  }
+  .bp-drawer__footer .bp-btn { width: var(--bp-footer-button-width); }
+  .bp-drawer__footer .bp-btn--cancel { border-color: var(--bp-color-border-input); color: var(--primitive-black); }
+  .bp-drawer__footer .bp-btn--continue { background: transparent; border-color: var(--bp-color-action-green); color: var(--bp-color-action-green); }
+
   /* ---- Footer ---- */
 
   .bp-footer {
@@ -654,22 +1003,15 @@
   }
   .bp-btn--cancel { background: transparent; border-color: var(--primitive-white); color: var(--primitive-white); }
   .bp-btn--continue { background: var(--bp-color-action-green); border-color: var(--bp-color-action-green); color: var(--primitive-white); }
-
-  /* ---- Scenes 2 & 3 — placeholder, no built content yet. ---- */
-  .scene-placeholder {
-    position: absolute;
-    inset: 0;
-    background: var(--primitive-grey-light);
-  }
 </style>
 </head>
 <body>
   <!-- The mock screen — one shared instance for every scene that needs it
-       (currently scenes 1 and 2). Same position, same size, same DOM;
-       scenes change its state (buildMockInstance/renderScene1/
-       renderScene2), they do not rebuild it. IDs are "mock-*", not
-       scene-numbered — nothing here belongs to one scene. Scene 3 has no
-       content yet and stays a separate, simpler placeholder below. -->
+       (scenes 1, 2, and now 3 — see buildMockInstance()). Same position,
+       same size, same DOM; scenes change its state
+       (buildMockInstance/renderScene1/renderScene2/renderScene3), they do
+       not rebuild it. IDs are "mock-*", not scene-numbered — nothing here
+       belongs to one scene. -->
   <div id="mock-wrap" class="scene-mock-wrap" style="display: none">
     <div class="mock-scaler">
       <div class="bp-screen" id="mock-screen">
@@ -678,7 +1020,7 @@
           <button class="bp-header__close" type="button" aria-label="Close" tabindex="-1">
             <img src="../../icons/bill-pay-mock/close.svg" alt="" />
           </button>
-          <div class="bp-header__row">
+          <div class="bp-header__row" id="mock-header-row">
             <div class="bp-pay-from">
               <p class="bp-pay-from__label">Pay from</p>
               <div class="bp-pay-from__field">
@@ -709,19 +1051,22 @@
 
         <div class="bp-table-wrap">
           <div class="bp-table-body">
-            <div class="bp-header-row">
+            <div class="bp-header-row" id="mock-header-row-cells">
               <div class="bp-header-row__cell" style="width: 230px"><span>Vendor</span></div>
               <div class="bp-header-row__cell" style="width: 76px"><span>Bill</span></div>
               <div class="bp-header-row__cell" style="width: 106px"><span>Status</span></div>
               <div class="bp-header-row__cell" style="width: 84px"><span>Due date</span></div>
-              <div class="bp-header-row__cell" style="width: 203px"><span>Payment speed</span></div>
-              <div class="bp-header-row__cell" style="width: 122px"><span>Processing fee</span></div>
+              <div class="bp-header-row__cell" data-narrow-hide style="width: 203px"><span>Payment speed</span></div>
+              <div class="bp-header-row__cell" data-narrow-hide style="width: 122px"><span>Processing fee</span></div>
               <div class="bp-header-row__cell" style="width: 115px"><span>Open balance</span></div>
               <div class="bp-header-row__cell" style="width: 120px"><span>Amount</span></div>
-              <div class="bp-header-row__cell" style="width: 106px"><span>Action</span></div>
+              <div class="bp-header-row__cell" data-action-label style="width: 106px"><span>Action</span></div>
             </div>
-            <div class="bp-rows-top-divider"></div>
+            <div class="bp-rows-top-divider" id="mock-rows-top-divider"></div>
             <div class="bp-rows-scroll" id="mock-rows-scroll"></div>
+          </div>
+          <div class="bp-row-card-layer" id="mock-row-card-layer">
+            <div class="bp-row-selected-card" id="mock-row-selected-card"></div>
           </div>
         </div>
 
@@ -735,11 +1080,11 @@
             <div class="bp-stat">
               <p class="bp-stat__label">Vendors</p>
               <p class="bp-stat__num" id="mock-stat-vendors">0</p>
-              <div class="bp-stat__sub" data-vendor-state="alert">
+              <div class="bp-stat__sub" id="mock-vendors-sub" data-vendor-state="alert">
                 <img data-state="resolved" src="../../icons/bill-pay-mock/footer-check.svg" alt="" />
                 <span data-state="resolved">Authorized</span>
                 <img data-state="alert" src="../../icons/bill-pay-mock/alert-circle.svg" alt="" />
-                <span data-state="alert" class="bp-hover-underline">1 needs delivery details</span>
+                <span data-state="alert" class="bp-hover-underline" id="mock-vendors-alert-text">1 needs delivery details</span>
               </div>
             </div>
             <div class="bp-stat">
@@ -753,6 +1098,36 @@
             <button class="bp-btn bp-btn--continue" type="button" tabindex="-1">Continue</button>
           </div>
         </footer>
+
+        <!-- Drawer — ported from assets/mock-screen/bill-pay/schedule-payment.html
+             (see that file for the fuller structural comments). Scene 3
+             only; hidden (display:none, from .bp-drawer's own base rule)
+             until renderScene3 opens it. Head (vendor name/subtitle,
+             close/back) is persistent markup exactly as in the standalone
+             mock — never destroyed/recreated across steps. -->
+        <aside class="bp-drawer" id="mock-drawer">
+          <div class="bp-drawer__scroll">
+            <div class="bp-drawer__head" id="mock-drawer-head">
+              <button class="bp-drawer__chevron" type="button" tabindex="-1" aria-label="Back">
+                <span style="display: inline-flex; transform: rotate(90deg)">
+                  <img src="../../icons/bill-pay-mock/dropdown-chevron.svg" alt="" style="display: block; width: 12px; height: 6.86px" />
+                </span>
+              </button>
+              <div class="bp-drawer__head-text">
+                <p class="bp-drawer__title" id="mock-drawer-vendor-name"></p>
+                <p class="bp-drawer__meta" id="mock-drawer-subtitle"></p>
+              </div>
+              <button class="bp-drawer__close" type="button" tabindex="-1" aria-label="Close">
+                <img class="bp-action-icon" src="../../icons/bill-pay-mock/narrow-action.svg" alt="" />
+              </button>
+            </div>
+            <div class="bp-drawer__inner" id="mock-drawer-inner"></div>
+          </div>
+          <div class="bp-drawer__footer" id="mock-drawer-footer" style="display: none">
+            <button class="bp-btn bp-btn--cancel" type="button" tabindex="-1">Cancel</button>
+            <button class="bp-btn bp-btn--continue" type="button" tabindex="-1">Apply changes</button>
+          </div>
+        </aside>
       </div>
 
       <div class="bp-dim-overlay" id="mock-dim-overlay"></div>
@@ -776,23 +1151,19 @@
     </div>
   </div>
 
-  <!-- Scene 3 — placeholder, no built content yet. -->
-  <div id="scene3-mock" class="scene-mock-wrap" style="display: none">
-    <div class="scene-placeholder"></div>
-  </div>
-
 <script>
   (function () {
     // One continuous timeline for all 3 scenes, loaded once by the parent
     // iframe and never reloaded. BOUNDARIES/TOTAL_DURATION must match
     // SCENE_BOUNDARIES/TOTAL_DURATION in js/bill-pay/scene-gallery.js
-    // exactly. Scene 1 (row travel) and scene 2 (bulk payment cursor
-    // demo) are both built; scene 3 is still a placeholder (see
-    // .scene-placeholder). Scene 2's own length (10660ms) is computed by
-    // buildScene2Segments — kept in sync here by hand, same as every
-    // other cross-file duration in this project.
+    // exactly. All 3 scenes are now built. Scene 2's own length (9410ms)
+    // is computed by buildScene2Segments; scene 3's own length (13721ms —
+    // holdPreClose grew from 120 to 300 for the "hold before clicking
+    // close" fix, giving 15910+13721=29631) is computed by S3_MARKS.total
+    // — both kept in sync here by hand, same as every other cross-file
+    // duration in this project.
     var BOUNDARIES = [0, 6500, 15910];
-    var TOTAL_DURATION = 22410;
+    var TOTAL_DURATION = 29631;
 
     var body = document.body;
     var epoch = performance.now();
@@ -848,11 +1219,42 @@
       ]),
       arrow: layeredIcon(18, [{ src: "withdraw-arrives-arrow.svg", inset: "32.99% 16.69% 33.04% 16.67%" }]),
       statusCheck: '<img src="' + ICONS + 'status-check.svg" alt="" style="display:block;width:100%;height:100%" />',
-      alertCircle: '<img src="' + ICONS + 'alert-circle.svg" alt="" style="display:block;width:100%;height:100%" />'
+      alertCircle: '<img src="' + ICONS + 'alert-circle.svg" alt="" style="display:block;width:100%;height:100%" />',
+      // Drawer's State field only (drill-down step) — same asset/markup as
+      // schedule-payment.js's own GLYPH.chevron.
+      chevron: '<img src="' + ICONS + 'dropdown-chevron.svg" alt="" style="display:block;width:12px;height:6.86px" />'
     };
 
     function money(n) {
       return "$" + n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    // 650 / 1440, same as .mock-scaler's own transform — this canvas is a
+    // fixed 800x452 stage (no resize handler in this file, unlike
+    // schedule-payment.js's resizable version), so this is a genuine
+    // constant, not a snapshot of something that can change later.
+    var MOCK_SCALE = 0.4513888889;
+
+    // Native-px rect of el, relative to refRect's top-left. Hoisted to
+    // module scope (was local to buildMockInstance) because scene 3 needs
+    // it too — its own targets (a bill's amount field, the footer's
+    // Vendors sub-line, the drawer's Apply button) only exist in their
+    // needed state well into its own timeline, so unlike scene 2's targets
+    // they can't be pre-measured once in buildMockInstance; renderScene3
+    // calls this live, per frame, the same way schedule-payment.js's own
+    // updateSelectedRowCard() does.
+    function nativeRect(el, refRect) {
+      var r = el.getBoundingClientRect();
+      return {
+        left: (r.left - refRect.left) / MOCK_SCALE,
+        top: (r.top - refRect.top) / MOCK_SCALE,
+        right: (r.right - refRect.left) / MOCK_SCALE,
+        bottom: (r.bottom - refRect.top) / MOCK_SCALE,
+        width: r.width / MOCK_SCALE,
+        height: r.height / MOCK_SCALE,
+        centerX: (r.left + r.width / 2 - refRect.left) / MOCK_SCALE,
+        centerY: (r.top + r.height / 2 - refRect.top) / MOCK_SCALE
+      };
     }
 
     // Source of truth is the batch-full Figma template (node 2964:601336) —
@@ -980,9 +1382,10 @@
       return narrowAttr ? " data-narrow-hide" : "";
     }
 
-    // Verbatim from schedule-payment.js. state.narrow is always false here
-    // (no drawer/narrow mode in this file) — kept for fidelity, not dead:
-    // renderVendorRow calls this exactly as schedule-payment.js does.
+    // Verbatim from schedule-payment.js. state.narrow is false for scenes 1
+    // and 2 (no drawer open, so this branch never fires for them); scene 3
+    // sets it true for as long as its own drawer is open (see
+    // ensureScene3Phase), same meaning as in the standalone mock.
     function renderActionCell(action, isSub) {
       if (state.narrow) {
         return (
@@ -1088,6 +1491,193 @@
       }
     }
 
+    // ============================================================
+    // Drawer — ported from schedule-payment.js's own renderDrawerDefault()/
+    // renderDrawerBankDetails(). Covers the two steps Part 1 asks for: the
+    // default step (total + method + delivery radios + note) and the
+    // drill-down payment-method step (speed tabs + fields, empty or
+    // filled). The Custom-calendar sub-view reachable from the default
+    // step's radio group is out of scope — scene 3 never reaches it, and
+    // it isn't one of the two steps Part 1 names. Nothing here is wired to
+    // a click (this file has no interactivity anywhere); renderScene3 is
+    // the only caller, driving both functions from plain values it derives
+    // from t.
+    // ============================================================
+
+    function pad2(n) { return n < 10 ? "0" + n : "" + n; }
+    function parseMMDDYY(s) {
+      var p = s.split("/");
+      return new Date(2000 + parseInt(p[2], 10), parseInt(p[0], 10) - 1, parseInt(p[1], 10));
+    }
+    function addDays(date, n) {
+      var d = new Date(date);
+      d.setDate(d.getDate() + n);
+      return d;
+    }
+    function isBusinessDay(d) {
+      var day = d.getDay();
+      return day !== 0 && day !== 6;
+    }
+    function addBusinessDays(date, n) {
+      var d = new Date(date);
+      var dir = n >= 0 ? 1 : -1;
+      var remaining = Math.abs(n);
+      while (remaining > 0) {
+        d.setDate(d.getDate() + dir);
+        if (isBusinessDay(d)) remaining--;
+      }
+      return d;
+    }
+    function fmtMD(d) { return pad2(d.getMonth() + 1) + "/" + pad2(d.getDate()); }
+    function getDrawerDueDates(payload) {
+      var rows = payload.rows ? payload.rows : [payload];
+      var seen = {};
+      var out = [];
+      rows.forEach(function (r) {
+        var d = parseMMDDYY(r.due);
+        var k = d.getTime();
+        if (!seen[k]) { seen[k] = true; out.push(d); }
+      });
+      out.sort(function (a, b) { return a - b; });
+      return out;
+    }
+
+    // titleStrong renamed to match the custom-mode speed tabs (Standard/
+    // Fast/Instant) — was "Standard"/"Latest Safe"/"Expedited", ported from
+    // schedule-payment.js before that file's own tabs/radios naming
+    // mismatch was fixed. `key` intentionally untouched (still
+    // "latest-safe"/"expedited") — every reference to these options here
+    // and in scene 3 matches on `key`, never on the displayed title.
+    var DELIVERY_OPTIONS = [
+      { key: "standard", titleStrong: "Standard", titleMedium: " | 3-5 business days", subtitle: "Maximum safety buffer", fee: "$0.50 fee", days: 5 },
+      { key: "latest-safe", titleStrong: "Fast", titleMedium: " | 1-2 business days", subtitle: "Optimal cash flow", fee: "$10.00 fee", days: 2 },
+      { key: "expedited", titleStrong: "Instant", titleMedium: " | Same day", subtitle: "Latest possible", fee: "$15.00 fee", days: 1 },
+      { key: "custom", titleStrong: "Custom", titleMedium: "", subtitle: "Choose specific dates and delivery speed", fee: null, days: null }
+    ];
+
+    function renderRadioGroup(dueDates, selectedKey) {
+      var earliestDue = dueDates[0];
+      var baseArrival = addDays(earliestDue, -1);
+      return (
+        '<div class="bp-radio-group">' +
+        DELIVERY_OPTIONS.map(function (opt) {
+          var checked = opt.key === selectedKey;
+          var isCustom = opt.key === "custom";
+          var withdraw = isCustom ? null : addBusinessDays(baseArrival, -opt.days);
+          return (
+            '<div class="bp-radio-item" data-radio="' + opt.key + '">' +
+              '<div class="bp-radio" data-checked="' + checked + '"></div>' +
+              '<div class="bp-radio-item__content">' +
+                '<div class="bp-radio-item__text">' +
+                  '<div class="bp-radio-item__title-block">' +
+                    '<p class="bp-radio-item__title"><strong>' + opt.titleStrong + "</strong><span>" + opt.titleMedium + "</span></p>" +
+                    '<p class="bp-radio-item__subtitle">' + opt.subtitle + "</p>" +
+                  "</div>" +
+                  (withdraw
+                    ? '<div class="bp-radio-item__meta"><span>Withdraw ' + fmtMD(withdraw) + "</span>" + GLYPH.arrow + "<span>Arrives " + fmtMD(baseArrival) + "</span></div>"
+                    : "") +
+                "</div>" +
+                (opt.fee ? '<p class="bp-radio-item__fee">' + opt.fee + "</p>" : "") +
+              "</div>" +
+            "</div>"
+          );
+        }).join("") +
+        "</div>"
+      );
+    }
+
+    // Drawer's first step (§ "the drawer itself, its first step" in Part 1)
+    // — total amount, method line, delivery-options radios, note field.
+    // payload is either a single bill row or a bulk vendor group (same
+    // shape schedule-payment.js's openDrawer() accepts). selectedKey
+    // defaults to "standard" (a fresh open per schedule-payment.js) but is
+    // now a real parameter — scene 3's Barnett beat re-renders this same
+    // function with "latest-safe" once the cursor selects Fast, rather
+    // than forking a second copy of this markup.
+    function renderDrawerDefault(payload, selectedKey) {
+      var total = typeof payload.total === "number" ? payload.total : payload.amount;
+      var dueDates = getDrawerDueDates(payload);
+      return (
+        '<p class="bp-drawer__total-amount">' + money(total) + "</p>" +
+        '<div class="bp-drawer__divider"></div>' +
+        '<div class="bp-drawer__method">' +
+          '<span style="display:inline-flex;width:15px;height:15px">' + GLYPH[payload.method] + "</span>" +
+          "<span>" + methodLabel({ method: payload.method, last4: payload.last4 }) + "</span>" +
+        "</div>" +
+        '<div class="bp-drawer__divider"></div>' +
+        '<div class="bp-drawer__section-title-row">' +
+          '<div class="bp-drawer__section-title-group">' +
+            '<p class="bp-drawer__section-title">Payment delivery options</p>' +
+            '<span class="bp-badge"><span>On time</span></span>' +
+          "</div>" +
+        "</div>" +
+        renderRadioGroup(dueDates, selectedKey || "standard") +
+        '<div class="bp-drawer__divider"></div>' +
+        '<p class="bp-drawer__section-title bp-drawer__section-title--note">Note to vendor</p>' +
+        '<textarea class="bp-note-field" placeholder="Add a note (optional)"></textarea>' +
+        '<div style="height:32px"></div>'
+      );
+    }
+
+    // ---- Drill-down payment-method step (§ "its drill-down payment-method
+    // step, the empty-form state") — scene 3's actual target. Good Heart
+    // Catering's real values (spec's own list, not schedule-payment.js's
+    // Barnett example), revealed field by field as the cursor "fills in"
+    // the form. typedLens[i] = how many characters of field i are shown;
+    // activeIndex = which field currently carries the caret (-1 = none).
+    var GOOD_HEART_FIELDS = [
+      { label: "Pay to", value: "Good Heart Catering LLC" },
+      { label: "Email", value: "billing@goodheart.com", helper: "We’ll email them with payment status updates." },
+      { label: "Vendor’s ZIP code", value: "02840" },
+      { label: "State", value: "RI" },
+      { label: "Bank account number (5-17 digits)", value: "8834561270", helper: "Double-check the bank info to avoid loss of funds." },
+      { label: "Routing number (9 digits)", value: "011500120" }
+    ];
+
+    // Groups the typed text + caret as one flex item so the caret always
+    // sits glued to the last typed character — see the .bp-field__value-box
+    // CSS comment for why this can't just be 2 loose children when a
+    // trailing icon (the State field's chevron) is also present.
+    function typedContentHTML(shown, caretOn) {
+      if (!shown && !caretOn) return "";
+      return (
+        '<span style="display:inline-flex;align-items:center">' +
+          (shown ? "<span>" + shown + "</span>" : "") +
+          (caretOn ? '<span class="bp3-caret"></span>' : "") +
+        "</span>"
+      );
+    }
+
+    function renderScene3DrawerBankDetails(typedLens, activeIndex) {
+      function box(i, extra) {
+        var f = GOOD_HEART_FIELDS[i];
+        var shown = f.value.slice(0, typedLens[i]);
+        var caretOn = i === activeIndex;
+        var cls = "bp-field__value-box" + (caretOn ? " bp-field__value-box--editing" : "");
+        return '<div class="' + cls + '">' + typedContentHTML(shown, caretOn) + (extra || "") + "</div>";
+      }
+      return (
+        '<div class="bp-speed-tabs">' +
+          '<button type="button" class="bp-speed-tab bp-speed-tab--start" data-active="true">Bank payment (ACH)</button>' +
+          '<button type="button" class="bp-speed-tab bp-speed-tab--end" data-active="false">Paper check</button>' +
+        "</div>" +
+        '<div class="bp-field"><label class="bp-field__label">' + GOOD_HEART_FIELDS[0].label + "</label>" + box(0) + "</div>" +
+        '<div class="bp-field">' +
+          '<label class="bp-field__label">' + GOOD_HEART_FIELDS[1].label + "</label>" + box(1) +
+          '<p class="bp-field__helper">' + GOOD_HEART_FIELDS[1].helper + "</p>" +
+        "</div>" +
+        '<div class="bp-field-row">' +
+          '<div class="bp-field bp-field--zip"><label class="bp-field__label">' + GOOD_HEART_FIELDS[2].label + "</label>" + box(2) + "</div>" +
+          '<div class="bp-field bp-field--state"><label class="bp-field__label">' + GOOD_HEART_FIELDS[3].label + "</label>" + box(3, GLYPH.chevron) + "</div>" +
+        "</div>" +
+        '<div class="bp-field">' +
+          '<label class="bp-field__label">' + GOOD_HEART_FIELDS[4].label + "</label>" + box(4) +
+          '<p class="bp-field__helper">' + GOOD_HEART_FIELDS[4].helper + "</p>" +
+        "</div>" +
+        '<div class="bp-field"><label class="bp-field__label">' + GOOD_HEART_FIELDS[5].label + "</label>" + box(5) + "</div>"
+      );
+    }
+
     // Mirrors schedule-payment.js's updateAggregates(), adapted to this
     // file's own getElementById-by-idPrefix convention instead of a
     // cached els object (this file never built one).
@@ -1107,11 +1697,13 @@
 
     // Mirrors schedule-payment.js's setMode(), minus the
     // bp-disable-transitions dance — nothing in this file's .bp-cell/etc.
-    // has a CSS transition to suppress (that's a schedule-payment.html-
-    // only, narrow-mode-drawer feature). Not wired to a click listener —
-    // the toggle stays non-interactive — but scene 2's regroup transition
-    // does call this directly, at its own dip-through trough (see
-    // renderScene2's REGROUP section).
+    // carries a CSS transition to suppress (narrow-mode column widths are
+    // driven by direct inline styles here, computed per frame — see
+    // applyNarrowProgress — never by a CSS transition, so there's nothing
+    // to disable). Not wired to a click listener — the toggle stays
+    // non-interactive — but scene 2's regroup transition calls this at its
+    // own dip-through trough (see renderScene2's REGROUP section), and
+    // scene 3 calls it once, directly, when Barnett's group closes.
     function setMode(mode) {
       state.mode = mode;
       state.expanded = {};
@@ -1122,18 +1714,20 @@
     }
 
     var sharedMock = { instance: null };
-    var scene3Wrap = document.getElementById("scene3-mock");
 
-    // The one shared mock instance — built once, lazily, on first visit
-    // to either scene 1 or scene 2, then reused. Returns everything
-    // either scene's render function needs: scene 1's persistent
-    // traveling card (built exactly as before, just against the shared
-    // screen instead of its own copy), plus scene 2's cursor/ripple
-    // element refs and every position it points at, pre-measured here so
-    // renderScene2 itself only ever does arithmetic, never DOM queries.
-    // Same one-time measure-then-hide discipline as before, just with
-    // more to measure — including a temporary detour through bulk mode
-    // (Barnett expanded) to measure its own row positions, reverted
+    // The one shared mock instance — built once, lazily, on first visit to
+    // any of the 3 scenes, then reused by all of them. Returns everything
+    // any scene's render function needs: scene 1's persistent traveling
+    // card, scene 2's cursor/ripple element refs and every position it
+    // points at (pre-measured here so renderScene2 itself only ever does
+    // arithmetic, never DOM queries), plus scene 3's drawer/row-card
+    // element refs (scene 3 measures its own row/field positions live,
+    // per-frame, via nativeRect() below — its target elements only exist
+    // in their needed state well into its own timeline, unlike scene 2's
+    // targets which are all present from the shared instance's very first
+    // frame). Same one-time measure-then-hide discipline as before, just
+    // with more to measure — including a temporary detour through bulk
+    // mode (Barnett expanded) to measure its own row positions, reverted
     // before returning so the shared instance comes back in the state
     // scene 1 expects (batch, collapsed, unscrolled).
     function buildMockInstance() {
@@ -1146,6 +1740,43 @@
       var rippleEl = document.getElementById("scene2-ripple");
       var rippleDisc = rippleEl.querySelector(".scene2-ripple__disc");
 
+      // ---- Scene 3's own element refs — drawer, row-card overlay, the
+      // table's narrow-mode collapse targets, footer alert line. All
+      // static markup (see the HTML above), so grabbed once here like
+      // everything else, even though scene 3 does most of its own
+      // measuring live (see nativeRect, module scope). ----
+      var headerRowEl = document.getElementById("mock-header-row");
+      var headerRowCellsEl = document.getElementById("mock-header-row-cells");
+      var rowsTopDividerEl = document.getElementById("mock-rows-top-divider");
+      var rowCardLayerEl = document.getElementById("mock-row-card-layer");
+      var rowCardEl = document.getElementById("mock-row-selected-card");
+      var drawerEl = document.getElementById("mock-drawer");
+      var drawerHeadEl = document.getElementById("mock-drawer-head");
+      var drawerVendorNameEl = document.getElementById("mock-drawer-vendor-name");
+      var drawerSubtitleEl = document.getElementById("mock-drawer-subtitle");
+      var drawerInnerEl = document.getElementById("mock-drawer-inner");
+      var drawerFooterEl = document.getElementById("mock-drawer-footer");
+      var vendorsSubEl = document.getElementById("mock-vendors-sub");
+      var vendorsAlertTextEl = document.getElementById("mock-vendors-alert-text");
+      var totalAmountEl = document.getElementById("mock-total-amount");
+
+      // Payment speed / Processing fee's own width (203px / 122px) is
+      // authored as a static inline style="width:..." attribute in the
+      // HTML above, not a CSS class rule — unlike the rest of this file's
+      // narrow-mode targets (rowsScroll's width, the header row's own
+      // right inset, the rows-top-divider's right inset), which all fall
+      // back to a real stylesheet default once their own inline override
+      // is cleared. These two have no such stylesheet fallback, so their
+      // pristine width has to be captured here, once, before anything
+      // (including resetSharedMockBaseline, which runs from the very
+      // first frame) ever touches them — clearing to "" would otherwise
+      // permanently destroy the only place that value exists, leaving
+      // the cell to whatever the flex layout computes on its own instead.
+      var headerNarrowCellsAtBuild = headerRowCellsEl.querySelectorAll("[data-narrow-hide]");
+      for (var hn = 0; hn < headerNarrowCellsAtBuild.length; hn++) {
+        headerNarrowCellsAtBuild[hn].__s3NaturalWidth = headerNarrowCellsAtBuild[hn].style.width;
+      }
+
       state.mode = "batch";
       state.expanded = {};
       renderRows(rowsScroll);
@@ -1154,25 +1785,8 @@
       mockWrap.style.display = "block";
       mockWrap.style.visibility = "hidden";
 
-      var scale = 0.4513888889; // 650 / 1440, same as .mock-scaler
       var screenRect = screenEl.getBoundingClientRect();
 
-      // Native-px rect of el, relative to refRect's top-left — the same
-      // math buildScene1Instance always used for row positions, just
-      // factored out since scene 2 needs it for many more elements.
-      function nativeRect(el, refRect) {
-        var r = el.getBoundingClientRect();
-        return {
-          left: (r.left - refRect.left) / scale,
-          top: (r.top - refRect.top) / scale,
-          right: (r.right - refRect.left) / scale,
-          bottom: (r.bottom - refRect.top) / scale,
-          width: r.width / scale,
-          height: r.height / scale,
-          centerX: (r.left + r.width / 2 - refRect.left) / scale,
-          centerY: (r.top + r.height / 2 - refRect.top) / scale
-        };
-      }
       function rowById(id) {
         return rowsScroll.querySelector('[data-row-id="' + id + '"]');
       }
@@ -1186,15 +1800,15 @@
         var rowEl = rowById(i);
         var rowRect = rowEl.getBoundingClientRect();
         sources.push(rowEl);
-        rowTops.push((rowRect.top - screenRect.top) / scale);
+        rowTops.push((rowRect.top - screenRect.top) / MOCK_SCALE);
         if (i === 1) {
           // Card sizing/centering is measured from row 1 only — every row
           // shares the same fixed-width columns, so row 1's true content
           // width (see the .bp-row--lift-clone comment above) applies for
           // the whole journey; the card's width never changes.
-          restWidthNative = rowRect.width / scale;
+          restWidthNative = rowRect.width / MOCK_SCALE;
           contentWidthNative = rowEl.scrollWidth + 20;
-          baseLeftNative = (rowRect.left - screenRect.left) / scale - (contentWidthNative - restWidthNative) / 2;
+          baseLeftNative = (rowRect.left - screenRect.left) / MOCK_SCALE - (contentWidthNative - restWidthNative) / 2;
           baseTopNative = rowTops[0];
         }
       }
@@ -1262,6 +1876,7 @@
       return {
         mockWrap: mockWrap,
         screenEl: screenEl,
+        screenRect: screenRect, // fixed-size stage (§ MOCK_SCALE) — safe to cache, never remeasured
         dimOverlay: dimOverlay,
         rowsScroll: rowsScroll,
         card: card,
@@ -1281,7 +1896,28 @@
         statPaymentsBlockEl: statPaymentsBlockEl,
         s2Bulk: s2Bulk,
         barnettVendor: barnettVendor,
-        s2LastContentMode: "batch" // scene 2's own DOM-swap cache, independent of scene 1's lastContentRow
+        s2LastContentMode: "batch", // scene 2's own DOM-swap cache, independent of scene 1's lastContentRow
+        headerRowEl: headerRowEl,
+        headerRowCellsEl: headerRowCellsEl,
+        rowsTopDividerEl: rowsTopDividerEl,
+        rowCardLayerEl: rowCardLayerEl,
+        rowCardEl: rowCardEl,
+        drawerEl: drawerEl,
+        drawerHeadEl: drawerHeadEl,
+        drawerVendorNameEl: drawerVendorNameEl,
+        drawerSubtitleEl: drawerSubtitleEl,
+        drawerInnerEl: drawerInnerEl,
+        drawerFooterEl: drawerFooterEl,
+        vendorsSubEl: vendorsSubEl,
+        vendorsAlertTextEl: vendorsAlertTextEl,
+        totalAmountEl: totalAmountEl,
+        lastRowsOwner: null, // which scene's own render most recently owned rowsScroll's DOM — see ensureScene2Phase / ensureScene3Mounted
+        s3Mounted: false,
+        s3StructPhase: null,
+        s3LastDrawerHTML: null,
+        s3BarnettNaturalHeight: null,
+        s3GoodHeartNaturalHeight: null,
+        s3RowsScrollFullWidth: null
       };
     }
 
@@ -1482,29 +2118,17 @@
     }
 
     // Renders scene 1's single traveling card at scene-local time t.
+    // Everything this scene doesn't mention (cursor, ripple, rowsScroll's
+    // own opacity/scrollTop, the toggle, dimOverlay, card, sources) is
+    // already at its neutral value courtesy of resetSharedMockBaseline —
+    // this only needs to apply what scene 1 itself actually requires:
+    // batch-mode table content, and its own row-travel animation.
     function renderScene1(instance, t) {
-      // Rebuilt from scratch every frame, not carried forward — hides
-      // whatever scene 2 may have left behind (its cursor, its ripple)
-      // and forces the shared table back to the flat batch content this
-      // scene's card and source-row suppression assume, regardless of
-      // how the timeline arrived here (a seek, prev/next, anything).
-      // ensureScene2Phase is cache-guarded, so this is a no-op once the
-      // table is already in batch mode — not a rebuild every frame.
-      instance.cursorEl.style.opacity = 0;
-      instance.rippleDisc.style.opacity = 0;
-      instance.rowsScroll.style.opacity = 1;
-      instance.rowsScroll.scrollTop = 0;
-      instance.toggleEl.setAttribute("aria-checked", "false");
       ensureScene2Phase(instance, "batch");
 
       var travel = computeTravel(t);
 
-      if (!travel) {
-        instance.dimOverlay.style.opacity = 0;
-        instance.card.style.opacity = 0;
-        for (var s0 = 0; s0 < instance.sources.length; s0++) instance.sources[s0].style.opacity = 1;
-        return;
-      }
+      if (!travel) return;
 
       // Dim: up during the rise, flat for the entire journey (every hold
       // and every move), down during the fall — one continuous dimmed
@@ -1794,6 +2418,17 @@
     // only when the phase actually changes (cheap cache, same pattern as
     // renderScene1's lastContentRow) — never on every frame.
     function ensureScene2Phase(instance, phase) {
+      // Scene 3 now shares this same rowsScroll DOM (mounting its own bulk
+      // content directly, not through this function) — if it was the last
+      // one to touch it, s2Phase's cached value can't be trusted even if it
+      // happens to match `phase` by coincidence, so force a remount. A
+      // no-op whenever only scenes 1/2 are in play (lastRowsOwner is set to
+      // "scene2" on the very first call here and never changes again in
+      // that world), so this doesn't alter scene 1/2's existing behavior.
+      if (instance.lastRowsOwner !== "scene2") {
+        instance.s2Phase = null;
+        instance.lastRowsOwner = "scene2";
+      }
       if (instance.s2Phase === phase) return;
       if (phase === "batch") {
         state.mode = "batch";
@@ -1834,28 +2469,15 @@
       instance.s2Phase = phase;
     }
 
+    // Everything this scene doesn't mention (card, sources, dimOverlay,
+    // the two stat-block transforms, cursor/ripple's default-hidden state,
+    // rowsScroll's own opacity/scrollTop) is already at its neutral value
+    // courtesy of resetSharedMockBaseline — this only applies what scene 2
+    // itself actually computes from t.
     function renderScene2(instance, t) {
-      // Rebuilt from scratch every frame, not carried forward — hides
-      // whatever scene 1 may have left behind (its traveling card, a
-      // suppressed source row) regardless of how the timeline arrived
-      // here. Source rows may currently be detached (table content
-      // already swapped to bulk/grouped markup) — setting style on a
-      // detached node is harmless, so this is safe to do unconditionally.
-      instance.card.style.opacity = 0;
-      for (var s1 = 0; s1 < instance.sources.length; s1++) instance.sources[s1].style.opacity = 1;
-
-      // Same reasoning, for this scene's own popCircle blocks: reset to
-      // neutral every frame, regardless of which segment (if any) last
-      // touched them — a cold seek to a point before either figure has
-      // popped must not show a stale pop from a previous render.
-      instance.statBillsBlockEl.style.transform = "scale(1)";
-      instance.statPaymentsBlockEl.style.transform = "scale(1)";
-
       if (!instance.s2Segments) instance.s2Segments = buildScene2Segments(instance);
       var S = instance.s2Segments;
       var marks = S.marks;
-
-      instance.dimOverlay.style.opacity = 0; // scene 2 never dims the screen
 
       // Toggle state is driven directly by the click's own start time, not
       // by the table's regroup phase (marks.swapAt, ~350ms later) — it must
@@ -1864,21 +2486,13 @@
       instance.toggleEl.setAttribute("aria-checked", t >= marks.clickAt ? "true" : "false");
 
       if (t <= 0 || t >= S.total) {
-        instance.cursorEl.style.opacity = 0;
-        instance.rippleDisc.style.opacity = 0;
         ensureScene2Phase(instance, "batch");
-        instance.rowsScroll.style.opacity = 1;
-        instance.rowsScroll.scrollTop = 0;
         return;
       }
 
       // ---- Table phase + continuous state (fade, expand) ----
       var phase = t < marks.swapAt ? "batch" : t < marks.expandStart ? "bulkCollapsed" : "bulkExpanded";
       ensureScene2Phase(instance, phase);
-
-      // This scene never scrolls the table — reset unconditionally
-      // rather than trusting it's already 0, same reasoning as above.
-      if (phase === "batch") instance.rowsScroll.scrollTop = 0;
 
       var rowsOpacity = 1;
       if (t >= marks.fadeOutStart && t < marks.fadeOutEnd) {
@@ -1950,33 +2564,875 @@
       instance.rippleDisc.style.transform = "translate(-50%, -50%) scale(" + rippleScale + ")";
     }
 
-    // Hides the shared mock when scene 3 is active (a no-op if it hasn't
-    // been built yet — build is lazy, on first visit to either scene 1 or
-    // 2 — since an unbuilt instance is still display:none from markup).
-    function hideMock(instance) {
-      if (instance) instance.mockWrap.style.display = "none";
+    // ============================================================
+    // Scene 3 — in-flow continuity. Two inline amount edits on Barnett's
+    // bills, then Good Heart Catering's missing delivery details get
+    // filled in via the drawer without ever leaving the table. Reuses
+    // scene 2's cursor system and gesture math verbatim (moveTo2/
+    // easeInOutCubic, computeUnderline, computeClickRipple/RIPPLE_*_STOPS,
+    // the SUB_ROW_STAGGER/DUR expand cascade) — only the sequence of what
+    // the cursor visits, and the drawer/typing content, is new.
+    //
+    // Structurally: the table is mounted ONCE (bulk mode, Barnett already
+    // expanded — continuing straight from scene 2's own end state) and
+    // never re-rendered again for the rest of the scene. Every later
+    // change — Barnett collapsing, Good Heart expanding, the scroll, the
+    // narrow columns, the drawer — is a direct style update on that same
+    // DOM, exactly like the standalone mock's own onChevronClick/
+    // openDrawer (re-rendering mid-collapse or mid-expand would blow away
+    // the very animation in progress).
+    // ============================================================
+
+    var easeDrawerOpen = makeEaseOut(0, 0, 0.2, 1); // --bp-ease-drawer-open
+    var easeDrawerClose = makeEaseOut(0.4, 0, 0.6, 1); // --bp-ease-drawer-close
+    var easeExpandS3 = makeEaseOut(0, 0, 0.2, 1); // --bp-ease-expand
+    var easeCollapseS3 = makeEaseOut(0.4, 0, 1, 1); // --bp-ease-collapse
+    var easeToggleS3 = makeEaseOut(0.4, 0, 0.2, 1); // --bp-ease-toggle
+
+    // Ordered [name, duration] pairs, reduced once below into S3_MARKS
+    // (name+"Start"/name+"End" ms offsets) — same accumulation technique
+    // as scene 1's T_HOLD_ENDS/T_MOVE_ENDS. Reordered vs. the task spec's
+    // own numbered list in one place: Good Heart's group expand runs
+    // BEFORE the scroll, not after (see the scroll code below for why —
+    // in short, "scroll as far as the table allows" is only a meaningful,
+    // non-zero distance once Good Heart's extra content height exists).
+    // Field durations are charCount × a per-field rate that decreases
+    // field over field (55/40/32/28/24/20 ms/char) — first field reads at
+    // a deliberate pace, each one after is faster, so the sequence
+    // resolves like completion rather than transcription (task spec §7).
+    //
+    // enterManage..holdPostBarnett is the Barnett-Fast beat: click Manage,
+    // drawer opens at its first step (radios), select Fast, click close,
+    // drawer closes, table pops. Every click/drawer-open/drawer-close/hold
+    // duration here reuses the exact same values as the equivalent Good
+    // Heart beat further down (200/225/195/180/220 etc.) rather than
+    // inventing a second set of "feel" numbers for what is mechanically
+    // the same gesture vocabulary. holdPreClose is 300 (was 120) — hold
+    // 0.3s after selecting Fast before clicking close. circleVendors is
+    // the actual circle-the-target gesture (computeCircle, same as scene
+    // 2's Bills/Payments treatment) that precedes hovering the footer's
+    // VENDORS alert; holdHoverVendors is the 0.3s hold-still once hovering
+    // before the click (was too brief to register).
+    var S3_SEQUENCE = [
+      ["enter153", 280], ["holdPre153", 120], ["click153", 200], ["type153", 390], ["commit153", 220], ["holdPost153", 160],
+      ["moveTo154", 260], ["holdPre154", 120], ["click154", 200], ["type154", 390], ["commit154", 220], ["holdPost154", 180],
+      ["enterManage", 260], ["holdPreManage", 120], ["clickManage", 200],
+      ["drawerOpenBarnett", 225], ["revealHoldBarnett", 180],
+      ["moveToFast", 280], ["holdPreFast", 120], ["clickFast", 200], ["holdPostFast", 160],
+      ["moveToClose", 260], ["holdPreClose", 300], ["clickClose", 200],
+      ["drawerCloseBarnett", 195], ["holdPostBarnett", 220],
+      ["moveToVendors", 280], ["circleVendors", 380], ["holdHoverVendors", 300], ["clickVendors", 200],
+      ["collapseBarnett", 260], ["expandGoodHeart", 300], ["scrollTable", 520],
+      ["settlePreDrawer", 200], ["drawerOpen", 225], ["revealHold", 180],
+      ["formLeadPause", 260],
+      ["field0", GOOD_HEART_FIELDS[0].value.length * 55], ["gap0", 200],
+      ["field1", GOOD_HEART_FIELDS[1].value.length * 40], ["gap1", 150],
+      ["field2", GOOD_HEART_FIELDS[2].value.length * 32], ["gap2", 110],
+      ["field3", GOOD_HEART_FIELDS[3].value.length * 28], ["gap3", 90],
+      ["field4", GOOD_HEART_FIELDS[4].value.length * 24], ["gap4", 70],
+      ["field5", GOOD_HEART_FIELDS[5].value.length * 20],
+      ["formTrailPause", 350],
+      ["enterApply", 280], ["holdPreApply", 120], ["clickApply", 200],
+      ["drawerClose", 195], ["exitHold", 450]
+    ];
+    var S3_MARKS = (function () {
+      var m = {}, acc = 0;
+      for (var i = 0; i < S3_SEQUENCE.length; i++) {
+        m[S3_SEQUENCE[i][0] + "Start"] = acc;
+        acc += S3_SEQUENCE[i][1];
+        m[S3_SEQUENCE[i][0] + "End"] = acc;
+      }
+      m.total = acc;
+      return m;
+    })();
+
+    function s3OriginalAmount(id) {
+      for (var i = 0; i < ROWS.length; i++) if (ROWS[i].id === id) return ROWS[i].amount;
+      return 0;
+    }
+    // The new value takes effect the instant its own typing finishes — the
+    // commit window right after is a pure visual bump (see s3NumberBump),
+    // not a value change, matching task spec §2 ("figures update in
+    // response" to the completed edit, not mid-keystroke).
+    function s3BillAmount(id, t) {
+      if (id === 1) return t >= S3_MARKS.commit153Start ? 400 : s3OriginalAmount(1);
+      if (id === 3) return t >= S3_MARKS.commit154Start ? 500 : s3OriginalAmount(3);
+      return s3OriginalAmount(id);
+    }
+    function s3BarnettTotal(t) {
+      return s3BillAmount(1, t) + s3BillAmount(3, t) + s3OriginalAmount(10);
+    }
+    function s3GrandTotal(t) {
+      var sum = 0;
+      for (var i = 0; i < ROWS.length; i++) {
+        var r = ROWS[i];
+        sum += (r.id === 1 || r.id === 3) ? s3BillAmount(r.id, t) : r.amount;
+      }
+      return sum;
+    }
+
+    // Barnett's speed-cell change (new beat, Part 2) — "Standard" is
+    // captured the same way renderVendorRow's own aggregation already
+    // computes it (earliest withdraw / latest arrives across the group's
+    // static per-bill fields), so seeking to any t before the change still
+    // shows the exact values the row was mounted with. "Fast" is computed
+    // the same way the drawer's own radio-row meta line computes it for
+    // any tier: arrival = the group's earliest due date minus 1 day (same
+    // regardless of speed — addDays/addBusinessDays/parseMMDDYY are the
+    // same functions the drawer itself uses, not a second formula).
+    function s3DateKeyMD(mmdd) {
+      var p = mmdd.split("/");
+      return parseInt(p[0], 10) * 100 + parseInt(p[1], 10);
+    }
+    function s3BarnettStandardDates() {
+      var bills = ROWS.filter(function (r) { return r.vendor === "Barnett Lawn Care"; });
+      var withdrawVals = bills.map(function (r) { return r.withdraw; });
+      var arrivesVals = bills.map(function (r) { return r.arrives; });
+      return {
+        withdraw: withdrawVals.reduce(function (a, b) { return s3DateKeyMD(a) < s3DateKeyMD(b) ? a : b; }),
+        arrives: arrivesVals.reduce(function (a, b) { return s3DateKeyMD(a) > s3DateKeyMD(b) ? a : b; })
+      };
+    }
+    var BARNETT_FAST_DAYS = 2; // matches DELIVERY_OPTIONS["latest-safe"] / SPEED_TABS["fast"]
+    var BARNETT_FAST_DATES = (function () {
+      var bills = ROWS.filter(function (r) { return r.vendor === "Barnett Lawn Care"; });
+      var per = bills.map(function (r) {
+        var arrival = addDays(parseMMDDYY(r.due), -1);
+        return { arrival: arrival, withdraw: addBusinessDays(arrival, -BARNETT_FAST_DAYS) };
+      });
+      var earliestWithdraw = per.reduce(function (a, b) { return a.withdraw < b.withdraw ? a : b; }).withdraw;
+      var latestArrives = per.reduce(function (a, b) { return a.arrival > b.arrival ? a : b; }).arrival;
+      return { withdraw: fmtMD(earliestWithdraw), arrives: fmtMD(latestArrives) };
+    })();
+
+    // Small, restrained scale-bump on a figure that just changed — the
+    // same curve vocabulary as scene 1/2's own pops (easeOut rise /
+    // easeRelease fall), at a fraction of their 0.20 magnitude since this
+    // is an inline workflow update, not a scene-defining reveal. 0.072 =
+    // 0.06 * 1.2 — a 20% increase over the original magnitude (same curve,
+    // same rise/hold/fall timing, just more scale), shared by every s3
+    // figure pop: the two amount-edit commits and Barnett's speed-cell
+    // change use this identical constant ("the same gesture").
+    var FIGURE_BUMP_MAGNITUDE = 0.072;
+    function s3NumberBump(localT, riseDur, holdDur, fallDur, magnitude) {
+      var riseEnd = riseDur, holdEnd = riseDur + holdDur, fallEnd = holdEnd + fallDur;
+      if (localT <= 0 || localT >= fallEnd) return 1;
+      if (localT < riseEnd) return 1 + magnitude * easeOut(clamp01(localT / riseDur));
+      if (localT < holdEnd) return 1 + magnitude;
+      return 1 + magnitude - magnitude * easeRelease(clamp01((localT - holdEnd) / fallDur));
+    }
+
+    // Amount field: click clears it (dollar sign stays — task spec §1),
+    // then digits build up at a steady per-character rate, then it
+    // reformats to the final money()-formatted value once typing ends.
+    function s3RenderAmountEdit(instance, rowId, clickStart, typeStart, typeEnd, finalVal, t) {
+      var row = instance.rowsScroll.querySelector('[data-row-id="' + rowId + '"]');
+      if (!row) return;
+      var field = row.querySelector(".bp-amount-field");
+      if (!field) return;
+      field.classList.toggle("bp-amount-field--editing", t >= clickStart && t < typeEnd);
+      if (t < clickStart) {
+        field.innerHTML = "<span>" + money(s3OriginalAmount(rowId)) + "</span>";
+      } else if (t < typeStart) {
+        field.innerHTML = '<span>$</span><span class="bp3-caret"></span>';
+      } else if (t < typeEnd) {
+        var digits = String(finalVal);
+        var perChar = (typeEnd - typeStart) / digits.length;
+        var shown = digits.slice(0, Math.min(digits.length, Math.floor((t - typeStart) / perChar)));
+        field.innerHTML = '<span>$' + shown + '</span><span class="bp3-caret"></span>';
+      } else {
+        field.innerHTML = "<span>" + money(finalVal) + "</span>";
+      }
+    }
+
+    // Open balance (both edited sub-rows), Barnett's aggregate (Open
+    // balance + Amount on the vendor row), and the header's total payment
+    // amount — task spec §2's "three figures", all recomputed from the
+    // same s3BillAmount()/s3BarnettTotal()/s3GrandTotal() so there's one
+    // source of truth for "what's the current amount" at any t.
+    function s3UpdateFigures(instance, t) {
+      var bump153 = s3NumberBump(t - S3_MARKS.commit153Start, 90, 40, 90, FIGURE_BUMP_MAGNITUDE);
+      var bump154 = s3NumberBump(t - S3_MARKS.commit154Start, 90, 40, 90, FIGURE_BUMP_MAGNITUDE);
+      var bumpEither = Math.max(bump153, bump154);
+
+      var bal153 = instance.rowsScroll.querySelector('[data-row-id="1"] .bp-cell--balance span');
+      if (bal153) {
+        bal153.textContent = money(s3BillAmount(1, t));
+        bal153.parentElement.style.transform = "scale(" + bump153 + ")";
+      }
+      var bal154 = instance.rowsScroll.querySelector('[data-row-id="3"] .bp-cell--balance span');
+      if (bal154) {
+        bal154.textContent = money(s3BillAmount(3, t));
+        bal154.parentElement.style.transform = "scale(" + bump154 + ")";
+      }
+
+      var barnettRow = instance.rowsScroll.querySelector('[data-vendor-row="' + instance.barnettVendor + '"]');
+      if (barnettRow) {
+        var total = s3BarnettTotal(t);
+        var balSpan = barnettRow.querySelector(".bp-cell--balance span");
+        var amtSpan = barnettRow.querySelector(".bp-cell--amount > span");
+        if (balSpan) { balSpan.textContent = money(total); balSpan.parentElement.style.transform = "scale(" + bumpEither + ")"; }
+        if (amtSpan) { amtSpan.textContent = money(total); amtSpan.style.transform = "scale(" + bumpEither + ")"; }
+      }
+
+      instance.totalAmountEl.textContent = money(s3GrandTotal(t));
+      instance.totalAmountEl.style.transform = "scale(" + bumpEither + ")";
+    }
+
+    // Collapses a list of narrow-hide cells toward width 0 (padding with
+    // them) and fades every direct child's opacity — the JS equivalent of
+    // schedule-payment.html's `.bp-screen--narrow .bp-cell[data-narrow-hide]`
+    // rule, computed per frame instead of CSS-transitioned (see the
+    // narrow-mode CSS comment for why). Full width is measured live once
+    // per element and cached on the element itself — cheap, and safe since
+    // scene 3 never re-renders these elements once mounted.
+    function s3CollapseCells(cells, p) {
+      for (var i = 0; i < cells.length; i++) {
+        var el = cells[i];
+        if (el.__s3FullWidth == null) el.__s3FullWidth = el.getBoundingClientRect().width / MOCK_SCALE;
+        el.style.width = (el.__s3FullWidth * (1 - p)) + "px";
+        el.style.paddingLeft = (10 * (1 - p)) + "px";
+        el.style.paddingRight = (10 * (1 - p)) + "px";
+        for (var c = 0; c < el.children.length; c++) el.children[c].style.opacity = 1 - p;
+      }
+    }
+
+    // Narrow-mode column collapse, driven by one 0..1 openness value.
+    // Targets every currently-mounted narrow-hide cell (header + every
+    // row, matching the standalone mock's own global — not per-row —
+    // narrow behavior) plus the bulk vendor row's own Action cell, which
+    // schedule-payment.js documents as structurally absent in bulk-narrow
+    // (sub-rows' own close-icon action cell is unaffected — it stays in
+    // both states in the real product, so it's deliberately not selected
+    // here; the `>` child combinators below are what keep it out).
+    //
+    // bp-screen--narrow is toggled LAST, after every measurement/cache
+    // above it — not just tidiness. .bp-screen--narrow .bp-cell
+    // [data-narrow-hide] outranks the cell's own base width rule
+    // (.bp-cell--speed etc.) on specificity alone, class or no class,
+    // `!important` or not. s3CollapseCells' own __s3FullWidth (and this
+    // function's own s3RowsScrollFullWidth) are measured exactly once,
+    // ever, per element/instance — if that one measurement happens while
+    // the class is already present, it captures the narrowed width as
+    // "full" and stays wrong for the rest of the session. Toggling the
+    // class only after every such measurement has already run means the
+    // first-ever read is always the class-free version, however this
+    // function first gets called (mid-open, cold seek, anything).
+    function s3ApplyNarrowProgress(instance, p) {
+      var dw = 435; // var(--bp-drawer-width)
+      instance.headerRowEl.style.right = (119 + p * (dw + 52 - 119)) + "px";
+      s3CollapseCells(instance.headerRowCellsEl.querySelectorAll("[data-narrow-hide]"), p);
+      s3CollapseCells(instance.rowsScroll.querySelectorAll(".bp-cell[data-narrow-hide]"), p);
+      s3CollapseCells(instance.rowsScroll.querySelectorAll(".bp-vendor-group > .bp-row > .bp-cell--action"), p);
+      var actionLabelSpan = instance.headerRowCellsEl.querySelector("[data-action-label] span");
+      if (actionLabelSpan) actionLabelSpan.style.opacity = 1 - p;
+      if (instance.s3RowsScrollFullWidth == null) {
+        instance.s3RowsScrollFullWidth = instance.rowsScroll.getBoundingClientRect().width / MOCK_SCALE;
+      }
+      instance.rowsScroll.style.width = (instance.s3RowsScrollFullWidth + p * (882 - instance.s3RowsScrollFullWidth)) + "px";
+      instance.rowsTopDividerEl.style.right = (20 + p * (dw - 50 - 20)) + "px";
+      instance.screenEl.classList.toggle("bp-screen--narrow", p > 0);
+    }
+
+    // Mounts the table exactly once, in the state scene 3 continues from
+    // (bulk mode, Barnett already expanded — scene 2's own end state).
+    // Guarded by lastRowsOwner (shared with ensureScene2Phase) so seeking
+    // in from scene 1/2 always forces a fresh mount, never trusts a stale
+    // s3Mounted flag left over from a previous visit.
+    function ensureScene3Mounted(instance) {
+      if (instance.lastRowsOwner !== "scene3") {
+        instance.s3Mounted = false;
+        instance.s3StructPhase = null;
+        instance.lastRowsOwner = "scene3";
+      }
+      if (instance.s3Mounted) return;
+      state.mode = "bulk";
+      state.expanded = {};
+      state.expanded[instance.barnettVendor] = true;
+      state.narrow = false;
+      renderRows(instance.rowsScroll);
+      updateAggregates("mock");
+      instance.rowsScroll.scrollTop = 0;
+      instance.rowsScroll.classList.remove("is-scrolled");
+      instance.s3BarnettNaturalHeight = null; // remeasure against the fresh DOM
+      instance.s3Mounted = true;
+    }
+
+    // Populates Good Heart's sub-rows (mirrors ensureScene2Phase's
+    // "bulkExpanded" setup for Barnett) once t reaches the point its own
+    // expand needs to be ready to animate from a real, measured 0 —
+    // cache-guarded the same way, so a seek anywhere past this point still
+    // lands correctly without replaying Barnett's collapse first.
+    function ensureScene3StructPhase(instance, phase) {
+      if (instance.s3StructPhase === phase) return;
+      if (phase === "goodHeartReady") {
+        var row = instance.rowsScroll.querySelector('[data-vendor-row="Good Heart Catering"]');
+        var wrap = row.parentElement.querySelector(".bp-expand-wrap");
+        var group = vendorGroups().filter(function (g) { return g.vendor === "Good Heart Catering"; })[0];
+        wrap.querySelector(".bp-expand-inner").innerHTML = group.rows.map(renderSubRow).join("");
+        instance.s3GoodHeartNaturalHeight = wrap.querySelector(".bp-expand-inner").scrollHeight;
+        wrap.style.height = "0px";
+        wrap.style.marginTop = "0px";
+      }
+      instance.s3StructPhase = phase;
+    }
+
+    function s3DrawerFieldState(t) {
+      var lens = [0, 0, 0, 0, 0, 0];
+      var active = -1;
+      var starts = [S3_MARKS.field0Start, S3_MARKS.field1Start, S3_MARKS.field2Start, S3_MARKS.field3Start, S3_MARKS.field4Start, S3_MARKS.field5Start];
+      var ends = [S3_MARKS.field0End, S3_MARKS.field1End, S3_MARKS.field2End, S3_MARKS.field3End, S3_MARKS.field4End, S3_MARKS.field5End];
+      for (var i = 0; i < 6; i++) {
+        var f = GOOD_HEART_FIELDS[i];
+        if (t >= ends[i]) lens[i] = f.value.length;
+        else if (t >= starts[i]) {
+          active = i;
+          var perChar = (ends[i] - starts[i]) / f.value.length;
+          lens[i] = Math.min(f.value.length, Math.floor((t - starts[i]) / perChar));
+        }
+      }
+      return { lens: lens, active: active };
+    }
+
+    // Shared by both drawer sessions this scene now has (Barnett's first
+    // step, Good Heart's drill-down) — one open/close cycle computed from
+    // its own 4 marks, so the two sessions never need to know about each
+    // other's timing.
+    function s3DrawerOpennessFor(t, openStart, openEnd, closeStart, closeEnd) {
+      if (t < openStart) return 0;
+      if (t < openEnd) return easeDrawerOpen(clamp01((t - openStart) / (openEnd - openStart)));
+      if (t < closeStart) return 1;
+      if (t < closeEnd) return 1 - easeDrawerClose(clamp01((t - closeStart) / (closeEnd - closeStart)));
+      return 0;
+    }
+
+    // Good Heart's drill-down step. Only touches content (head classlist,
+    // vendor name/subtitle, footer, inner HTML) — display/transform are
+    // shared with Barnett's session and driven once, from the combined
+    // openness, by renderScene3 itself; a no-op whenever this specific
+    // session isn't the active one, so it can never clobber what
+    // s3RenderDrawerBarnett just set (and vice versa) when called back to
+    // back on every frame regardless of which (if either) is active.
+    function s3RenderDrawerGoodHeart(instance, t, opennessGoodHeart) {
+      if (opennessGoodHeart <= 0) return;
+      instance.drawerHeadEl.classList.add("bp-drawer__head--drilldown");
+      instance.drawerVendorNameEl.textContent = "Good Heart Catering";
+      instance.drawerSubtitleEl.textContent = "Delivery method";
+      instance.drawerFooterEl.style.display = "flex";
+
+      var fs = s3DrawerFieldState(t);
+      var sig = "goodheart:" + fs.lens.join(",") + "|" + fs.active;
+      if (instance.s3LastDrawerHTML !== sig) {
+        instance.drawerInnerEl.innerHTML = renderScene3DrawerBankDetails(fs.lens, fs.active);
+        instance.s3LastDrawerHTML = sig;
+      }
+    }
+
+    // Barnett's first step (new beat, Part 2) — the drawer's default view
+    // (renderDrawerDefault, already built for Part 1 of the original
+    // drawer-port task and never called until now), not the drill-down.
+    // No footer (Cancel/Apply changes only exists on the drill-down step —
+    // matches openDrawer()'s own els.drawerFooter.style.display = "none"
+    // in schedule-payment.js) and the head stays in its default (close-X,
+    // not back-chevron) state. Same no-op-when-inactive contract as
+    // s3RenderDrawerGoodHeart above.
+    function s3RenderDrawerBarnett(instance, t, opennessBarnett) {
+      if (opennessBarnett <= 0) return;
+      instance.drawerHeadEl.classList.remove("bp-drawer__head--drilldown");
+      instance.drawerFooterEl.style.display = "none";
+      var barnettGroup = vendorGroups().filter(function (g) { return g.vendor === instance.barnettVendor; })[0];
+      instance.drawerVendorNameEl.textContent = barnettGroup.vendor;
+      instance.drawerSubtitleEl.textContent = barnettGroup.rows.length + " Bills • Total Amount:";
+
+      var selectedKey = t >= S3_MARKS.clickFastStart ? "latest-safe" : "standard";
+      var sig = "barnett:" + selectedKey;
+      if (instance.s3LastDrawerHTML !== sig) {
+        instance.drawerInnerEl.innerHTML = renderDrawerDefault(barnettGroup, selectedKey);
+        instance.s3LastDrawerHTML = sig;
+      }
+    }
+
+    // 0..1 reveal fraction for a drawer session's own selected-row card /
+    // chevron-hide — deferred until the drawer's own opening motion
+    // resolves, faded back out immediately/concurrently with its close,
+    // mirroring schedule-payment.js's revealSelectedRow()/closeDrawer()
+    // timing (see that file for the fuller reasoning). Shared by both
+    // Barnett's and Good Heart's sessions, each with its own openEnd/
+    // closeStart pair.
+    function s3RevealFrac(t, openEnd, closeStart) {
+      if (t < openEnd) return 0;
+      if (t < closeStart) return easeToggleS3(clamp01((t - openEnd) / 180));
+      if (t < closeStart + 180) return 1 - easeToggleS3(clamp01((t - closeStart) / 180));
+      return 0;
+    }
+
+    // Fades a row's own chevron opposite its reveal fraction — always
+    // called for both Barnett and Good Heart every frame (not just the
+    // currently-active one), so whichever row was selected a moment ago
+    // still gets its chevron faded back in once its own session ends,
+    // instead of being left invisible with no further call to reset it.
+    function s3ApplyChevronFade(instance, vendorName, revealFrac) {
+      var row = instance.rowsScroll.querySelector('[data-vendor-row="' + vendorName + '"]');
+      if (!row) return;
+      var chevron = row.querySelector("[data-chevron]");
+      if (chevron) chevron.style.opacity = 1 - revealFrac;
+    }
+
+    // Selected-row card (one shared element — only one drawer session is
+    // ever open at a time, Barnett's and Good Heart's windows never
+    // overlap) + both rows' own chevron-hide. Also flips Good Heart's
+    // method line + the footer's Vendors stat to their resolved state once
+    // "Apply changes" is clicked (task spec §9, unchanged from before).
+    function s3RenderSelection(instance, t) {
+      var rBarnett = s3RevealFrac(t, S3_MARKS.drawerOpenBarnettEnd, S3_MARKS.clickCloseStart);
+      var rGoodHeart = s3RevealFrac(t, S3_MARKS.drawerOpenEnd, S3_MARKS.drawerCloseStart);
+
+      s3ApplyChevronFade(instance, instance.barnettVendor, rBarnett);
+      s3ApplyChevronFade(instance, "Good Heart Catering", rGoodHeart);
+
+      var activeVendor = rBarnett > 0 ? instance.barnettVendor : (rGoodHeart > 0 ? "Good Heart Catering" : null);
+      var activeFrac = Math.max(rBarnett, rGoodHeart);
+      if (activeVendor) {
+        var row = instance.rowsScroll.querySelector('[data-vendor-row="' + activeVendor + '"]');
+        var rowRect = row.getBoundingClientRect();
+        var layerRect = instance.rowCardLayerEl.getBoundingClientRect();
+        instance.rowCardEl.style.top = ((rowRect.top - layerRect.top) / MOCK_SCALE + 11) + "px";
+        instance.rowCardEl.style.left = ((rowRect.left - layerRect.left) / MOCK_SCALE) + "px";
+        instance.rowCardEl.style.width = (rowRect.width / MOCK_SCALE) + "px";
+      }
+      instance.rowCardEl.style.opacity = activeFrac;
+
+      var goodHeartRow = instance.rowsScroll.querySelector('[data-vendor-row="Good Heart Catering"]');
+      if (goodHeartRow) {
+        var methodEl = goodHeartRow.querySelector(".bp-vendor__method");
+        if (methodEl) methodEl.setAttribute("data-vendor-state", t >= S3_MARKS.clickApplyEnd ? "resolved" : "alert");
+      }
+      instance.vendorsSubEl.setAttribute("data-vendor-state", t >= S3_MARKS.clickApplyEnd ? "resolved" : "alert");
+    }
+
+    // Cursor + ripple — one big dispatch over S3_MARKS' named windows,
+    // reusing scene 2's exact gesture math (moveTo2/computeUnderline/
+    // computeClickRipple) throughout. Positions are read live (nativeRect)
+    // rather than pre-measured in buildMockInstance: unlike scene 2's
+    // targets, scene 3's (a bill's amount field, the footer's alert line,
+    // the drawer's Apply button) only exist in their needed state well
+    // into this scene's own timeline.
+    function s3CursorState(instance, t) {
+      var pos = { x: 0, y: 0 }, cursorOpacity = 0, rippleOpacity = 0, rippleScale = 1;
+      var M = S3_MARKS;
+
+      function fieldRect(rowId) {
+        return nativeRect(instance.rowsScroll.querySelector('[data-row-id="' + rowId + '"] .bp-amount-field'), instance.screenRect);
+      }
+
+      if (t < M.enter153End) {
+        var t153 = fieldRect(1);
+        pos = moveTo2(t - M.enter153Start, M.enter153End - M.enter153Start, { x: -90, y: t153.centerY }, { x: t153.centerX, y: t153.centerY });
+        cursorOpacity = clamp01((t - M.enter153Start) / (M.enter153End - M.enter153Start));
+      } else if (t < M.click153End) {
+        var f153 = fieldRect(1);
+        pos = { x: f153.centerX, y: f153.centerY };
+        cursorOpacity = 1;
+        if (t >= M.click153Start) {
+          var r1 = computeClickRipple(t - M.click153Start, M.click153End - M.click153Start);
+          rippleOpacity = r1.opacity; rippleScale = r1.scale;
+        }
+      } else if (t < M.holdPost153End) {
+        var f153b = fieldRect(1);
+        pos = { x: f153b.centerX, y: f153b.centerY };
+        cursorOpacity = 1;
+      } else if (t < M.moveTo154End) {
+        var from153 = fieldRect(1), to154 = fieldRect(3);
+        pos = moveTo2(t - M.moveTo154Start, M.moveTo154End - M.moveTo154Start, { x: from153.centerX, y: from153.centerY }, { x: to154.centerX, y: to154.centerY });
+        cursorOpacity = 1;
+      } else if (t < M.click154End) {
+        var f154 = fieldRect(3);
+        pos = { x: f154.centerX, y: f154.centerY };
+        cursorOpacity = 1;
+        if (t >= M.click154Start) {
+          var r2 = computeClickRipple(t - M.click154Start, M.click154End - M.click154Start);
+          rippleOpacity = r2.opacity; rippleScale = r2.scale;
+        }
+      } else if (t < M.holdPost154End) {
+        var f154b = fieldRect(3);
+        pos = { x: f154b.centerX, y: f154b.centerY };
+        cursorOpacity = 1;
+      } else if (t < M.enterManageEnd) {
+        var fromBill154 = fieldRect(3);
+        var manageRect0 = nativeRect(instance.rowsScroll.querySelector('[data-vendor-row="' + instance.barnettVendor + '"] .bp-cell--action'), instance.screenRect);
+        pos = moveTo2(t - M.enterManageStart, M.enterManageEnd - M.enterManageStart, { x: fromBill154.centerX, y: fromBill154.centerY }, { x: manageRect0.centerX, y: manageRect0.centerY });
+        cursorOpacity = 1;
+      } else if (t < M.clickManageEnd) {
+        var manageRect1 = nativeRect(instance.rowsScroll.querySelector('[data-vendor-row="' + instance.barnettVendor + '"] .bp-cell--action'), instance.screenRect);
+        pos = { x: manageRect1.centerX, y: manageRect1.centerY };
+        cursorOpacity = 1;
+        if (t >= M.clickManageStart) {
+          var r5 = computeClickRipple(t - M.clickManageStart, M.clickManageEnd - M.clickManageStart);
+          rippleOpacity = r5.opacity; rippleScale = r5.scale;
+        }
+      } else if (t < M.revealHoldBarnettEnd) {
+        // Drawer sliding in + selected-card reveal — cursor holds at the
+        // Manage cell's own (now narrowing) position, same acceptance as
+        // the rest of this file's static "hold" windows.
+        var manageRect2 = nativeRect(instance.rowsScroll.querySelector('[data-vendor-row="' + instance.barnettVendor + '"] .bp-cell--action'), instance.screenRect);
+        pos = { x: manageRect2.centerX, y: manageRect2.centerY };
+        cursorOpacity = 1;
+      } else if (t < M.moveToFastEnd) {
+        var fromManage = nativeRect(instance.rowsScroll.querySelector('[data-vendor-row="' + instance.barnettVendor + '"] .bp-cell--action'), instance.screenRect);
+        var fastRect0 = nativeRect(instance.drawerInnerEl.querySelector('[data-radio="latest-safe"] .bp-radio'), instance.screenRect);
+        pos = moveTo2(t - M.moveToFastStart, M.moveToFastEnd - M.moveToFastStart, { x: fromManage.centerX, y: fromManage.centerY }, { x: fastRect0.centerX, y: fastRect0.centerY });
+        cursorOpacity = 1;
+      } else if (t < M.clickFastEnd) {
+        var fastRect1 = nativeRect(instance.drawerInnerEl.querySelector('[data-radio="latest-safe"] .bp-radio'), instance.screenRect);
+        pos = { x: fastRect1.centerX, y: fastRect1.centerY };
+        cursorOpacity = 1;
+        if (t >= M.clickFastStart) {
+          var r6 = computeClickRipple(t - M.clickFastStart, M.clickFastEnd - M.clickFastStart);
+          rippleOpacity = r6.opacity; rippleScale = r6.scale;
+        }
+      } else if (t < M.holdPostFastEnd) {
+        var fastRect2 = nativeRect(instance.drawerInnerEl.querySelector('[data-radio="latest-safe"] .bp-radio'), instance.screenRect);
+        pos = { x: fastRect2.centerX, y: fastRect2.centerY };
+        cursorOpacity = 1;
+      } else if (t < M.moveToCloseEnd) {
+        var fromFast = nativeRect(instance.drawerInnerEl.querySelector('[data-radio="latest-safe"] .bp-radio'), instance.screenRect);
+        var closeRect0 = nativeRect(instance.drawerHeadEl.querySelector(".bp-drawer__close"), instance.screenRect);
+        pos = moveTo2(t - M.moveToCloseStart, M.moveToCloseEnd - M.moveToCloseStart, { x: fromFast.centerX, y: fromFast.centerY }, { x: closeRect0.centerX, y: closeRect0.centerY });
+        cursorOpacity = 1;
+      } else if (t < M.clickCloseEnd) {
+        var closeRect1 = nativeRect(instance.drawerHeadEl.querySelector(".bp-drawer__close"), instance.screenRect);
+        pos = { x: closeRect1.centerX, y: closeRect1.centerY };
+        cursorOpacity = 1;
+        if (t >= M.clickCloseStart) {
+          var r7 = computeClickRipple(t - M.clickCloseStart, M.clickCloseEnd - M.clickCloseStart);
+          rippleOpacity = r7.opacity; rippleScale = r7.scale;
+        }
+      } else if (t < M.holdPostBarnettEnd) {
+        // Drawer closing/closed — cursor fades out in place over 250ms,
+        // same duration/shape as the equivalent fade after clicking Apply
+        // later in the scene (see the final else branch below).
+        var closeRect2 = nativeRect(instance.drawerHeadEl.querySelector(".bp-drawer__close"), instance.screenRect);
+        pos = { x: closeRect2.centerX, y: closeRect2.centerY };
+        cursorOpacity = 1 - clamp01((t - M.clickCloseEnd) / 250);
+      } else if (t < M.moveToVendorsEnd) {
+        var fromV = nativeRect(instance.rowsScroll.querySelector('[data-vendor-row="' + instance.barnettVendor + '"] .bp-cell--action'), instance.screenRect);
+        var pC1 = circleParamsFor(nativeRect(instance.vendorsSubEl, instance.screenRect), 3.1, 1.4);
+        pos = moveTo2(t - M.moveToVendorsStart, M.moveToVendorsEnd - M.moveToVendorsStart, { x: fromV.centerX, y: fromV.centerY }, circleTop(pC1));
+        // Cursor faded out at the end of the Barnett beat (holdPostBarnett)
+        // — fades back in here, same shape as the scene's own opening
+        // enter153 segment, rather than snapping to opacity 1.
+        cursorOpacity = clamp01((t - M.moveToVendorsStart) / (M.moveToVendorsEnd - M.moveToVendorsStart));
+      } else if (t < M.circleVendorsEnd) {
+        // Draws an actual circle around the whole missing-details data
+        // block (icon + "needs delivery details" text, not just the text
+        // label) — same gesture (computeCircle) scene 2 uses for the
+        // Bills/Payments figures, not the underline sweep this used
+        // before. The hover state itself (is-hover, see renderScene3)
+        // only engages once the circle finishes — you circle something
+        // first, then hover over it.
+        var pC2 = circleParamsFor(nativeRect(instance.vendorsSubEl, instance.screenRect), 3.1, 1.4);
+        pos = computeCircle(t - M.circleVendorsStart, M.circleVendorsEnd - M.circleVendorsStart, pC2);
+        cursorOpacity = 1;
+      } else if (t < M.holdHoverVendorsEnd) {
+        // Hold the hover still for 0.3s before clicking (task spec) —
+        // computeCircle's own sweep is a full revolution, so it already
+        // lands back at circleTop(p) when it finishes (e=1), same point
+        // moveToVendors arrived at — resting here is a continuation, not a
+        // jump.
+        var pCHold = circleParamsFor(nativeRect(instance.vendorsSubEl, instance.screenRect), 3.1, 1.4);
+        pos = circleTop(pCHold);
+        cursorOpacity = 1;
+      } else if (t < M.clickVendorsEnd) {
+        var pC3 = circleParamsFor(nativeRect(instance.vendorsSubEl, instance.screenRect), 3.1, 1.4);
+        pos = circleTop(pC3);
+        cursorOpacity = 1;
+        var r3 = computeClickRipple(t - M.clickVendorsStart, M.clickVendorsEnd - M.clickVendorsStart);
+        rippleOpacity = r3.opacity; rippleScale = r3.scale;
+      } else if (t < M.settlePreDrawerEnd) {
+        var pC4 = circleParamsFor(nativeRect(instance.vendorsSubEl, instance.screenRect), 3.1, 1.4);
+        pos = circleTop(pC4);
+        cursorOpacity = 1 - clamp01((t - M.settlePreDrawerStart) / (M.settlePreDrawerEnd - M.settlePreDrawerStart));
+      } else if (t < M.enterApplyStart) {
+        cursorOpacity = 0;
+      } else if (t < M.enterApplyEnd) {
+        var applyBtn = instance.drawerFooterEl.querySelector(".bp-btn--continue");
+        var applyRect = nativeRect(applyBtn, instance.screenRect);
+        pos = moveTo2(t - M.enterApplyStart, M.enterApplyEnd - M.enterApplyStart, { x: applyRect.centerX, y: applyRect.centerY + 60 }, { x: applyRect.centerX, y: applyRect.centerY });
+        cursorOpacity = clamp01((t - M.enterApplyStart) / (M.enterApplyEnd - M.enterApplyStart));
+      } else if (t < M.clickApplyEnd) {
+        var applyRect2 = nativeRect(instance.drawerFooterEl.querySelector(".bp-btn--continue"), instance.screenRect);
+        pos = { x: applyRect2.centerX, y: applyRect2.centerY };
+        cursorOpacity = 1;
+        if (t >= M.clickApplyStart) {
+          var r4 = computeClickRipple(t - M.clickApplyStart, M.clickApplyEnd - M.clickApplyStart);
+          rippleOpacity = r4.opacity; rippleScale = r4.scale;
+        }
+      } else {
+        var applyBtn3 = instance.drawerFooterEl.querySelector(".bp-btn--continue");
+        if (applyBtn3) {
+          var applyRect3 = nativeRect(applyBtn3, instance.screenRect);
+          pos = { x: applyRect3.centerX, y: applyRect3.centerY };
+        }
+        cursorOpacity = 1 - clamp01((t - M.clickApplyEnd) / 250);
+      }
+
+      return { pos: pos, cursorOpacity: cursorOpacity, rippleOpacity: rippleOpacity, rippleScale: rippleScale };
+    }
+
+    // Everything this scene doesn't mention (card, sources, dimOverlay,
+    // the two stat-block transforms) is already at its neutral value
+    // courtesy of resetSharedMockBaseline — this only applies what scene 3
+    // itself actually computes from t.
+    function renderScene3(instance, t) {
+      // Scene 3 continues from scene 2's end state (bulk mode) for its
+      // entire duration — unlike the toggle's own click moment mid-scene-2,
+      // there's no point in scene 3 where this should ever read "off", so
+      // it's just forced here rather than computed from t.
+      instance.toggleEl.setAttribute("aria-checked", "true");
+
+      ensureScene3Mounted(instance);
+      ensureScene3StructPhase(instance, t < S3_MARKS.expandGoodHeartStart ? "initial" : "goodHeartReady");
+
+      // ---- Barnett collapse ----
+      var barnettRow = instance.rowsScroll.querySelector('[data-vendor-row="' + instance.barnettVendor + '"]');
+      var barnettWrap = barnettRow ? barnettRow.parentElement.querySelector(".bp-expand-wrap") : null;
+      if (barnettWrap) {
+        if (instance.s3BarnettNaturalHeight == null) {
+          instance.s3BarnettNaturalHeight = barnettWrap.scrollHeight;
+        }
+        var collapseP = t < S3_MARKS.collapseBarnettStart ? 0 : t >= S3_MARKS.collapseBarnettEnd ? 1
+          : easeCollapseS3(clamp01((t - S3_MARKS.collapseBarnettStart) / (S3_MARKS.collapseBarnettEnd - S3_MARKS.collapseBarnettStart)));
+        barnettWrap.style.height = (instance.s3BarnettNaturalHeight * (1 - collapseP)) + "px";
+        barnettWrap.style.marginTop = (14 * (1 - collapseP)) + "px";
+        var barnettChevronImg = barnettRow.querySelector("[data-chevron] img");
+        if (barnettChevronImg) barnettChevronImg.style.transform = "rotate(" + (180 * (1 - collapseP)) + "deg)";
+      }
+
+      // ---- Good Heart expand ----
+      var goodHeartRow = instance.rowsScroll.querySelector('[data-vendor-row="Good Heart Catering"]');
+      var goodHeartWrap = goodHeartRow ? goodHeartRow.parentElement.querySelector(".bp-expand-wrap") : null;
+      if (goodHeartWrap && t >= S3_MARKS.expandGoodHeartStart) {
+        var expandP = t >= S3_MARKS.expandGoodHeartEnd ? 1
+          : easeExpandS3(clamp01((t - S3_MARKS.expandGoodHeartStart) / (S3_MARKS.expandGoodHeartEnd - S3_MARKS.expandGoodHeartStart)));
+        var natural = instance.s3GoodHeartNaturalHeight || 0;
+        goodHeartWrap.style.height = (natural * expandP) + "px";
+        goodHeartWrap.style.marginTop = (14 * expandP) + "px";
+        var goodHeartChevronImg = goodHeartRow.querySelector("[data-chevron] img");
+        if (goodHeartChevronImg) goodHeartChevronImg.style.transform = "rotate(" + (180 * expandP) + "deg)";
+        var subRows = goodHeartWrap.querySelectorAll(".bp-row--sub");
+        for (var gi = 0; gi < subRows.length; gi++) {
+          var rowLocal = (t - S3_MARKS.expandGoodHeartStart) - gi * SUB_ROW_STAGGER;
+          var rowP = easeOut(clamp01(rowLocal / SUB_ROW_DUR));
+          subRows[gi].style.opacity = rowP;
+          subRows[gi].style.transform = "translateY(" + (6 * (1 - rowP)) + "px)";
+        }
+      }
+
+      // ---- Scroll — as far as the table allows (task spec's own
+      // wording): plain 0..maxScroll, not a hand-picked target, so it
+      // stays correct regardless of exactly how tall Good Heart's now-
+      // expanded content turns out to be. maxScroll is only meaningfully
+      // non-zero because Good Heart's expand (above) already ran — see
+      // S3_SEQUENCE's own comment on why it's ordered before this. ----
+      var scrollP = t < S3_MARKS.scrollTableStart ? 0 : t >= S3_MARKS.scrollTableEnd ? 1
+        : easeInOut(clamp01((t - S3_MARKS.scrollTableStart) / (S3_MARKS.scrollTableEnd - S3_MARKS.scrollTableStart)));
+      var maxScroll = Math.max(0, instance.rowsScroll.scrollHeight - instance.rowsScroll.clientHeight);
+      instance.rowsScroll.scrollTop = maxScroll * scrollP;
+      // Fixes the doubled top-divider artifact at max scroll (see the
+      // .bp-rows-scroll::before CSS comment) — same is-scrolled toggle
+      // schedule-payment.js's own scroll listener uses, just driven by
+      // computed scrollTop instead of a real scroll event.
+      instance.rowsScroll.classList.toggle("is-scrolled", instance.rowsScroll.scrollTop > 0);
+
+      // ---- Amount edits ----
+      s3RenderAmountEdit(instance, 1, S3_MARKS.click153Start, S3_MARKS.type153Start, S3_MARKS.type153End, 400, t);
+      s3RenderAmountEdit(instance, 3, S3_MARKS.click154Start, S3_MARKS.type154Start, S3_MARKS.type154End, 500, t);
+      s3UpdateFigures(instance, t);
+
+      // ---- Barnett's delivery-speed change (new beat, Part 2). The
+      // radio selection shown INSIDE the drawer (Standard vs. Fast) is
+      // driven separately, in s3RenderDrawerBarnett, by clickFastStart —
+      // that's the tentative, drawer-local choice. What the TABLE shows
+      // only commits once the drawer is closed again (clickCloseStart):
+      // matches the task's own sequencing ("clicks close... In the
+      // table..."), and means the change is never revealed while the
+      // speed cell itself is still width-0 under narrow mode. The pop
+      // itself is timed to start only once the cell is fully back at full
+      // width (drawerCloseBarnettEnd), so it plays on a visible cell
+      // rather than an invisible one. */
+      var barnettRow = instance.rowsScroll.querySelector('[data-vendor-row="' + instance.barnettVendor + '"]');
+      if (barnettRow) {
+        var barnettFast = t >= S3_MARKS.clickCloseStart;
+        var barnettDates = barnettFast ? BARNETT_FAST_DATES : s3BarnettStandardDates();
+        var speedLabelEl = barnettRow.querySelector(".bp-speed__label");
+        var metaSpans = barnettRow.querySelectorAll(".bp-speed__meta > span");
+        if (speedLabelEl) speedLabelEl.textContent = barnettFast ? "Fast" : "Standard";
+        if (metaSpans[0]) metaSpans[0].textContent = "Withdraw " + barnettDates.withdraw;
+        if (metaSpans[2]) metaSpans[2].textContent = "Arrives " + barnettDates.arrives;
+        var barnettSpeedBump = s3NumberBump(t - S3_MARKS.drawerCloseBarnettEnd, 90, 40, 90, FIGURE_BUMP_MAGNITUDE);
+        var speedCell = barnettRow.querySelector(".bp-cell--speed");
+        if (speedCell) speedCell.style.transform = "scale(" + barnettSpeedBump + ")";
+      }
+
+      // ---- Footer hover-underline (class-based — a synthetic cursor
+      // can't trigger real :hover, task spec §4). Starts once the circle
+      // gesture finishes, not while it's still circling — you hover
+      // something only once you've settled on it, not mid-circle — and
+      // stays through the 0.3s hold (holdHoverVendors) and the click
+      // itself, both already inside this same collapseBarnettStart-bounded
+      // window. ----
+      instance.vendorsAlertTextEl.classList.toggle("is-hover", t >= S3_MARKS.circleVendorsEnd && t < S3_MARKS.collapseBarnettStart);
+
+      // ---- Drawer + narrow columns — two sessions now (Barnett's first
+      // step, then later Good Heart's drill-down); their windows never
+      // overlap, so a plain max() of the two opennesses always resolves to
+      // whichever one is actually active (or 0, between the two). ----
+      var opennessBarnett = s3DrawerOpennessFor(t, S3_MARKS.drawerOpenBarnettStart, S3_MARKS.drawerOpenBarnettEnd, S3_MARKS.drawerCloseBarnettStart, S3_MARKS.drawerCloseBarnettEnd);
+      var opennessGoodHeart = s3DrawerOpennessFor(t, S3_MARKS.drawerOpenStart, S3_MARKS.drawerOpenEnd, S3_MARKS.drawerCloseStart, S3_MARKS.drawerCloseEnd);
+      var openness = Math.max(opennessBarnett, opennessGoodHeart);
+      instance.drawerEl.style.display = openness > 0 ? "flex" : "none";
+      instance.drawerEl.style.transform = "translate3d(" + (100 * (1 - openness)) + "%, 0, 0)";
+      s3ApplyNarrowProgress(instance, openness);
+      s3RenderDrawerBarnett(instance, t, opennessBarnett);
+      s3RenderDrawerGoodHeart(instance, t, opennessGoodHeart);
+      s3RenderSelection(instance, t);
+
+      // ---- Cursor + ripple ----
+      var cs = s3CursorState(instance, t);
+      instance.cursorEl.style.left = cs.pos.x + "px";
+      instance.cursorEl.style.top = cs.pos.y + "px";
+      instance.cursorEl.style.opacity = cs.cursorOpacity;
+      instance.rippleEl.style.left = cs.pos.x + "px";
+      instance.rippleEl.style.top = cs.pos.y + "px";
+      instance.rippleDisc.style.opacity = cs.rippleOpacity;
+      instance.rippleDisc.style.transform = "translate(-50%, -50%) scale(" + cs.rippleScale + ")";
+    }
+
+    // ============================================================
+    // Shared baseline — called once per frame, before the active scene's
+    // own render function runs, resetting every piece of DOM state any
+    // scene can touch to one known-neutral value. Scenes then only ever
+    // apply what they need FROM t; they never have to guess or
+    // defensively undo what some other scene might have left behind.
+    //
+    // This is the actual fix for the cross-scene leak (see the earlier
+    // investigation): the bug was never that scene 3's own state was
+    // wrong — every property it touches was already a correct, pure
+    // function of t while scene 3 was the active scene — it was that
+    // nothing ever put that state back once scene 3 stopped being active.
+    // Patching scenes 1/2 to defensively reset scene 3's specific
+    // properties (the way each scene used to defensively reset a
+    // couple of scene 1's/2's own properties at its own top) would only
+    // move the same mistake up one level: a 4th scene would reintroduce
+    // it the same way scene 3 did. Resetting everything to neutral here,
+    // once, structurally, means a scene that never mentions a piece of
+    // state can never inherit it — including a scene that doesn't exist
+    // yet, with zero changes required to scenes 1-3.
+    //
+    // Deliberately NOT included: the drawer's own inner content
+    // (#mock-drawer-inner's innerHTML, the vendor name/subtitle text).
+    // display:none (reset below) already makes it fully invisible
+    // regardless of what it contains, and s3RenderDrawerBarnett/
+    // GoodHeart's own signature-based cache guard (s3LastDrawerHTML)
+    // already forces a fresh render, in the same synchronous pass,
+    // before the drawer is ever made visible again — so there is no
+    // timestamp at which stale content is observable. Clearing it here
+    // too would force a full drawer re-render on every single frame
+    // scene 3 is active (60/s, instead of only when a field's typed
+    // character count actually advances), defeating that cache for a
+    // difference that can never actually be seen. Likewise, row-level
+    // state (chevron rotation, sub-row heights, amount-field text, the
+    // Barnett/Good Heart speed cell, Good Heart's method line) lives
+    // inside #mock-rows-scroll's own innerHTML, which is already fully
+    // rebuilt whenever table ownership changes scene (see
+    // ensureScene2Phase/ensureScene3Mounted's lastRowsOwner guard) — a
+    // working, pre-existing mechanism this doesn't need to duplicate.
+    // ============================================================
+    function resetSharedMockBaseline(instance) {
+      // Scene 1's own visuals (traveling card + row dim).
+      instance.card.style.opacity = 0;
+      for (var i = 0; i < instance.sources.length; i++) instance.sources[i].style.opacity = 1;
+      instance.dimOverlay.style.opacity = 0;
+
+      // Scene 2 & 3's shared pop targets (Bills/Payments figures).
+      instance.statBillsBlockEl.style.transform = "scale(1)";
+      instance.statPaymentsBlockEl.style.transform = "scale(1)";
+
+      // Cursor + ripple (scene 2 & 3's shared cursor system).
+      instance.cursorEl.style.opacity = 0;
+      instance.rippleDisc.style.opacity = 0;
+
+      // Header toggle — matches the static markup's own default.
+      instance.toggleEl.setAttribute("aria-checked", "false");
+
+      // Table scroll container.
+      instance.rowsScroll.style.opacity = "1";
+      instance.rowsScroll.scrollTop = 0;
+      instance.rowsScroll.classList.remove("is-scrolled");
+      instance.rowsScroll.style.width = "";
+
+      // Narrow mode (drawer-open column collapse) — every narrow-hide
+      // cell back at its natural width/padding/opacity. Padding/opacity
+      // have a real stylesheet default to fall back to once their inline
+      // override is cleared; width doesn't (see buildMockInstance's own
+      // comment on __s3NaturalWidth) — restore that captured value
+      // explicitly rather than clearing it.
+      instance.screenEl.classList.remove("bp-screen--narrow");
+      instance.headerRowEl.style.right = "";
+      var headerNarrowCells = instance.headerRowCellsEl.querySelectorAll("[data-narrow-hide]");
+      for (var h = 0; h < headerNarrowCells.length; h++) {
+        var hc = headerNarrowCells[h];
+        hc.style.width = hc.__s3NaturalWidth || "";
+        hc.style.paddingLeft = "";
+        hc.style.paddingRight = "";
+        for (var hcc = 0; hcc < hc.children.length; hcc++) hc.children[hcc].style.opacity = "";
+      }
+      var actionLabelSpan = instance.headerRowCellsEl.querySelector("[data-action-label] span");
+      if (actionLabelSpan) actionLabelSpan.style.opacity = "";
+      instance.rowsTopDividerEl.style.right = "";
+
+      // Selected-row card overlay.
+      instance.rowCardEl.style.opacity = 0;
+      instance.rowCardEl.style.top = "";
+      instance.rowCardEl.style.left = "";
+      instance.rowCardEl.style.width = "";
+
+      // Drawer — closed, off-screen, default (non-drilldown) head, no
+      // footer (see the function's own comment above for why its inner
+      // content is deliberately left alone).
+      instance.drawerEl.style.display = "none";
+      instance.drawerEl.style.transform = "";
+      instance.drawerHeadEl.classList.remove("bp-drawer__head--drilldown");
+      instance.drawerFooterEl.style.display = "none";
+
+      // Footer — the mock's own default alert state, no hover.
+      instance.vendorsSubEl.setAttribute("data-vendor-state", "alert");
+      instance.vendorsAlertTextEl.classList.remove("is-hover");
+
+      // Header total figure.
+      instance.totalAmountEl.style.transform = "";
     }
 
     // Derives the full visual state from ms alone — nothing carried over
     // from the previous frame. Required so a seek can land directly on any
     // scene, at any point within it, and render correctly without having
-    // played what came before.
+    // played what came before. All three scenes now share the one mock
+    // instance (built lazily on first visit to any of them) — scene 3 used
+    // to be a separate, simpler placeholder div; it needed the real table,
+    // footer, and drawer just like scenes 1/2, so it was folded into the
+    // same shared instance instead of staying a parallel implementation.
     function renderAtTime(ms) {
       var index = sceneIndexForTime(ms);
-      if (index === 0 || index === 1) {
-        if (!sharedMock.instance) sharedMock.instance = buildMockInstance();
-        sharedMock.instance.mockWrap.style.display = "block";
-        scene3Wrap.style.display = "none";
-        body.style.backgroundColor = "";
-        if (index === 0) {
-          renderScene1(sharedMock.instance, ms - BOUNDARIES[0]);
-        } else {
-          renderScene2(sharedMock.instance, ms - BOUNDARIES[1]);
-        }
+      if (!sharedMock.instance) sharedMock.instance = buildMockInstance();
+      sharedMock.instance.mockWrap.style.display = "block";
+      body.style.backgroundColor = "";
+      resetSharedMockBaseline(sharedMock.instance);
+      if (index === 0) {
+        renderScene1(sharedMock.instance, ms - BOUNDARIES[0]);
+      } else if (index === 1) {
+        renderScene2(sharedMock.instance, ms - BOUNDARIES[1]);
       } else {
-        hideMock(sharedMock.instance);
-        scene3Wrap.style.display = "block";
-        body.style.backgroundColor = "";
+        renderScene3(sharedMock.instance, ms - BOUNDARIES[2]);
       }
       return index;
     }
