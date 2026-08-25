@@ -17,6 +17,7 @@ When a new component is needed, add a row here first. Do not create a CSS file w
 | `section` (platform=desktop/mobile, placement=*) | `section.css` |
 | layout-master (Cockpit Widget, node 466:14209) | css/widgets/bill-pay/cockpit/ — split by sub-component (see briefs/bill-pay/BP-COCKPIT.md for the full breakdown: members-rail.css, steps-rail.css, toggle.css, tag.css, center-stage.css) |
 | *(no Figma frame — Bill Pay's Tipping Point section isn't Figma-linked at all, see briefs/bill-pay/bill-pay-brief.md)* — full-width, natural-height stacked image(s), no crop/overlay/shadow | `image-group.css` — distinct from `Visual/video`/`video.css`, which is fixed-height, object-fit:cover, with a dark overlay treatment; wrong shape for a plain illustration. Built directly per Hadar's brief since no Figma coverage exists yet for this section; revisit this mapping if/when Figma coverage is added. |
+| `Frame 1197135596` (node 943:27525) — three-column principles row: icon placeholder, caption, tag pill, per-column, with thin vertical dividers between columns, inside a rounded container | `principles.css` — article-level component (inline case-study markup, not a widget); used in Bill Pay's "Designing a cockpit" section. Figma layer name is an unrenamed auto-generated default (`Frame 1197135596`) — flagged here rather than invented, since renaming Figma layers is out of scope for this task. |
 
 ## Flagged — needs mapping before use
 
