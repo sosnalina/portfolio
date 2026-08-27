@@ -4,8 +4,7 @@
   justify-content: center;
   gap: var(--spacing-32);
   width: 100%;
-  padding: var(--spacing-64);
-  background: var(--primitive-grey-light);
+  padding: var(--spacing-24) var(--spacing-32);
   border-radius: var(--spacing-32);
 }
 
@@ -13,7 +12,7 @@
   display: flex;
   flex: 1 0 0;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
   gap: var(--spacing-32);
   min-width: 0;
@@ -21,8 +20,8 @@
 
 .principles-icon {
   flex-shrink: 0;
-  width: 90px;
-  height: 90px;
+  width: 80px;
+  height: 80px;
 }
 
 div.principles-icon {
@@ -32,7 +31,7 @@ div.principles-icon {
 .principles-text {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   gap: var(--spacing-16);
   width: 100%;
 }
@@ -42,6 +41,7 @@ div.principles-icon {
   margin: 0;
   font: var(--text-caption);
   color: var(--primitive-black);
+  text-align: center;
 }
 
 .principles-tag {
