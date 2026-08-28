@@ -261,6 +261,20 @@
     transform: translate(-50%, -50%) scale(0.02);
   }
 
+  /* Scene 2's toggle-click spark burst. Same native 1440x1000 coordinate
+     space as .bp-lift-layer/.scene2-cursor (sibling of .bp-screen inside
+     .mock-scaler, so it scales down with everything else here for free —
+     no separate scale math). Above the cursor/ripple (z-index 10/9) so
+     the burst reads on top of the click it's reacting to. */
+  .scene2-spark-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 11;
+  }
+
   .bp-row--lift-clone {
     position: absolute;
     box-sizing: border-box;
@@ -1148,6 +1162,7 @@
       <div class="scene2-ripple" id="scene2-ripple">
         <div class="scene2-ripple__disc"></div>
       </div>
+      <canvas class="scene2-spark-canvas" id="scene2-spark-canvas" width="1440" height="1000"></canvas>
     </div>
   </div>
 
@@ -1174,6 +1189,88 @@
         if (ms >= BOUNDARIES[i]) return i;
       }
       return 0;
+    }
+
+    // ============================================================
+    // Click spark burst (radial burst of short lines that travel
+    // outward and shorten as they go) — a vanilla port of the "click
+    // spark" pattern, ported from a React reference implementation
+    // since this project has no React, no build step, and no npm
+    // dependencies. Runs on its own real-time requestAnimationFrame
+    // loop (performance.now()-based), independent of the scene
+    // timeline's own t-driven, seekable render — this is a short
+    // (SPARK_DURATION), self-contained visual flourish layered on top
+    // of a scripted click, the same way a CSS transition retriggered by
+    // retriggerProgressBar/retriggerAnimation elsewhere in this project
+    // isn't itself part of the seekable state either. One shared
+    // trigger/canvas/constants; each caller only supplies where and
+    // when. Two callers today, both a t >= <click's start> crossing,
+    // never a real pointer event (this file has no click interactivity
+    // anywhere): renderScene2's toggle click (see marks.clickAt) and
+    // renderScene3's Manage click (see S3_MARKS.clickManageStart).
+    var SPARK_COUNT = 8;
+    var SPARK_SIZE = 28;
+    var SPARK_RADIUS = 45;
+    var SPARK_DURATION = 500; // ms
+    var SPARK_LINE_WIDTH = 3;
+    function sparkEaseOut(t) { return t * (2 - t); }
+
+    var prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    // Canvas strokeStyle can't reference a CSS custom property directly
+    // (that's a CSS-cascade concept, not something the 2D context
+    // understands), so its computed value is read from :root once, at
+    // startup — --primitive-grey-dark, tokens.css's own dark grey (the
+    // only one; --primitive-black is black, not grey, and the other
+    // grey tokens are lighter).
+    var SPARK_COLOR = getComputedStyle(document.documentElement).getPropertyValue("--primitive-grey-dark").trim();
+
+    var sparkCanvasEl = document.getElementById("scene2-spark-canvas");
+    var sparkCtx = sparkCanvasEl.getContext("2d");
+    // { x, y, angle, startTime }[] — angle is fixed per spark at
+    // creation (evenly distributed around a full circle), startTime is
+    // a real performance.now() timestamp, not a scene-timeline value.
+    var sparks = [];
+
+    function triggerSparkBurst(x, y) {
+      if (prefersReducedMotion) return;
+      var now = performance.now();
+      for (var i = 0; i < SPARK_COUNT; i++) {
+        sparks.push({ x: x, y: y, angle: (2 * Math.PI * i) / SPARK_COUNT, startTime: now });
+      }
+    }
+
+    // Called every tick() frame, regardless of scene — cheap no-op via
+    // clearRect when there's nothing to draw, same "always redraw, never
+    // diff" approach the rest of this file already uses.
+    function drawSparks() {
+      sparkCtx.clearRect(0, 0, sparkCanvasEl.width, sparkCanvasEl.height);
+      if (sparks.length === 0) return;
+      var now = performance.now();
+      var next = [];
+      for (var i = 0; i < sparks.length; i++) {
+        var spark = sparks[i];
+        var elapsed = now - spark.startTime;
+        if (elapsed >= SPARK_DURATION) continue;
+        next.push(spark);
+
+        var progress = elapsed / SPARK_DURATION;
+        var eased = sparkEaseOut(progress);
+        var distance = eased * SPARK_RADIUS;
+        var lineLength = SPARK_SIZE * (1 - eased);
+        var x1 = spark.x + distance * Math.cos(spark.angle);
+        var y1 = spark.y + distance * Math.sin(spark.angle);
+        var x2 = spark.x + (distance + lineLength) * Math.cos(spark.angle);
+        var y2 = spark.y + (distance + lineLength) * Math.sin(spark.angle);
+
+        sparkCtx.strokeStyle = SPARK_COLOR;
+        sparkCtx.lineWidth = SPARK_LINE_WIDTH;
+        sparkCtx.beginPath();
+        sparkCtx.moveTo(x1, y1);
+        sparkCtx.lineTo(x2, y2);
+        sparkCtx.stroke();
+      }
+      sparks = next;
     }
 
     // ============================================================
@@ -1917,7 +2014,9 @@
         s3LastDrawerHTML: null,
         s3BarnettNaturalHeight: null,
         s3GoodHeartNaturalHeight: null,
-        s3RowsScrollFullWidth: null
+        s3RowsScrollFullWidth: null,
+        sparkClickFired: false,
+        sparkManageClickFired: false
       };
     }
 
@@ -2392,7 +2491,7 @@
         starts.push(acc);
         acc += seg[i].dur;
         ends.push(acc);
-        if (seg[i].type === "click") marks.clickAt = starts[i];
+        if (seg[i].type === "click") marks.clickAt = starts[i], marks.clickPos = seg[i].at;
         if (seg[i].type === "regroupFadeOut") marks.fadeOutStart = starts[i], marks.fadeOutEnd = ends[i];
         if (seg[i].type === "regroupSwap") marks.swapAt = starts[i];
         if (seg[i].type === "regroupFadeIn") marks.fadeInStart = starts[i], marks.fadeInEnd = ends[i];
@@ -2484,6 +2583,20 @@
       // flip on the same frame the cursor clicks, not when the content
       // underneath finishes swapping.
       instance.toggleEl.setAttribute("aria-checked", t >= marks.clickAt ? "true" : "false");
+
+      // Spark burst fires once per pass through the click, exactly on
+      // the crossing into t >= marks.clickAt — not on every frame once
+      // past it. Resets whenever t falls back before the click (looping
+      // back to the start of the timeline, or a seek backward), so the
+      // next forward pass can fire it again.
+      if (t >= marks.clickAt) {
+        if (!instance.sparkClickFired) {
+          instance.sparkClickFired = true;
+          triggerSparkBurst(marks.clickPos.x, marks.clickPos.y);
+        }
+      } else {
+        instance.sparkClickFired = false;
+      }
 
       if (t <= 0 || t >= S.total) {
         ensureScene2Phase(instance, "batch");
@@ -3193,6 +3306,26 @@
       ensureScene3Mounted(instance);
       ensureScene3StructPhase(instance, t < S3_MARKS.expandGoodHeartStart ? "initial" : "goodHeartReady");
 
+      // Manage-click spark — same one-shot-per-pass crossing detection
+      // as scene 2's toggle click (see renderScene2), reusing the same
+      // triggerSparkBurst/constants/canvas via a separate instance flag
+      // and its own crossing point, since this is an independent click
+      // in an independent scene. Position is read live (nativeRect),
+      // matching how the rest of this scene reads its own targets —
+      // .bp-cell--action is already known-good here (after
+      // ensureScene3Mounted, same as the Barnett-collapse block right
+      // below), s3CursorState queries the identical selector across
+      // this same t-range further down.
+      if (t >= S3_MARKS.clickManageStart) {
+        if (!instance.sparkManageClickFired) {
+          instance.sparkManageClickFired = true;
+          var manageSparkRect = nativeRect(instance.rowsScroll.querySelector('[data-vendor-row="' + instance.barnettVendor + '"] .bp-cell--action'), instance.screenRect);
+          triggerSparkBurst(manageSparkRect.centerX, manageSparkRect.centerY);
+        }
+      } else {
+        instance.sparkManageClickFired = false;
+      }
+
       // ---- Barnett collapse ----
       var barnettRow = instance.rowsScroll.querySelector('[data-vendor-row="' + instance.barnettVendor + '"]');
       var barnettWrap = barnettRow ? barnettRow.parentElement.querySelector(".bp-expand-wrap") : null;
@@ -3456,6 +3589,7 @@
         lastIndex = index;
         announce(elapsed, index);
       }
+      drawSparks();
       requestAnimationFrame(tick);
     }
 
