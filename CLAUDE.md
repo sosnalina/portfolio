@@ -96,6 +96,14 @@ Before building any new component structure (not small tweaks — actual new lay
 
 Site-wrapper pages (landing, navigation, about, resume, project gallery) support both desktop and mobile per the verification checklist below. Case study article pages are desktop-only by design decision — do not build or verify mobile layouts for them. The checklist's mobile-match requirement and the Responsive section's mobile breakpoint rule below apply only to wrapper pages, not case studies.
 
+Measured facts from the Bill Pay responsive QA sweep:
+
+- Case study article pages are verified solid down to 1024px viewport width. Below 900px, progress rows overflow their content column and the page gains a horizontal scrollbar. Below 710px, Gallery 2's tag and mock overhang clip. Below 650px the layout breaks down. 1024 is the practical floor and matches iPad landscape.
+- The 600px breakpoint is a hardcoded literal, not a token. It is duplicated by hand in three files: css/tokens.css, css/components/section.css, css/components/subheader.css. There is no --breakpoint-* custom property. Any future breakpoint work should address this duplication rather than adding a fourth copy.
+- Section 05's Cockpit Widget independently overflows below 900px and is the cause of the page's horizontal scrollbar at those widths — not the galleries.
+
+Full responsive investigation, measurements, and open questions: https://app.notion.com/p/3ca2f788b40081498e02e6ec78532276
+
 ## Illustration bleed (hero images)
 
 Hero-section illustrations are exported from Figma as PNG files with transparent margin intentionally baked into the file around the artwork, equal to --spacing-32 (from tokens.css), so the image is larger than its visible layout "slot."
