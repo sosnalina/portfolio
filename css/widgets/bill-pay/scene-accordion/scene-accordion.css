@@ -20,8 +20,9 @@
      below. */
   --ag-stage-height: 461px; /* matches the panels' own height built inside the iframe */
   --ag-nav-gap: 60px; /* panels' own bottom edge to the progress line */
-  --ag-nav-width: 800px; /* matches the panel row's total width (627 + 24 gap + 149) */
-  --ag-overhang: 30px; /* must stay in sync with scenes-accordion.html's own --ag-overhang — see below */
+  --ag-nav-width: 800px; /* matches the panel row's total width (627 + 32 gap + 141) */
+  --ag-overhang: 20px; /* must stay in sync with scenes-accordion.html's own --ag-overhang — see below */
+  --ag-shadow-bleed: 6.69px; /* must stay in sync with scenes-accordion.html's own --ag-shadow-bleed (30px shadow-blur-radius × 0.223 mock-scale) — see below */
 
   display: flex;
   flex-direction: column;
@@ -40,19 +41,25 @@
    section shell's own max-width:1056px + padding:128px math already
    nets an 800px content box, the same 800px this component's own
    panels/gap sum to; nothing here hardcodes that number a second
-   time). It's then widened by --ag-overhang and pulled left by the
-   same amount — an iframe hard-clips to its own box regardless of any
-   overflow:visible set inside it, so without this the grey panel's
-   -30px tag/mock overhang would be clipped at the iframe's own left
-   edge even though nothing inside the document is clipping it. The
-   inner document mirrors this with matching left padding on its own
-   body (see scenes-accordion.html), so the row's own visible position
-   on the page doesn't move — only the invisible margin for the
-   overhang to bleed into does. */
+   time). It's then widened by --ag-overhang + --ag-shadow-bleed and
+   pulled left by the same total amount — an iframe hard-clips to its
+   own box regardless of any overflow:visible set inside it, so without
+   this the grey panel's -20px tag/mock overhang (and, since the
+   floating-cards phase-1 pass, the mock's own box-shadow bleeding a
+   further ~6.69px past that) would be clipped at the iframe's own left
+   edge even though nothing inside the document is clipping it — a
+   document's own root can't paint at negative coordinates relative to
+   its own origin at all, overflow rule or not, so this reserved width
+   is the only thing that actually gives that shadow anywhere to render
+   (see scenes-accordion.html's own --ag-shadow-bleed comment for the
+   full mechanism). The inner document mirrors this with matching left
+   padding on its own body, so the row's own visible position on the
+   page doesn't move — only the invisible margin for the overhang (and
+   now the shadow beyond it) to bleed into does. */
 .scene-accordion__visual {
   display: block;
-  width: calc(100% + var(--ag-overhang));
-  margin-left: calc(-1 * var(--ag-overhang));
+  width: calc(100% + var(--ag-overhang) + var(--ag-shadow-bleed));
+  margin-left: calc(-1 * (var(--ag-overhang) + var(--ag-shadow-bleed)));
   height: var(--ag-stage-height);
   border: none;
 }

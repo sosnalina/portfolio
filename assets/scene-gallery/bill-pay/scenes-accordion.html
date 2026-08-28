@@ -102,8 +102,8 @@
   /* ---- This accordion's own composition coordinates — measured
      values with no matching token step, kept as widget-scoped custom
      properties per CLAUDE.md rather than raw values in the rules
-     below. 627 (active) + 24 (var(--spacing-24), a real token — not
-     duplicated here) + 149 (collapsed) = 800, the section's own
+     below. 627 (active) + 32 (var(--spacing-32), a real token — not
+     duplicated here) + 141 (collapsed) = 800, the section's own
      natural content-column width (see scene-accordion.css). Vertical
      rhythm (48/120/223/30) is carried over unchanged from Gallery 2;
      64 (caption's left offset) is also a real token
@@ -111,20 +111,154 @@
      duplicated as a custom property either. ---- */
   :root {
     --ag-panel-active-width: 627px;
-    --ag-panel-collapsed-width: 149px;
+    --ag-panel-collapsed-width: 141px;
     --ag-panel-height: 461px;
     --ag-inset-y: 48px; /* panel top to tag, and mock bottom to panel bottom — equal by design, same as Gallery 2 */
     --ag-tag-mock-gap: 120px; /* tag's own bottom edge to mock's top edge */
     --ag-mock-height: 223px;
     --ag-mock-scale: 0.223; /* 223 / 1000 native height — identical to Gallery 2, mock is not resized */
-    --ag-overhang: 30px;
-    --ag-tag-height: 22px; /* .principles-tag's actual rendered height, measured directly (not via its wrapper — see .ag-tag-wrap's own comment for why that measures 2px taller). Matches the token math exactly: spacing-4 + spacing-4 padding + text-tag's 14px line-height = 22. Still a custom property rather than a bare literal in the calc()s below, since it's a measured fact about this component, not itself a token. */
+    --ag-overhang: 20px;
+    --ag-shadow-bleed: calc(30px * var(--ag-mock-scale)); /* the mock's own box already sits flush with the document's true left edge (see --ag-overhang's own use in .ag-mock-wrap below) — meaning there's zero canvas left for its box-shadow to bleed into. Ink overflow (box-shadow, unlike layout) can't render at negative document coordinates at all — confirmed empirically (a diagnostic solid-color shadow rendered fully invisible past this edge, not just faint) — so --overflow-x alone was never going to fix it; genuine reserved canvas is needed, same technique as --ag-overhang itself already uses, just for a second, smaller amount. 30px matches --shadow-soft's own blur radius (tokens.css) — CSS can't extract that number out of the shorthand programmatically, so it's mirrored here as a literal, same as --ag-radio-diameter/--ag-radio-content-gap already mirror other existing values elsewhere in this file. Scaled by --ag-mock-scale because the shadow paints on .bp-screen *inside* .ag-mock-scaler's own transform:scale() — the transform shrinks the visual blur radius right along with the box itself. Used below (body's own padding-left) and in scene-accordion.css (the iframe's own width/shift) — not in .ag-mock-wrap's own position, which is untouched; see the shadow's own comment on .bp-screen below for the full mechanism. */
+    --ag-tag-height: 22px; /* .principles-tag's actual rendered height, measured directly (not via its wrapper — see .ag-tag's own comment for why that measures 2px taller). Matches the token math exactly: spacing-4 + spacing-4 padding + text-tag's 14px line-height = 22. Still a custom property rather than a bare literal in the calc()s below, since it's a measured fact about this component, not itself a token. */
     --ag-duration: 480ms; /* reference's own AccordionGallery.jsx (GSAP): duration 0.6s, reduced 20% per instruction = 0.48s. Also reused as the caption's own enter (expand) duration — the reference animates panel width and caption opacity/translate with the same duration. */
     --ag-ease: cubic-bezier(0.215, 0.61, 0.355, 1); /* ported from the same reference's ease: 'power3.out' — closest standard cubic-bezier equivalent to a GSAP power3-out curve, since GSAP's own named eases aren't literal bezier functions. Used for every transition in this file, panel width and caption alike. */
     --ag-content-fade: 200ms; /* not part of the reference — this project's own choice for hiding the tag/mock/placeholder paragraph on collapse, see build report. The caption itself no longer uses this — see --ag-caption-collapse-duration below */
     --ag-content-reveal-delay: 350ms; /* ditto — tag/mock/placeholder only start fading in once the panel is mostly expanded */
     --ag-caption-collapse-duration: 288ms; /* reference: caption collapses out at 0.6 × its enter duration — 0.6 × 480ms = 288ms */
     --ag-caption-stagger: 60ms; /* reference: 0.06s stagger between headline and description, enter only */
+
+    /* Floating cards (phase 1 — static placement/styling only, see
+       .ag-float-card below; drift/float motion is a separate task).
+       Payment-speed option rows lifted out of the mock's drawer,
+       floating in the grey panel's own empty space to the right of the
+       mock. Every literal number the brief names (150, 36, 60, 30, 6,
+       10) gets its own property below rather than being inlined —
+       none has a matching step on tokens.css's own scale (checked),
+       so, same as the block above, they stay widget-scoped composition
+       coordinates rather than tokens. */
+    --ag-float-block-height: 150px; /* the block both cards sit inside, vertically centered against the mock's own 223px height — see --ag-float-block-top below */
+    --ag-float-block-top: calc(var(--ag-inset-y) + var(--ag-tag-height) + var(--ag-tag-mock-gap) + (var(--ag-mock-height) - var(--ag-float-block-height)) / 2); /* same top-offset formula .ag-mock-wrap's own `top` uses below (not touched or refactored to share it — task: no change to the mock beyond its shadow), plus half of the (223 − 150) leftover height, to center the block against the mock */
+    --ag-float-card-1-height: 36px;
+    --ag-float-card-1-padding: 6px;
+    --ag-float-card-1-right-offset: 60px; /* card 1's own right edge, measured from the grey panel's right edge — a distinct measurement from --ag-float-card-2-height below even though both happen to equal 60px, since one is a horizontal offset and the other a card size; kept as separate properties so they can diverge independently later */
+    --ag-float-card-2-height: 60px; /* "60px square" — also this card's width, see .ag-float-card--2 below */
+    --ag-float-card-2-padding: 10px;
+    --ag-float-card-gap: 30px; /* card 2's top edge, below card 1's bottom edge */
+    --ag-float-card-1-bottom: calc(var(--ag-float-block-top) + var(--ag-float-card-1-height)); /* extracted so card 3 and the pill below can both reference card 1's own bottom edge without duplicating this formula a second and third time */
+    --ag-float-card-2-top: calc(var(--ag-float-card-1-bottom) + var(--ag-float-card-gap)); /* same value .ag-float-card--2's own `top` used to compute inline — extracted so the pill below can reference it too */
+
+    /* The two cards are scaled differently on purpose (task: "do not
+       normalise them to a shared scale") — each card's own available
+       content height (its own height minus 2× its own padding) divided
+       by the payment-speed row's real rendered native height. That
+       height was measured directly off the drawer's own live
+       .bp-radio-item markup, at its natural/unstretched intrinsic
+       size (i.e. not stretched to the drawer's own 375px-ish content
+       width) — same "measure the real rendered box" approach
+       --ag-tag-height above already uses, not a hand-computed
+       box-model guess. Standard's and Fast's rows both measured
+       exactly 74.3125px tall (same structure/type scale — only their
+       text content differs, which affects width, not height), so one
+       shared constant covers both. */
+    --ag-radio-row-height: 74.3125px;
+    --ag-float-card-1-scale: calc((var(--ag-float-card-1-height) - 2 * var(--ag-float-card-1-padding)) / var(--ag-radio-row-height));
+    --ag-float-card-2-scale: calc((var(--ag-float-card-2-height) - 2 * var(--ag-float-card-2-padding)) / var(--ag-radio-row-height));
+
+    /* Card 1's own outer width — task: "proportional to the scaled
+       content." `transform: scale()` is paint-only: it never changes
+       an element's box size for layout purposes (shrink-to-fit sizing,
+       a parent's own auto width, etc. — those all use the element's
+       *native*, pre-transform size). So unlike a plain shrink-wrapped
+       box, card 1's own width has to be computed explicitly — the
+       Standard row's own measured native width (same
+       natural/unstretched measurement --ag-radio-row-height above
+       uses) × this card's own scale, plus its own padding on both
+       sides — rather than left to size itself automatically. (Card 2
+       doesn't need this: its own box is a fixed 60px square per spec,
+       not sized to its content at all — see .ag-float-card--2 below.) */
+    --ag-standard-row-width: 345.828125px;
+    --ag-float-card-1-width: calc(var(--ag-standard-row-width) * var(--ag-float-card-1-scale) + 2 * var(--ag-float-card-1-padding));
+
+    /* Card 2's own outer width — same bug, same fix as card 1 just
+       above: its box was left at a fixed var(--ag-float-card-2-height)
+       (60px), on the assumption a "square" card didn't need to
+       shrink-wrap — but the "60px square" in the brief describes the
+       *available content height* driving --ag-float-card-2-scale
+       above (60 − 2×10 padding = 40px interior), not a literal
+       fixed-width box; the box itself still has to contain its
+       (much wider, ~191px) scaled content on every side, exactly like
+       card 1. Fast's own measured native width (same
+       natural/unstretched measurement as --ag-standard-row-width
+       above) × this card's own scale, plus its own padding on both
+       sides. --ag-float-card-2-height is unaffected — it's still the
+       real 60px used for the scale factor and stays this card's own
+       height. */
+    --ag-fast-row-width: 355.578125px;
+    --ag-float-card-2-width: calc(var(--ag-fast-row-width) * var(--ag-float-card-2-scale) + 2 * var(--ag-float-card-2-padding));
+
+    /* Card 2's overlap with the mock — derived, not hardcoded (task:
+       "if the scale factor changes, the overlap should follow").
+       Measured off the same live row: its radio sits at native
+       x:0–20px (.bp-radio's own existing width, captured here rather
+       than inlined as a raw literal, so this calc never hardcodes it)
+       with a 16px gap (.bp-radio-item's own existing `gap`, ditto)
+       before its text content begins at native x:36px.
+
+       First pass landed the mock's edge at the gap's own MIDDLE
+       (native x:28, i.e. radius + gap/2), which read as too little
+       visible space (~4.3px scaled) — the text looked almost flush
+       against the mock. Landing it much closer to the radio's own
+       edge instead — radius + gap/8 (native x:22) — keeps the same
+       safety margin *shape* (still past the radio, not flush with it)
+       while giving up most of the rest of the gap: margin past the
+       radio drops to ~1.1px scaled (still enough headroom that no
+       sliver of the radio's own edge shows — checked visually), and
+       the visible space before the text grows to ~7.5px scaled, close
+       to double the first pass's ~4.3px. Re-derives automatically from
+       --ag-float-card-2-scale if the card's own height/padding ever
+       change. */
+    --ag-radio-diameter: 20px; /* matches .bp-radio's own existing width below (not touched here) — captured as its own property, same measured-fact pattern as --ag-radio-row-height above, so the calc below never inlines a raw 20 */
+    --ag-radio-content-gap: 16px; /* matches .bp-radio-item's own existing `gap` below (not touched here) — ditto */
+    --ag-float-card-2-overlap: calc(var(--ag-float-card-2-padding) + (var(--ag-radio-diameter) + var(--ag-radio-content-gap) / 8) * var(--ag-float-card-2-scale));
+
+    /* Card 3 — Instant. Same pattern as cards 1/2 above: height minus
+       2× padding gives the available content height, divided by the
+       shared --ag-radio-row-height to get this card's own scale;
+       native row width (measured the same unstretched way) × that
+       scale + 2× padding gives the box its own explicit width so it
+       wraps the content instead of relying on shrink-to-fit (see
+       --ag-float-card-1-width's own comment for why that matters). */
+    --ag-float-card-3-height: 32px;
+    --ag-float-card-3-padding: 6px;
+    --ag-float-card-3-right-offset: 14px;
+    --ag-float-card-3-gap-below-card-1: 68px; /* task: "top edge 68px below card 1's bottom edge" */
+    --ag-float-card-3-top: calc(var(--ag-float-card-1-bottom) + var(--ag-float-card-3-gap-below-card-1));
+    --ag-float-card-3-scale: calc((var(--ag-float-card-3-height) - 2 * var(--ag-float-card-3-padding)) / var(--ag-radio-row-height));
+    --ag-instant-row-width: 355.578125px; /* measured the same unstretched way as --ag-standard-row-width/--ag-fast-row-width above — coincidentally identical to the Fast row's own width (verified against the real "Instant | Same day..." text, not a copy-paste slip): both rows' widest line turns out to be their "Withdraw MM/DD → Arrives MM/DD" meta row, which is roughly the same length regardless of which option it belongs to */
+    --ag-float-card-3-width: calc(var(--ag-instant-row-width) * var(--ag-float-card-3-scale) + 2 * var(--ag-float-card-3-padding));
+
+    /* Green "Arrives on time" pill — cloned from the table's own
+       PAYMENT SPEED column badge (.bp-badge, real component, not
+       re-authored), text changed after cloning. No white container
+       (task: "it is the pill on its own") so, unlike the three cards,
+       its own outer box has no padding added on top of the scaled
+       content — --ag-float-pill-width below is just native width ×
+       scale, nothing added. --ag-badge-height/-width are measured the
+       same unstretched way as the row measurements above, but *after*
+       the text swap to "Arrives on time" — a longer string than the
+       badge's original "On time", so measuring post-swap is what
+       actually determines this pill's real rendered size. Height only
+       (not width) drives the scale, matching the brief's own "scale
+       proportionally to a height of 10px". */
+    --ag-float-pill-height: 10px;
+    --ag-badge-height: 16px; /* .bp-badge's own real rendered height (line-height of --bp-text-badge, no vertical padding on the badge itself) — a measured fact, not a reference to --spacing-16 (same value, different meaning, per --ag-tag-height's own precedent above) */
+    --ag-badge-width: 108.03125px; /* measured with "Arrives on time" already substituted in, see above */
+    --ag-float-pill-scale: calc(var(--ag-float-pill-height) / var(--ag-badge-height));
+    --ag-float-pill-width: calc(var(--ag-badge-width) * var(--ag-float-pill-scale));
+    --ag-float-pill-gap-from-card1: 30px; /* task: "right edge 30px to the left of card 1's left edge" */
+    --ag-float-pill-right-offset: calc(var(--ag-float-card-1-right-offset) + var(--ag-float-card-1-width) + var(--ag-float-pill-gap-from-card1)); /* card 1's own left edge, expressed the same way card 1 itself is positioned — as a distance from the panel's right edge (its own right-offset + its own width) — plus this pill's 30px gap beyond that; avoids ever computing an absolute "card 1 left" value or needing the panel's own width */
+    --ag-float-pill-gap-above-card2: 20px; /* task: "bottom edge 20px above card 2's top edge" */
+    --ag-float-pill-top: calc(var(--ag-float-card-2-top) - var(--ag-float-pill-gap-above-card2) - var(--ag-float-pill-height));
   }
 
   /* No background here on purpose, same reasoning as Gallery 1's
@@ -134,65 +268,86 @@
      the page's own 800px content column (see scene-accordion.css),
      centered in the section like everything else. An iframe always
      hard-clips to its own embedding box no matter what overflow is set
-     inside it — so the parent page widens the iframe itself by
-     --ag-overhang and shifts it left by the same amount (see
-     scene-accordion.css), and this document mirrors that with matching
-     left padding on body, so the -30px overhang has real canvas to
-     land on while the row's own visible position on the page doesn't
-     move a pixel. Same technique Gallery 2 uses for its own stage,
-     just a fixed 30px instead of a viewport-bleed.
+     inside it, and a document's own root can never paint at negative
+     coordinates relative to its own origin regardless of overflow
+     either (confirmed empirically — see --ag-shadow-bleed's own
+     comment above) — so the parent page widens the iframe itself by
+     --ag-overhang + --ag-shadow-bleed and shifts it left by the same
+     total amount (see scene-accordion.css), and this document mirrors
+     that with matching left padding on body, so both the -20px
+     overhang AND the mock's shadow beyond it have real canvas to land
+     on while the row's own visible position on the page doesn't move a
+     pixel. Same technique Gallery 2 uses for its own stage, just a
+     fixed reserve instead of a viewport-bleed — now two amounts added
+     together instead of one, since the shadow (task 3, phase-1 floating
+     cards work) needed more canvas than the original overhang (tag/mock
+     artwork, an earlier pass) alone provided. Nothing here moves the
+     mock's own `left` value itself (still exactly -1 × --ag-overhang,
+     see .ag-mock-wrap below) — only how much canvas exists to its left
+     changed, which is why the mock's own screen position is unaffected
+     even though its shadow now has room to render.
 
-     overflow-x is hidden (not visible) on purpose: this document's own
-     iframe box does have real width beyond the 800px row — but only
-     30px of it, all on the LEFT, reserved for the overhang above.
-     Nothing is reserved on the right. During a panel transition, a
-     panel that just became active gets overflow:visible immediately
-     (see .ag-panel.is-active below) so the grey panel's overhang never
-     has to wait — but while the green panel is the one expanding, its
-     placeholder paragraph (a fixed 420px box that doesn't track the
-     panel's own animating width) is briefly wider than the panel,
-     bleeding past its right edge with nothing on this side to
-     accommodate it. Since there's no equivalent 30px of reserved
-     canvas on the right (only the left has one, for the overhang),
-     that momentary overhang has to be clipped here instead of shown —
-     any content that overhangs a panel's RIGHT edge is clipped, not
-     scrollable, while the LEFT edge still has its reserved 30px for
-     the tag/mock. overflow-y stays visible, unchanged — this is a
-     horizontal-only fix. */
+     overflow-x used to be hidden here rather than visible, specifically
+     to catch the green panel's placeholder paragraph transiently
+     overhanging its own right edge during expansion (a fixed 420px box
+     that doesn't track the panel's own animating width — see
+     .ag-panel--green.is-active's own comment above for the full
+     story). That clip lived at the DOCUMENT's own edge — which turned
+     out to matter for a second, unrelated reason (task: "the mock's
+     --shadow-soft... is cut off where the mock overhangs the panel's
+     left edge"): even with this rule set to visible, the shadow still
+     had nowhere to render without --ag-shadow-bleed's own extra canvas
+     above, since ink overflow at negative document coordinates isn't
+     paintable at all, clip rule or not. Both issues are fixed now: the
+     placeholder's own clip moved down to .ag-panel--green.is-active
+     itself (its real source, not the document's edge), and the shadow
+     has genuine reserved canvas to bleed into — so html/body no longer
+     needs to clip anything, and overflow-x is visible here on purpose.
+     Verified this doesn't reintroduce a horizontal scrollbar at any
+     point during a transition in either direction — see the build
+     report. */
   html, body {
     margin: 0;
     width: 100%;
     height: var(--ag-panel-height);
-    overflow-x: hidden;
+    overflow-x: visible;
     overflow-y: visible;
   }
 
   body {
     font-family: var(--bp-font-body);
     position: relative;
-    padding-left: var(--ag-overhang);
+    padding-left: calc(var(--ag-overhang) + var(--ag-shadow-bleed)); /* was just --ag-overhang; the extra --ag-shadow-bleed reserves the mock's shadow its own canvas (see --ag-shadow-bleed's own comment above). .ag-row itself needs no compensating margin for this: the matching increase to the iframe's own width/left-shift in scene-accordion.css keeps the row's visible position on the parent page exactly where it was — only .ag-mock-wrap's own position-within-this-document shifts right by the same amount (still landing exactly where the iframe's own right edge minus 800px puts it), which is invisible from outside this document and is what actually gives the shadow room. */
   }
 
-  /* Fixed 800px (627 + spacing-24 + 149), not 100% — body's own extra
+  /* Fixed 800px (627 + spacing-32 + 141), not 100% — body's own extra
      left padding above (reserved for the overhang) must not stretch
      this row itself. */
   .ag-row {
+    position: relative; /* containing block for .ag-tag's absolute travel, below */
     display: flex;
-    width: calc(var(--ag-panel-active-width) + var(--spacing-24) + var(--ag-panel-collapsed-width));
+    width: calc(var(--ag-panel-active-width) + var(--spacing-32) + var(--ag-panel-collapsed-width));
     height: 100%;
-    gap: var(--spacing-24);
+    gap: var(--spacing-32);
   }
 
   /* Width is the one thing that animates — both panels transition
      simultaneously (same duration/ease, no stagger), matching the
      reference's own GSAP timeline (every panel's tween is placed at
      the same timeline position, position 0, so they run in lockstep).
-     overflow swaps un-delayed with the width transition; only the
-     grey panel's tag/mock actually need `visible` (see .ag-panel--grey
-     below) but toggling it uniformly on both is harmless — the green
-     panel's content never overhangs its own box. */
+     overflow swaps un-delayed with the width transition; the grey
+     panel's own tag/mock/cards overhang genuinely needs `visible` —
+     the green panel doesn't need it for anything of its own, but
+     toggling it uniformly here is still harmless: its placeholder
+     paragraph DOES transiently overhang its right edge while
+     expanding (a fixed-width box that doesn't track the panel's own
+     animating width), but that gets its own dedicated clip on
+     .ag-panel--green.is-active below, layered on top of this shared
+     rule — see that rule's own comment for why, and see the mock's
+     shadow fix below for what this replaced. */
   .ag-panel {
     position: relative;
+    z-index: 0; /* position:relative alone does NOT create a stacking context (only a non-auto z-index does) — without this, .ag-float-card--2's own negative z-index below escapes past this panel entirely and paints behind the panel's own background fill, not just behind the mock. No visible effect of its own — panels are already isolated from each other by their own layout/overflow, this only scopes the floating cards' z-index to their own panel. */
     flex-shrink: 0;
     width: var(--ag-panel-collapsed-width);
     height: var(--ag-panel-height);
@@ -205,6 +360,26 @@
     width: var(--ag-panel-active-width);
     overflow: visible;
   }
+  /* Green's placeholder paragraph is a fixed 420px box that doesn't
+     track the panel's own animating width, so while green is
+     expanding it's briefly wider than the panel — this used to be
+     caught by a document-level `overflow-x: hidden` on html/body (see
+     that rule's own comment below), which also clipped the mock's own
+     shadow on the grey panel's overhanging left edge as an unwanted
+     side effect (task: "fix the mock's clipped shadow... find what is
+     clipping it"). Moving the clip down to here — this panel
+     specifically, only its X axis, only while it's active — contains
+     the exact same transient overflow at its real source instead of at
+     the document's own edge, freeing html/body to stop clipping
+     anything at all. Same specificity as the shared .ag-panel.is-active
+     rule above (two classes each) — wins on source order, appearing
+     after it. Grey never gets this override: its own tag/mock/cards
+     genuinely need to render outside its box, which is the entire
+     point of .ag-panel.is-active's shared `overflow: visible` above. */
+  .ag-panel--green.is-active {
+    overflow-x: hidden;
+    overflow-y: visible;
+  }
 
   .ag-panel--grey { background: var(--primitive-grey-light); }
   .ag-panel--green { background: var(--primitive-green-light); }
@@ -215,52 +390,95 @@
      the whole content block, but the caption now has its own,
      spec-exact animation (see .ag-caption__headline/__description
      below) that would otherwise be double-applied on top of this
-     wrapper's opacity — so the fade moved down onto .ag-tag-wrap /
-     .ag-mock-wrap / .ag-placeholder-body individually instead (same
-     200ms/350ms timing as before, just scoped per-element rather than
-     on the shared wrapper). */
+     wrapper's opacity — so the fade moved down onto .ag-mock-wrap /
+     .ag-placeholder-body individually instead (same 200ms/350ms timing
+     as before, just scoped per-element rather than on the shared
+     wrapper). The tag is no longer part of this at all — it's not
+     nested inside a panel's content anymore, see .ag-tag below. */
   .ag-panel__content {
     pointer-events: none;
   }
 
-  /* Collapsed-state hiding for the tag/mock (grey panel) and the
-     placeholder paragraph (green panel) — task: "at 149px a panel
-     cannot show its content — clip or hide the contents so nothing
-     spills or wraps awkwardly." Fades out immediately on collapse (so
-     nothing is still visible while the panel is shrinking); fades in
-     only after a delay on expand (so content doesn't pop in while the
-     panel is still narrow) — same "swap the transition on the class
-     toggle" technique already used for Gallery 2's fade masks. Neither
-     the 200ms fade nor the 350ms reveal delay come from the reactbits
-     reference (its panels never fully hide content, they dim/tilt it) —
-     both are this project's own choice for a problem the reference
-     doesn't have. The caption is deliberately not included here — see
-     its own rules below. */
-  .ag-tag-wrap,
+  /* Collapsed-state hiding for the mock and floating cards (grey
+     panel) and the placeholder paragraph (green panel) — task: "at
+     149px a panel cannot show its content — clip or hide the contents
+     so nothing spills or wraps awkwardly." Fades out immediately on
+     collapse (so nothing is still visible while the panel is
+     shrinking); fades in only after a delay on expand (so content
+     doesn't pop in while the panel is still narrow) — same "swap the
+     transition on the class toggle" technique already used for
+     Gallery 2's fade masks. Neither the 200ms fade nor the 350ms
+     reveal delay come from the reactbits reference (its panels never
+     fully hide content, they dim/tilt it) — both are this project's
+     own choice for a problem the reference doesn't have; the floating
+     cards (added later, in the same phase-1 pass as the shadow above)
+     reuse them rather than inventing their own, per that task's own
+     "durations or easing" out-of-scope note. The caption is
+     deliberately not included here — see its own rules below. The tag
+     isn't either: it's no longer per-panel content that hides when its
+     panel collapses, it's a single element that travels between
+     panels — see .ag-tag below. */
   .ag-mock-wrap,
+  .ag-float-card,
+  .ag-float-pill,
   .ag-placeholder-body {
     opacity: 0;
     transition: opacity var(--ag-content-fade) ease;
   }
-  .ag-panel.is-active .ag-tag-wrap,
   .ag-panel.is-active .ag-mock-wrap,
+  .ag-panel.is-active .ag-float-card,
+  .ag-panel.is-active .ag-float-pill,
   .ag-panel.is-active .ag-placeholder-body {
     opacity: 1;
     transition: opacity var(--ag-content-fade) ease var(--ag-content-reveal-delay);
   }
 
-  .ag-tag-wrap {
+  /* The gallery's single tag — its own label, not per-panel content
+     (task: "there should only ever be ONE tag... It travels between
+     the two resting positions as the panels swap"). Lives as a
+     row-level sibling of both panels (see markup — it's .ag-row's
+     third child, after both .ag-panel elements), not nested inside
+     either one, so it's never subject to a panel's own
+     overflow:hidden while collapsed and can freely slide across both.
+     pointer-events:none for the same reason .ag-panel__content has it
+     above — the panel underneath is the actual click target.
+     display:flex for the same line-box-strut reason the old
+     .ag-tag-wrap had it: sizes this box to exactly its .principles-tag
+     child (22px) rather than picking up an inherited-font strut. */
+  .ag-tag {
     position: absolute;
-    left: calc(-1 * var(--ag-overhang));
     top: var(--ag-inset-y);
-    /* display:flex (not the default block) so this wrapper's own box
-       sizes to exactly its .principles-tag child's box (22px) instead
-       of picking up an extra ~2px "line-box strut" from the inherited
-       body font's metrics around an inline-flex child — a well-known
-       CSS gotcha, caught here by measuring the tag directly instead of
-       through its wrapper (see --ag-tag-height's own comment). Doesn't
-       change this wrapper's own position, only its computed height. */
+    left: calc(-1 * var(--ag-overhang));
     display: flex;
+    pointer-events: none;
+    transform: translateX(0);
+    /* Position A (this rule's resting transform, translateX(0)): the
+       grey panel's own left edge — which never moves, since grey is
+       always .ag-row's first flex item, permanently at the row's own
+       left edge, regardless of which panel is active. Locked to the
+       panel transition on purpose (task: "same duration, same easing,
+       same start time... do not give the tag its own duration, its
+       own easing, or any delay") — reuses --ag-duration/--ag-ease
+       verbatim rather than declaring its own values, and is
+       retriggered by the exact same is-active class toggle the panels
+       themselves react to (see applyScene() below, and the sibling
+       rule beneath this one) — both changes happen in the same JS
+       call, so both transitions start on the same frame. */
+    transition: transform var(--ag-duration) var(--ag-ease);
+  }
+
+  /* Position B: reached only while the green panel is the active one.
+     Its left edge then sits at (collapsed width + gap) from the row's
+     start — the exact spot grey's trailing edge vacates as it shrinks
+     to --ag-panel-collapsed-width — so the travel distance is derived
+     entirely from the panels' own width custom properties, never a
+     hardcoded pixel value; it re-derives automatically if either ever
+     changes. (The -overhang term present in both Position A and
+     Position B cancels out of this delta, which is why it doesn't
+     appear here.) `~` (general sibling combinator) requires .ag-tag to
+     come after .ag-panel--green in the DOM, which it does. */
+  .ag-panel--green.is-active ~ .ag-tag {
+    transform: translateX(calc(var(--ag-panel-collapsed-width) + var(--spacing-32)));
   }
 
   /* Same offsets, same vertical band as Gallery 2's caption — 64px
@@ -347,36 +565,185 @@
     transform: scale(var(--ag-mock-scale));
   }
 
+  /* Floating cards (phase 1: static placement/styling only — drift is a
+     separate task) — payment-speed option rows lifted out of the
+     mock's drawer, floating in the grey panel's own empty space to the
+     right of the mock (task: "the fee and delivery tradeoffs scattered
+     as loose fragments — the decision space before it resolves").
+     Same outer/scaler split .ag-mock-wrap / .ag-mock-scaler already
+     use above: the OUTER .ag-float-card sits at its own real/final
+     size (so its padding, shadow and position are genuine final-size
+     values, never themselves scaled); the INNER .ag-float-card__scaler
+     holds the reused row at the row's own *native* rendered size and
+     is what actually gets `transform: scale()`'d down — same reason
+     .ag-mock-scaler does this instead of scaling-and-padding one
+     combined element. The row itself is never re-authored in this
+     stylesheet — it's cloned at runtime from the drawer's own
+     already-rendered markup (task: "take that element, wrap it in a
+     container"), so these rules only size/position/scale a wrapper
+     around it; the row's own existing classes (.bp-radio-item etc.,
+     defined above) are untouched. background/border-radius aren't
+     named in the brief — added here (existing --primitive-white,
+     matching the row's own natural white drawer backdrop; existing
+     --spacing-8, matching this same file's own --spacing-24-as-radius
+     precedent on .ag-panel above) since a shadow only reads as a card
+     with a surface to cast it; flagged in the build report as a
+     judgment call, not a spec value. */
+  .ag-float-card {
+    position: absolute;
+    box-sizing: border-box;
+    background: var(--primitive-white);
+    border-radius: var(--spacing-8);
+    box-shadow: var(--shadow-soft);
+  }
+  /* width:max-content so the cloned row keeps its own natural size
+     inside here regardless of the padded card's own (much narrower)
+     content box — without this, a plain block div with the default
+     width:auto stretches to fill its containing block, squeezing the
+     row's flexible internals down to that width instead of letting it
+     render at its true natural size before the scale transform below
+     shrinks it visually. Same reason the sandbox measurement that
+     produced --ag-radio-row-height/--ag-standard-row-width above used
+     an unstretched width:max-content context too — this mirrors that
+     exact condition in the real page. */
+  .ag-float-card__scaler {
+    width: max-content;
+    transform-origin: top left;
+  }
+
+  /* Card 1 — Standard. Explicit width (--ag-float-card-1-width above —
+     task: "proportional to the scaled content", computed from the
+     row's own real measured width × this card's own scale, not left
+     to shrink-wrap: see that property's own comment for why a
+     transform-scaled child can't just be shrink-wrapped). Anchored by
+     `right`, no `left`. */
+  .ag-float-card--1 {
+    top: var(--ag-float-block-top);
+    right: var(--ag-float-card-1-right-offset);
+    width: var(--ag-float-card-1-width);
+    height: var(--ag-float-card-1-height);
+    padding: var(--ag-float-card-1-padding);
+  }
+  .ag-float-card--1 .ag-float-card__scaler {
+    transform: scale(var(--ag-float-card-1-scale));
+  }
+
+  /* Card 2 — Fast ("latest-safe" in the source data, see the script).
+     Explicit width (--ag-float-card-2-width above, same
+     transform-doesn't-affect-layout fix as card 1 — see that
+     property's own comment) so the box actually wraps its scaled
+     content on all four sides rather than sitting undersized next to
+     it. z-index:-1 places it behind the mock (task: "The mock renders
+     above card 2 in z-order") — .ag-mock-wrap doesn't need a matching
+     z-index of its own: within a shared stacking context, a *negative*
+     z-index paints behind everything at the default stack level, which
+     is exactly where an ordinary positioned element with no z-index
+     (.ag-mock-wrap, here) already sits — so this one rule is
+     sufficient without touching the mock's own rule. */
+  .ag-float-card--2 {
+    top: var(--ag-float-card-2-top);
+    left: calc(-1 * var(--ag-overhang) + 1440px * var(--ag-mock-scale) - var(--ag-float-card-2-overlap));
+    width: var(--ag-float-card-2-width);
+    height: var(--ag-float-card-2-height);
+    padding: var(--ag-float-card-2-padding);
+    z-index: -1;
+  }
+  .ag-float-card--2 .ag-float-card__scaler {
+    transform: scale(var(--ag-float-card-2-scale));
+  }
+
+  /* Card 3 — Instant. Explicit width, same reasoning as cards 1/2 (see
+     --ag-float-card-1-width's own comment). Anchored by `right`, like
+     card 1 — no z-index needed for "fully visible, in front of
+     anything it meets": it has none (auto), which already paints above
+     card 2's explicit z-index:-1, and it's later in DOM order than
+     card 2 too (see markup), so it wins on both counts without a rule
+     of its own. Its vertical band does overlap card 2's, and depending
+     on final layout the two may sit close together horizontally too —
+     both expected (task: "may or may not touch... a slight overlap is
+     acceptable"), not a bug to fix by nudging positions apart. */
+  .ag-float-card--3 {
+    top: var(--ag-float-card-3-top);
+    right: var(--ag-float-card-3-right-offset);
+    width: var(--ag-float-card-3-width);
+    height: var(--ag-float-card-3-height);
+    padding: var(--ag-float-card-3-padding);
+  }
+  .ag-float-card--3 .ag-float-card__scaler {
+    transform: scale(var(--ag-float-card-3-scale));
+  }
+
+  /* Green "Arrives on time" pill — deliberately its own class, not
+     .ag-float-card: no white background/border-radius/padding (task:
+     "No white container — it is the pill on its own"), just position
+     + the same --shadow-soft the cards use. The badge itself
+     (.bp-badge, cloned from the table, defined above) already supplies
+     its own background/radius — this wrapper only positions and scales
+     it. */
+  .ag-float-pill {
+    position: absolute;
+    top: var(--ag-float-pill-top);
+    right: var(--ag-float-pill-right-offset);
+    width: var(--ag-float-pill-width);
+    height: var(--ag-float-pill-height);
+    box-shadow: var(--shadow-soft);
+  }
+  /* display:flex here for the exact same reason .ag-tag's own comment
+     documents above: .bp-badge is display:inline-flex, and a plain
+     block div wrapping an inline-level child picks up an inherited-font
+     line-box strut taller than the child itself (measured: ~23px
+     native vs the badge's own 16px) — the cards above don't need this
+     override since .bp-radio-item is already a block-level flex
+     container, not inline, so it never had the strut in the first
+     place. Scoped to just the pill rather than added to the shared
+     .ag-float-card__scaler rule, so cards 1–3 can't be affected by it. */
+  .ag-float-pill .ag-float-card__scaler {
+    display: flex;
+    transform: scale(var(--ag-float-pill-scale));
+  }
+
   /* Reduced motion: keep the opacity fades everywhere (grey panel's
-     tag/mock, green panel's placeholder paragraph, and the caption) —
-     they aid comprehension of which panel just became active — but
-     drop every position/size change and every stagger. Same choice
+     mock, green panel's placeholder paragraph, and the caption) — they
+     aid comprehension of which panel just became active — but drop
+     every position/size change and every stagger. Same choice
      Gallery 1's own scene-gallery mock already makes for its drawer
      head text ("keep the opacity fades... but drop the position
      slide, per spec"). The caption's own transform is dropped entirely
      (forced to its resting translateX(0) in both states, not just an
      un-animated -14px) so there's no offset to reduce in the first
-     place, and only opacity transitions — no transform, no stagger. */
+     place, and only opacity transitions — no transform, no stagger.
+     The tag (task: "under prefers-reduced-motion, the tag should jump
+     between positions rather than travelling") gets the same
+     1ms-duration treatment as .ag-panel below — it has no opacity
+     component to preserve, just a jump instead of a slide. */
   @media (prefers-reduced-motion: reduce) {
     .ag-panel {
       transition-duration: 1ms;
     }
-    .ag-tag-wrap,
+    .ag-tag {
+      transition-duration: 1ms;
+    }
     .ag-mock-wrap,
+    .ag-float-card,
+    .ag-float-pill,
     .ag-placeholder-body {
       transition-duration: 1ms;
       transition-delay: 0s;
     }
-    /* The .is-active variants of these three rules redeclare their own
+    /* The .is-active variants of these four rules redeclare their own
        `transition` at higher specificity (.ag-panel.is-active
-       .ag-tag-wrap etc., 3 classes) than the plain selectors above (1
+       .ag-mock-wrap etc., 3 classes) than the plain selectors above (1
        class) — without matching that specificity here too, the
        reduced-motion override above only wins for the collapsed state
        and the active state's full-duration transition keeps running
        unreduced. (.ag-panel's own transition isn't re-declared by
-       .ag-panel.is-active, so it doesn't have this problem.) */
-    .ag-panel.is-active .ag-tag-wrap,
+       .ag-panel.is-active, so it doesn't have this problem; neither is
+       .ag-tag's — the .ag-panel--green.is-active ~ .ag-tag rule only
+       touches `transform`, never `transition`, so .ag-tag's own
+       reduced-motion override above already covers both states.) */
     .ag-panel.is-active .ag-mock-wrap,
+    .ag-panel.is-active .ag-float-card,
+    .ag-panel.is-active .ag-float-pill,
     .ag-panel.is-active .ag-placeholder-body {
       transition-duration: 1ms;
       transition-delay: 0s;
@@ -404,7 +771,12 @@
      Lawn Care expanded, and narrow-mode (drawer open) are used here —
      this scene is a single, permanently-static frame. Task: "do NOT
      resize or rescale it; heights and positions carry over unchanged
-     from Gallery 2" — every rule in this block is copied verbatim.
+     from Gallery 2" — every rule in this block was copied verbatim,
+     with one later, deliberate exception: .bp-screen's own box-shadow
+     below, added per the floating-cards (phase 1) brief ("both cards
+     and the mock need a drop shadow"). overflow:hidden below only
+     clips this element's own content, not its box-shadow, which always
+     paints outside the border box regardless — safe to add here.
      ============================================================ */
 
   .bp-screen {
@@ -414,6 +786,7 @@
     overflow: hidden;
     border-radius: 35.4461538462px;
     background: var(--primitive-white);
+    box-shadow: var(--shadow-soft);
   }
 
   /* ---- Header ---- */
@@ -586,9 +959,6 @@
   <div class="ag-row" id="ag-row">
     <div class="ag-panel ag-panel--grey is-active" id="ag-panel-0" data-index="0">
       <div class="ag-panel__content">
-        <div class="ag-tag-wrap">
-          <div class="principles-tag"><p class="principles-tag__label"># Quality_of_decisions</p></div>
-        </div>
         <div class="ag-caption">
           <p class="ag-caption__headline">Fee &amp; Delivery Options tradeoffs</p>
           <p class="ag-caption__description">A visual display overlapping factors</p>
@@ -701,6 +1071,25 @@
             </div>
           </div>
         </div>
+
+        <!-- Floating cards (phase 1 — static placement only, see
+             .ag-float-card's own comment below). Each .ag-float-card__scaler
+             is left empty here on purpose: the real payment-speed row is
+             cloned into it at runtime from the drawer's own already-rendered
+             markup above, not re-authored a second time — see the script's
+             own comment near "ag-float-card-1-scaler". -->
+        <div class="ag-float-card ag-float-card--1">
+          <div class="ag-float-card__scaler" id="ag-float-card-1-scaler"></div>
+        </div>
+        <div class="ag-float-card ag-float-card--2">
+          <div class="ag-float-card__scaler" id="ag-float-card-2-scaler"></div>
+        </div>
+        <div class="ag-float-card ag-float-card--3">
+          <div class="ag-float-card__scaler" id="ag-float-card-3-scaler"></div>
+        </div>
+        <div class="ag-float-pill">
+          <div class="ag-float-card__scaler" id="ag-float-pill-scaler"></div>
+        </div>
       </div>
     </div>
 
@@ -716,6 +1105,14 @@
           veniam.
         </p>
       </div>
+    </div>
+
+    <!-- The gallery's single tag — a row-level sibling of both panels,
+         not nested inside either one. It must come after both panels
+         in DOM order for the `.ag-panel--green.is-active ~ .ag-tag`
+         CSS rule below to reach it. -->
+    <div class="ag-tag" id="ag-tag">
+      <div class="principles-tag"><p class="principles-tag__label"># Quality_of_decisions</p></div>
     </div>
   </div>
 
@@ -1070,6 +1467,37 @@
     document.getElementById("mock-drawer-vendor-name").textContent = barnettGroup.vendor;
     document.getElementById("mock-drawer-subtitle").textContent = barnettGroup.rows.length + " Bills • Total Amount:";
     document.getElementById("mock-drawer-inner").innerHTML = renderDrawerDefault(barnettGroup, "standard");
+
+    // Floating cards (phase 1, static placement only — see
+    // .ag-float-card's own comment in the <style> block above for the
+    // scaling/overlap math). Task: "Build them by reusing the drawer's
+    // existing payment-delivery-option row... take that element, wrap
+    // it in a container" — so this clones the two rows the drawer just
+    // rendered above (real content, real computed Withdraw/Arrives
+    // dates for this scene's own Barnett Lawn Care bills) straight out
+    // of #mock-drawer-inner, rather than re-authoring their markup a
+    // second time. Runs once at load; nothing here is the deferred
+    // float/drift motion. "latest-safe" is DELIVERY_OPTIONS' own key
+    // for the "Fast" option (see schedule-payment.js) — not renamed
+    // here, since it isn't ours to rename.
+    var standardRow = document.querySelector('#mock-drawer-inner [data-radio="standard"]');
+    var fastRow = document.querySelector('#mock-drawer-inner [data-radio="latest-safe"]');
+    var instantRow = document.querySelector('#mock-drawer-inner [data-radio="expedited"]');
+    document.getElementById("ag-float-card-1-scaler").appendChild(standardRow.cloneNode(true));
+    document.getElementById("ag-float-card-2-scaler").appendChild(fastRow.cloneNode(true));
+    document.getElementById("ag-float-card-3-scaler").appendChild(instantRow.cloneNode(true));
+
+    // Green pill — cloned from the table's own PAYMENT SPEED column
+    // badge (real .bp-badge, not re-authored), same take-the-element
+    // approach as the cards above; only its text is changed after
+    // cloning (task: "Clone it, then change its text"). Barnett Lawn
+    // Care's own row specifically, for the same reason the drawer
+    // above is Barnett's — one vendor's worth of fragments, not a
+    // different one grabbed at random.
+    var speedBadge = document.querySelector('#mock-rows-scroll [data-vendor-row="Barnett Lawn Care"] .bp-badge');
+    var pillClone = speedBadge.cloneNode(true);
+    pillClone.querySelector('span').textContent = 'Arrives on time';
+    document.getElementById("ag-float-pill-scaler").appendChild(pillClone);
 
     // Selected-row card overlay — same +11px offset formula as Gallery
     // 1's/Gallery 2's own selected-row-card positioning, just measured
