@@ -12,6 +12,8 @@ stylesheets:
   - ../../css/components/image-group.css
   - ../../css/components/principles.css
   - ../../css/widgets/bill-pay/scene-gallery/scene-gallery.css
+  - ../../css/widgets/bill-pay/scene-gallery-2/scene-gallery-2.css
+  - ../../css/widgets/bill-pay/scene-accordion/scene-accordion.css
   - ../../css/widgets/bill-pay/walkthrough-gallery/gallery.css
   - ../../css/widgets/bill-pay/walkthrough-gallery/visual.css
   - ../../css/widgets/bill-pay/walkthrough-gallery/caption.css
@@ -26,6 +28,8 @@ scripts:
   - ../../js/bill-pay/walkthrough-gallery.js
   - ../../js/bill-pay/cockpit-widget.js
   - ../../js/bill-pay/scene-gallery.js
+  - ../../js/bill-pay/scene-gallery-2.js
+  - ../../js/bill-pay/scene-accordion.js
 ---
 {% extends "base.njk" %}
 {% from "hero.njk" import hero %}
@@ -36,6 +40,8 @@ scripts:
 {% from "two-block-header.njk" import twoBlockHeader %}
 {% from "gallery-navigation.njk" import galleryNavigation %}
 {% from "scene-gallery.njk" import sceneGallery %}
+{% from "scene-gallery-2.njk" import sceneGallery2 %}
+{% from "scene-accordion.njk" import sceneAccordion %}
 
 {% block body %}
 <main>
@@ -58,7 +64,7 @@ scripts:
 
   {# 3. Gallery section #}
   {% call section("section--grey-light") %}
-  {{ sectionHeader("Click, Click, Done", "Exiting Experience") }}
+  {{ sectionHeader("Click, Click, Done", "Exiting Experience (V1)") }}
   {# Gallery intro paragraph moved to statBlock above #}
   {% call sectionVisual(true) %}
   <div class="gallery">
@@ -67,8 +73,8 @@ scripts:
   </div>
   {% endcall %}
   {{ sectionBody([
-    "Launched in 2022 as a multi-step wizard, Bill Pay V1 was tailored to serve QuickBooks' core audience of small businesses, managing their own books, and processing up to 30 bills per month. The experience was rooted in a cognitive model of simplicity and clarity.",
-    "The overhead of moving money was wrapped inside a friendly, sequential wizard with clean UI, so that even non-professional users could navigate their payments with confidence and minimal friction. Paying a bill to a vendor was easy like ordering pizza."
+    "Launched in 2022 as a multi-step wizard, Bill Pay V1 was tailored to serve QuickBooks' core audience of small businesses, managing their own books, and processing up to 30 bills per month.",
+    "The experience was rooted in a cognitive model of simplicity, and the overhead of moving money was wrapped inside a friendly, sequential wizard with a minimalist interface. Paying a bill to a vendor was easy like ordering pizza, so that even non-professional users could navigate their bill payments with confidence."
   ]) }}
   {% endcall %}
 
@@ -212,6 +218,21 @@ scripts:
     principlesBlock
   ) %}
   {{ sceneGallery() }}
+  {% endcall %}
+
+  {# Accordion gallery — exploratory variant, placed above Gallery 2
+     for direct visual comparison. Same content as Gallery 2, own white
+     section, unheadered (so it doesn't consume a section-header badge
+     number — Gallery 2's own numbering below is unaffected). Does not
+     modify Gallery 2 in any way; may be deleted after comparison. #}
+  {% call section() %}
+  {{ sceneAccordion() }}
+  {% endcall %}
+
+  {# 8. Gallery 2 — own white section, not a continuation of section 7.
+     No section header (undecided per build spec) — just the gallery. #}
+  {% call section() %}
+  {{ sceneGallery2() }}
   {% endcall %}
 </main>
 {% endblock %}

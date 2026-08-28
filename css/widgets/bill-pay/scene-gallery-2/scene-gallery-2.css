@@ -1,0 +1,72 @@
+/* Bill Pay — Scene Gallery 2 widget (parent page). The composition
+   itself (grey frame, green panel, tag, caption, mock, panel-swap) lives
+   entirely inside assets/scene-gallery/bill-pay/scenes-gallery-2.html —
+   this file only sizes/bleeds the iframe stage to the viewport edge and
+   lays out the shared progress row beneath it. Shared controls
+   (.gallery__interaction and everything inside it) come from
+   css/widgets/bill-pay/walkthrough-gallery/{gallery,legend,
+   progress-bar}.css — not duplicated here, see gallery-navigation.njk.
+   Class names prefixed scene-gallery-2-/scene-gallery-2__ so they can
+   never collide with Gallery 1's own scene-gallery-/scene-gallery__
+   classes if both ever load on the same page. */
+
+.scene-gallery-2 {
+  /* Composition coordinates specific to this widget — measured values
+     with no matching token step (tokens.css has 32/64, not 60; no
+     sizing token covers a 461px stage), kept as widget-scoped custom
+     properties per CLAUDE.md rather than raw values in the rules
+     below. The 1550px viewport lock on the green panel's revealed
+     width lives inside scenes-gallery-2.html now, not here — it must
+     only constrain the panel, not this stage, so it has nothing to do
+     with sizing the iframe itself. */
+  --sg2-stage-height: 461px; /* matches the grey/green frame height built inside the iframe */
+  --sg2-nav-gap: 60px; /* grey frame's own bottom edge to the progress line */
+  --sg2-nav-width: 650px; /* matches the grey frame's width, and Gallery 1's own progress-row width */
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--sg2-nav-gap);
+  width: 100%;
+}
+
+.scene-gallery-2__stage {
+  width: 100%;
+}
+
+/* Bleeds to the true viewport edge — the standard "50% / -50vw"
+   full-bleed trick — regardless of .section__content's own centered,
+   max-width:1056px column. The offset cancels out to exactly the
+   viewport's left edge for any viewport width, because every ancestor
+   between this element and .section is either full-width (.section)
+   or centered via margin:auto (.section__content) with no asymmetric
+   offset of its own. Deliberately uncapped: this box must always be
+   exactly viewport-width so the grey frame, which centers itself
+   within it (see scenes-gallery-2.html's .sg2-row), keeps tracking the
+   viewport's true center at any width — capping this stage was the
+   bug (it froze the frame's centering reference along with the green
+   panel's growth). The panel's own 1550px lock now lives entirely
+   inside the iframe, on the panel itself, decoupled from this box. */
+.scene-gallery-2__visual {
+  display: block;
+  width: 100vw;
+  height: var(--sg2-stage-height);
+  margin-left: calc(50% - 50vw);
+  border: none;
+}
+
+/* Plain margin:auto centering within this row's own (content-column)
+   ancestor — not a bleed trick. This looks like it should only center
+   the nav within the page's content column, not the viewport, but for
+   this page's section shell the two are the same position: every
+   ancestor from here up to .section is itself centered/full-width with
+   no asymmetric offset, so a normally-centered box anywhere in that
+   chain lands on the true viewport center too (confirmed by measuring
+   Gallery 1's mock, which centers the same way and lands on the exact
+   same viewport-center pixel as this nav / the grey frame). Simpler
+   and more robust than re-deriving a bleed formula here — no vw units,
+   no dependency on the grey frame's own sizing mechanism. */
+.scene-gallery-2__navigation {
+  width: var(--sg2-nav-width);
+  max-width: 100%; /* shrinks below --sg2-nav-width once the content column can't fit it (~906px viewport) instead of overflowing the page */
+  margin: 0 auto;
+}

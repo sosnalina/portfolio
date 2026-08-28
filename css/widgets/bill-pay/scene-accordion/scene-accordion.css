@@ -1,0 +1,64 @@
+/* Bill Pay — Scene Accordion widget (parent page). Exploratory variant
+   for visual comparison against Gallery 2 — same content, a two-panel
+   width-swap accordion instead of a slide. The composition itself
+   (panels, tag, caption, mock, width transition) lives entirely inside
+   assets/scene-gallery/bill-pay/scenes-accordion.html — this file only
+   sizes the iframe stage to the page's own 800px content column (no
+   viewport bleed, unlike Gallery 2 — this component never needs to
+   reach past it) and lays out the shared progress row beneath it.
+   Shared controls (.gallery__interaction and everything inside it)
+   come from css/widgets/bill-pay/walkthrough-gallery/{gallery,legend,
+   progress-bar}.css — not duplicated here, see gallery-navigation.njk.
+   Class names prefixed scene-accordion-/scene-accordion__ so they can
+   never collide with Gallery 1's or Gallery 2's own classes, all three
+   of which load on this page at once. */
+
+.scene-accordion {
+  /* Composition coordinates specific to this widget — measured values
+     with no matching token step, kept as widget-scoped custom
+     properties per CLAUDE.md rather than raw values in the rules
+     below. */
+  --ag-stage-height: 461px; /* matches the panels' own height built inside the iframe */
+  --ag-nav-gap: 60px; /* panels' own bottom edge to the progress line */
+  --ag-nav-width: 800px; /* matches the panel row's total width (627 + 24 gap + 149) */
+  --ag-overhang: 30px; /* must stay in sync with scenes-accordion.html's own --ag-overhang — see below */
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--ag-nav-gap);
+  width: 100%;
+}
+
+.scene-accordion__stage {
+  width: 100%;
+}
+
+/* No viewport-bleed trick here — unlike Gallery 2, this composition
+   never reaches past the page's own content column, so the iframe's
+   base width is just 100% of whatever .section__slot already provides
+   (exactly 800px at the widths this component was built for — the
+   section shell's own max-width:1056px + padding:128px math already
+   nets an 800px content box, the same 800px this component's own
+   panels/gap sum to; nothing here hardcodes that number a second
+   time). It's then widened by --ag-overhang and pulled left by the
+   same amount — an iframe hard-clips to its own box regardless of any
+   overflow:visible set inside it, so without this the grey panel's
+   -30px tag/mock overhang would be clipped at the iframe's own left
+   edge even though nothing inside the document is clipping it. The
+   inner document mirrors this with matching left padding on its own
+   body (see scenes-accordion.html), so the row's own visible position
+   on the page doesn't move — only the invisible margin for the
+   overhang to bleed into does. */
+.scene-accordion__visual {
+  display: block;
+  width: calc(100% + var(--ag-overhang));
+  margin-left: calc(-1 * var(--ag-overhang));
+  height: var(--ag-stage-height);
+  border: none;
+}
+
+.scene-accordion__navigation {
+  width: var(--ag-nav-width);
+  max-width: 100%;
+  margin: 0 auto;
+}

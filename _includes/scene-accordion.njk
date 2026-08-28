@@ -1,0 +1,32 @@
+{#
+  Bill Pay — Scene accordion. Exploratory, third instance of the
+  scene-gallery pattern (see scene-gallery.njk / scene-gallery-2.njk
+  for the first two) — built for a side-by-side visual comparison
+  against Gallery 2: same content (tag, caption, Barnett Lawn Care
+  drawer-open mock), a two-panel width-swap accordion instead of a
+  slide. Does not modify or share code with Gallery 1's or Gallery 2's
+  files — this may be deleted after comparison.
+
+  Entire visual composition (panels, tag, caption, mock, width
+  transition) lives inside
+  assets/scene-gallery/bill-pay/scenes-accordion.html — this partial
+  only provides the iframe stage (sized to the page's own 800px content
+  column by scene-accordion.css, no viewport bleed) and the shared
+  progress row.
+
+  Standalone component — no section wrapper, no headline, no
+  background. Caller drops {{ sceneAccordion() }} into its own content
+  column.
+#}
+{% from "gallery-navigation.njk" import galleryInteraction %}
+
+{% macro sceneAccordion() %}
+<div class="scene-accordion">
+  <div class="scene-accordion__stage">
+    <iframe class="scene-accordion__visual" id="scene-accordion-visual" title="Bill Pay scene (accordion)"></iframe>
+  </div>
+  <div class="scene-accordion__navigation">
+    {{ galleryInteraction("scene-accordion") }}
+  </div>
+</div>
+{% endmacro %}

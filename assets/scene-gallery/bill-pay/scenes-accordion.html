@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Scene Accordion — Scenes</title>
+<link rel="stylesheet" href="../../../css/tokens.css">
+<link rel="stylesheet" href="../../../css/components/principles.css">
+<style>
+  /* ---- Avenir Next (self-hosted) — same asset paths as Gallery 1's
+     scenes.html / Gallery 2's scenes-gallery-2.html, one level further
+     up from this file's own location but resolving to the same
+     assets/fonts/avenir-next/ target. Duplicated here rather than
+     shared — this exploratory version deliberately duplicates rather
+     than extracts (per the task's own instruction), same hand-synced-
+     copy pattern used throughout this project. ---- */
+  @font-face {
+    font-family: "Avenir Next";
+    src: url("../../fonts/avenir-next/Avenir_Next_Regular.otf") format("opentype");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "Avenir Next";
+    src: url("../../fonts/avenir-next/Avenir_Next_Demi.otf") format("opentype");
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "Avenir Next";
+    src: url("../../fonts/avenir-next/Avenir_Next_Bold.otf") format("opentype");
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "Avenir Next";
+    src: url("../../fonts/avenir-next/Avenir_Next_Heavy.otf") format("opentype");
+    font-weight: 800;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  :root {
+    /* ---- BP tokens — ported verbatim from Gallery 2's
+       scenes-gallery-2.html (itself ported from Gallery 1's
+       scenes.html; same source, Figma qfIgkJTuD0k956262uOUSp), the mock
+       itself is unchanged; only this composition's own scale/position
+       differ (see .ag-* below). ---- */
+    --bp-font-body: "Avenir Next", system-ui, sans-serif;
+    --bp-color-action-green: #2ca01c;
+    --bp-color-border-input: #8d9096;
+    --bp-color-divider: #d4d7dc;
+    --bp-color-row-sub-bg: #f4f6f7;
+    --bp-radius-input: 4px;
+    --bp-radius-switch-pill: 20px;
+    --bp-radius-table-top: 26px;
+    --bp-radius-subrow: 11.235px;
+    --bp-shadow-table-body: 0px 4px 24px 0px rgba(0, 0, 0, 0.05);
+
+    --bp-text-header-title: 600 34px/32px var(--bp-font-body);
+    --bp-text-total-label: 600 13px/24px var(--bp-font-body);
+    --bp-text-total-amount: 700 32px/1 var(--bp-font-body);
+    --bp-text-total-fee: 400 14px/20px var(--bp-font-body);
+    --bp-text-label: 400 14px/14px var(--bp-font-body);
+    --bp-text-label-strong: 600 14px/14px var(--bp-font-body);
+    --bp-text-cell-normal: 400 14px/14px var(--bp-font-body);
+    --bp-text-cell-strong: 600 15px/26.965px var(--bp-font-body);
+    --bp-text-cell-small: 400 12px/21.65px var(--bp-font-body);
+    --bp-text-cell-action: 600 14px/14px var(--bp-font-body);
+    --bp-text-table-header: 600 12px/20px var(--bp-font-body);
+    --bp-text-footer-num: 600 20px/20px var(--bp-font-body);
+    --bp-text-footer-label: 400 12px/12px var(--bp-font-body);
+    --bp-text-button-label: 400 16px/24px var(--bp-font-body);
+    --bp-text-badge: 400 12px/16px var(--bp-font-body);
+
+    --bp-color-focus-ring: #0077c5;
+    --bp-radius-full: 9999px;
+    --bp-radius-drawer-top: 30px;
+    --bp-drawer-width: 435px;
+    --bp-shadow-drawer: 0px 4px 34px 0px rgba(0, 0, 0, 0.25);
+    --bp-shadow-row-card: 0px 0px 16px 0px rgba(0, 0, 0, 0.13);
+    --bp-color-footer-bg: #f4f5f8;
+    --bp-footer-button-width: 145px;
+
+    --bp-text-drawer-title: 600 24px/28px var(--bp-font-body);
+    --bp-text-drawer-total: 600 32px/36px var(--bp-font-body);
+    --bp-text-drawer-section-title: 600 18px/36px var(--bp-font-body);
+    --bp-text-drawer-meta: 400 14px/21.65px var(--bp-font-body);
+    --bp-text-radio-title: 600 16px/24px var(--bp-font-body);
+    --bp-text-radio-title-medium: 400 16px/24px var(--bp-font-body);
+    --bp-text-radio-subtitle: 400 14px/21.65px var(--bp-font-body);
+    --bp-text-radio-meta: 400 16px/21.65px var(--bp-font-body);
+    --bp-text-radio-fee: 600 16px/24px var(--bp-font-body);
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  /* ---- This accordion's own composition coordinates — measured
+     values with no matching token step, kept as widget-scoped custom
+     properties per CLAUDE.md rather than raw values in the rules
+     below. 627 (active) + 24 (var(--spacing-24), a real token — not
+     duplicated here) + 149 (collapsed) = 800, the section's own
+     natural content-column width (see scene-accordion.css). Vertical
+     rhythm (48/120/223/30) is carried over unchanged from Gallery 2;
+     64 (caption's left offset) is also a real token
+     (var(--spacing-64)), used directly in the rules below, not
+     duplicated as a custom property either. ---- */
+  :root {
+    --ag-panel-active-width: 627px;
+    --ag-panel-collapsed-width: 149px;
+    --ag-panel-height: 461px;
+    --ag-inset-y: 48px; /* panel top to tag, and mock bottom to panel bottom — equal by design, same as Gallery 2 */
+    --ag-tag-mock-gap: 120px; /* tag's own bottom edge to mock's top edge */
+    --ag-mock-height: 223px;
+    --ag-mock-scale: 0.223; /* 223 / 1000 native height — identical to Gallery 2, mock is not resized */
+    --ag-overhang: 30px;
+    --ag-tag-height: 22px; /* .principles-tag's actual rendered height, measured directly (not via its wrapper — see .ag-tag-wrap's own comment for why that measures 2px taller). Matches the token math exactly: spacing-4 + spacing-4 padding + text-tag's 14px line-height = 22. Still a custom property rather than a bare literal in the calc()s below, since it's a measured fact about this component, not itself a token. */
+    --ag-duration: 480ms; /* reference's own AccordionGallery.jsx (GSAP): duration 0.6s, reduced 20% per instruction = 0.48s. Also reused as the caption's own enter (expand) duration — the reference animates panel width and caption opacity/translate with the same duration. */
+    --ag-ease: cubic-bezier(0.215, 0.61, 0.355, 1); /* ported from the same reference's ease: 'power3.out' — closest standard cubic-bezier equivalent to a GSAP power3-out curve, since GSAP's own named eases aren't literal bezier functions. Used for every transition in this file, panel width and caption alike. */
+    --ag-content-fade: 200ms; /* not part of the reference — this project's own choice for hiding the tag/mock/placeholder paragraph on collapse, see build report. The caption itself no longer uses this — see --ag-caption-collapse-duration below */
+    --ag-content-reveal-delay: 350ms; /* ditto — tag/mock/placeholder only start fading in once the panel is mostly expanded */
+    --ag-caption-collapse-duration: 288ms; /* reference: caption collapses out at 0.6 × its enter duration — 0.6 × 480ms = 288ms */
+    --ag-caption-stagger: 60ms; /* reference: 0.06s stagger between headline and description, enter only */
+  }
+
+  /* No background here on purpose, same reasoning as Gallery 1's
+     scenes.html / Gallery 2's scenes-gallery-2.html — the panels paint
+     their own backgrounds; nothing else should. Unlike Gallery 2, this
+     canvas never bleeds to the viewport — it's sized to exactly match
+     the page's own 800px content column (see scene-accordion.css),
+     centered in the section like everything else. An iframe always
+     hard-clips to its own embedding box no matter what overflow is set
+     inside it — so the parent page widens the iframe itself by
+     --ag-overhang and shifts it left by the same amount (see
+     scene-accordion.css), and this document mirrors that with matching
+     left padding on body, so the -30px overhang has real canvas to
+     land on while the row's own visible position on the page doesn't
+     move a pixel. Same technique Gallery 2 uses for its own stage,
+     just a fixed 30px instead of a viewport-bleed.
+
+     overflow-x is hidden (not visible) on purpose: this document's own
+     iframe box does have real width beyond the 800px row — but only
+     30px of it, all on the LEFT, reserved for the overhang above.
+     Nothing is reserved on the right. During a panel transition, a
+     panel that just became active gets overflow:visible immediately
+     (see .ag-panel.is-active below) so the grey panel's overhang never
+     has to wait — but while the green panel is the one expanding, its
+     placeholder paragraph (a fixed 420px box that doesn't track the
+     panel's own animating width) is briefly wider than the panel,
+     bleeding past its right edge with nothing on this side to
+     accommodate it. Since there's no equivalent 30px of reserved
+     canvas on the right (only the left has one, for the overhang),
+     that momentary overhang has to be clipped here instead of shown —
+     any content that overhangs a panel's RIGHT edge is clipped, not
+     scrollable, while the LEFT edge still has its reserved 30px for
+     the tag/mock. overflow-y stays visible, unchanged — this is a
+     horizontal-only fix. */
+  html, body {
+    margin: 0;
+    width: 100%;
+    height: var(--ag-panel-height);
+    overflow-x: hidden;
+    overflow-y: visible;
+  }
+
+  body {
+    font-family: var(--bp-font-body);
+    position: relative;
+    padding-left: var(--ag-overhang);
+  }
+
+  /* Fixed 800px (627 + spacing-24 + 149), not 100% — body's own extra
+     left padding above (reserved for the overhang) must not stretch
+     this row itself. */
+  .ag-row {
+    display: flex;
+    width: calc(var(--ag-panel-active-width) + var(--spacing-24) + var(--ag-panel-collapsed-width));
+    height: 100%;
+    gap: var(--spacing-24);
+  }
+
+  /* Width is the one thing that animates — both panels transition
+     simultaneously (same duration/ease, no stagger), matching the
+     reference's own GSAP timeline (every panel's tween is placed at
+     the same timeline position, position 0, so they run in lockstep).
+     overflow swaps un-delayed with the width transition; only the
+     grey panel's tag/mock actually need `visible` (see .ag-panel--grey
+     below) but toggling it uniformly on both is harmless — the green
+     panel's content never overhangs its own box. */
+  .ag-panel {
+    position: relative;
+    flex-shrink: 0;
+    width: var(--ag-panel-collapsed-width);
+    height: var(--ag-panel-height);
+    border-radius: var(--spacing-24);
+    overflow: hidden;
+    cursor: pointer;
+    transition: width var(--ag-duration) var(--ag-ease);
+  }
+  .ag-panel.is-active {
+    width: var(--ag-panel-active-width);
+    overflow: visible;
+  }
+
+  .ag-panel--grey { background: var(--primitive-grey-light); }
+  .ag-panel--green { background: var(--primitive-green-light); }
+
+  /* Purely structural now — pointer-events:none because the panel
+     itself (not its content) is the click target (see the click
+     handler below). Used to own the collapsed-state opacity fade for
+     the whole content block, but the caption now has its own,
+     spec-exact animation (see .ag-caption__headline/__description
+     below) that would otherwise be double-applied on top of this
+     wrapper's opacity — so the fade moved down onto .ag-tag-wrap /
+     .ag-mock-wrap / .ag-placeholder-body individually instead (same
+     200ms/350ms timing as before, just scoped per-element rather than
+     on the shared wrapper). */
+  .ag-panel__content {
+    pointer-events: none;
+  }
+
+  /* Collapsed-state hiding for the tag/mock (grey panel) and the
+     placeholder paragraph (green panel) — task: "at 149px a panel
+     cannot show its content — clip or hide the contents so nothing
+     spills or wraps awkwardly." Fades out immediately on collapse (so
+     nothing is still visible while the panel is shrinking); fades in
+     only after a delay on expand (so content doesn't pop in while the
+     panel is still narrow) — same "swap the transition on the class
+     toggle" technique already used for Gallery 2's fade masks. Neither
+     the 200ms fade nor the 350ms reveal delay come from the reactbits
+     reference (its panels never fully hide content, they dim/tilt it) —
+     both are this project's own choice for a problem the reference
+     doesn't have. The caption is deliberately not included here — see
+     its own rules below. */
+  .ag-tag-wrap,
+  .ag-mock-wrap,
+  .ag-placeholder-body {
+    opacity: 0;
+    transition: opacity var(--ag-content-fade) ease;
+  }
+  .ag-panel.is-active .ag-tag-wrap,
+  .ag-panel.is-active .ag-mock-wrap,
+  .ag-panel.is-active .ag-placeholder-body {
+    opacity: 1;
+    transition: opacity var(--ag-content-fade) ease var(--ag-content-reveal-delay);
+  }
+
+  .ag-tag-wrap {
+    position: absolute;
+    left: calc(-1 * var(--ag-overhang));
+    top: var(--ag-inset-y);
+    /* display:flex (not the default block) so this wrapper's own box
+       sizes to exactly its .principles-tag child's box (22px) instead
+       of picking up an extra ~2px "line-box strut" from the inherited
+       body font's metrics around an inline-flex child — a well-known
+       CSS gotcha, caught here by measuring the tag directly instead of
+       through its wrapper (see --ag-tag-height's own comment). Doesn't
+       change this wrapper's own position, only its computed height. */
+    display: flex;
+  }
+
+  /* Same offsets, same vertical band as Gallery 2's caption — 64px
+     from the panel's own left edge (var(--spacing-64), a real token),
+     vertically centered in the gap between tag and mock. Text styles
+     reuse the existing scene-gallery caption tokens — no new text
+     tokens. */
+  .ag-caption {
+    position: absolute;
+    left: var(--spacing-64);
+    top: calc(var(--ag-inset-y) + var(--ag-tag-height));
+    height: var(--ag-tag-mock-gap);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 7px;
+  }
+  /* Caption entrance/exit — ported from the reference's own text
+     animation (opacity 0/1 + translateX -14px/0, same easing as the
+     panel width). Collapse is un-staggered and uses
+     --ag-caption-collapse-duration (0.6 × the enter duration, same
+     ratio the reference uses); expand uses the full --ag-duration and
+     staggers description --ag-caption-stagger behind headline —
+     transform is on `transform` alone (not `translate`, for wider
+     browser support) and paired with `opacity` in the same
+     transition list so both animate together. Base rule below is the
+     collapsed/hidden state; .is-active overrides it per element so
+     the stagger can differ between the two. */
+  .ag-caption__headline,
+  .ag-caption__description {
+    margin: 0;
+    color: var(--primitive-black);
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateX(-14px);
+    transition: opacity var(--ag-caption-collapse-duration) var(--ag-ease),
+                transform var(--ag-caption-collapse-duration) var(--ag-ease);
+  }
+  .ag-caption__headline {
+    font: var(--text-widget-legend);
+  }
+  .ag-caption__description {
+    font: var(--text-widget-step-subheadline);
+  }
+  .ag-panel.is-active .ag-caption__headline {
+    opacity: 1;
+    transform: translateX(0);
+    transition: opacity var(--ag-duration) var(--ag-ease),
+                transform var(--ag-duration) var(--ag-ease);
+  }
+  .ag-panel.is-active .ag-caption__description {
+    opacity: 1;
+    transform: translateX(0);
+    transition: opacity var(--ag-duration) var(--ag-ease) var(--ag-caption-stagger),
+                transform var(--ag-duration) var(--ag-ease) var(--ag-caption-stagger);
+  }
+
+  /* Placeholder-only, same as Gallery 2's own .sg2-placeholder-body —
+     the green panel's real content isn't designed yet. Sits in the
+     same slot the mock occupies in the grey panel. */
+  .ag-placeholder-body {
+    position: absolute;
+    left: var(--spacing-64);
+    top: calc(var(--ag-inset-y) + var(--ag-tag-height) + var(--ag-tag-mock-gap));
+    width: 420px;
+    max-width: calc(var(--ag-panel-active-width) - var(--spacing-64) * 2);
+    margin: 0;
+    font: var(--text-widget-step-subheadline);
+    color: var(--primitive-black);
+  }
+
+  .ag-mock-wrap {
+    position: absolute;
+    left: calc(-1 * var(--ag-overhang));
+    top: calc(var(--ag-inset-y) + var(--ag-tag-height) + var(--ag-tag-mock-gap));
+    width: calc(1440px * var(--ag-mock-scale));
+    height: var(--ag-mock-height);
+    overflow: visible;
+  }
+  .ag-mock-scaler {
+    width: 1440px;
+    height: 1000px;
+    transform-origin: top left;
+    transform: scale(var(--ag-mock-scale));
+  }
+
+  /* Reduced motion: keep the opacity fades everywhere (grey panel's
+     tag/mock, green panel's placeholder paragraph, and the caption) —
+     they aid comprehension of which panel just became active — but
+     drop every position/size change and every stagger. Same choice
+     Gallery 1's own scene-gallery mock already makes for its drawer
+     head text ("keep the opacity fades... but drop the position
+     slide, per spec"). The caption's own transform is dropped entirely
+     (forced to its resting translateX(0) in both states, not just an
+     un-animated -14px) so there's no offset to reduce in the first
+     place, and only opacity transitions — no transform, no stagger. */
+  @media (prefers-reduced-motion: reduce) {
+    .ag-panel {
+      transition-duration: 1ms;
+    }
+    .ag-tag-wrap,
+    .ag-mock-wrap,
+    .ag-placeholder-body {
+      transition-duration: 1ms;
+      transition-delay: 0s;
+    }
+    /* The .is-active variants of these three rules redeclare their own
+       `transition` at higher specificity (.ag-panel.is-active
+       .ag-tag-wrap etc., 3 classes) than the plain selectors above (1
+       class) — without matching that specificity here too, the
+       reduced-motion override above only wins for the collapsed state
+       and the active state's full-duration transition keeps running
+       unreduced. (.ag-panel's own transition isn't re-declared by
+       .ag-panel.is-active, so it doesn't have this problem.) */
+    .ag-panel.is-active .ag-tag-wrap,
+    .ag-panel.is-active .ag-mock-wrap,
+    .ag-panel.is-active .ag-placeholder-body {
+      transition-duration: 1ms;
+      transition-delay: 0s;
+    }
+    .ag-caption__headline,
+    .ag-caption__description {
+      transform: none;
+      transition-property: opacity;
+      transition-duration: 1ms;
+      transition-delay: 0s;
+    }
+    .ag-panel.is-active .ag-caption__headline,
+    .ag-panel.is-active .ag-caption__description {
+      transform: none;
+      transition-property: opacity;
+      transition-duration: 1ms;
+      transition-delay: 0s;
+    }
+  }
+
+  /* ============================================================
+     Bill Pay mock — ported from Gallery 2's scenes-gallery-2.html,
+     unchanged (same native 1440x1000 build, same tokens above). Only
+     the drawer's default (non-drilldown) step, bulk mode with Barnett
+     Lawn Care expanded, and narrow-mode (drawer open) are used here —
+     this scene is a single, permanently-static frame. Task: "do NOT
+     resize or rescale it; heights and positions carry over unchanged
+     from Gallery 2" — every rule in this block is copied verbatim.
+     ============================================================ */
+
+  .bp-screen {
+    width: 1440px;
+    height: 1000px;
+    position: relative;
+    overflow: hidden;
+    border-radius: 35.4461538462px;
+    background: var(--primitive-white);
+  }
+
+  /* ---- Header ---- */
+  .bp-header { width: 1440px; height: 400px; background: var(--primitive-grey-light); position: relative; }
+  .bp-header__title { position: absolute; left: 78px; top: 51px; margin: 0; font: var(--bp-text-header-title); color: var(--primitive-black); }
+  .bp-header__close { position: absolute; top: 60px; right: 44px; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border: none; background: none; padding: 0; }
+  .bp-header__close img { width: 16px; height: 16px; }
+  .bp-header__row { position: absolute; left: 78px; right: 119px; top: 172px; display: flex; align-items: center; gap: 52px; }
+  .bp-header__divider { width: 1px; height: 60px; background: var(--bp-color-divider); flex-shrink: 0; }
+  .bp-header__divider:has(+ .bp-totals) { margin-left: auto; }
+  .bp-pay-from { display: flex; flex-direction: column; gap: 4px; width: 250px; }
+  .bp-pay-from__label { margin: 0; height: 20px; font: var(--bp-text-label); color: var(--primitive-black); }
+  .bp-pay-from__field { height: 36px; border: 1px solid var(--bp-color-border-input); border-radius: var(--bp-radius-input); background: var(--primitive-white); display: flex; align-items: center; justify-content: space-between; padding: 0 8px; }
+  .bp-pay-from__field span { font: var(--bp-text-label); color: var(--primitive-black); }
+  .bp-pay-from__field img { width: 14px; height: 8px; }
+  .bp-combine { display: flex; flex-direction: column; gap: 10px; height: 60px; }
+  .bp-combine__label { margin: 0; font: var(--bp-text-label); color: var(--primitive-black); }
+  .bp-combine__row { display: flex; align-items: center; gap: 22px; height: 36px; }
+  .bp-combine__toggle-label { margin: 0; font: var(--bp-text-label-strong); color: var(--primitive-black); white-space: nowrap; }
+  .bp-switch { width: 36px; height: 20px; border-radius: var(--bp-radius-switch-pill); background: var(--bp-color-border-input); padding: 1px; display: flex; align-items: center; border: none; }
+  .bp-switch[aria-checked="true"] { background: var(--bp-color-action-green); }
+  .bp-switch__thumb { width: 18px; height: 18px; border-radius: 50%; background: var(--primitive-white); box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.1), 0px 2px 2px rgba(0, 0, 0, 0.3); transform: translateX(0); }
+  .bp-switch[aria-checked="true"] .bp-switch__thumb { transform: translateX(16px); }
+  .bp-totals { display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; }
+  .bp-totals__label { margin: 0 0 10px 0; font: var(--bp-text-total-label); text-transform: uppercase; color: var(--primitive-black); white-space: nowrap; }
+  .bp-totals__amount { margin: 0; font: var(--bp-text-total-amount); color: var(--primitive-black); white-space: nowrap; }
+  .bp-totals__fee { margin: 0; font: var(--bp-text-total-fee); color: var(--primitive-black); white-space: nowrap; }
+
+  /* ---- Table body card ---- */
+  .bp-table-wrap { position: absolute; left: 74px; top: 261px; width: 1287px; height: 676px; padding-top: 40px; }
+  .bp-table-body { width: 100%; height: 100%; background: var(--primitive-white); border-radius: var(--bp-radius-table-top) var(--bp-radius-table-top) 0 0; box-shadow: var(--bp-shadow-table-body); padding: 20px; display: flex; flex-direction: column; gap: 14px; overflow: hidden; position: relative; }
+  .bp-header-row { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+  .bp-header-row__cell { display: flex; align-items: flex-start; padding: 17px 10px 0; height: 60px; overflow: hidden; }
+  .bp-header-row__cell span { font: var(--bp-text-table-header); text-transform: uppercase; color: var(--primitive-black); white-space: nowrap; }
+  .bp-rows-scroll { flex: 1; display: flex; flex-direction: column; gap: 14px; overflow-y: auto; overflow-x: hidden; position: relative; }
+  .bp-rows-scroll::-webkit-scrollbar { display: none; }
+  .bp-rows-scroll { scrollbar-width: none; -ms-overflow-style: none; }
+  .bp-rows-top-divider { position: absolute; top: 94px; left: 20px; right: 20px; height: 1px; background: var(--bp-color-divider); pointer-events: none; z-index: 3; }
+  .bp-row { display: flex; align-items: center; gap: 12px; padding-top: 14px; background: var(--primitive-white); border-top: 1px solid var(--bp-color-divider); }
+  .bp-row--sub { background: var(--bp-color-row-sub-bg); border-top: none; border-radius: var(--bp-radius-subrow); padding: 8px 0; margin-top: 0; }
+  .bp-cell { display: flex; align-items: center; height: 60px; padding: 0 10px; flex-shrink: 0; overflow: hidden; }
+  .bp-cell--vendor { width: 230px; padding-right: 12px; padding-left: 0; }
+  .bp-cell--bill { width: 76px; }
+  .bp-cell--status { width: 106px; gap: 6px; }
+  .bp-cell--due { width: 84px; }
+  .bp-cell--speed { width: 203px; flex-direction: column; align-items: flex-start; justify-content: center; }
+  .bp-cell--fee { width: 122px; overflow: hidden; }
+  .bp-cell--balance { width: 115px; overflow: hidden; }
+  .bp-cell--amount { width: 120px; padding-left: 8px; }
+  .bp-cell--action { width: 106px; overflow: hidden; }
+  .bp-action-icon { width: 14px; height: 14px; }
+
+  .bp-vendor { display: flex; align-items: flex-start; gap: 16px; width: 100%; }
+  .bp-vendor__chevron { width: 20px; height: 20px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; align-self: center; border: none; background: none; padding: 0; }
+  .bp-vendor__chevron img { width: 12px; height: 6.86px; transform: rotate(0deg); }
+  .bp-vendor__chevron[data-expanded="true"] img { transform: rotate(180deg); }
+  .bp-vendor__body { display: flex; flex-direction: column; gap: 0; width: 100%; }
+  .bp-vendor__name { margin: 0; font: var(--bp-text-cell-strong); color: var(--primitive-black); }
+  .bp-vendor__method { display: flex; align-items: center; gap: 7px; height: 24px; margin-top: -2px; }
+  .bp-vendor__method-icon { width: 14px; height: 14px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; line-height: 0; }
+  .bp-vendor__method-icon img { display: block; transform: translateY(1px); }
+  .bp-vendor__method-icon--alert { width: 12px; height: 12px; }
+  .bp-vendor__method-text { margin: 0; font: var(--bp-text-cell-small); color: var(--primitive-grey-dark); white-space: nowrap; }
+  .bp-vendor__method[data-vendor-state] > [data-state] { display: none; }
+  .bp-vendor__method[data-vendor-state="alert"] > span[data-state="alert"],
+  .bp-vendor__method[data-vendor-state="resolved"] > span[data-state="resolved"] { display: inline-flex; }
+  .bp-vendor__method[data-vendor-state="alert"] > p[data-state="alert"],
+  .bp-vendor__method[data-vendor-state="resolved"] > p[data-state="resolved"] { display: block; }
+  .bp-cell--bill span, .bp-cell--due span, .bp-cell--balance span, .bp-cell--amount > span { font: var(--bp-text-cell-normal); color: var(--primitive-black); }
+  .bp-status__check { width: 10px; height: 10px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; line-height: 0; }
+  .bp-status__check img { display: block; transform: translateY(1px); }
+  .bp-status-text { margin: 0; font: var(--bp-text-cell-strong); color: var(--primitive-black); }
+  .bp-speed__top { display: flex; align-items: center; gap: 7px; height: 25px; }
+  .bp-speed__label { margin: 0; font: var(--bp-text-cell-strong); color: var(--primitive-black); white-space: nowrap; }
+  .bp-badge { display: inline-flex; align-items: center; padding: 0 4px; border-radius: var(--bp-radius-input); background: var(--primitive-green); }
+  .bp-badge span { font: var(--bp-text-badge); text-transform: uppercase; color: var(--primitive-white); }
+  .bp-speed__meta { display: flex; align-items: center; gap: 3px; height: 24px; margin-top: -2px; }
+  .bp-speed__meta span { font: var(--bp-text-cell-small); color: var(--primitive-grey-dark); white-space: nowrap; }
+  .bp-speed__meta img { width: 18px; height: 18px; }
+  .bp-fee { display: flex; align-items: center; gap: 2px; }
+  .bp-fee span { font: var(--bp-text-cell-normal); color: var(--primitive-black); }
+  .bp-fee img { width: 20px; height: 20px; }
+  .bp-amount-field { width: 100px; height: 36px; background: var(--primitive-white); border: 1px solid var(--bp-color-border-input); border-radius: var(--bp-radius-input); padding: 6px 8px; display: flex; align-items: center; }
+  .bp-amount-field span { font: var(--bp-text-cell-normal); color: var(--primitive-black); }
+  .bp-action-text { font: var(--bp-text-cell-action); color: var(--bp-color-action-green); white-space: nowrap; }
+
+  /* ---- Narrow mode (drawer open) — column collapse. Ported verbatim
+     from Gallery 2's scenes-gallery-2.html (itself minus every
+     JS-interpolated intermediate frame from Gallery 1) — this scene
+     never opens/closes, always at rest at openness=1. */
+  .bp-screen--narrow .bp-header-row__cell[data-narrow-hide] { width: 0; padding-left: 0; padding-right: 0; }
+  .bp-screen--narrow .bp-header-row__cell[data-narrow-hide] span { opacity: 0; }
+  .bp-screen--narrow .bp-header-row__cell[data-action-label] span { opacity: 0; }
+  .bp-screen--narrow .bp-cell[data-narrow-hide] { width: 0; padding-left: 0; padding-right: 0; }
+  .bp-screen--narrow .bp-cell[data-narrow-hide] > * { opacity: 0; }
+  .bp-screen--narrow .bp-rows-scroll { width: calc(1317px - var(--bp-drawer-width)); }
+  .bp-screen--narrow .bp-rows-top-divider { right: calc(var(--bp-drawer-width) - 50px); }
+  .bp-screen--narrow .bp-header-row { right: calc(var(--bp-drawer-width) + 52px); }
+  .bp-screen--narrow .bp-vendor-group > .bp-row > .bp-cell--action { width: 0; padding-left: 0; padding-right: 0; }
+  .bp-screen--narrow .bp-vendor-group > .bp-row > .bp-cell--action > * { opacity: 0; }
+
+  /* ---- Selected-row card ---- */
+  .bp-row-card-layer { position: absolute; top: 40px; left: 0; right: 0; bottom: 0; overflow: hidden; pointer-events: none; }
+  .bp-row-selected-card { position: absolute; height: 68px; border-radius: var(--bp-radius-subrow); box-shadow: var(--bp-shadow-row-card); opacity: 0; }
+
+  /* ---- Drawer — default step only, static "open" state via inline
+     style on the markup below. ---- */
+  .bp-drawer { position: absolute; top: 0; right: 0; width: var(--bp-drawer-width); height: 1000px; background: var(--primitive-white); border-radius: 0 var(--bp-radius-drawer-top) 0 0; box-shadow: var(--bp-shadow-drawer); display: none; flex-direction: column; z-index: 5; }
+  .bp-drawer__scroll { position: relative; flex: 1; overflow-y: auto; padding: 48px 30px 0; scrollbar-width: none; -ms-overflow-style: none; }
+  .bp-drawer__scroll::-webkit-scrollbar { width: 0 !important; height: 0 !important; background: transparent !important; }
+  .bp-drawer__scroll::after { content: ""; position: absolute; top: 0; right: 0; width: 16px; height: 100%; background: var(--primitive-white); pointer-events: none; z-index: 3; }
+  .bp-drawer__head { position: relative; width: 100%; }
+  .bp-drawer__chevron { position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 19px; height: 24px; opacity: 0; display: flex; align-items: center; justify-content: center; border: none; background: none; padding: 0; }
+  .bp-drawer__head-text { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; width: 100%; }
+  .bp-drawer__title { margin: 0; font: var(--bp-text-drawer-title); color: var(--primitive-black); }
+  .bp-drawer__close { position: absolute; top: 0; right: 0; width: 36px; height: 36px; padding: 6px; border-radius: 4px; border: none; background: none; display: flex; align-items: center; justify-content: center; }
+  .bp-drawer__meta { margin: 0; font: var(--bp-text-drawer-meta); color: var(--primitive-grey-dark); }
+  .bp-drawer__method { display: flex; align-items: center; gap: 7px; width: 100%; height: 24px; }
+  .bp-drawer__method img { width: 15px; height: 15px; }
+  .bp-drawer__method span { font: var(--bp-text-drawer-meta); color: var(--primitive-grey-dark); }
+  .bp-drawer__divider { height: 1px; background: var(--bp-color-divider); margin: 24px 0; }
+  .bp-drawer__total-amount { margin: 24px 0 0; font: var(--bp-text-drawer-total); color: var(--primitive-black); }
+  .bp-drawer__section-title { margin: 0 0 24px; padding-top: 6px; font: var(--bp-text-drawer-section-title); color: var(--primitive-black); }
+  .bp-drawer__section-title-row { display: flex; align-items: center; justify-content: space-between; padding-top: 6px; margin: 0 0 24px; }
+  .bp-drawer__section-title-row .bp-drawer__section-title { margin: 0; padding-top: 0; }
+  .bp-drawer__section-title-group { display: flex; align-items: center; gap: 8px; }
+  .bp-drawer__section-title-group .bp-badge { position: relative; top: 2.5px; }
+
+  .bp-radio-group { display: flex; flex-direction: column; align-items: flex-start; gap: 29px; width: 100%; }
+  .bp-radio-item { display: flex; align-items: flex-start; gap: 16px; }
+  .bp-radio { width: 20px; height: 20px; border-radius: var(--bp-radius-full); border: 1px solid var(--bp-color-border-input); background: var(--primitive-white); flex-shrink: 0; margin-top: 4px; position: relative; }
+  .bp-radio[data-checked="true"] { border: none; }
+  .bp-radio[data-checked="true"]::after { content: ""; position: absolute; inset: 0; border-radius: var(--bp-radius-full); background: var(--bp-color-action-green); box-shadow: inset 0 0 0 4px var(--primitive-white), 0 0 0 1px var(--bp-color-action-green); }
+  .bp-radio-item__content { flex: 1; display: flex; align-items: flex-start; justify-content: space-between; }
+  .bp-radio-item__text { display: flex; flex-direction: column; align-items: flex-start; gap: 7px; }
+  .bp-radio-item__title-block { display: flex; flex-direction: column; }
+  .bp-radio-item__title { margin: 0; }
+  .bp-radio-item__title strong { font: var(--bp-text-radio-title); color: var(--primitive-black); }
+  .bp-radio-item__title span { font: var(--bp-text-radio-title-medium); color: var(--primitive-black); }
+  .bp-radio-item__subtitle { margin: 0; font: var(--bp-text-radio-subtitle); color: var(--primitive-black); }
+  .bp-radio-item__meta { display: flex; align-items: center; gap: 3px; }
+  .bp-radio-item__meta span { font: var(--bp-text-radio-meta); color: var(--primitive-grey-dark); }
+  .bp-radio-item__meta img { width: 18px; height: 18px; }
+  .bp-radio-item__fee { margin: 0; font: var(--bp-text-radio-fee); color: var(--primitive-black); white-space: nowrap; }
+
+  .bp-note-field { width: 100%; min-height: 189px; border: 1px solid var(--bp-color-border-input); border-radius: var(--bp-radius-input); padding: 12px; font: var(--bp-text-cell-normal); color: var(--primitive-black); resize: none; font-family: var(--bp-font-body); }
+
+  /* ---- Footer ---- */
+  .bp-footer { position: absolute; left: 0; bottom: 0; width: 1440px; height: 100px; background: var(--primitive-black); display: flex; align-items: center; justify-content: flex-end; gap: 20px; padding: 0 100px; }
+  .bp-footer__stats { display: flex; align-items: center; gap: 120px; flex: 1; }
+  .bp-stat { display: flex; flex-direction: column; gap: 4px; }
+  .bp-stat__num { margin: 2px 0 1px; font: var(--bp-text-footer-num); color: var(--primitive-white); }
+  .bp-stat__label { margin: 0; font: var(--bp-text-footer-label); text-transform: uppercase; color: var(--bp-color-divider); }
+  .bp-stat__sub { display: flex; align-items: center; gap: 5px; }
+  .bp-stat__sub img { width: 10px; height: 10px; }
+  .bp-stat__sub span { font: var(--bp-text-footer-label); color: var(--bp-color-divider); }
+  .bp-stat__sub[data-vendor-state] > [data-state] { display: none; }
+  .bp-stat__sub[data-vendor-state="alert"] > [data-state="alert"],
+  .bp-stat__sub[data-vendor-state="resolved"] > [data-state="resolved"] { display: inline; }
+  .bp-footer__buttons { display: flex; gap: 20px; }
+  .bp-btn { height: 36px; min-width: 100px; padding: 0 16px; border-radius: var(--bp-radius-input); font: var(--bp-text-button-label); text-align: center; border: 2px solid transparent; display: inline-flex; align-items: center; justify-content: center; }
+  .bp-btn--cancel { border-color: var(--primitive-white); color: var(--primitive-white); background: none; }
+  .bp-btn--continue { background: var(--bp-color-action-green); color: var(--primitive-white); }
+  .bp-drawer__footer .bp-btn { width: var(--bp-footer-button-width); }
+  .bp-drawer__footer .bp-btn--cancel { border-color: var(--bp-color-border-input); color: var(--primitive-black); }
+  .bp-drawer__footer .bp-btn--continue { background: transparent; border-color: var(--bp-color-action-green); color: var(--bp-color-action-green); }
+</style>
+</head>
+<body>
+  <div class="ag-row" id="ag-row">
+    <div class="ag-panel ag-panel--grey is-active" id="ag-panel-0" data-index="0">
+      <div class="ag-panel__content">
+        <div class="ag-tag-wrap">
+          <div class="principles-tag"><p class="principles-tag__label"># Quality_of_decisions</p></div>
+        </div>
+        <div class="ag-caption">
+          <p class="ag-caption__headline">Fee &amp; Delivery Options tradeoffs</p>
+          <p class="ag-caption__description">A visual display overlapping factors</p>
+        </div>
+        <div class="ag-mock-wrap">
+          <div class="ag-mock-scaler">
+            <div class="bp-screen bp-screen--narrow" id="mock-screen">
+              <header class="bp-header">
+                <h1 class="bp-header__title">Schedule bill payment</h1>
+                <button class="bp-header__close" type="button" aria-label="Close" tabindex="-1">
+                  <img src="../../icons/bill-pay-mock/close.svg" alt="" />
+                </button>
+                <div class="bp-header__row">
+                  <div class="bp-pay-from">
+                    <p class="bp-pay-from__label">Pay from</p>
+                    <div class="bp-pay-from__field">
+                      <span>Chase checking (...1234)</span>
+                      <img src="../../icons/bill-pay-mock/dropdown-chevron.svg" alt="" />
+                    </div>
+                  </div>
+                  <div class="bp-header__divider"></div>
+                  <div class="bp-combine">
+                    <p class="bp-combine__label">Combine multiple bills</p>
+                    <div class="bp-combine__row">
+                      <p class="bp-combine__toggle-label">Make one payment per vendor</p>
+                      <button class="bp-switch" type="button" role="switch" aria-checked="true" aria-label="Make one payment per vendor" tabindex="-1">
+                        <span class="bp-switch__thumb"></span>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="bp-header__divider"></div>
+                  <div class="bp-totals">
+                    <div>
+                      <p class="bp-totals__label">Total payment amount</p>
+                      <p class="bp-totals__amount" id="mock-total-amount">$0.00</p>
+                    </div>
+                    <p class="bp-totals__fee" id="mock-total-fee">Total processing fees: $0.00</p>
+                  </div>
+                </div>
+              </header>
+
+              <div class="bp-table-wrap">
+                <div class="bp-table-body">
+                  <div class="bp-header-row" id="mock-header-row">
+                    <div class="bp-header-row__cell" style="width: 230px"><span>Vendor</span></div>
+                    <div class="bp-header-row__cell" style="width: 76px"><span>Bill</span></div>
+                    <div class="bp-header-row__cell" style="width: 106px"><span>Status</span></div>
+                    <div class="bp-header-row__cell" style="width: 84px"><span>Due date</span></div>
+                    <div class="bp-header-row__cell" data-narrow-hide><span>Payment speed</span></div>
+                    <div class="bp-header-row__cell" data-narrow-hide><span>Processing fee</span></div>
+                    <div class="bp-header-row__cell" style="width: 115px"><span>Open balance</span></div>
+                    <div class="bp-header-row__cell" style="width: 120px"><span>Amount</span></div>
+                    <div class="bp-header-row__cell" data-action-label style="width: 106px"><span>Action</span></div>
+                  </div>
+                  <div class="bp-rows-top-divider"></div>
+                  <div class="bp-rows-scroll" id="mock-rows-scroll"></div>
+                </div>
+                <div class="bp-row-card-layer">
+                  <div class="bp-row-selected-card" id="mock-row-selected-card"></div>
+                </div>
+              </div>
+
+              <footer class="bp-footer">
+                <div class="bp-footer__stats">
+                  <div class="bp-stat">
+                    <p class="bp-stat__label">Bills</p>
+                    <p class="bp-stat__num" id="mock-stat-bills">0</p>
+                    <div class="bp-stat__sub"><img src="../../icons/bill-pay-mock/footer-check.svg" alt="" /><span>Approved</span></div>
+                  </div>
+                  <div class="bp-stat">
+                    <p class="bp-stat__label">Vendors</p>
+                    <p class="bp-stat__num" id="mock-stat-vendors">0</p>
+                    <div class="bp-stat__sub"><img src="../../icons/bill-pay-mock/footer-check.svg" alt="" /><span>Authorized</span></div>
+                  </div>
+                  <div class="bp-stat">
+                    <p class="bp-stat__label">Payments</p>
+                    <p class="bp-stat__num" id="mock-stat-payments">0</p>
+                    <div class="bp-stat__sub"><img src="../../icons/bill-pay-mock/footer-check.svg" alt="" /><span>Arrives on time</span></div>
+                  </div>
+                </div>
+                <div class="bp-footer__buttons">
+                  <button class="bp-btn bp-btn--cancel" type="button" tabindex="-1">Cancel</button>
+                  <button class="bp-btn bp-btn--continue" type="button" tabindex="-1">Continue</button>
+                </div>
+              </footer>
+
+              <aside class="bp-drawer" id="mock-drawer" style="display: flex; transform: translate3d(0, 0, 0)">
+                <div class="bp-drawer__scroll">
+                  <div class="bp-drawer__head">
+                    <button class="bp-drawer__chevron" type="button" tabindex="-1" aria-label="Back">
+                      <span style="display: inline-flex; transform: rotate(90deg)">
+                        <img src="../../icons/bill-pay-mock/dropdown-chevron.svg" alt="" style="display: block; width: 12px; height: 6.86px" />
+                      </span>
+                    </button>
+                    <div class="bp-drawer__head-text">
+                      <p class="bp-drawer__title" id="mock-drawer-vendor-name"></p>
+                      <p class="bp-drawer__meta" id="mock-drawer-subtitle"></p>
+                    </div>
+                    <button class="bp-drawer__close" type="button" tabindex="-1" aria-label="Close">
+                      <img class="bp-action-icon" src="../../icons/bill-pay-mock/narrow-action.svg" alt="" />
+                    </button>
+                  </div>
+                  <div class="bp-drawer__inner" id="mock-drawer-inner"></div>
+                </div>
+                <div class="bp-drawer__footer" id="mock-drawer-footer" style="display: none">
+                  <button class="bp-btn bp-btn--cancel" type="button" tabindex="-1">Cancel</button>
+                  <button class="bp-btn bp-btn--continue" type="button" tabindex="-1">Apply changes</button>
+                </div>
+              </aside>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ag-panel ag-panel--green" id="ag-panel-1" data-index="1">
+      <div class="ag-panel__content">
+        <div class="ag-caption">
+          <p class="ag-caption__headline">Fee &amp; Delivery Options tradeoffs</p>
+          <p class="ag-caption__description">A visual display overlapping factors</p>
+        </div>
+        <p class="ag-placeholder-body">
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod
+          tempor incididunt ut labore et dolore magna aliqua, ut enim ad minim
+          veniam.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function () {
+    // Two equal-length panels, a starting point not a final timing
+    // decision — see js/bill-pay/scene-accordion.js for the fuller
+    // comment. Must match SCENE_BOUNDARIES/TOTAL_DURATION there
+    // exactly; this file owns the actual clock, same hand-synced,
+    // no-shared-module pattern as Gallery 1's and Gallery 2's own
+    // boundaries/parent-JS pairs.
+    var BOUNDARIES = [0, 6000];
+    var TOTAL_DURATION = 12000;
+
+    var row = document.getElementById("ag-row");
+    var panels = [document.getElementById("ag-panel-0"), document.getElementById("ag-panel-1")];
+    var epoch = performance.now();
+    var lastIndex = -1;
+
+    function sceneIndexForTime(ms) {
+      for (var i = BOUNDARIES.length - 1; i >= 0; i--) {
+        if (ms >= BOUNDARIES[i]) return i;
+      }
+      return 0;
+    }
+
+    var ICONS = "../../icons/bill-pay-mock/";
+
+    function layeredIcon(size, layers) {
+      var inner = layers
+        .map(function (l) {
+          return '<span style="position:absolute;inset:' + l.inset + '"><img src="' + ICONS + l.src + '" alt="" style="display:block;width:100%;height:100%" /></span>';
+        })
+        .join("");
+      return '<span style="position:relative;display:inline-block;width:' + size + "px;height:" + size + 'px">' + inner + "</span>";
+    }
+
+    // Same real exported Figma vector layers as Gallery 1's/Gallery 2's
+    // scenes documents — not re-derived.
+    var GLYPH = {
+      bank: layeredIcon(14, [
+        { src: "bank-1.svg", inset: "4.36% 8.33% 8.33% 8.33%" },
+        { src: "bank-2.svg", inset: "20.83% 45.83% 70.83% 45.83%" }
+      ]),
+      check: layeredIcon(14, [
+        { src: "check-1.svg", inset: "20.81% 8.31% 20.79% 8.31%" },
+        { src: "check-2.svg", inset: "37.46% 41.67% 54.17% 20.83%" },
+        { src: "check-3.svg", inset: "37.54% 20.83% 54.13% 62.5%" },
+        { src: "check-4.svg", inset: "52.07% 20.84% 35.38% 45.79%" }
+      ]),
+      info: layeredIcon(20, [
+        { src: "info-circle-1.svg", inset: "45.83% 45.83% 33.33% 45.83%" },
+        { src: "info-circle-2.svg", inset: "33.33% 45.82% 58.33% 45.85%" },
+        { src: "info-circle-3.svg", inset: "8.33% 8.3% 8.33% 8.3%" }
+      ]),
+      arrow: layeredIcon(18, [{ src: "withdraw-arrives-arrow.svg", inset: "32.99% 16.69% 33.04% 16.67%" }]),
+      statusCheck: '<img src="' + ICONS + 'status-check.svg" alt="" style="display:block;width:100%;height:100%" />',
+      alertCircle: '<img src="' + ICONS + 'alert-circle.svg" alt="" style="display:block;width:100%;height:100%" />'
+    };
+
+    function money(n) {
+      return "$" + n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    // 223 / 1000 — this stage's own fixed mock scale (see
+    // --ag-mock-scale), identical to Gallery 2's. Used only to convert
+    // the Barnett row's measured rect into the native 1440x1000
+    // coordinate space the selected-row card is positioned in — a
+    // one-time call, not per-frame, since this scene never re-measures
+    // after its single static render.
+    var MOCK_SCALE = 0.223;
+
+    function nativeRect(el, refRect) {
+      var r = el.getBoundingClientRect();
+      return {
+        left: (r.left - refRect.left) / MOCK_SCALE,
+        top: (r.top - refRect.top) / MOCK_SCALE,
+        width: r.width / MOCK_SCALE,
+        height: r.height / MOCK_SCALE
+      };
+    }
+
+    // Source of truth is the same batch-full Figma template Gallery 1's
+    // and Gallery 2's scenes documents already port (node
+    // 2964:601336) — identical data, not re-derived.
+    var ROWS = [
+      { id: 1, vendor: "Barnett Lawn Care", method: "bank", last4: "3456", bill: "153", due: "08/29/25", withdraw: "08/25", arrives: "08/28", fee: 1.0, amount: 650.0, action: "Manage" },
+      { id: 2, vendor: "Bluebird Office Supplies", method: "check", last4: "", bill: "1764", due: "09/06/25", withdraw: "09/02", arrives: "09/05", fee: 1.0, amount: 385.0, action: "Manage" },
+      { id: 3, vendor: "Barnett Lawn Care", method: "bank", last4: "3456", bill: "154", due: "09/09/25", withdraw: "09/05", arrives: "09/08", fee: 1.0, amount: 725.0, action: "Manage" },
+      { id: 4, vendor: "Good Heart Catering", method: "check", last4: "", bill: "9092", due: "09/12/25", withdraw: "09/08", arrives: "09/11", fee: 1.0, amount: 1250.0, action: "Manage" },
+      { id: 5, vendor: "Greenfield Solutions", method: "bank", last4: "1278", bill: "7562", due: "09/14/25", withdraw: "09/10", arrives: "09/13", fee: 1.0, amount: 1800.0, action: "Manage" },
+      { id: 6, vendor: "Red Ocean Developer", method: "bank", last4: "7989", bill: "349", due: "09/15/25", withdraw: "09/11", arrives: "09/14", fee: 1.0, amount: 1500.0, action: "Manage" },
+      { id: 7, vendor: "Bluebird Office Supplies", method: "check", last4: "", bill: "1789", due: "09/16/25", withdraw: "09/12", arrives: "09/15", fee: 1.0, amount: 520.0, action: "Manage" },
+      { id: 8, vendor: "Greenfield Solutions", method: "bank", last4: "1278", bill: "7562", due: "09/19/25", withdraw: "09/15", arrives: "09/18", fee: 1.0, amount: 1950.0, action: "Manage" },
+      { id: 9, vendor: "Good Heart Catering", method: "check", last4: "", bill: "9095", due: "09/20/25", withdraw: "09/16", arrives: "09/19", fee: 1.0, amount: 875.0, action: "Manage" },
+      { id: 10, vendor: "Barnett Lawn Care", method: "bank", last4: "3456", bill: "155", due: "09/22/25", withdraw: "09/18", arrives: "09/21", fee: 1.0, amount: 580.0, action: "Manage" },
+      { id: 11, vendor: "Greenfield Solutions", method: "bank", last4: "1278", bill: "7589", due: "09/24/25", withdraw: "09/20", arrives: "09/23", fee: 1.0, amount: 1750.0, action: "Manage" },
+      { id: 12, vendor: "Red Ocean Developer", method: "bank", last4: "7989", bill: "354", due: "09/25/25", withdraw: "09/21", arrives: "09/24", fee: 1.0, amount: 1650.0, action: "Manage" },
+      { id: 13, vendor: "Bluebird Office Supplies", method: "check", last4: "", bill: "1790", due: "09/27/25", withdraw: "09/23", arrives: "09/26", fee: 1.0, amount: 290.0, action: "Manage" }
+    ];
+
+    function methodLabel(row) {
+      if (row.method === "bank") return "Bank payment (ACH)..." + row.last4;
+      return "Check";
+    }
+
+    var ALERTED_VENDOR = "Good Heart Catering";
+
+    function renderVendorMethod(vendorName, method, last4) {
+      if (vendorName === ALERTED_VENDOR) {
+        return (
+          '<div class="bp-vendor__method" data-vendor-state="alert">' +
+            '<span class="bp-vendor__method-icon bp-vendor__method-icon--alert" data-state="alert">' + GLYPH.alertCircle + "</span>" +
+            '<p class="bp-vendor__method-text" data-state="alert">Add delivery details</p>' +
+            '<span class="bp-vendor__method-icon" data-state="resolved">' + GLYPH.bank + "</span>" +
+            '<p class="bp-vendor__method-text" data-state="resolved">Bank payment (ACH)</p>' +
+          "</div>"
+        );
+      }
+      return (
+        '<div class="bp-vendor__method">' +
+          '<span class="bp-vendor__method-icon">' + GLYPH[method] + "</span>" +
+          '<p class="bp-vendor__method-text">' + methodLabel({ method: method, last4: last4 }) + "</p>" +
+        "</div>"
+      );
+    }
+
+    var state = { mode: "bulk", expanded: {} };
+
+    function vendorGroups() {
+      var order = [];
+      var map = {};
+      ROWS.forEach(function (r) {
+        if (!map[r.vendor]) {
+          map[r.vendor] = { vendor: r.vendor, method: r.method, last4: r.last4, rows: [] };
+          order.push(r.vendor);
+        }
+        map[r.vendor].rows.push(r);
+      });
+      return order.map(function (v) {
+        var g = map[v];
+        g.total = g.rows.reduce(function (s, r) { return s + r.amount; }, 0);
+        return g;
+      });
+    }
+
+    function rowCellsCommon(narrowAttr) {
+      return narrowAttr ? " data-narrow-hide" : "";
+    }
+
+    function renderActionCell(action) {
+      return (
+        '<div class="bp-cell bp-cell--action" data-action="' + action + '">' +
+        '<span class="bp-action-text">' + action + "</span>" +
+        "</div>"
+      );
+    }
+
+    function renderSubRow(row) {
+      return (
+        '<div class="bp-row bp-row--sub" data-row-id="' + row.id + '">' +
+          '<div class="bp-cell bp-cell--vendor" style="opacity:0"></div>' +
+          '<div class="bp-cell bp-cell--bill"><span>' + row.bill + "</span></div>" +
+          '<div class="bp-cell bp-cell--status"><span class="bp-status__check">' + GLYPH.statusCheck + '</span><span class="bp-status-text">Approved</span></div>' +
+          '<div class="bp-cell bp-cell--due"><span>' + row.due + "</span></div>" +
+          '<div class="bp-cell bp-cell--speed" data-narrow-hide style="opacity:0"></div>' +
+          '<div class="bp-cell bp-cell--fee" data-narrow-hide style="opacity:0"></div>' +
+          '<div class="bp-cell bp-cell--balance"><span>' + money(row.amount) + "</span></div>" +
+          '<div class="bp-cell bp-cell--amount"><div class="bp-amount-field"><span>' + money(row.amount) + "</span></div></div>" +
+          '<div class="bp-cell bp-cell--action"><img class="bp-action-icon" src="' + ICONS + 'narrow-action.svg" alt="" /></div>' +
+        "</div>"
+      );
+    }
+
+    function renderVendorRow(group) {
+      var expanded = !!state.expanded[group.vendor];
+      var narrowHideSpeed = rowCellsCommon(true);
+      var feeTotal = 1.0;
+      var withdrawVals = group.rows.map(function (r) { return r.withdraw; }).filter(Boolean);
+      var arrivesVals = group.rows.map(function (r) { return r.arrives; }).filter(Boolean);
+      function dateKey(mmdd) {
+        if (!mmdd) return 999999;
+        var parts = mmdd.split('/');
+        return parseInt(parts[0], 10) * 100 + parseInt(parts[1], 10);
+      }
+      var earliestWithdraw = withdrawVals.length ? withdrawVals.reduce(function (a, b) { return dateKey(a) < dateKey(b) ? a : b; }) : '';
+      var latestArrives = arrivesVals.length ? arrivesVals.reduce(function (a, b) { return dateKey(a) > dateKey(b) ? a : b; }) : '';
+
+      var vendorRowHtml =
+        '<div class="bp-row" data-vendor-row="' + group.vendor + '">' +
+          '<div class="bp-cell bp-cell--vendor">' +
+            '<div class="bp-vendor">' +
+              '<button class="bp-vendor__chevron" type="button" data-chevron data-expanded="' + expanded + '" aria-label="Expand vendor">' +
+                '<img src="' + ICONS + 'dropdown-chevron.svg" alt="" />' +
+              "</button>" +
+              '<div class="bp-vendor__body">' +
+                '<p class="bp-vendor__name">' + group.vendor + "</p>" +
+                renderVendorMethod(group.vendor, group.method, group.last4) +
+              "</div>" +
+            "</div>" +
+          "</div>" +
+          '<div class="bp-cell bp-cell--bill"><span>' + group.rows.length + "</span></div>" +
+          '<div class="bp-cell bp-cell--status" style="opacity:0"></div>' +
+          '<div class="bp-cell bp-cell--due" style="opacity:0"></div>' +
+          '<div class="bp-cell bp-cell--speed"' + narrowHideSpeed + ">" +
+            '<div class="bp-speed__top"><p class="bp-speed__label">Standard</p><span class="bp-badge"><span>On time</span></span></div>' +
+            '<div class="bp-speed__meta"><span>Withdraw ' + (earliestWithdraw || '') + "</span><span style=\"display:inline-flex\">" + GLYPH.arrow + "</span><span>Arrives " + (latestArrives || '') + "</span></div>" +
+          "</div>" +
+          '<div class="bp-cell bp-cell--fee"' + narrowHideSpeed + '><div class="bp-fee"><span>' + money(feeTotal) + "</span><span>" + GLYPH.info + "</span></div></div>" +
+          '<div class="bp-cell bp-cell--balance"><span>' + money(group.total) + "</span></div>" +
+          '<div class="bp-cell bp-cell--amount"><span>' + money(group.total) + "</span></div>" +
+          renderActionCell("Manage") +
+        "</div>";
+      var expandWrapHtml =
+        '<div class="bp-expand-wrap" data-expand-wrap="' + group.vendor + '" style="overflow:hidden;height:' + (expanded ? "auto" : "0") + ";margin-top:" + (expanded ? "14px" : "0") + '">' +
+          '<div class="bp-expand-inner" style="display:flex;flex-direction:column;gap:14px">' + (expanded ? group.rows.map(renderSubRow).join("") : "") + "</div>" +
+        "</div>";
+      return '<div class="bp-vendor-group">' + vendorRowHtml + expandWrapHtml + "</div>";
+    }
+
+    function renderRows(rowsScroll) {
+      rowsScroll.innerHTML = vendorGroups().map(renderVendorRow).join("");
+    }
+
+    function updateAggregates() {
+      var bills = ROWS.length;
+      var groups = vendorGroups();
+      var vendors = groups.length;
+      var payments = vendors; // bulk mode: one payment per vendor
+      var totalAmount = ROWS.reduce(function (s, r) { return s + r.amount; }, 0);
+      var totalFee = 1.0 * payments;
+      document.getElementById("mock-total-amount").textContent = money(totalAmount);
+      document.getElementById("mock-total-fee").textContent = "Total processing fees: " + money(totalFee);
+      document.getElementById("mock-stat-bills").textContent = bills;
+      document.getElementById("mock-stat-vendors").textContent = vendors;
+      document.getElementById("mock-stat-payments").textContent = payments;
+    }
+
+    function pad2(n) { return n < 10 ? "0" + n : "" + n; }
+    function parseMMDDYY(s) {
+      var p = s.split("/");
+      return new Date(2000 + parseInt(p[2], 10), parseInt(p[0], 10) - 1, parseInt(p[1], 10));
+    }
+    function addDays(date, n) {
+      var d = new Date(date);
+      d.setDate(d.getDate() + n);
+      return d;
+    }
+    function isBusinessDay(d) {
+      var day = d.getDay();
+      return day !== 0 && day !== 6;
+    }
+    function addBusinessDays(date, n) {
+      var d = new Date(date);
+      var dir = n >= 0 ? 1 : -1;
+      var remaining = Math.abs(n);
+      while (remaining > 0) {
+        d.setDate(d.getDate() + dir);
+        if (isBusinessDay(d)) remaining--;
+      }
+      return d;
+    }
+    function fmtMD(d) { return pad2(d.getMonth() + 1) + "/" + pad2(d.getDate()); }
+    function getDrawerDueDates(payload) {
+      var rows = payload.rows ? payload.rows : [payload];
+      var seen = {};
+      var out = [];
+      rows.forEach(function (r) {
+        var d = parseMMDDYY(r.due);
+        var k = d.getTime();
+        if (!seen[k]) { seen[k] = true; out.push(d); }
+      });
+      out.sort(function (a, b) { return a - b; });
+      return out;
+    }
+
+    var DELIVERY_OPTIONS = [
+      { key: "standard", titleStrong: "Standard", titleMedium: " | 3-5 business days", subtitle: "Maximum safety buffer", fee: "$0.50 fee", days: 5 },
+      { key: "latest-safe", titleStrong: "Fast", titleMedium: " | 1-2 business days", subtitle: "Optimal cash flow", fee: "$10.00 fee", days: 2 },
+      { key: "expedited", titleStrong: "Instant", titleMedium: " | Same day", subtitle: "Latest possible", fee: "$15.00 fee", days: 1 },
+      { key: "custom", titleStrong: "Custom", titleMedium: "", subtitle: "Choose specific dates and delivery speed", fee: null, days: null }
+    ];
+
+    function renderRadioGroup(dueDates, selectedKey) {
+      var earliestDue = dueDates[0];
+      var baseArrival = addDays(earliestDue, -1);
+      return (
+        '<div class="bp-radio-group">' +
+        DELIVERY_OPTIONS.map(function (opt) {
+          var checked = opt.key === selectedKey;
+          var isCustom = opt.key === "custom";
+          var withdraw = isCustom ? null : addBusinessDays(baseArrival, -opt.days);
+          return (
+            '<div class="bp-radio-item" data-radio="' + opt.key + '">' +
+              '<div class="bp-radio" data-checked="' + checked + '"></div>' +
+              '<div class="bp-radio-item__content">' +
+                '<div class="bp-radio-item__text">' +
+                  '<div class="bp-radio-item__title-block">' +
+                    '<p class="bp-radio-item__title"><strong>' + opt.titleStrong + "</strong><span>" + opt.titleMedium + "</span></p>" +
+                    '<p class="bp-radio-item__subtitle">' + opt.subtitle + "</p>" +
+                  "</div>" +
+                  (withdraw
+                    ? '<div class="bp-radio-item__meta"><span>Withdraw ' + fmtMD(withdraw) + "</span>" + GLYPH.arrow + "<span>Arrives " + fmtMD(baseArrival) + "</span></div>"
+                    : "") +
+                "</div>" +
+                (opt.fee ? '<p class="bp-radio-item__fee">' + opt.fee + "</p>" : "") +
+              "</div>" +
+            "</div>"
+          );
+        }).join("") +
+        "</div>"
+      );
+    }
+
+    function renderDrawerDefault(payload, selectedKey) {
+      var total = typeof payload.total === "number" ? payload.total : payload.amount;
+      var dueDates = getDrawerDueDates(payload);
+      return (
+        '<p class="bp-drawer__total-amount">' + money(total) + "</p>" +
+        '<div class="bp-drawer__divider"></div>' +
+        '<div class="bp-drawer__method">' +
+          '<span style="display:inline-flex;width:15px;height:15px">' + GLYPH[payload.method] + "</span>" +
+          "<span>" + methodLabel({ method: payload.method, last4: payload.last4 }) + "</span>" +
+        "</div>" +
+        '<div class="bp-drawer__divider"></div>' +
+        '<div class="bp-drawer__section-title-row">' +
+          '<div class="bp-drawer__section-title-group">' +
+            '<p class="bp-drawer__section-title">Payment delivery options</p>' +
+            '<span class="bp-badge"><span>On time</span></span>' +
+          "</div>" +
+        "</div>" +
+        renderRadioGroup(dueDates, selectedKey || "standard") +
+        '<div class="bp-drawer__divider"></div>' +
+        '<p class="bp-drawer__section-title">Note to vendor</p>' +
+        '<textarea class="bp-note-field" placeholder="Add a note (optional)"></textarea>' +
+        '<div style="height:32px"></div>'
+      );
+    }
+
+    // ---- Build the one, permanently-static frame ----
+    var rowsScroll = document.getElementById("mock-rows-scroll");
+    var screenEl = document.getElementById("mock-screen");
+    var rowCardLayerEl = screenEl.querySelector(".bp-row-card-layer");
+    var rowCardEl = document.getElementById("mock-row-selected-card");
+
+    var barnettVendor = "Barnett Lawn Care";
+    state.expanded[barnettVendor] = true;
+    renderRows(rowsScroll);
+    updateAggregates();
+
+    var barnettGroup = vendorGroups().filter(function (g) { return g.vendor === barnettVendor; })[0];
+    document.getElementById("mock-drawer-vendor-name").textContent = barnettGroup.vendor;
+    document.getElementById("mock-drawer-subtitle").textContent = barnettGroup.rows.length + " Bills • Total Amount:";
+    document.getElementById("mock-drawer-inner").innerHTML = renderDrawerDefault(barnettGroup, "standard");
+
+    // Selected-row card overlay — same +11px offset formula as Gallery
+    // 1's/Gallery 2's own selected-row-card positioning, just measured
+    // once instead of per-frame since this scene never animates.
+    var screenRect = screenEl.getBoundingClientRect();
+    var layerRect = rowCardLayerEl.getBoundingClientRect();
+    var barnettRowEl = rowsScroll.querySelector('[data-vendor-row="' + barnettVendor + '"]');
+    var rowRect = barnettRowEl.getBoundingClientRect();
+    rowCardEl.style.top = ((rowRect.top - layerRect.top) / MOCK_SCALE + 11) + "px";
+    rowCardEl.style.left = ((rowRect.left - layerRect.left) / MOCK_SCALE) + "px";
+    rowCardEl.style.width = (rowRect.width / MOCK_SCALE) + "px";
+    rowCardEl.style.opacity = 1;
+
+    // ---- Clock — drives only the active-panel class + progress
+    // announcements; the mock content built above never changes (it's
+    // permanently inside panel 0 — see build spec: only widths change,
+    // nothing slides or swaps content). Same continuous-clock /
+    // postMessage protocol as Gallery 1's and Gallery 2's scenes
+    // documents, distinct message "type" strings so no gallery's
+    // iframe can ever cross-talk with another's even though all
+    // listen on window. ----
+    function applyScene(index) {
+      panels[0].classList.toggle("is-active", index === 0);
+      panels[1].classList.toggle("is-active", index === 1);
+    }
+
+    function announce(ms, index) {
+      parent.postMessage(
+        { type: "scene-accordion-state", ms: ms, sceneIndex: index },
+        window.location.origin
+      );
+    }
+
+    // Advancing never stops (task: "there is no pause state") — this
+    // just re-anchors epoch so tick() keeps playing forward from
+    // wherever it lands, exactly like Gallery 1's/Gallery 2's own
+    // seek handling; nothing here ever cancels/pauses the rAF loop.
+    function seekToIndex(index) {
+      var targetMs = BOUNDARIES[index];
+      epoch = performance.now() - targetMs;
+      lastIndex = index;
+      applyScene(index);
+      announce(targetMs, index);
+    }
+
+    // Task: "clicking the collapsed panel jumps to that panel and
+    // autoplay continues from there." Clicking the already-active
+    // panel is a harmless no-op (nothing to jump to).
+    panels.forEach(function (panel, index) {
+      panel.addEventListener("click", function () {
+        if (index !== sceneIndexForTime((performance.now() - epoch) % TOTAL_DURATION)) {
+          seekToIndex(index);
+        }
+      });
+    });
+
+    function tick() {
+      var elapsed = (performance.now() - epoch) % TOTAL_DURATION;
+      var index = sceneIndexForTime(elapsed);
+      if (index !== lastIndex) {
+        lastIndex = index;
+        applyScene(index);
+        announce(elapsed, index);
+      }
+      requestAnimationFrame(tick);
+    }
+
+    window.addEventListener("message", function (event) {
+      if (event.origin !== window.location.origin) return;
+
+      var data = event.data;
+      if (!data || data.type !== "scene-accordion-seek" || typeof data.ms !== "number") return;
+
+      epoch = performance.now() - data.ms;
+      var index = sceneIndexForTime(data.ms);
+      lastIndex = index;
+      applyScene(index);
+      announce(data.ms, index);
+    });
+
+    var initialIndex = sceneIndexForTime(0);
+    lastIndex = initialIndex;
+    applyScene(initialIndex);
+    announce(0, initialIndex);
+    requestAnimationFrame(tick);
+  })();
+  </script>
+</body>
+</html>
