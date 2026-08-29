@@ -93,6 +93,24 @@
     --bp-text-radio-subtitle: 400 14px/21.65px var(--bp-font-body);
     --bp-text-radio-meta: 400 16px/21.65px var(--bp-font-body);
     --bp-text-radio-fee: 600 16px/24px var(--bp-font-body);
+
+    /* ---- Calendar (task 2) — ported verbatim from schedule-payment.html's
+       own :root, same as every other --bp-* token above. Wasn't needed
+       until now since nothing in this file used the calendar before. ---- */
+    --bp-color-calendar-range-bg: #e3e3e3;
+    --bp-color-calendar-text: #3c3844;
+    --bp-color-calendar-past-text: #9c9c9c;
+    --bp-color-calendar-divider: #babec5;
+    --bp-color-calendar-due: #ff8d28;
+    --bp-calendar-letter-spacing: 0.22px;
+    --bp-radius-calendar-marker: 12px;
+    --bp-radius-calendar-mid: 15px;
+    --bp-text-calendar-month: 600 14px/20px var(--bp-font-body);
+    --bp-text-calendar-dow: 400 12px/16px var(--bp-font-body);
+    --bp-text-calendar-date: 400 12px/22px var(--bp-font-body);
+    --bp-text-calendar-date-strong: 600 12px/22px var(--bp-font-body);
+    --bp-text-speed-tab: 400 14px/24px var(--bp-font-body);
+    --bp-text-legend: 400 13px/1.5 var(--bp-font-body);
   }
 
   * {
@@ -119,6 +137,25 @@
     --ag-mock-scale: 0.223; /* 223 / 1000 native height — identical to Gallery 2, mock is not resized */
     --ag-overhang: 20px;
     --ag-shadow-bleed: calc(30px * var(--ag-mock-scale)); /* the mock's own box already sits flush with the document's true left edge (see --ag-overhang's own use in .ag-mock-wrap below) — meaning there's zero canvas left for its box-shadow to bleed into. Ink overflow (box-shadow, unlike layout) can't render at negative document coordinates at all — confirmed empirically (a diagnostic solid-color shadow rendered fully invisible past this edge, not just faint) — so --overflow-x alone was never going to fix it; genuine reserved canvas is needed, same technique as --ag-overhang itself already uses, just for a second, smaller amount. 30px matches --shadow-soft's own blur radius (tokens.css) — CSS can't extract that number out of the shorthand programmatically, so it's mirrored here as a literal, same as --ag-radio-diameter/--ag-radio-content-gap already mirror other existing values elsewhere in this file. Scaled by --ag-mock-scale because the shadow paints on .bp-screen *inside* .ag-mock-scaler's own transform:scale() — the transform shrinks the visual blur radius right along with the box itself. Used below (body's own padding-left) and in scene-accordion.css (the iframe's own width/shift) — not in .ag-mock-wrap's own position, which is untouched; see the shadow's own comment on .bp-screen below for the full mechanism. */
+    --ag-shadow-soft-tight: 0px 1px 4px color-mix(in srgb, var(--primitive-black) 16%, transparent); /* --shadow-soft's own 30px blur/0 offset (tokens.css) is proportioned for the mock and cards 1-3 (32-60px+) — at the pill's/calendar row's own 11-14px size it spreads too thin to read as a shadow at all. Blur cut down in the same spirit --ag-shadow-bleed above already scales a shadow by size; a small 1px vertical offset added (the original has none) so it reads as a lift, not just a soft halo, at this size; opacity nudged from 10% to 16% since a tighter blur covers less area. Used only by .ag-float-pill and .ag-cal-row below — cards 1-3 and the mock keep --shadow-soft verbatim, unchanged. Widget-scoped per CLAUDE.md, not added to tokens.css — this fixes two elements in one widget, not a new site-wide token. */
+
+    /* Task 4 — float animation's two "lifted" shadow states, one per
+       resting shadow that already exists. Both widen (blur), drop a
+       little (a small positive Y offset — a shadow cast further out
+       reads as coming from something higher up) and lighten (lower
+       opacity) relative to their own resting counterpart — task: "it
+       spreads and lightens as the element rises." Ratios are the same
+       between both pairs (~1.33x blur, ~0.7x opacity) so cards and
+       pill/calendar-row lift by the same *proportion*, not the same
+       absolute amount — consistent with --ag-shadow-soft-tight's own
+       size-proportioned relationship to --shadow-soft above. Neither
+       touches --shadow-soft or --ag-shadow-soft-tight themselves —
+       those stay the fixed resting state in the keyframes below, used
+       verbatim, unchanged. Widget-scoped per CLAUDE.md, not added to
+       tokens.css — this is one effect in one widget. */
+    --ag-shadow-cards-lifted: 0px 8px 40px color-mix(in srgb, var(--primitive-black) 7%, transparent); /* pairs with --shadow-soft (tokens.css: 0px 0px 30px @10%) for cards 1-3 */
+    --ag-shadow-tight-lifted: 0px 3px 8px color-mix(in srgb, var(--primitive-black) 12%, transparent); /* pairs with --ag-shadow-soft-tight above (0px 1px 4px @16%) for the pill and calendar row */
+    --ag-float-ease: ease-in-out; /* matches the reference (codepen.io/MarioDesigns/pen/woJgeo) exactly. The project's own strong ease-in-out-quart curve (cubic-bezier(0.77, 0, 0.175, 1)) was tried first but hangs at the resting/lifted extremes and snaps through the middle — noticeably sharper than the reference's gentle, even motion; plain ease-in-out is the closer match. Distinct from --ag-ease below regardless, which is an ease-OUT for one-shot enter/exit transitions (panel width, caption), not this element's own continuous ambient loop. */
     --ag-tag-height: 22px; /* .principles-tag's actual rendered height, measured directly (not via its wrapper — see .ag-tag's own comment for why that measures 2px taller). Matches the token math exactly: spacing-4 + spacing-4 padding + text-tag's 14px line-height = 22. Still a custom property rather than a bare literal in the calc()s below, since it's a measured fact about this component, not itself a token. */
     --ag-duration: 480ms; /* reference's own AccordionGallery.jsx (GSAP): duration 0.6s, reduced 20% per instruction = 0.48s. Also reused as the caption's own enter (expand) duration — the reference animates panel width and caption opacity/translate with the same duration. */
     --ag-ease: cubic-bezier(0.215, 0.61, 0.355, 1); /* ported from the same reference's ease: 'power3.out' — closest standard cubic-bezier equivalent to a GSAP power3-out curve, since GSAP's own named eases aren't literal bezier functions. Used for every transition in this file, panel width and caption alike. */
@@ -136,7 +173,7 @@
        none has a matching step on tokens.css's own scale (checked),
        so, same as the block above, they stay widget-scoped composition
        coordinates rather than tokens. */
-    --ag-float-block-height: 150px; /* the block both cards sit inside, vertically centered against the mock's own 223px height — see --ag-float-block-top below */
+    --ag-float-block-height: 164px; /* the block all the floating elements sit inside, vertically centered against the mock's own 223px height — see --ag-float-block-top below. Was 150px before task 2's calendar row (--ag-cal-row below) extended the block's own real bottom edge from card 2's 126px down to the calendar row's own 164px — matches the task's own "roughly 164px" figure exactly (card 2's bottom(126) + the calendar row's own 24px gap + its own 14px height = 164) */
     --ag-float-block-top: calc(var(--ag-inset-y) + var(--ag-tag-height) + var(--ag-tag-mock-gap) + (var(--ag-mock-height) - var(--ag-float-block-height)) / 2); /* same top-offset formula .ag-mock-wrap's own `top` uses below (not touched or refactored to share it — task: no change to the mock beyond its shadow), plus half of the (223 − 150) leftover height, to center the block against the mock */
     --ag-float-card-1-height: 36px;
     --ag-float-card-1-padding: 6px;
@@ -239,11 +276,10 @@
 
     /* Green "Arrives on time" pill — cloned from the table's own
        PAYMENT SPEED column badge (.bp-badge, real component, not
-       re-authored), text changed after cloning. No white container
-       (task: "it is the pill on its own") so, unlike the three cards,
-       its own outer box has no padding added on top of the scaled
-       content — --ag-float-pill-width below is just native width ×
-       scale, nothing added. --ag-badge-height/-width are measured the
+       re-authored), text changed after cloning. No white background
+       (task: "it is the pill on its own") — unlike the three cards, its
+       outer box has no fill of its own, the badge's own green fill
+       shows straight through. --ag-badge-height/-width are measured the
        same unstretched way as the row measurements above, but *after*
        the text swap to "Arrives on time" — a longer string than the
        badge's original "On time", so measuring post-swap is what
@@ -255,10 +291,35 @@
     --ag-badge-width: 108.03125px; /* measured with "Arrives on time" already substituted in, see above */
     --ag-float-pill-scale: calc(var(--ag-float-pill-height) / var(--ag-badge-height));
     --ag-float-pill-width: calc(var(--ag-badge-width) * var(--ag-float-pill-scale));
+    --ag-float-pill-padding: 2px; /* task 3: "Give it 2px on all sides." The badge's own scaled size/position must stay exactly as they were (task: "everything else... stays"), so the wrapper below grows by this amount on each side (width/height +2×padding) and its own top/right anchors shift outward by the same amount — the CSS `padding` declared on it then insets the badge back in by exactly that much, landing it at its old absolute position, now with genuine breathing room around it instead of the shadow starting flush against its edge. */
     --ag-float-pill-gap-from-card1: 30px; /* task: "right edge 30px to the left of card 1's left edge" */
     --ag-float-pill-right-offset: calc(var(--ag-float-card-1-right-offset) + var(--ag-float-card-1-width) + var(--ag-float-pill-gap-from-card1)); /* card 1's own left edge, expressed the same way card 1 itself is positioned — as a distance from the panel's right edge (its own right-offset + its own width) — plus this pill's 30px gap beyond that; avoids ever computing an absolute "card 1 left" value or needing the panel's own width */
     --ag-float-pill-gap-above-card2: 20px; /* task: "bottom edge 20px above card 2's top edge" */
     --ag-float-pill-top: calc(var(--ag-float-card-2-top) - var(--ag-float-pill-gap-above-card2) - var(--ag-float-pill-height));
+
+    /* Calendar row (task 2b) — a 5-consecutive-day horizontal slice
+       cloned from the newly-ported calendar (see the calendar port's
+       own comment in the script below), floating below card 2, same
+       clone-and-scale technique as cards 1-3. Unlike those cards, no
+       white background/padding/radius: at a final height of only 14px
+       there's no room left for anything like the cards' own 6-10px
+       padding (it would consume the entire box before any content
+       could show) — same "not named in the brief, added here as a
+       judgment call" precedent the cards' own background/radius above
+       already sets, just landing on the opposite answer here because
+       the numbers force it; ends up structurally like the pill below
+       (position + shadow only) even though the reasoning differs (the
+       pill has no container because "it is the pill on its own" by
+       spec; this has none because there's no room for one). */
+    --ag-cal-row-height: 14px; /* task: "Height: 14px" */
+    --ag-cal-row-native-height: 24px; /* the ported .bp-cal-grid's own grid-auto-rows:24px (source-verbatim, untouched below) — this row's real unscaled height */
+    --ag-cal-row-native-width: calc(172px / 7 * 5); /* 5 of the ported .bp-cal-block's own 7 equal-width column tracks (172px, source-verbatim below) — a 5-day slice, not the full week */
+    --ag-cal-row-scale: calc(var(--ag-cal-row-height) / var(--ag-cal-row-native-height));
+    --ag-cal-row-width: calc(var(--ag-cal-row-native-width) * var(--ag-cal-row-scale)); /* task: "Width: proportional to the scaled content, computed explicitly" — no padding term added, see this block's own opening comment for why */
+    --ag-cal-row-gap-below-card2: 24px; /* task: "top edge 24px below card 2's bottom edge" */
+    --ag-cal-row-top: calc(var(--ag-float-card-2-top) + var(--ag-float-card-2-height) + var(--ag-cal-row-gap-below-card2));
+    --ag-cal-row-gap-from-mock: 120px; /* task: "the left edge of the green range-start circle sits 120px from the mock's right edge" */
+    --ag-cal-row-left: calc(-1 * var(--ag-overhang) + 1440px * var(--ag-mock-scale) + var(--ag-cal-row-gap-from-mock)); /* "mock's right edge" expressed the same way card 2's own `left` above already does (-overhang + native width × scale). The anchor named in the brief is the green start-circle's own left edge, not the row wrapper's — but that circle sits centered in the row's first (start) cell (a 24px marker inside a ~24.57px-wide cell), only ~0.29px from the cell's own left edge — under the 3px measurement tolerance, so the row wrapper is positioned directly here rather than adding a sub-pixel correction term for it */
   }
 
   /* No background here on purpose, same reasoning as Gallery 1's
@@ -302,16 +363,59 @@
      placeholder's own clip moved down to .ag-panel--green.is-active
      itself (its real source, not the document's edge), and the shadow
      has genuine reserved canvas to bleed into — so html/body no longer
-     needs to clip anything, and overflow-x is visible here on purpose.
-     Verified this doesn't reintroduce a horizontal scrollbar at any
-     point during a transition in either direction — see the build
-     report. */
+     needs to clip anything by default, and overflow-x is visible here
+     on purpose. Verified this doesn't reintroduce a horizontal
+     scrollbar at any point during a transition in either direction —
+     see the build report.
+
+     Task 1 — this composition is a fixed 800px row (see .ag-row below)
+     plus body's own reserved left padding above; below roughly 827px
+     the section's own content column (which shrinks under its own
+     1056px max-width — see CLAUDE.md's Mobile scope) is narrower than
+     that fixed total, and the row genuinely no longer fits, producing
+     a real horizontal scrollbar this document's own overflow rule
+     can't paint its way around by itself. The threshold isn't
+     hardcoded here — CSS media features can't read a custom property's
+     computed value, so it's measured at runtime instead (the row's own
+     real rendered width + body's own real computed left padding — see
+     updateOverflowClip() in the script below) and applied via the
+     .ag-narrow class toggled onto <html>, so this stays correct
+     automatically if --ag-panel-active-width/--ag-panel-collapsed-
+     width/--ag-overhang/--ag-shadow-bleed ever change, same as every
+     other measured value in this file. Below that threshold overflow-x
+     switches to hidden (see .ag-narrow below) and the mock's shadow is
+     clipped on its left edge there — accepted, not fixed: case-study
+     article pages are desktop-only by design and already unverified
+     below 900px width (CLAUDE.md's Mobile scope), so this only ever
+     engages below the floor this page already doesn't promise to look
+     right at. */
   html, body {
     margin: 0;
     width: 100%;
     height: var(--ag-panel-height);
     overflow-x: visible;
     overflow-y: visible;
+  }
+
+  /* Below the threshold documented above: overflow-x flips to hidden so
+     no horizontal scrollbar appears (the shadow-clipping tradeoff is
+     accepted — see this block's own comment above). overflow-y is
+     deliberately NOT touched here — the rule above still declares it
+     `visible` — but per the CSS overflow spec, once one axis is
+     `hidden` the other axis (overflow-y, left at `visible` above)
+     computes to `auto`, not `visible`, regardless of what's written for
+     it. That's a spec side effect of the overflow-x change below, not a
+     second rule written here; verified at 900px/1024px/1440px that this
+     doesn't produce an unwanted vertical scrollbar of its own — the
+     panel's own fixed height already leaves every floating element
+     (and the mock's own shadow bleed) real vertical slack to spare, see
+     the build report. Targets both html AND body (not just html)
+     because the base rule above sets overflow-x on both, at the same
+     relative specificity increase (class > bare type selector) on
+     each. */
+  html.ag-narrow,
+  html.ag-narrow body {
+    overflow-x: hidden;
   }
 
   body {
@@ -421,6 +525,7 @@
   .ag-mock-wrap,
   .ag-float-card,
   .ag-float-pill,
+  .ag-cal-row,
   .ag-placeholder-body {
     opacity: 0;
     transition: opacity var(--ag-content-fade) ease;
@@ -428,6 +533,7 @@
   .ag-panel.is-active .ag-mock-wrap,
   .ag-panel.is-active .ag-float-card,
   .ag-panel.is-active .ag-float-pill,
+  .ag-panel.is-active .ag-cal-row,
   .ag-panel.is-active .ag-placeholder-body {
     opacity: 1;
     transition: opacity var(--ag-content-fade) ease var(--ag-content-reveal-delay);
@@ -595,6 +701,8 @@
     background: var(--primitive-white);
     border-radius: var(--spacing-8);
     box-shadow: var(--shadow-soft);
+    --ag-float-shadow-resting: var(--shadow-soft); /* task 4 — the @keyframes below (see the reduced-motion block's own neighbor further down) read these two generic names per element; shared here since all three cards use the same shadow pair, so it isn't repeated on --1/--2/--3 below */
+    --ag-float-shadow-lifted: var(--ag-shadow-cards-lifted);
   }
   /* width:max-content so the cloned row keeps its own natural size
      inside here regardless of the padded card's own (much narrower)
@@ -623,6 +731,9 @@
     width: var(--ag-float-card-1-width);
     height: var(--ag-float-card-1-height);
     padding: var(--ag-float-card-1-padding);
+    --ag-float-duration: 3.2s; /* task 4 — see the build report for the full duration/phase table across all five elements */
+    --ag-float-delay: 0s; /* phase 0% of this element's own cycle — starts at the keyframes' own 0% (resting), heading up. All five elements below sit at a different phase (0/20/40/60/80%) so none are in sync — see the build report */
+    --ag-float-travel: -8px; /* narrowed into a shared ~6-10px band across all five elements (was -10px) — a wider, strictly size-proportional spread (was up to -16px on card 2) read as separate elements bobbing rather than one group drifting; chosen by eye within the band, not recomputed from this card's own size, see the build report */
   }
   .ag-float-card--1 .ag-float-card__scaler {
     transform: scale(var(--ag-float-card-1-scale));
@@ -647,6 +758,9 @@
     height: var(--ag-float-card-2-height);
     padding: var(--ag-float-card-2-padding);
     z-index: -1;
+    --ag-float-duration: 3.3s; /* task 4 — largest of the five (60px); slowest duration, see the build report */
+    --ag-float-delay: calc(var(--ag-float-duration) * -0.4); /* phase 40% */
+    --ag-float-travel: -10px; /* narrowed into the shared ~6-10px band (was -16px, 4x the pill's own travel) — see card 1's own comment above for why */
   }
   .ag-float-card--2 .ag-float-card__scaler {
     transform: scale(var(--ag-float-card-2-scale));
@@ -668,6 +782,9 @@
     width: var(--ag-float-card-3-width);
     height: var(--ag-float-card-3-height);
     padding: var(--ag-float-card-3-padding);
+    --ag-float-duration: 3.1s; /* task 4 */
+    --ag-float-delay: calc(var(--ag-float-duration) * -0.6); /* phase 60% — a negative delay starts the animation already partway through its own cycle; here at -60% of its own duration */
+    --ag-float-travel: -7px; /* narrowed into the shared ~6-10px band — see card 1's own comment above for why */
   }
   .ag-float-card--3 .ag-float-card__scaler {
     transform: scale(var(--ag-float-card-3-scale));
@@ -682,11 +799,18 @@
      it. */
   .ag-float-pill {
     position: absolute;
-    top: var(--ag-float-pill-top);
-    right: var(--ag-float-pill-right-offset);
-    width: var(--ag-float-pill-width);
-    height: var(--ag-float-pill-height);
-    box-shadow: var(--shadow-soft);
+    top: calc(var(--ag-float-pill-top) - var(--ag-float-pill-padding)); /* shifted up by the new padding below so the badge's own top edge (inset back in by that same padding) lands exactly where it sat before task 3 */
+    right: calc(var(--ag-float-pill-right-offset) - var(--ag-float-pill-padding)); /* ditto, on the right — the box grows outward from the badge's own unchanged right edge, not the other way around */
+    width: calc(var(--ag-float-pill-width) + 2 * var(--ag-float-pill-padding));
+    height: calc(var(--ag-float-pill-height) + 2 * var(--ag-float-pill-padding));
+    padding: var(--ag-float-pill-padding); /* task 3. `* { box-sizing: border-box; }` above means this eats into the box just grown above rather than growing it further — the badge inside ends up inset by exactly this amount on all four sides, at its old unchanged size (see --ag-float-pill-padding's own comment) */
+    border-radius: calc(var(--bp-radius-input) * var(--ag-float-pill-scale)); /* this wrapper carries the shadow, not the cloned .bp-badge inside the scaled .ag-float-card__scaler below — box-shadow follows whatever border-radius is on the SAME element, so without this it was square-cornered behind the badge's own rounded shape (same bug the mock's shadow had, fixed the same way: put the shadow on the surface whose shape it should follow). Radius itself is unaffected by task 3's padding — still the badge's own real --bp-radius-input scaled down, not the wrapper's new, larger size. */
+    box-shadow: var(--ag-shadow-soft-tight); /* --shadow-soft reads as basically invisible at this 11px height — see --ag-shadow-soft-tight's own comment above */
+    --ag-float-shadow-resting: var(--ag-shadow-soft-tight); /* task 4 */
+    --ag-float-shadow-lifted: var(--ag-shadow-tight-lifted);
+    --ag-float-duration: 2.9s; /* smallest of the five (10px); fastest duration, see the build report */
+    --ag-float-delay: calc(var(--ag-float-duration) * -0.2); /* phase 20% */
+    --ag-float-travel: -6px; /* narrowed into the shared ~6-10px band (was -4px, well below it) — see card 1's own comment above for why */
   }
   /* display:flex here for the exact same reason .ag-tag's own comment
      documents above: .bp-badge is display:inline-flex, and a plain
@@ -700,6 +824,82 @@
   .ag-float-pill .ag-float-card__scaler {
     display: flex;
     transform: scale(var(--ag-float-pill-scale));
+  }
+
+  /* Calendar row (task 2b) — see --ag-cal-row-* above for why this has
+     no background/padding/radius, unlike cards 1-3. Positioned by
+     `left`/`top` (not `right`, like cards 1/3/pill) since its own
+     anchor is the mock's right edge, the same reference card 2's own
+     `left` above already uses. */
+  .ag-cal-row {
+    position: absolute;
+    top: var(--ag-cal-row-top);
+    left: var(--ag-cal-row-left);
+    width: var(--ag-cal-row-width);
+    height: var(--ag-cal-row-height);
+    border-radius: calc(var(--bp-radius-calendar-marker) * var(--ag-cal-row-scale)); /* this wrapper carries the shadow, not the cloned day cells inside the scaled .ag-float-card__scaler below — box-shadow follows whatever border-radius is on the SAME element, so without this it was square-cornered behind the row's own rounded silhouette (the first/last cloned cells are .bp-cal-day--start/--end, each rounded on their own outer corner via --bp-radius-calendar-marker; the 3 cells between share the same background with no radius, so the row reads as one continuous rounded bar — same bug the mock's shadow had, fixed the same way: put the shadow on the surface whose shape it should follow). All four corners get the same radius since --bp-cal-day--start/--end round symmetrically (top+bottom on their own side); native --bp-radius-calendar-marker scaled by this row's own --ag-cal-row-scale, not a new guessed number. */
+    box-shadow: var(--ag-shadow-soft-tight); /* --shadow-soft reads as basically invisible at this 14px height — see --ag-shadow-soft-tight's own comment above */
+    --ag-float-shadow-resting: var(--ag-shadow-soft-tight); /* task 4 */
+    --ag-float-shadow-lifted: var(--ag-shadow-tight-lifted);
+    --ag-float-duration: 3.0s; /* task 4 */
+    --ag-float-delay: calc(var(--ag-float-duration) * -0.8); /* phase 80% */
+    --ag-float-travel: -9px; /* narrowed into the shared ~6-10px band — see card 1's own comment above for why */
+  }
+  .ag-cal-row .ag-float-card__scaler {
+    transform: scale(var(--ag-cal-row-scale));
+  }
+  /* The cloned slice's own wrapper (built in the script below) — 5 of
+     the ported .bp-cal-grid's own equal-width column tracks, at their
+     real native size (24px row height, ~24.57px per column — see
+     --ag-cal-row-native-width/-height above), so the scale transform
+     above shrinks genuine native-size content, same reasoning
+     .ag-float-card__scaler's own width:max-content already documents
+     for cards 1-3. */
+  .ag-cal-row__grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    width: var(--ag-cal-row-native-width);
+    height: var(--ag-cal-row-native-height);
+  }
+
+  /* Task 4 — float animation. One shared @keyframes for all five
+     floating elements (cards 1-3, the pill, the calendar row) — each
+     one's own duration/delay/travel/shadow pair is supplied by the
+     custom properties set on it above, rather than five near-identical
+     keyframe blocks. transform and box-shadow animate together on
+     purpose (task: "the shadow animates alongside the transform... both
+     must animate together") — 0%/100% sit at the element's own resting
+     shadow with no translate; 50% at its own lifted shadow and its own
+     travel distance. Only transform/box-shadow move — no width/height/
+     position property here, so this never touches layout or repaints
+     anything beyond each element's own box.
+
+     Applying `animation` only inside
+     prefers-reduced-motion:no-preference below (rather than declaring
+     it unconditionally here and overriding it back off in the existing
+     reduced-motion block further down) means reduced motion needs no
+     extra code at all: outside that query nothing ever sets
+     `animation`, so every element simply keeps sitting at its own base
+     rule's already-resting box-shadow (--shadow-soft /
+     --ag-shadow-soft-tight) with no transform — exactly the spec'd "no
+     float at all... resting position with resting shadow." */
+  @keyframes ag-float {
+    0%, 100% {
+      transform: translateY(0);
+      box-shadow: var(--ag-float-shadow-resting);
+    }
+    50% {
+      transform: translateY(var(--ag-float-travel));
+      box-shadow: var(--ag-float-shadow-lifted);
+    }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .ag-float-card,
+    .ag-float-pill,
+    .ag-cal-row {
+      animation: ag-float var(--ag-float-duration) var(--ag-float-ease) var(--ag-float-delay) infinite;
+    }
   }
 
   /* Reduced motion: keep the opacity fades everywhere (grey panel's
@@ -726,6 +926,7 @@
     .ag-mock-wrap,
     .ag-float-card,
     .ag-float-pill,
+    .ag-cal-row,
     .ag-placeholder-body {
       transition-duration: 1ms;
       transition-delay: 0s;
@@ -744,6 +945,7 @@
     .ag-panel.is-active .ag-mock-wrap,
     .ag-panel.is-active .ag-float-card,
     .ag-panel.is-active .ag-float-pill,
+    .ag-panel.is-active .ag-cal-row,
     .ag-panel.is-active .ag-placeholder-body {
       transition-duration: 1ms;
       transition-delay: 0s;
@@ -932,6 +1134,59 @@
   .bp-radio-item__meta img { width: 18px; height: 18px; }
   .bp-radio-item__fee { margin: 0; font: var(--bp-text-radio-fee); color: var(--primitive-black); white-space: nowrap; }
 
+  /* ---- Calendar (task 2) — ported from schedule-payment.html's own
+     .bp-speed-tabs/.bp-speed-tab/.bp-cal-* rules, condensed to this
+     file's own one-line-per-selector style (matching every other ported
+     rule above), values unchanged. Used both by the newly-ported
+     renderDeliveryCalendar() (script below) and by the floating
+     calendar row (.ag-cal-row above, script below) that clones a slice
+     of its output. ---- */
+  .bp-speed-tabs { display: flex; width: 100%; margin-bottom: 20px; }
+  .bp-drawer__section-title-row + .bp-speed-tabs { margin-bottom: 24px; }
+  .bp-speed-tab { position: relative; flex: 1 1 0; min-width: 0; box-sizing: border-box; padding: 6px 12px; border: 2px solid var(--bp-color-border-input); background: transparent; font: var(--bp-text-speed-tab); color: var(--primitive-black); text-align: center; cursor: pointer; }
+  .bp-speed-tab--start { border-radius: var(--bp-radius-input) 0 0 var(--bp-radius-input); margin-right: -2px; z-index: 3; }
+  .bp-speed-tab--mid { margin-right: -2px; z-index: 2; }
+  .bp-speed-tab--end { border-radius: 0 var(--bp-radius-input) var(--bp-radius-input) 0; z-index: 1; }
+  .bp-speed-tab[data-active="true"] { background: var(--bp-color-action-green); border-color: var(--bp-color-action-green); color: var(--primitive-white); z-index: 4; }
+
+  .bp-cal-row { display: flex; align-items: flex-start; gap: 20px; width: 100%; }
+  .bp-cal-column { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; flex: 1 1 0; min-width: 0; }
+  .bp-cal-divider-v { width: 1px; align-self: stretch; background: var(--bp-color-calendar-divider); flex-shrink: 0; }
+  .bp-cal-months-header { display: flex; align-items: center; gap: 8px; width: 100%; box-sizing: border-box; padding-bottom: 10px; }
+  .bp-cal-nav { width: 24px; height: 24px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+  .bp-cal-nav img { display: block; width: 24px; height: 24px; }
+  .bp-cal-months-header__title { margin: 0; flex: 1 1 0; min-width: 0; height: 20px; display: flex; align-items: center; justify-content: center; font: var(--bp-text-calendar-month); color: var(--primitive-black); white-space: nowrap; }
+  .bp-cal-block { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; width: 172px; }
+  .bp-cal-dow-header { display: flex; align-items: center; gap: 16px; width: 100%; box-sizing: border-box; padding: 0 7px 2px 6px; }
+  .bp-cal-dow-header span { flex: 1 1 0; min-width: 0; height: 24px; display: flex; align-items: center; justify-content: center; font: var(--bp-text-calendar-dow); color: var(--primitive-black); }
+  .bp-cal-divider-h { width: 100%; height: 1px; background: var(--bp-color-calendar-divider); flex-shrink: 0; }
+  .bp-cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); grid-auto-rows: 24px; row-gap: 4px; column-gap: 0; width: 100%; }
+  .bp-cal-day { position: relative; display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
+  .bp-cal-day[data-cal-pick] { cursor: pointer; }
+  .bp-cal-day__num { font: var(--bp-text-calendar-date); letter-spacing: var(--bp-calendar-letter-spacing); color: var(--bp-color-calendar-text); }
+  .bp-cal-day__num--past { color: var(--bp-color-calendar-past-text); }
+  .bp-cal-day--range, .bp-cal-day--mid-left, .bp-cal-day--mid-right { background: var(--bp-color-calendar-range-bg); }
+  .bp-cal-day--mid-left { border-radius: var(--bp-radius-calendar-mid) 0 0 var(--bp-radius-calendar-mid); }
+  .bp-cal-day--mid-right { border-radius: 0 var(--bp-radius-calendar-mid) var(--bp-radius-calendar-mid) 0; }
+  .bp-cal-day--start, .bp-cal-day--end { background: var(--bp-color-calendar-range-bg); }
+  .bp-cal-day--start { border-radius: var(--bp-radius-calendar-marker) 0 0 var(--bp-radius-calendar-marker); }
+  .bp-cal-day--end { border-radius: 0 var(--bp-radius-calendar-marker) var(--bp-radius-calendar-marker) 0; }
+  .bp-cal-day__marker { width: 24px; height: 24px; border-radius: 50%; box-sizing: border-box; display: flex; align-items: center; justify-content: center; }
+  .bp-cal-day__marker--start { background: var(--bp-color-action-green); }
+  .bp-cal-day__marker--end { background: var(--primitive-white); border: 1px solid var(--bp-color-action-green); }
+  .bp-cal-day__marker-num { font: var(--bp-text-calendar-date-strong); letter-spacing: var(--bp-calendar-letter-spacing); }
+  .bp-cal-day__marker--start .bp-cal-day__marker-num { color: var(--primitive-white); }
+  .bp-cal-day__marker--end .bp-cal-day__marker-num { color: var(--bp-color-action-green); }
+  .bp-cal-day__due-wrap { width: 24px; height: 24px; border-radius: var(--bp-radius-calendar-marker); box-sizing: border-box; background: var(--primitive-white); border: 1px solid var(--bp-color-calendar-due); display: flex; align-items: center; justify-content: center; padding: 2px 5px 2px 6px; }
+  .bp-cal-day__num--due { font: var(--bp-text-calendar-date-strong); letter-spacing: var(--bp-calendar-letter-spacing); color: var(--bp-color-calendar-due); white-space: nowrap; }
+  .bp-cal-legend { display: flex; align-items: center; gap: 24px; padding: 8px 0; margin-top: 20px; }
+  .bp-cal-legend__item { display: flex; align-items: center; gap: 8px; }
+  .bp-cal-legend__dot { width: 12px; height: 12px; border-radius: 50%; box-sizing: border-box; flex-shrink: 0; }
+  .bp-cal-legend__dot--withdraw { background: var(--bp-color-action-green); }
+  .bp-cal-legend__dot--arrival { background: var(--primitive-white); border: 1px solid var(--bp-color-action-green); }
+  .bp-cal-legend__text { margin: 0; font: var(--bp-text-legend); color: var(--primitive-black); }
+  .bp-cal-legend__text span { color: var(--primitive-grey-dark); font: var(--bp-text-calendar-date-strong); }
+
   .bp-note-field { width: 100%; min-height: 189px; border: 1px solid var(--bp-color-border-input); border-radius: var(--bp-radius-input); padding: 12px; font: var(--bp-text-cell-normal); color: var(--primitive-black); resize: none; font-family: var(--bp-font-body); }
 
   /* ---- Footer ---- */
@@ -1090,6 +1345,14 @@
         <div class="ag-float-pill">
           <div class="ag-float-card__scaler" id="ag-float-pill-scaler"></div>
         </div>
+        <!-- Calendar row (task 2b) — same pattern as the floating cards
+             above: the .ag-cal-row__grid wrapper (built and populated at
+             runtime with a real cloned slice of the newly-ported
+             calendar, see the script's own comment near
+             "ag-cal-row-scaler") is left empty here on purpose. -->
+        <div class="ag-cal-row" id="ag-cal-row">
+          <div class="ag-float-card__scaler" id="ag-cal-row-scaler"></div>
+        </div>
       </div>
     </div>
 
@@ -1131,6 +1394,21 @@
     var panels = [document.getElementById("ag-panel-0"), document.getElementById("ag-panel-1")];
     var epoch = performance.now();
     var lastIndex = -1;
+
+    // Task 1 — see the .ag-narrow/html,body comment above for why this
+    // is measured rather than hardcoded. row.getBoundingClientRect()
+    // reads the row's own real rendered width (fixed by its own CSS
+    // calc(), not viewport-dependent) rather than assuming the 800px
+    // the tokens currently add up to; body's own left padding (reserved
+    // for the overhang + shadow bleed) is read the same way. Re-run on
+    // resize since it's the section's own content column — not this
+    // document's own fixed-width row — that actually shrinks.
+    function updateOverflowClip() {
+      var threshold = row.getBoundingClientRect().width + parseFloat(getComputedStyle(document.body).paddingLeft);
+      document.documentElement.classList.toggle("ag-narrow", document.documentElement.clientWidth < threshold);
+    }
+    updateOverflowClip();
+    window.addEventListener("resize", updateOverflowClip);
 
     function sceneIndexForTime(ms) {
       for (var i = BOUNDARIES.length - 1; i >= 0; i--) {
@@ -1240,7 +1518,7 @@
       );
     }
 
-    var state = { mode: "bulk", expanded: {} };
+    var state = { mode: "bulk", expanded: {}, calendar: { tab: "standard", withdraw: null, arrival: null } };
 
     function vendorGroups() {
       var order = [];
@@ -1389,6 +1667,144 @@
       return out;
     }
 
+    // ---- Calendar (task 2) — ported from
+    // assets/mock-screen/bill-pay/schedule-payment.js's own
+    // renderDeliveryCalendar/renderCalendarColumn/renderCalendarCell/
+    // classifyCell/buildMonthGrid/CALENDAR_MONTHS/MONTH_NAMES/
+    // SPEED_TABS/fmtLong — none of this existed in this file before.
+    // pad2/addDays/isBusinessDay/addBusinessDays/fmtMD/getDrawerDueDates
+    // above were already ported earlier (for the radio group below) and
+    // are reused as-is, not re-ported a second time. This is real scene
+    // content (task: "not scaffolding for the clone... will be needed
+    // regardless"), not built only to serve the floating calendar row
+    // further down — the drawer's own default state is untouched
+    // (this scene's own state.delivery-equivalent stays "radios", see
+    // renderDrawerDefault below, unchanged), so nothing here changes
+    // what the visible drawer opens on; renderDeliveryCalendar is
+    // renderable, just never called as part of that default flow. It
+    // reads a plain state.calendar (see state's own declaration below)
+    // rather than schedule-payment.js's state.drawer.calendar — same
+    // shape, just not nested under a .drawer object this scene never
+    // builds (it has no drawer open/close, view, or delivery-mode state
+    // at all — this scene's drawer is permanently, statically open).
+    var CALENDAR_MONTHS = [
+      { year: 2025, month: 7 },
+      { year: 2025, month: 8 }
+    ];
+    var MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    var MONTH_NAMES_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    var SPEED_TABS = [
+      { key: "standard", label: "Standard", fee: 0.5, days: 5 },
+      { key: "fast", label: "Fast", fee: 10.0, days: 2 },
+      { key: "instant", label: "Instant", fee: 15.0, days: 1 }
+    ];
+
+    function fmtLong(d) {
+      return MONTH_NAMES_SHORT[d.getMonth()] + " " + d.getDate() + ", " + d.getFullYear();
+    }
+
+    function buildMonthGrid(year, month) {
+      var first = new Date(year, month, 1);
+      var gridStart = addDays(first, -first.getDay());
+      var cells = [];
+      for (var i = 0; i < 42; i++) {
+        var d = addDays(gridStart, i);
+        cells.push({ date: d, col: i % 7, inMonth: d.getMonth() === month });
+      }
+      return cells;
+    }
+
+    function classifyCell(cell, withdraw, arrival, dueDates) {
+      if (!cell.inMonth) return { variant: "past", clickable: false };
+      var t = cell.date.getTime();
+      var w = withdraw.getTime();
+      var a = arrival.getTime();
+      if (t === w) return { variant: "start", clickable: true };
+      if (t === a) return { variant: "end", clickable: true };
+      if (t > w && t < a) {
+        if (cell.col === 0) return { variant: "mid-left", clickable: false };
+        if (cell.col === 6) return { variant: "mid-right", clickable: false };
+        return { variant: "range", clickable: false };
+      }
+      var isDue = dueDates.some(function (d) { return d.getTime() === t; });
+      if (isDue) return { variant: "due", clickable: true };
+      var isWeekend = cell.col === 0 || cell.col === 6;
+      if (isWeekend) return { variant: "past", clickable: false };
+      return { variant: "normal", clickable: true };
+    }
+
+    function renderCalendarCell(cell, v) {
+      var day = cell.date.getDate();
+      var iso = cell.date.getFullYear() + "-" + pad2(cell.date.getMonth() + 1) + "-" + pad2(cell.date.getDate());
+      var pick = v.clickable ? ' data-cal-pick="' + iso + '"' : "";
+      if (v.variant === "start" || v.variant === "end") {
+        return (
+          '<div class="bp-cal-day bp-cal-day--' + v.variant + '"' + pick + ">" +
+            '<span class="bp-cal-day__marker bp-cal-day__marker--' + v.variant + '">' +
+              '<span class="bp-cal-day__marker-num">' + day + "</span>" +
+            "</span>" +
+          "</div>"
+        );
+      }
+      if (v.variant === "due") {
+        return (
+          '<div class="bp-cal-day bp-cal-day--due"' + pick + ">" +
+            '<span class="bp-cal-day__due-wrap"><span class="bp-cal-day__num--due">' + day + "</span></span>" +
+          "</div>"
+        );
+      }
+      var numCls = v.variant === "past" ? "bp-cal-day__num bp-cal-day__num--past" : "bp-cal-day__num";
+      return '<div class="bp-cal-day bp-cal-day--' + v.variant + '"' + pick + '><span class="' + numCls + '">' + day + "</span></div>";
+    }
+
+    function renderCalendarColumn(year, month, withdraw, arrival, dueDates) {
+      var cells = buildMonthGrid(year, month);
+      var label = MONTH_NAMES[month] + " " + year;
+      return (
+        '<div class="bp-cal-column">' +
+          '<div class="bp-cal-months-header">' +
+            '<div class="bp-cal-nav" aria-hidden="true"><img src="' + ICONS + 'calendar/chevron-left.svg" alt="" /></div>' +
+            '<p class="bp-cal-months-header__title">' + label + "</p>" +
+            '<div class="bp-cal-nav" aria-hidden="true"><img src="' + ICONS + 'calendar/chevron-right.svg" alt="" /></div>' +
+          "</div>" +
+          '<div class="bp-cal-block">' +
+            '<div class="bp-cal-dow-header"><span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span></div>' +
+            '<div class="bp-cal-divider-h"></div>' +
+            '<div class="bp-cal-grid">' +
+              cells.map(function (c) { return renderCalendarCell(c, classifyCell(c, withdraw, arrival, dueDates)); }).join("") +
+            "</div>" +
+          "</div>" +
+        "</div>"
+      );
+    }
+
+    function renderDeliveryCalendar(dueDates) {
+      var cal = state.calendar;
+      var withdraw = cal.withdraw;
+      var arrival = cal.arrival;
+      return (
+        '<div class="bp-speed-tabs">' +
+          SPEED_TABS.map(function (t, i) {
+            var edgeCls = i === 0 ? " bp-speed-tab--start" : i === SPEED_TABS.length - 1 ? " bp-speed-tab--end" : " bp-speed-tab--mid";
+            return (
+              '<button type="button" class="bp-speed-tab' + edgeCls + '" data-cal-tab="' + t.key + '" data-active="' + (t.key === cal.tab) + '">' +
+                t.label + " " + money(t.fee) +
+              "</button>"
+            );
+          }).join("") +
+        "</div>" +
+        '<div class="bp-cal-row">' +
+          CALENDAR_MONTHS.map(function (m, idx) {
+            return renderCalendarColumn(m.year, m.month, withdraw, arrival, dueDates) + (idx === 0 ? '<div class="bp-cal-divider-v"></div>' : "");
+          }).join("") +
+        "</div>" +
+        '<div class="bp-cal-legend">' +
+          '<div class="bp-cal-legend__item"><span class="bp-cal-legend__dot bp-cal-legend__dot--withdraw"></span><p class="bp-cal-legend__text">Withdraw <span>' + fmtLong(withdraw) + "</span></p></div>" +
+          '<div class="bp-cal-legend__item"><span class="bp-cal-legend__dot bp-cal-legend__dot--arrival"></span><p class="bp-cal-legend__text">Est. arrival <span>' + fmtLong(arrival) + "</span></p></div>" +
+        "</div>"
+      );
+    }
+
     var DELIVERY_OPTIONS = [
       { key: "standard", titleStrong: "Standard", titleMedium: " | 3-5 business days", subtitle: "Maximum safety buffer", fee: "$0.50 fee", days: 5 },
       { key: "latest-safe", titleStrong: "Fast", titleMedium: " | 1-2 business days", subtitle: "Optimal cash flow", fee: "$10.00 fee", days: 2 },
@@ -1498,6 +1914,50 @@
     var pillClone = speedBadge.cloneNode(true);
     pillClone.querySelector('span').textContent = 'Arrives on time';
     document.getElementById("ag-float-pill-scaler").appendChild(pillClone);
+
+    // Calendar row (task 2b) — floating element, same clone-and-scale
+    // technique as cards 1-3 above. Unlike those cards, there's no live
+    // instance inside #mock-drawer-inner to clone from: the drawer's
+    // default state never renders the calendar (see the calendar port's
+    // own comment above), so this renders one, once, into an offscreen
+    // sandbox purely so a real slice of it can be cloned from real DOM
+    // — same "clone the live rendered element, don't re-author markup"
+    // rule the cards follow, just with a private place to render it
+    // first (removed again immediately after, never part of the
+    // visible page).
+    //
+    // withdraw/arrival below are a clean same-week Monday-to-Friday
+    // run, not Barnett's own real Standard-tier dates. Standard is 5
+    // business days, and stepping 5 business days back from ANY weekday
+    // always crosses at least one full weekend — a Monday-to-Friday
+    // span only covers 4 business days before hitting one — confirmed
+    // by computing it for every weekday, not assumed. So a real
+    // Standard range can never land inside a single calendar row/week
+    // in the first place; there is no bill in ROWS whose actual
+    // computed range would satisfy the task's own "five consecutive
+    // dates... first is range-start... last is range-end" shape.
+    // task: "Which specific dates does not matter, as long as they are
+    // consistent with each other" — so these still run through the
+    // real classifyCell() above exactly like any other date would; the
+    // start/range/range/range/end states are genuinely computed by that
+    // shared function, not hand-assigned classes.
+    state.calendar = { tab: "standard", withdraw: new Date(2025, 7, 4), arrival: new Date(2025, 7, 8) };
+    var calSandbox = document.createElement("div");
+    calSandbox.style.cssText = "position:absolute;left:-9999px;top:0;visibility:hidden;";
+    calSandbox.innerHTML = renderDeliveryCalendar(getDrawerDueDates(barnettGroup));
+    document.body.appendChild(calSandbox);
+    var calCells = calSandbox.querySelectorAll(".bp-cal-day");
+    var calRunStart = -1;
+    for (var calI = 0; calI < calCells.length; calI++) {
+      if (calCells[calI].classList.contains("bp-cal-day--start")) { calRunStart = calI; break; }
+    }
+    var calRowGrid = document.createElement("div");
+    calRowGrid.className = "ag-cal-row__grid";
+    for (var calJ = calRunStart; calJ < calRunStart + 5; calJ++) {
+      calRowGrid.appendChild(calCells[calJ].cloneNode(true));
+    }
+    document.getElementById("ag-cal-row-scaler").appendChild(calRowGrid);
+    document.body.removeChild(calSandbox);
 
     // Selected-row card overlay — same +11px offset formula as Gallery
     // 1's/Gallery 2's own selected-row-card positioning, just measured
