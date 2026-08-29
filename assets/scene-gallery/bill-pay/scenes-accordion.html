@@ -1179,7 +1179,7 @@
   .bp-cal-day__marker--end .bp-cal-day__marker-num { color: var(--bp-color-action-green); }
   .bp-cal-day__due-wrap { width: 24px; height: 24px; border-radius: var(--bp-radius-calendar-marker); box-sizing: border-box; background: var(--primitive-white); border: 1px solid var(--bp-color-calendar-due); display: flex; align-items: center; justify-content: center; padding: 2px 5px 2px 6px; }
   .bp-cal-day__num--due { font: var(--bp-text-calendar-date-strong); letter-spacing: var(--bp-calendar-letter-spacing); color: var(--bp-color-calendar-due); white-space: nowrap; }
-  .bp-cal-legend { display: flex; align-items: center; gap: 24px; padding: 8px 0; margin-top: 20px; }
+  .bp-cal-legend { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding: 8px 0; margin-top: 20px; }
   .bp-cal-legend__item { display: flex; align-items: center; gap: 8px; }
   .bp-cal-legend__dot { width: 12px; height: 12px; border-radius: 50%; box-sizing: border-box; flex-shrink: 0; }
   .bp-cal-legend__dot--withdraw { background: var(--bp-color-action-green); }
@@ -1800,7 +1800,7 @@
         "</div>" +
         '<div class="bp-cal-legend">' +
           '<div class="bp-cal-legend__item"><span class="bp-cal-legend__dot bp-cal-legend__dot--withdraw"></span><p class="bp-cal-legend__text">Withdraw <span>' + fmtLong(withdraw) + "</span></p></div>" +
-          '<div class="bp-cal-legend__item"><span class="bp-cal-legend__dot bp-cal-legend__dot--arrival"></span><p class="bp-cal-legend__text">Est. arrival <span>' + fmtLong(arrival) + "</span></p></div>" +
+          '<div class="bp-cal-legend__item"><span class="bp-cal-legend__dot bp-cal-legend__dot--arrival"></span><p class="bp-cal-legend__text">Est. arrival <span>' + fmtLong(arrival) + '</span></p><span class="bp-badge"><span>On time</span></span></div>' +
         "</div>"
       );
     }
