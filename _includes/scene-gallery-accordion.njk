@@ -1,0 +1,54 @@
+{#
+  Bill Pay — Scene gallery accordion. Replaces the chrome around Gallery 1
+  (caption row + progress bar + 650px mock) with a vertical accordion rail,
+  per the "Volume_Productivity Gallery — Accordion Restructure" build spec.
+  Does not touch the scenes themselves: the mock is the exact same
+  continuous-timeline document (assets/scene-gallery/bill-pay/scenes.html)
+  Gallery 1 already plays — this only changes what's wrapped around it. See
+  js/bill-pay/scene-gallery-accordion.js for the postMessage protocol
+  (identical shape to scene-gallery.js's, reused against the same iframe).
+
+  scene-gallery.njk / scene-gallery.css / scene-gallery.js are superseded by
+  this component and left in place, unreferenced — same pattern as
+  scene-accordion.njk superseding accordion-gallery.njk.
+
+  Tag markup/classes (.principles-tag / .principles-tag__label) are the
+  exact ones Gallery 2 uses (css/components/principles.css) — reused, not
+  duplicated, per CLAUDE.md's "reuse existing component CSS wherever
+  possible."
+
+  Layout: tag, then a row of [144px rail][50px gap][606px mock] — 800px
+  total, the article's full content column (--sga-rail-width /
+  --sga-mock-width, scene-gallery-accordion.css) — see that file's own
+  comment on .scene-gallery-accordion for why the tag/arrow sit at a fixed
+  -30px from this column's own left edge (matching Gallery 2's own
+  --sg2-overhang value, not its rendered page position).
+
+  Tag and mock share the same top
+  anchor (the tag is positioned out of flow, at the outer wrapper's own
+  top:0 — see the CSS); the rail alone starts --spacing-64 below that,
+  via its own margin-top. This needs one shared wrapper (unlike an earlier
+  build of this component, which relied on .section__slot's own gap between
+  two top-level siblings) — that approach couldn't express "tag and mock
+  share a top edge, rail doesn't" without hardcoding the tag's own rendered
+  height, which this positioning avoids entirely.
+
+  Standalone component — no section wrapper, no headline, no background.
+  Caller drops {{ sceneGalleryAccordion() }} into its own content column.
+#}
+{% macro sceneGalleryAccordion() %}
+<div class="scene-gallery-accordion">
+  <div class="scene-gallery-accordion__tag">
+    <div class="principles-tag"><p class="principles-tag__label"># Volume_Productivity</p></div>
+  </div>
+  <div class="scene-gallery-accordion__row">
+    <div class="scene-gallery-accordion__rail">
+      <div class="scene-gallery-accordion__arrow" id="scene-gallery-accordion-arrow" aria-hidden="true"></div>
+      <ol class="scene-gallery-accordion__list" id="scene-gallery-accordion-list"></ol>
+    </div>
+    <div class="scene-gallery-accordion__mock">
+      <iframe class="scene-gallery-accordion__visual" id="scene-gallery-accordion-visual" title="Bill Pay scene"></iframe>
+    </div>
+  </div>
+</div>
+{% endmacro %}

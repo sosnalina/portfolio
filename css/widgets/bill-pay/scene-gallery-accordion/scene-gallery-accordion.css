@@ -1,0 +1,241 @@
+/* Bill Pay — Scene Gallery Accordion widget (parent page). Replaces
+   scene-gallery.css's chrome (caption row, progress bar, 650px mock) around
+   the same Gallery 1 mock with a vertical accordion rail. The mock itself —
+   assets/scene-gallery/bill-pay/scenes.html — is reused unchanged (one edit
+   only: the scene-1 clone-centering fix, unrelated to this file) and is
+   never re-sized at its own document level; this file scales the whole
+   iframe element down via CSS transform instead (see .visual below), so no
+   second copy of the mock's markup/styles exists anywhere. Class names
+   prefixed scene-gallery-accordion-/scene-gallery-accordion__ so they can
+   never collide with Gallery 1's, Gallery 2's, or the exploratory
+   scene-accordion's own classes, all of which can load on this page at
+   once. Tag reuses .principles-tag/.principles-tag__label from
+   css/components/principles.css verbatim, matching Gallery 2's tag exactly
+   (no widget-owned tag styling here). */
+
+/* ---- Outer wrapper ---- */
+
+.scene-gallery-accordion {
+  /* Tag/arrow position, current (reverted) approach: match Gallery 2's own
+     --sg2-overhang VALUE (30px) and apply it the same way Gallery 2 does
+     — as a negative left offset from the tag's own immediate container's
+     left edge (there: the grey frame; here: this content column) — rather
+     than chasing Gallery 2's tag's actual rendered page position, which
+     several earlier passes tried (see git history) and which turned out
+     to be the wrong target: Gallery 2's tag is centered via a full-
+     viewport-bleed mechanism, this component's via the fixed-max-width
+     content column, so matching absolute page pixels between the two only
+     ever held at one specific viewport width, not as a general rule. This
+     is simpler and viewport-stable: --sga-tag-indent is a fixed 30px
+     regardless of viewport width, matching --sg2-overhang's own value
+     (not Gallery 2's rendered position). --sga-rail-width/--sga-mock-width
+     are back to their original split (144 + 50 + 606 = 800) — the
+     narrower-rail-to-buy-alignment-room approach from an earlier pass is
+     no longer needed now that alignment isn't chasing Gallery 2's own
+     rendered x position. */
+  --sga-tag-indent: 30px;
+  --sga-rail-width: 144px;
+  --sga-row-gap: 50px;
+  --sga-mock-width: 606px;
+
+  position: relative; /* containing block for the absolutely-positioned tag below */
+  width: 100%;
+}
+
+/* ---- Tag ---- */
+
+/* Positioned out of flow, pinned to this component's own top:0 — the same
+   top:0 the row (and, inside it, the mock) naturally sits at, since the tag
+   no longer occupies flex/document space that would otherwise push the row
+   down. This is what lets the tag and the mock share a top anchor without
+   needing to know the tag's own rendered height (padding + line-height) as
+   a magic number anywhere. */
+.scene-gallery-accordion__tag {
+  position: absolute;
+  top: 0;
+  left: calc(-1 * var(--sga-tag-indent));
+}
+
+/* ---- Rail + mock row ---- */
+
+.scene-gallery-accordion__row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sga-row-gap);
+  width: 100%;
+}
+
+/* ---- Rail ---- */
+
+.scene-gallery-accordion__rail {
+  position: relative; /* containing block for the travelling arrow */
+  width: var(--sga-rail-width);
+  flex-shrink: 0;
+  /* The rail alone starts --spacing-64 below the tag/mock's shared top
+     anchor — the mock (this rule's flex sibling) gets no such offset. */
+  margin-top: var(--spacing-64);
+}
+
+.scene-gallery-accordion__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-24);
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.scene-gallery-accordion__item {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  transition: gap 260ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.scene-gallery-accordion__item--active {
+  gap: var(--spacing-8);
+}
+
+.scene-gallery-accordion__item-name {
+  margin: 0;
+  font: var(--text-widget-step-name);
+  color: var(--primitive-black);
+  white-space: nowrap;
+  /* Safety net, not the primary defense — every real scene name is expected
+     to fit the rail's own current width (checked in JS at boot against the
+     rail's live computed width, not a hardcoded number; see
+     scene-gallery-accordion.js). If one ever doesn't, this truncates
+     visibly instead of silently bleeding past the rail's edge into the
+     tag/mock's own space. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Grid-rows trick (0fr/1fr) — same technique already proven in the parked
+   css/widgets/bill-pay/accordion-gallery/accordion-gallery.css for this
+   exact problem (a caption that appears only for the open/active item).
+   Caption markup exists in the DOM for every item, always — only this
+   wrapper's own height animates, so an item's caption never needs to be
+   measured or conditionally rendered. */
+.scene-gallery-accordion__item-caption-wrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 260ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.scene-gallery-accordion__item--active .scene-gallery-accordion__item-caption-wrap {
+  grid-template-rows: 1fr;
+}
+
+.scene-gallery-accordion__item-caption-row {
+  min-height: 0; /* required for the grid-rows trick to actually collapse to 0 */
+  overflow: hidden;
+}
+
+.scene-gallery-accordion__item-caption {
+  margin: 0;
+  font: var(--text-caption);
+  color: var(--primitive-black);
+}
+
+.scene-gallery-accordion__divider {
+  width: 100%;
+  height: 1px;
+  background: var(--primitive-disable);
+  flex-shrink: 0;
+}
+
+/* Decorative only — indicates the currently-running scene, never a control
+   (no hover/focus/active states, not a button). The shared prev/next arrow
+   asset (walkthrough-gallery.js and friends) is one SVG path combining a
+   circular ring with the arrow glyph; scene-gallery-accordion.js extracts
+   just the glyph subpath and sets the viewBox to its own tight bounding
+   box (4.400390, 5.400118, 9.199209 x 7.199787 — measured via getBBox() on
+   that subpath in isolation), so this renders at 9.199209 x 7.199787px
+   instead of the shared asset's full 18x18 (down from 18px wide before).
+   Width/height below match that measured glyph box exactly, at the same
+   1-viewBox-unit-to-1px scale the 18x18 version rendered at — not a
+   design choice, a direct consequence of the crop.
+   Position: top is fixed at 0 (rail/mock's own shared top anchor, matching
+   the tag). left shares the tag's own --sga-tag-indent (same value, same
+   calc), since the rail (this element's own position:relative containing
+   block) starts flush with this component's own left edge with no offset
+   of its own — so "-1 * --sga-tag-indent relative to the rail" and
+   "-1 * --sga-tag-indent relative to the wrapper" land at the same
+   absolute position, matching the tag exactly. Fully static: no live
+   measurement needed. translateY (vertical centering on the active
+   scene's own name line) stays runtime-computed in
+   scene-gallery-accordion.js, still deferred to document.fonts.ready —
+   see that file's own comment. */
+.scene-gallery-accordion__arrow {
+  position: absolute;
+  top: 0;
+  left: calc(-1 * var(--sga-tag-indent));
+  width: 9.199209px;
+  height: 7.199787px;
+  transition: transform 320ms cubic-bezier(0.23, 1, 0.32, 1);
+  will-change: transform;
+}
+
+.scene-gallery-accordion__arrow svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scene-gallery-accordion__item,
+  .scene-gallery-accordion__item-caption-wrap,
+  .scene-gallery-accordion__arrow {
+    transition: none;
+  }
+}
+
+/* ---- Mock ---- */
+
+/* scenes.html's own canvas is a fixed 800x452 document with the 650px-wide
+   mock centered inside it (75px clear each side — see that file's
+   .mock-scaler comment). Rather than re-scaling anything inside that
+   document (out of scope — the only allowed edit to it is the scene-1
+   clone-centering fix), this wrapper's width is the 606px slot the layout
+   math calls for, and the iframe *element* is scaled down around it via
+   CSS transform — the same technique .mock-scaler itself already uses one
+   level in, just applied one level out. overflow:visible lets the iframe's
+   own generous, already-existing 75px-per-side slack (scaled down
+   proportionally along with everything else) bleed past this 606px slot,
+   which is what actually gives the scene-1 row-lift overhang (target
+   20px + its shadow, comfortably under the ~70px available) and any other
+   scene's travel overhang somewhere to render without being clipped. */
+.scene-gallery-accordion__mock {
+  position: relative;
+  width: var(--sga-mock-width, 606px);
+  /* 1000px (mock's native height) * 606/1440 (mock's native-to-display
+     scale, i.e. 606px-wide / 1440px-native) — the mock's own display
+     height at this width, not a token but a derived geometric fact (same
+     precedent as scenes.html's own .mock-scaler transform value). */
+  height: 420.8333333333px;
+  overflow: visible;
+  flex-shrink: 0;
+}
+
+.scene-gallery-accordion__visual {
+  position: absolute;
+  top: 0;
+  /* -75px (the iframe's own native left clearance to its centered mock) *
+     606/650 (this scale-down factor) — shifts the iframe left so the
+     mock's own left edge, after scaling, lands exactly at this wrapper's
+     x:0 instead of at its scaled clearance offset. */
+  left: -69.9230769231px;
+  width: 800px;
+  height: 452px;
+  border: none;
+  transform-origin: top left;
+  /* 606 / 650 — shrinks the iframe's existing 650px-wide mock (see
+     scenes.html's own .mock-scaler, unrelated to and untouched by this
+     value) down to this component's 606px display width. Composed with
+     that internal 650/1440 scale, the net native-to-display ratio is
+     606/1440 — the same ratio used for this file's other derived values
+     above (mock height, iframe shift). */
+  transform: scale(0.9323076923);
+}

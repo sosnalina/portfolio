@@ -15,6 +15,13 @@
     id                  — optional id attribute on the first block's outer <section>
     firstExtra          — optional raw HTML inserted after firstParagraphs, replacing
                            the first block's placeholder video (e.g. via a {% set %} capture)
+    secondSection       — default true (unchanged behavior). Pass false when a page's
+                           content is fully one block (e.g. carried entirely via firstExtra)
+                           and the second, continuation <section> shouldn't exist at all —
+                           not even empty. Without this, {% call %}...{% endcall %} with an
+                           empty body still emits a real (but content-less) second section,
+                           since `caller` is truthy any time {% call %} invoked the macro,
+                           regardless of whether the block body is empty.
 
   The second block defaults to body-paragraphs + a placeholder box. When a
   page's second block needs something else (real content doesn't always fit
@@ -24,11 +31,17 @@
     {% call twoBlockHeader(heading, subheading, firstParagraphs) %}
       ...anything...
     {% endcall %}
+
+  When there's no second block at all, pass secondSection=false and use a
+  plain expression call (no {% call %}/{% endcall %} needed, since nothing
+  will ever read `caller`):
+
+    {{ twoBlockHeader(heading, subheading, firstParagraphs, firstExtra=block, secondSection=false) }}
 #}
 {% from "section.njk" import section %}
 {% from "section-header.njk" import sectionHeader %}
 {% from "section-body.njk" import sectionBody %}
-{% macro twoBlockHeader(heading, subheading, firstParagraphs, secondParagraphs=[], secondModifiers="section--green-light", id="", firstExtra="") %}
+{% macro twoBlockHeader(heading, subheading, firstParagraphs, secondParagraphs=[], secondModifiers="section--green-light", id="", firstExtra="", secondSection=true) %}
 {% call section("", id) %}
 {{ sectionHeader(heading, subheading) }}
 {% if firstParagraphs.length %}
@@ -40,6 +53,7 @@
 <div class="section-video section-video--placeholder"></div>
 {% endif %}
 {% endcall %}
+{% if secondSection %}
 {% call section(secondModifiers) %}
 {% if caller %}
 {{ caller() }}
@@ -48,4 +62,5 @@
 <div class="section-video section-video--placeholder"></div>
 {% endif %}
 {% endcall %}
+{% endif %}
 {% endmacro %}

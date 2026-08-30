@@ -1905,7 +1905,20 @@
           // the whole journey; the card's width never changes.
           restWidthNative = rowRect.width / MOCK_SCALE;
           contentWidthNative = rowEl.scrollWidth + 20;
-          baseLeftNative = (rowRect.left - screenRect.left) / MOCK_SCALE - (contentWidthNative - restWidthNative) / 2;
+          // .bp-table-wrap (left:74px, width:1287px) isn't centered in the
+          // 1440-wide screen — its content ends up with a 94px left inset
+          // vs. a 99px right inset, so row 1 itself sits 2.5px left of the
+          // screen's true center. Centering the clone's extra padding-width
+          // on the ROW's own box (as the old formula below did) inherits
+          // that 2.5px bias and doubles it into a visible left/right
+          // overhang mismatch once scaled down for display. Anchoring to
+          // the screen's true center instead cancels it, independent of
+          // this table's specific numbers (measured live, not hardcoded).
+          var rowLeftNative = (rowRect.left - screenRect.left) / MOCK_SCALE;
+          var rowCenterNative = rowLeftNative + restWidthNative / 2;
+          var screenCenterNative = screenRect.width / MOCK_SCALE / 2;
+          var centeringCorrection = screenCenterNative - rowCenterNative;
+          baseLeftNative = rowLeftNative - (contentWidthNative - restWidthNative) / 2 + centeringCorrection;
           baseTopNative = rowTops[0];
         }
       }

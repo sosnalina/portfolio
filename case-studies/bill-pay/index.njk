@@ -11,7 +11,7 @@ stylesheets:
   - ../../css/components/video.css
   - ../../css/components/image-group.css
   - ../../css/components/principles.css
-  - ../../css/widgets/bill-pay/scene-gallery/scene-gallery.css
+  - ../../css/widgets/bill-pay/scene-gallery-accordion/scene-gallery-accordion.css
   - ../../css/widgets/bill-pay/scene-gallery-2/scene-gallery-2.css
   - ../../css/widgets/bill-pay/scene-accordion/scene-accordion.css
   - ../../css/widgets/bill-pay/walkthrough-gallery/gallery.css
@@ -27,7 +27,7 @@ stylesheets:
 scripts:
   - ../../js/bill-pay/walkthrough-gallery.js
   - ../../js/bill-pay/cockpit-widget.js
-  - ../../js/bill-pay/scene-gallery.js
+  - ../../js/bill-pay/scene-gallery-accordion.js
   - ../../js/bill-pay/scene-gallery-2.js
   - ../../js/bill-pay/scene-accordion.js
 ---
@@ -39,7 +39,7 @@ scripts:
 {% from "section-visual.njk" import sectionVisual %}
 {% from "two-block-header.njk" import twoBlockHeader %}
 {% from "gallery-navigation.njk" import galleryNavigation %}
-{% from "scene-gallery.njk" import sceneGallery %}
+{% from "scene-gallery-accordion.njk" import sceneGalleryAccordion %}
 {% from "scene-gallery-2.njk" import sceneGallery2 %}
 {% from "scene-accordion.njk" import sceneAccordion %}
 
@@ -174,7 +174,11 @@ scripts:
   ]) }}
   {% endcall %}
 
-  {# 7. Designing a cockpit — header block (white, with principles row) + continuation (green, scene gallery) #}
+  {# 7. Designing a cockpit — single white block (header + principles row). No
+     second/continuation section — the gallery that used to live there is now
+     its own section below (see "Volume_Productivity accordion"), so
+     secondSection=false suppresses twoBlockHeader's second <section> entirely
+     instead of leaving a real-but-empty green one behind. #}
   {% set principlesBlock %}
   <div class="principles-block">
     <div class="principles-column">
@@ -205,7 +209,7 @@ scripts:
     "In practice, instead of trying to simplify the data or hide the complexity, the design we were going for was about getting control over it while moving at speed. We traded our minimalist, empty spaces for a high-density view, surfacing all the context needed on every action right where it happened, visible in one view."
   ]) }}
   {% endset %}
-  {% call twoBlockHeader(
+  {{ twoBlockHeader(
     "Designing a cockpit",
     "Principles & Execution",
     [
@@ -215,9 +219,17 @@ scripts:
     [],
     "section--green-light",
     "",
-    principlesBlock
-  ) %}
-  {{ sceneGallery() }}
+    principlesBlock,
+    secondSection=false
+  ) }}
+
+  {# Volume_Productivity accordion — replaces the chrome around Gallery 1
+     (caption row, progress bar, 650px mock) with a vertical accordion
+     rail; the mock itself (assets/scene-gallery/bill-pay/scenes.html) is
+     unchanged. Own section directly below "Designing a cockpit" (badge
+     06), unheadered so it doesn't consume a section-header badge number. #}
+  {% call section("section--green-light") %}
+  {{ sceneGalleryAccordion() }}
   {% endcall %}
 
   {# Accordion gallery — exploratory variant, placed above Gallery 2
