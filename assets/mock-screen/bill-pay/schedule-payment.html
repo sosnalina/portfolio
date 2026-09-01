@@ -125,7 +125,7 @@
         --bp-text-speed-tab: 400 14px/24px var(--bp-font-body);
         --bp-text-legend: 400 13px/1.5 var(--bp-font-body);
         --bp-text-show-more: 600 14px/20px var(--bp-font-body);
-        --bp-text-tooltip: 400 12px/16px var(--bp-font-body);
+        --bp-text-tooltip: 400 12px/14px var(--bp-font-body);
 
         /* Motion — the only source of truth for timing/easing (spec §7) */
         --bp-ease-toggle: cubic-bezier(0.4, 0, 0.2, 1);
@@ -955,6 +955,9 @@
         text-transform: uppercase;
         color: var(--primitive-white);
       }
+      .bp-badge--overdue {
+        background: var(--bp-color-calendar-due);
+      }
       .bp-speed__meta {
         display: flex;
         align-items: center;
@@ -1650,20 +1653,39 @@
       .bp-cal-day__num--past {
         color: var(--bp-color-calendar-past-text);
       }
-      .bp-cal-day--range,
-      .bp-cal-day--mid-left,
-      .bp-cal-day--mid-right {
+      /* ---- Range band (mutually exclusive grey/orange fills) and
+         row-edge caps — both independent of what mark (if any) sits on top.
+         On-time and overdue-before-the-due-date read as the same grey — a
+         green on-time band was tried and reverted, so orange stays the
+         only color signal (overdue, from the due date to arrival). Orange
+         is raw hex per this pass's brief: the mock is a standalone visual
+         reproduction, not the portfolio's tokenized design system, so it's
+         intentionally not a --bp-* token. */
+      .bp-cal-day--band-grey {
         background: var(--bp-color-calendar-range-bg);
       }
-      .bp-cal-day--mid-left {
+      .bp-cal-day--band-orange {
+        background: #ffd5b0;
+      }
+      /* Due-date cell mid-range: grey/orange hard stop at the cell's
+         horizontal center, aligned with the due marker sitting on top. */
+      .bp-cal-day--band-grad-due {
+        background: linear-gradient(to right, var(--bp-color-calendar-range-bg) 50%, #ffd5b0 50%);
+      }
+      /* Arrival cell: only the left half is actually "inside" the range —
+         the right half fades to transparent rather than implying the band
+         continues past the arrival date. */
+      .bp-cal-day--band-grad-arrival-orange {
+        background: linear-gradient(to right, #ffd5b0 50%, transparent 50%);
+      }
+      .bp-cal-day--band-grad-arrival-grey {
+        background: linear-gradient(to right, var(--bp-color-calendar-range-bg) 50%, transparent 50%);
+      }
+      .bp-cal-day--cap-left {
         border-radius: var(--bp-radius-calendar-mid) 0 0 var(--bp-radius-calendar-mid);
       }
-      .bp-cal-day--mid-right {
+      .bp-cal-day--cap-right {
         border-radius: 0 var(--bp-radius-calendar-mid) var(--bp-radius-calendar-mid) 0;
-      }
-      .bp-cal-day--start,
-      .bp-cal-day--end {
-        background: var(--bp-color-calendar-range-bg);
       }
       .bp-cal-day--start {
         border-radius: var(--bp-radius-calendar-marker) 0 0 var(--bp-radius-calendar-marker);
@@ -1680,12 +1702,14 @@
         align-items: center;
         justify-content: center;
       }
+      /* Withdraw = solid black (certain/committed); est. arrival = black
+         outline (estimated) — was green/green-outline. */
       .bp-cal-day__marker--start {
-        background: var(--bp-color-action-green);
+        background: var(--primitive-black);
       }
       .bp-cal-day__marker--end {
         background: var(--primitive-white);
-        border: 1px solid var(--bp-color-action-green);
+        border: 1px solid var(--primitive-black);
       }
       .bp-cal-day__marker-num {
         font: var(--bp-text-calendar-date-strong);
@@ -1695,15 +1719,16 @@
         color: var(--primitive-white);
       }
       .bp-cal-day__marker--end .bp-cal-day__marker-num {
-        color: var(--bp-color-action-green);
+        color: var(--primitive-black);
       }
+      /* Due date = solid orange fill (was outlined) — opaque, sits on top
+         of whatever range band is behind it. */
       .bp-cal-day__due-wrap {
         width: 24px;
         height: 24px;
         border-radius: var(--bp-radius-calendar-marker);
         box-sizing: border-box;
-        background: var(--primitive-white);
-        border: 1px solid var(--bp-color-calendar-due);
+        background: var(--bp-color-calendar-due);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -1712,7 +1737,7 @@
       .bp-cal-day__num--due {
         font: var(--bp-text-calendar-date-strong);
         letter-spacing: var(--bp-calendar-letter-spacing);
-        color: var(--bp-color-calendar-due);
+        color: var(--primitive-white);
         white-space: nowrap;
       }
 
@@ -1738,11 +1763,14 @@
         flex-shrink: 0;
       }
       .bp-cal-legend__dot--withdraw {
-        background: var(--bp-color-action-green);
+        background: var(--primitive-black);
       }
       .bp-cal-legend__dot--arrival {
         background: var(--primitive-white);
-        border: 1px solid var(--bp-color-action-green);
+        border: 1px solid var(--primitive-black);
+      }
+      .bp-cal-legend__dot--due {
+        background: var(--bp-color-calendar-due);
       }
       .bp-cal-legend__text {
         margin: 0;
@@ -1754,50 +1782,93 @@
         font: var(--bp-text-calendar-date-strong);
       }
 
-      /* ---- bp-tool-tip (node 3013:121336) — structure only, per spec §6.6
-         this pass builds the component ready to wire but does not attach
-         hover triggers/content/display logic. Unused until a future pass. ---- */
+      /* ---- bp-tool-tip (node 3013:121336) — mounted as a child of a
+         .bp-cal-day date cell by schedule-payment.js's showTooltip()/
+         hideTooltip(). This is a standalone visual reproduction, not the
+         portfolio's design system (Hadar, unblocking this task) - values
+         below are the raw pixel values as given, not portfolio/bp
+         tokens. Trigger timing and content are the scene script's job
+         (deferred, per spec) - this only defines what renders once
+         something calls showTooltip().
+
+         .bp-tooltip itself is a zero-size coordinate anchor, not a
+         visible box: width/height:0, positioned via the cell's own
+         position:relative at left:50% (the cell's exact horizontal
+         center - the date number, since .bp-cal-day centers its content
+         both axes). The needle (.bp-tooltip__beak-wrap) is centered on
+         that same zero point via a fixed -4.5px margin (half its own
+         9px width) in EVERY variant, so "needle always centred on the
+         date number" holds unconditionally, not just approximately.
+
+         The bubble is a SEPARATE absolutely-positioned child of that
+         same anchor, free to sit off-center from the needle - this is
+         what "the bubble shifts left or right of the needle" means: for
+         a 24px-ish-wide cell, the needle's own footprint (padding +
+         icon) is wider than half the cell, so anchoring the bubble AT
+         the cell's center too (like the needle) would push a left/right-
+         edge cell's bubble past the calendar's boundary - confirmed via
+         computed-style measurement, not assumed. Anchoring the bubble
+         instead at the needle's edge (left variant: bubble's own left
+         edge = anchor, extends right; right variant: mirrored) keeps
+         the whole bubble inside the calendar for the columns that
+         actually need it (0 and 6), while the needle stays exactly on
+         the cell regardless. ---- */
       .bp-tooltip {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        width: 71px;
+        position: absolute;
+        bottom: calc(100% + 6px);
+        left: 50%;
+        width: 0;
+        height: 0;
+        overflow: visible;
+        pointer-events: none;
       }
+      /* Bubble sizes to its text, wrapping only past 123px - one rule
+         covers both a short single-line string (bubble hugs it, well
+         under 123px, no wrap) and a long one (wraps, capped at 123px).
+         No size parameter on renderTooltip() - the CSS alone decides. */
       .bp-tooltip__bubble {
+        position: absolute;
+        bottom: 6px;
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 4px;
+        max-width: 123px;
+        width: max-content;
+        padding: 5px 4px;
         border-radius: 5px;
         background: var(--primitive-black);
+      }
+      .bp-tooltip--middle .bp-tooltip__bubble {
+        left: 0;
+        transform: translateX(-50%);
+      }
+      .bp-tooltip--left .bp-tooltip__bubble {
+        left: 0;
+      }
+      .bp-tooltip--right .bp-tooltip__bubble {
+        right: 0;
       }
       .bp-tooltip__text {
         margin: 0;
         font: var(--bp-text-tooltip);
         color: var(--primitive-white);
-        white-space: nowrap;
+        white-space: normal;
       }
       .bp-tooltip__beak-wrap {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        margin-left: -4.5px;
         display: flex;
         align-items: center;
+        justify-content: center;
+        width: 9px;
         height: 6px;
-        width: 100%;
-        box-sizing: border-box;
-        padding: 0 15px;
       }
       .bp-tooltip__beak-wrap img {
         display: block;
         width: 9px;
         height: 6px;
-      }
-      .bp-tooltip--left .bp-tooltip__beak-wrap {
-        justify-content: flex-start;
-      }
-      .bp-tooltip--middle .bp-tooltip__beak-wrap {
-        justify-content: center;
-      }
-      .bp-tooltip--right .bp-tooltip__beak-wrap {
-        justify-content: flex-end;
       }
 
       .bp-note-field {

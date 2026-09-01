@@ -743,59 +743,121 @@
     return cells;
   }
 
-  /* Priority (highest first): adjacent-month padding -> exact marker date
-     (withdraw/arrival) -> mid-range fill (row-edge continuation gets
-     rounded mid-left/mid-right, per \u00a76.6's "each row's segment must abut
-     cleanly") -> due-date mark -> weekend (Past Month treatment) -> normal
-     clickable weekday. Due dates always fall on/after arrival by
-     construction (arrival = earliest due date - 1), so they never collide
-     with the withdraw/arrival markers or the gray range fill. */
-  function classifyCell(cell, withdraw, arrival, dueDates) {
-    if (!cell.inMonth) return { variant: "past", clickable: false };
+  /* Three orthogonal concerns per cell, computed independently:
+     - mark: what's drawn INSIDE the cell (start/end/due marker, plain
+       number, or nothing) \u2014 priority highest-first: adjacent-month padding
+       -> exact marker date (withdraw/arrival) -> due-date mark -> in-range
+       fill ("range", no inner mark) -> weekend outside the range (Past
+       Month treatment) -> normal clickable weekday.
+     - band: the cell's background fill. Green/grey/orange are mutually
+       exclusive per the delivery-color spec: on-time ranges are solid
+       green throughout; overdue ranges are grey up to the due date (the
+       earliest due date in scope \u2014 see splitDate below) then orange from
+       there to arrival. The due-date cell itself and the arrival cell each
+       get a hard-stop half gradient rather than a flat fill (arrival is
+       always a business day, so it can never land in column 0/6 and need
+       a row-edge cap; a due date can, see cap below).
+     - cap: row-edge rounding for a range cell that continues into/from an
+       adjacent grid row (column 0 = receives from the row above, rounded
+       left; column 6 = continues into the row below, rounded right) \u2014
+       independent of what's drawn inside, so a due-date mark landing on a
+       Sunday/Saturday gets both the due gradient AND the matching cap.
+     Due dates can now render strictly inside a range (previously
+     impossible when arrival was always <= every due date by construction;
+     user-picked withdraw dates or the Fast/Instant tabs can push arrival
+     past a due date, which is exactly the overdue case this exists for). */
+  function classifyCell(cell, withdraw, arrival, dueDates, splitDate, overdue) {
+    if (!cell.inMonth) return { mark: "past", clickable: false, band: "none", cap: "none" };
     var t = cell.date.getTime();
     var w = withdraw.getTime();
     var a = arrival.getTime();
-    if (t === w) return { variant: "start", clickable: true };
-    if (t === a) return { variant: "end", clickable: true };
-    if (t > w && t < a) {
-      if (cell.col === 0) return { variant: "mid-left", clickable: false };
-      if (cell.col === 6) return { variant: "mid-right", clickable: false };
-      return { variant: "range", clickable: false };
-    }
+    var inRange = t >= w && t <= a;
+    var isWeekend = cell.col === 0 || cell.col === 6;
     var isDue = dueDates.some(function (d) {
       return d.getTime() === t;
     });
-    if (isDue) return { variant: "due", clickable: true };
-    var isWeekend = cell.col === 0 || cell.col === 6;
-    if (isWeekend) return { variant: "past", clickable: false };
-    return { variant: "normal", clickable: true };
+    var mark, clickable;
+    if (t === w) {
+      mark = "start";
+      clickable = true;
+    } else if (t === a) {
+      mark = "end";
+      clickable = true;
+    } else if (isDue) {
+      mark = "due";
+      clickable = true;
+    } else if (inRange) {
+      /* Every business day is a valid pick, whether or not it currently
+         sits inside the committed range — only weekends (and, above,
+         adjacent-month padding) stay non-clickable. Previously this whole
+         branch was hardcoded non-clickable, which made every weekday
+         already inside the range unreachable — a bug, not a design
+         choice: nothing about being inside the current range should make
+         a date invalid to re-pick. */
+      mark = "range";
+      clickable = !isWeekend;
+    } else if (isWeekend) {
+      mark = "past";
+      clickable = false;
+    } else {
+      mark = "normal";
+      clickable = true;
+    }
+
+    /* On-time and overdue-before-the-due-date both read as the same grey
+       — green was tried and reverted; orange is the only color signal
+       (overdue, from the due date to arrival). */
+    var band = "none";
+    if (mark === "end") {
+      band = overdue ? "grad-arrival-orange" : "grad-arrival-grey";
+    } else if (inRange) {
+      if (overdue && t > splitDate) {
+        band = "orange";
+      } else if (overdue && t === splitDate) {
+        band = "grad-due";
+      } else {
+        band = "grey";
+      }
+    }
+
+    var cap = "none";
+    if (inRange && mark !== "start" && mark !== "end") {
+      if (cell.col === 0) cap = "left";
+      else if (cell.col === 6) cap = "right";
+    }
+
+    return { mark: mark, clickable: clickable, band: band, cap: cap };
+  }
+
+  function cellMarkup(v, day) {
+    var classes = ["bp-cal-day", "bp-cal-day--" + v.mark];
+    if (v.band !== "none") classes.push("bp-cal-day--band-" + v.band);
+    if (v.cap !== "none") classes.push("bp-cal-day--cap-" + v.cap);
+    var inner;
+    if (v.mark === "start" || v.mark === "end") {
+      inner = '<span class="bp-cal-day__marker bp-cal-day__marker--' + v.mark + '"><span class="bp-cal-day__marker-num">' + day + "</span></span>";
+    } else if (v.mark === "due") {
+      inner = '<span class="bp-cal-day__due-wrap"><span class="bp-cal-day__num--due">' + day + "</span></span>";
+    } else {
+      var numCls = v.mark === "past" ? "bp-cal-day__num bp-cal-day__num--past" : "bp-cal-day__num";
+      inner = '<span class="' + numCls + '">' + day + "</span>";
+    }
+    return { className: classes.join(" "), inner: inner };
   }
 
   function renderCalendarCell(cell, v) {
     var day = cell.date.getDate();
     var iso = cell.date.getFullYear() + "-" + pad2(cell.date.getMonth() + 1) + "-" + pad2(cell.date.getDate());
+    var built = cellMarkup(v, day);
     var pick = v.clickable ? ' data-cal-pick="' + iso + '"' : "";
-    if (v.variant === "start" || v.variant === "end") {
-      return (
-        '<div class="bp-cal-day bp-cal-day--' + v.variant + '"' + pick + ">" +
-          '<span class="bp-cal-day__marker bp-cal-day__marker--' + v.variant + '">' +
-            '<span class="bp-cal-day__marker-num">' + day + "</span>" +
-          "</span>" +
-        "</div>"
-      );
-    }
-    if (v.variant === "due") {
-      return (
-        '<div class="bp-cal-day bp-cal-day--due"' + pick + ">" +
-          '<span class="bp-cal-day__due-wrap"><span class="bp-cal-day__num--due">' + day + "</span></span>" +
-        "</div>"
-      );
-    }
-    var numCls = v.variant === "past" ? "bp-cal-day__num bp-cal-day__num--past" : "bp-cal-day__num";
-    return '<div class="bp-cal-day bp-cal-day--' + v.variant + '"' + pick + '><span class="' + numCls + '">' + day + "</span></div>";
+    return (
+      '<div class="' + built.className + '" data-cal-date="' + iso + '" data-cal-col="' + cell.col + '" data-cal-in-month="' + cell.inMonth + '"' + pick + ">" +
+        built.inner +
+      "</div>"
+    );
   }
 
-  function renderCalendarColumn(year, month, withdraw, arrival, dueDates) {
+  function renderCalendarColumn(year, month, withdraw, arrival, dueDates, splitDate, overdue) {
     var cells = buildMonthGrid(year, month);
     var label = MONTH_NAMES[month] + " " + year;
     return (
@@ -809,17 +871,70 @@
           '<div class="bp-cal-dow-header"><span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span></div>' +
           '<div class="bp-cal-divider-h"></div>' +
           '<div class="bp-cal-grid">' +
-            cells.map(function (c) { return renderCalendarCell(c, classifyCell(c, withdraw, arrival, dueDates)); }).join("") +
+            cells.map(function (c) { return renderCalendarCell(c, classifyCell(c, withdraw, arrival, dueDates, splitDate, overdue)); }).join("") +
           "</div>" +
         "</div>" +
       "</div>"
     );
   }
 
+  /* Re-derives every cell's classification for a (possibly previewed)
+     withdraw/arrival pair and mutates each cell IN PLACE (className +
+     innerHTML only \u2014 never removes/replaces the cell node itself). This is
+     what makes the hover preview safe: the hovered element's own identity
+     never changes, so mutating it can't trigger a spurious mouseleave that
+     would fight the hover handler that just ran. Legend dates and the
+     overdue/on-time badge update the same way; showBadge is false during
+     hover (\u00a76 \u2014 the badge disappears rather than showing a stale verdict
+     while the range previews a different one). */
+  function updateCalendarView(dueDates, withdraw, arrival, showBadge) {
+    var splitDate = dueDates[0].getTime();
+    var overdue = isDeliveryOverdue(arrival, dueDates);
+    var cells = els.drawerInner.querySelectorAll(".bp-cal-day[data-cal-date]");
+    for (var i = 0; i < cells.length; i++) {
+      var cellEl = cells[i];
+      var iso = cellEl.getAttribute("data-cal-date");
+      var parts = iso.split("-");
+      var d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+      var col = parseInt(cellEl.getAttribute("data-cal-col"), 10);
+      var inMonth = cellEl.getAttribute("data-cal-in-month") === "true";
+      var v = classifyCell({ date: d, col: col, inMonth: inMonth }, withdraw, arrival, dueDates, splitDate, overdue);
+      var built = cellMarkup(v, d.getDate());
+      cellEl.className = built.className;
+      cellEl.innerHTML = built.inner;
+      if (v.clickable) cellEl.setAttribute("data-cal-pick", iso);
+      else cellEl.removeAttribute("data-cal-pick");
+    }
+    var wSpan = els.drawerInner.querySelector(".bp-cal-legend__text--withdraw span");
+    var aSpan = els.drawerInner.querySelector(".bp-cal-legend__text--arrival span");
+    if (wSpan) wSpan.textContent = fmtLong(withdraw);
+    if (aSpan) aSpan.textContent = fmtLong(arrival);
+    var badgeEl = els.drawerInner.querySelector(".bp-cal-legend__badge");
+    if (badgeEl) {
+      if (!showBadge) {
+        badgeEl.style.display = "none";
+      } else {
+        badgeEl.style.display = "";
+        badgeEl.classList.toggle("bp-badge--overdue", overdue);
+        badgeEl.querySelector("span").textContent = overdue ? "Overdue" : "On time";
+      }
+    }
+  }
+
+  /* On time only if arrival lands on/before every due date in the payment;
+     one late due date (bulk, multiple bills) makes the whole thing overdue. */
+  function isDeliveryOverdue(arrival, dueDates) {
+    return dueDates.some(function (d) {
+      return arrival.getTime() > d.getTime();
+    });
+  }
+
   function renderDeliveryCalendar(dueDates) {
     var cal = state.drawer.calendar;
     var withdraw = cal.withdraw;
     var arrival = cal.arrival;
+    var splitDate = dueDates[0].getTime();
+    var overdue = isDeliveryOverdue(arrival, dueDates);
     return (
       '<div class="bp-speed-tabs">' +
         SPEED_TABS.map(function (t, i) {
@@ -833,19 +948,20 @@
       "</div>" +
       '<div class="bp-cal-row">' +
         CALENDAR_MONTHS.map(function (m, idx) {
-          return renderCalendarColumn(m.year, m.month, withdraw, arrival, dueDates) + (idx === 0 ? '<div class="bp-cal-divider-v"></div>' : "");
+          return renderCalendarColumn(m.year, m.month, withdraw, arrival, dueDates, splitDate, overdue) + (idx === 0 ? '<div class="bp-cal-divider-v"></div>' : "");
         }).join("") +
       "</div>" +
       '<div class="bp-cal-legend">' +
-        '<div class="bp-cal-legend__item"><span class="bp-cal-legend__dot bp-cal-legend__dot--withdraw"></span><p class="bp-cal-legend__text">Withdraw <span>' + fmtLong(withdraw) + "</span></p></div>" +
-        '<div class="bp-cal-legend__item"><span class="bp-cal-legend__dot bp-cal-legend__dot--arrival"></span><p class="bp-cal-legend__text">Est. arrival <span>' + fmtLong(arrival) + '</span></p><span class="bp-badge"><span>On time</span></span></div>' +
+        '<div class="bp-cal-legend__item"><span class="bp-cal-legend__dot bp-cal-legend__dot--due"></span><p class="bp-cal-legend__text bp-cal-legend__text--due">Due Date <span>' + fmtLong(dueDates[0]) + "</span></p></div>" +
+        '<div class="bp-cal-legend__item"><span class="bp-cal-legend__dot bp-cal-legend__dot--withdraw"></span><p class="bp-cal-legend__text bp-cal-legend__text--withdraw">Withdraw <span>' + fmtLong(withdraw) + "</span></p></div>" +
+        '<div class="bp-cal-legend__item"><span class="bp-cal-legend__dot bp-cal-legend__dot--arrival"></span><p class="bp-cal-legend__text bp-cal-legend__text--arrival">Est. arrival <span>' + fmtLong(arrival) + '</span></p><span class="bp-badge bp-cal-legend__badge' + (overdue ? " bp-badge--overdue" : "") + '"><span>' + (overdue ? "Overdue" : "On time") + "</span></span></div>" +
       "</div>"
     );
   }
 
   function renderRadioGroup(dueDates) {
     var earliestDue = dueDates[0];
-    var baseArrival = addDays(earliestDue, -1);
+    var baseArrival = normalizeArrival(addDays(earliestDue, -1));
     var selected = state.drawer.selectedRadio;
     return (
       '<div class="bp-radio-group">' +
@@ -876,9 +992,10 @@
     );
   }
 
-  /* bp-tool-tip (node 3013:121336) \u2014 structure only, per spec \u00a76.6: ready
-     to wire (CSS above + this render helper), intentionally not called
-     from anywhere yet. No hover trigger, no content logic in this pass. */
+  /* bp-tool-tip (node 3013:121336) \u2014 mounted as a child of a specific
+     .bp-cal-day cell via showTooltip()/hideTooltip() below. Trigger timing
+     and content are the scene script's job (deferred, per spec \u00a76.6) -
+     this only defines what renders once something calls showTooltip(). */
   function renderTooltip(text, position) {
     return (
       '<div class="bp-tooltip bp-tooltip--' + position + '">' +
@@ -886,6 +1003,45 @@
         '<div class="bp-tooltip__beak-wrap"><img src="' + ICONS + 'calendar/tooltip-beak.svg" alt="" /></div>' +
       "</div>"
     );
+  }
+
+  /* Column within the 7-wide calendar grid (0 = Sunday .. 6 = Saturday),
+     derived from the cell's own DOM position - .bp-cal-grid is a flat
+     42-cell run (buildMonthGrid()/renderCalendarColumn()), Sunday-first -
+     rather than a stored attribute, so wiring the tooltip touches nothing
+     in renderCalendarCell()/classifyCell(). Positional, not day-name-based:
+     column 0 is always "leftmost" regardless of which date lands there. */
+  function calendarCellColumn(cellEl) {
+    var siblings = cellEl.parentElement.children;
+    return Array.prototype.indexOf.call(siblings, cellEl) % 7;
+  }
+
+  function calendarTooltipVariant(cellEl) {
+    var col = calendarCellColumn(cellEl);
+    if (col === 0) return "left";
+    if (col === 6) return "right";
+    return "middle";
+  }
+
+  /* Shows a tooltip on any calendar date cell - clickable ([data-cal-pick])
+     or not (weekends, adjacent-month "Past Month" cells: classifyCell()
+     never gives them a class/attribute beyond their existing variant, and
+     this doesn't add one either - only appends a sibling node inside the
+     cell, so a non-clickable cell carrying a tooltip gains zero styling or
+     interaction change). One tooltip at a time: mounts fresh (removing any
+     previous one first) rather than tracking/reusing a persistent node,
+     since the calendar itself is wholesale-rebuilt on tab switch or date
+     pick (renderDeliveryCalendar()) - a kept reference would go stale the
+     moment that happens. */
+  function showTooltip(cellEl, text) {
+    hideTooltip();
+    if (!cellEl) return;
+    cellEl.insertAdjacentHTML("beforeend", renderTooltip(text, calendarTooltipVariant(cellEl)));
+  }
+
+  function hideTooltip() {
+    var existing = q(".bp-tooltip");
+    if (existing) existing.remove();
   }
 
   function renderDrawerDefault() {
@@ -976,6 +1132,45 @@
           state.drawer.calendar.withdraw = picked;
           state.drawer.calendar.arrival = addBusinessDays(picked, tabDef.days);
           renderDrawerDefault();
+        });
+        /* §6 hover preview — mutates cells in place via updateCalendarView()
+           rather than re-rendering the drawer, so the hovered element is
+           never removed/replaced and mouseenter/mouseleave can't fight each
+           other. Guards on a missing data-cal-pick because a cell's own
+           pickability can change mid-hover (this cell's listener stays
+           attached even if the preview it triggered made some OTHER cell
+           non-clickable, but never this one — this cell is always the new
+           withdraw mark itself, always clickable — the guard exists for
+           symmetry/safety, not a case that fires today). */
+        pickable[pi].addEventListener("mouseenter", function (e) {
+          var iso = e.currentTarget.getAttribute("data-cal-pick");
+          if (!iso) return;
+          var parts = iso.split("-");
+          var hovered = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+          var tabDef = SPEED_TABS.filter(function (t) { return t.key === state.drawer.calendar.tab; })[0];
+          var previewArrival = addBusinessDays(hovered, tabDef.days);
+          updateCalendarView(dueDates, hovered, previewArrival, false);
+        });
+        pickable[pi].addEventListener("mouseleave", function () {
+          updateCalendarView(dueDates, state.drawer.calendar.withdraw, state.drawer.calendar.arrival, true);
+        });
+      }
+      /* §6.6 weekend tooltip — the coloured range answers "would this
+         arrive late," not "why didn't moving back two days help" (a
+         weekend in between doesn't count as a business day, which is a
+         rule, not a state, and needs words). Column 0/6 is always
+         Sunday/Saturday regardless of which month's padding is showing
+         there, so this is keyed off data-cal-col, not day-in-month.
+         Weekend cells stay exactly as non-clickable as before — no
+         data-cal-pick, no listener added by the pickable loop above —
+         this only adds the tooltip, nothing else about them changes. */
+      var weekendCells = els.drawerInner.querySelectorAll('.bp-cal-day[data-cal-col="0"], .bp-cal-day[data-cal-col="6"]');
+      for (var wi = 0; wi < weekendCells.length; wi++) {
+        weekendCells[wi].addEventListener("mouseenter", function (e) {
+          showTooltip(e.currentTarget, "Bank transfers only move on business days");
+        });
+        weekendCells[wi].addEventListener("mouseleave", function () {
+          hideTooltip();
         });
       }
     }

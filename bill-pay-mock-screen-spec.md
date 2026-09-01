@@ -173,9 +173,11 @@ Each of the three speed radios shows "Withdraw MM/DD → Arrives MM/DD" computed
 **Calendar UI structure (Custom view):**
 - Top: 3 tabs — Standard $0.50 / Fast $10.00 / Instant $15.00 (each showing its fee). Default active tab: Standard.
 - Body: 2 calendars side by side (August 2025 + September 2025, matching the mock data date range). Vertical divider between them.
-- Bottom: legend — 2 rows, each a colored dot + dynamic text:
-  - "Withdraw [selected date]"
-  - "Est. arrival [computed date]"
+- Bottom: legend — 3 rows, top to bottom, each a colored dot + label + dynamic date, long form `Mon DD, YYYY` (e.g. "Sep 9, 2025") — a different format from the radios' and table's short `MM/DD`, intentional:
+  1. "Due Date [bill's due date]" — dot solid orange (`--bp-color-calendar-due`). For a bulk drawer (multiple due dates in scope), this row shows the **earliest** due date — the same one used as the range/orange split boundary (see Marks below).
+  2. "Withdraw [selected date]" — dot solid `--primitive-black`
+  3. "Est. arrival [computed date]" — dot outlined `--primitive-black`; carries the on-time/overdue badge as a trailing element on the same row
+  Same label weight/date weight/spacing across all three rows; the gap between any two adjacent rows is identical (all three share the legend's own flex `gap`, so this holds automatically regardless of order).
 
 **Calendar composition (each of the 2 calendars):**
 Stacked vertically:
@@ -194,11 +196,25 @@ Stacked vertically:
 - August 2025 + September 2025 with correct days of week. The current Figma mock shows "28" on every cell — that's placeholder. Use real calendar dates.
 
 **Marks (per drawer's scope — batch = 1 bill, bulk = N bills for the vendor):**
-- 1 Range start mark = withdrawal date (user-picked or default-computed)
-- 1 Range end mark = arrival date (computed)
-- Range cells (gray) fill weekdays between withdrawal and arrival
-- N Due date marks (orange), one per bill in the drawer's scope
+- 1 Range start mark = withdrawal date (user-picked or default-computed) — solid, `--primitive-black`.
+- 1 Range end mark = arrival date (computed) — outlined, `--primitive-black`.
+- Range cells fill every day (not just weekdays — the range includes weekends it spans) between withdrawal and arrival, colored per the range-color rules below.
+- N Due date marks — solid fill, orange (`--bp-color-calendar-due`) — one per bill in the drawer's scope. Marks are opaque and always render on top of whatever range-band color sits behind them, including when a due date lands strictly inside the range (see below — previously this couldn't happen because arrival was always on/before every due date by construction; a user-picked withdrawal or a faster tier can now push arrival past a due date, and the mark must still render correctly there).
 - **Collision rule:** if two bills share the same due date, they collapse to ONE mark on that cell (not stacked).
+
+**Range colors — orange is the only verdict signal:**
+On-time and overdue-before-the-due-date read as the same grey. Orange (`#FFD5B0`) is the sole color signal, appearing only for the overdue portion of a range — from the due date to arrival. A green on-time band was tried and reverted; `#DDF0DB` does not appear anywhere in the codebase.
+- **On-time** (arrival on/before every due date in scope): the whole range, withdrawal through arrival, is solid grey (`--bp-color-calendar-range-bg`). The due-date mark inside an on-time range carries no gradient — it's either outside the range entirely, or sitting inside the uniformly grey span.
+- **Overdue** (arrival falls after the earliest due date in scope — the same due date always drives this, since due dates are deduped/sorted ascending and the earliest one is always the first to be exceeded): the range is grey from withdrawal up to that due date, then `#FFD5B0` (orange) from the due date to arrival.
+- **Due-date cell, overdue only:** a hard-stop gradient, not a blend — grey on the left half, `#FFD5B0` on the right half, split at the cell's horizontal center (aligned with the due mark sitting on top of it).
+- **Arrival (est. arrival) cell:** always a hard-stop half gradient, left half only — `#FFD5B0` fading to transparent when overdue, grey fading to transparent when on-time. The right half is never filled; arrival is the edge of the range, not its middle.
+- **Row-edge cells** (range spans a week boundary — see "Range fill is continuous" below): take the color of whichever side of the split they fall on (grey throughout if on-time; grey before the due date, orange from the due date on, if overdue). If the due date itself lands on a row edge (Sunday = first column, or Saturday = last column), that cell gets both the gradient split above AND the row's rounded end cap on the matching side (grey→left cap on a Sunday due date, orange→right cap on a Saturday due date) — arrival can never do this since it's always a business day and can't land in the first/last column.
+
+**Hover preview:**
+Hovering a valid (clickable) calendar date previews the range that date would produce if picked — nothing commits until click:
+- The range recolors for the hovered date per the rules above, and the legend's Withdraw/Est. arrival dates update to the previewed values.
+- The on-time/overdue badge disappears entirely during hover (no verdict text while the range is mid-preview — showing the *committed* verdict next to a *previewed* range would put two contradictory answers on screen at once). The Due Date legend row is unaffected — the due date itself doesn't change.
+- Hovering out with no click reverts everything, badge included. Clicking commits the previewed state and the badge returns showing the committed verdict.
 
 **Default dates when entering Custom (business buffer logic):**
 - **Batch drawer (1 bill):** arrival = bill's due date − 1 day, rolled BACK to the previous business day if that lands on a weekend; withdrawal = normalized arrival − 5 business days (Standard tab default).
@@ -212,22 +228,24 @@ Stacked vertically:
 - Instant → 0 business days (same day — arrival lands on the withdraw date)
 
 **User interactions:**
+- Hover a valid calendar date → previews the range that date would produce, without committing. See "Hover preview" above. This includes dates that currently sit inside the committed range — being part of the active range does not make a date invalid to re-pick; there is no exception for it (see Fix, below).
 - Click a valid calendar date → sets that as withdrawal date. Arrival auto-updates.
 - Switch tabs → arrival recomputes with new N. Withdrawal persists across tab switches.
 - Only the withdrawal date is user-controlled. Arrival and due date marks are display-only.
+- **Fix (in-range weekdays were unreachable):** every business day in the grid is hoverable/clickable regardless of whether it currently sits inside the range — this was previously bugged (`classifyCell`'s in-range branch hardcoded `clickable: false` for every cell strictly between withdrawal and arrival, weekday or weekend, so a weekday already inside the range had no way to be re-picked). Fixed by keying `clickable` off weekday/weekend for in-range cells the same way it already was for out-of-range cells, instead of off range membership.
 
-**Non-clickable cells (rendered in Past Month style — grayed out):**
-- Weekend cells (Saturday, Sunday) — not valid withdrawal dates.
+**Non-clickable cells (rendered in Past Month style — grayed out, or, if inside the current range, in the range's own band color):**
+- Weekend cells (Saturday, Sunday) — not valid withdrawal dates, in range or not.
 - Dates from adjacent months showing at grid edges (visual overflow of prior/next month) — already what "Past Month" style is for.
-- Both use the same visual treatment; both are non-clickable.
+- Both use the same visual treatment when outside the range; both are non-clickable regardless of range membership.
 
-**Tooltip component (structure only — do NOT wire up hover behavior yet):**
+**Weekend tooltip (`bp-tool-tip`, wired):**
+- Fires on hover over any weekend cell (Saturday or Sunday) in the date grid, in-range or not — no other cell type shows a tooltip. Copy: "Bank transfers only move on business days." Weekend cells stay exactly as non-clickable as ever — no `cursor: pointer`, no other affordance; the tooltip is the only thing that changes.
+- Why: the colored range answers "would this arrive late," not "why didn't moving back two days help" — that happens because an intervening weekend doesn't count as business days. That's a rule, not a state, and needs words. Weekends are 2 of 7 columns and only trigger on hover, so this fires rarely, which is deliberate.
 - `bp-tool-tip` has 3 variants distinguished by needle position: `left`, `middle`, `right`.
-- Positioning rule (when eventually wired): date cell in the LEFT column of a calendar → use `left` variant; date cell in the RIGHT column → use `right` variant; middle columns → `middle` variant. Prevents tooltip from overflowing the calendar's edges.
-- Build the component STRUCTURE so it's ready to wire; do NOT add hover triggers, content, or display logic in this pass.
-
+- Positioning rule: date cell in the LEFT column of a calendar (Sunday) → `left` variant; RIGHT column (Saturday) → `right` variant; middle columns → `middle` variant. Prevents the tooltip from overflowing the calendar's edges. Weekend cells only ever occupy the first and last columns, so in practice only `left`/`right` fire — `middle` exists because the component is shared, not because a weekend can land there. Positional (grid column), not day-name-based — a column's variant doesn't depend on which date happens to land there.
+- Bubble sits 6px above the cell; needle stays centered on the date number in every variant; the bubble itself shifts left/right of the needle to stay inside the calendar's edges. Sizing (`max-width: 123px`, sizes to content, 5px/4px padding, 14px line-height) and positioning were already correct in the CSS before this pass — only the hover wiring (`showTooltip`/`hideTooltip`, already-defined but previously uncalled, plus the column→variant helpers) was missing.
 **Deferred / do NOT build in this pass:**
-- Tooltip hover behavior + content.
 - Calendar month navigation (arrows render as visual-only, no click handler).
 
 **Calendar rendering conventions — non-negotiable:**
@@ -239,9 +257,9 @@ These are standard calendar rules, not project-specific inventions. Any deviatio
 - **Column order:** week starts Sunday (S M T W T F S), per Figma.
 - **Vertical column alignment:** the date `28` in row 1 sits directly above the date `28` in row 2 (same column = same day of week). All dates in the same column line up vertically to the pixel.
 - **Circular date marks are circles:** the withdrawal / arrival / due date marks are perfect circles — equal width and height. Do NOT stretch them into ovals to fit non-square date cells. The mark's diameter comes from Figma; the mark is centered inside its cell.
-- **Gray range is continuous:** the gray fill between withdrawal date and arrival date is a single visual band, not a stack of separate rectangles per cell. No visible gaps between cells within the range. If the range spans multiple rows (a week boundary), each row's segment must abut the row above/below cleanly with no dead gap; the range visually reads as one contiguous highlight.
+- **Range fill is continuous:** the colored fill between withdrawal date and arrival date (grey on-time, or grey-then-orange overdue — see "Range colors" above) is a single visual band, not a stack of separate rectangles per cell. No visible gaps between cells within the range. If the range spans multiple rows (a week boundary), each row's segment must abut the row above/below cleanly with no dead gap; the range visually reads as one contiguous highlight, in whichever color(s) that segment falls under.
 - **Adjacent-month cells:** dates from the previous month (shown at the top-left of the grid before the 1st of the current month) and from the next month (shown at the bottom-right after the last of the current month) must be rendered in the "Past Month" style (grayed out) — NOT blank, NOT omitted, NOT the same style as current-month dates.
-- **Weekend cells:** rendered in Past Month style (same treatment as adjacent-month cells) — non-clickable, visually distinct from clickable weekdays.
+- **Weekend cells:** rendered in Past Month style when outside the current range (same treatment as adjacent-month cells), or in the range's own band color when inside it — non-clickable either way, visually distinct from clickable weekdays. Hovering a weekend cell shows the weekend tooltip regardless of range membership (see "Weekend tooltip" above); it never becomes clickable.
 - **No invented visuals:** if any visual detail isn't spelled out here or in Figma, STOP and ask. Do not invent styling, spacing, or behavior.
 
 ---
