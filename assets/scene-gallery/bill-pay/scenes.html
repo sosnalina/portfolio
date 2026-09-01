@@ -1410,6 +1410,7 @@
     // the narrow-mode branch, which never applies here — this scene never
     // opens a drawer). Static: called once per row at load, never re-run.
     function renderBatchRow(row) {
+      var dates = computeStandardDates(row);
       return (
         '<div class="bp-row" data-row-id="' + row.id + '">' +
           '<div class="bp-cell bp-cell--vendor">' +
@@ -1425,7 +1426,7 @@
           '<div class="bp-cell bp-cell--due"><span>' + row.due + "</span></div>" +
           '<div class="bp-cell bp-cell--speed">' +
             '<div class="bp-speed__top"><p class="bp-speed__label">Standard</p><span class="bp-badge"><span>On time</span></span></div>' +
-            '<div class="bp-speed__meta"><span>Withdraw ' + row.withdraw + "</span><span style=\"display:inline-flex\">" + GLYPH.arrow + "</span><span>Arrives " + row.arrives + "</span></div>" +
+            '<div class="bp-speed__meta"><span>Withdraw ' + fmtMD(dates.withdraw) + "</span><span style=\"display:inline-flex\">" + GLYPH.arrow + "</span><span>Arrives " + fmtMD(dates.arrival) + "</span></div>" +
           "</div>" +
           '<div class="bp-cell bp-cell--fee"><div class="bp-fee"><span>' + money(row.fee) + "</span><span>" + GLYPH.info + "</span></div></div>" +
           '<div class="bp-cell bp-cell--balance"><span>' + money(row.amount) + "</span></div>" +
@@ -1528,15 +1529,7 @@
       // Fee is NOT summed: one vendor = one payment = one $1.00 fee,
       // regardless of how many bills are aggregated under it.
       var feeTotal = 1.0;
-      var withdrawVals = group.rows.map(function (r) { return r.withdraw; }).filter(Boolean);
-      var arrivesVals = group.rows.map(function (r) { return r.arrives; }).filter(Boolean);
-      function dateKey(mmdd) {
-        if (!mmdd) return 999999;
-        var parts = mmdd.split('/');
-        return parseInt(parts[0], 10) * 100 + parseInt(parts[1], 10);
-      }
-      var earliestWithdraw = withdrawVals.length ? withdrawVals.reduce(function (a,b){ return dateKey(a) < dateKey(b) ? a : b; }) : '';
-      var latestArrives = arrivesVals.length ? arrivesVals.reduce(function (a,b){ return dateKey(a) > dateKey(b) ? a : b; }) : '';
+      var dates = computeStandardDates(group);
 
       var vendorRowHtml =
         '<div class="bp-row" data-vendor-row="' + group.vendor + '">' +
@@ -1556,7 +1549,7 @@
           '<div class="bp-cell bp-cell--due" style="opacity:0"></div>' +
           '<div class="bp-cell bp-cell--speed"' + narrowHideSpeed + ">" +
             '<div class="bp-speed__top"><p class="bp-speed__label">Standard</p><span class="bp-badge"><span>On time</span></span></div>' +
-            '<div class="bp-speed__meta"><span>Withdraw ' + (earliestWithdraw || '') + "</span><span style=\"display:inline-flex\">" + GLYPH.arrow + "</span><span>Arrives " + (latestArrives || '') + "</span></div>" +
+            '<div class="bp-speed__meta"><span>Withdraw ' + fmtMD(dates.withdraw) + "</span><span style=\"display:inline-flex\">" + GLYPH.arrow + "</span><span>Arrives " + fmtMD(dates.arrival) + "</span></div>" +
           "</div>" +
           '<div class="bp-cell bp-cell--fee"' + narrowHideSpeed + '><div class="bp-fee"><span>' + money(feeTotal) + "</span><span>" + GLYPH.info + "</span></div></div>" +
           '<div class="bp-cell bp-cell--balance"><span>' + money(group.total) + "</span></div>" +
@@ -1625,6 +1618,16 @@
       }
       return d;
     }
+    // Arrival anchor must itself be a business day before counting back N
+    // business days for withdraw - rolls back to the closest earlier
+    // weekday; no-op if already a business day.
+    function normalizeArrival(d) {
+      var r = new Date(d);
+      while (!isBusinessDay(r)) {
+        r.setDate(r.getDate() - 1);
+      }
+      return r;
+    }
     function fmtMD(d) { return pad2(d.getMonth() + 1) + "/" + pad2(d.getDate()); }
     function getDrawerDueDates(payload) {
       var rows = payload.rows ? payload.rows : [payload];
@@ -1638,6 +1641,20 @@
       out.sort(function (a, b) { return a - b; });
       return out;
     }
+    // Table rows derive dates from the same engine the drawer uses, instead
+    // of storing them, so no two surfaces can drift apart. `days` is the
+    // speed tier's business-day count (Standard=5, Fast=2, ...) — factored
+    // out of computeStandardDates so scene 3's Barnett-Fast beat can reuse
+    // this same anchor logic instead of a bespoke formula.
+    function computeTierDates(payload, days) {
+      var dueDates = getDrawerDueDates(payload);
+      var arrival = normalizeArrival(addDays(dueDates[0], -1));
+      var withdraw = addBusinessDays(arrival, -days);
+      return { withdraw: withdraw, arrival: arrival };
+    }
+    function computeStandardDates(payload) {
+      return computeTierDates(payload, 5);
+    }
 
     // titleStrong renamed to match the custom-mode speed tabs (Standard/
     // Fast/Instant) — was "Standard"/"Latest Safe"/"Expedited", ported from
@@ -1648,13 +1665,13 @@
     var DELIVERY_OPTIONS = [
       { key: "standard", titleStrong: "Standard", titleMedium: " | 3-5 business days", subtitle: "Maximum safety buffer", fee: "$0.50 fee", days: 5 },
       { key: "latest-safe", titleStrong: "Fast", titleMedium: " | 1-2 business days", subtitle: "Optimal cash flow", fee: "$10.00 fee", days: 2 },
-      { key: "expedited", titleStrong: "Instant", titleMedium: " | Same day", subtitle: "Latest possible", fee: "$15.00 fee", days: 1 },
+      { key: "expedited", titleStrong: "Instant", titleMedium: " | Same day", subtitle: "Latest possible", fee: "$15.00 fee", days: 0 },
       { key: "custom", titleStrong: "Custom", titleMedium: "", subtitle: "Choose specific dates and delivery speed", fee: null, days: null }
     ];
 
     function renderRadioGroup(dueDates, selectedKey) {
       var earliestDue = dueDates[0];
-      var baseArrival = addDays(earliestDue, -1);
+      var baseArrival = normalizeArrival(addDays(earliestDue, -1));
       return (
         '<div class="bp-radio-group">' +
         DELIVERY_OPTIONS.map(function (opt) {
@@ -2029,7 +2046,8 @@
         s3GoodHeartNaturalHeight: null,
         s3RowsScrollFullWidth: null,
         sparkClickFired: false,
-        sparkManageClickFired: false
+        sparkManageClickFired: false,
+        s3BarnettFastApplied: false
       };
     }
 
@@ -2797,39 +2815,11 @@
       return sum;
     }
 
-    // Barnett's speed-cell change (new beat, Part 2) — "Standard" is
-    // captured the same way renderVendorRow's own aggregation already
-    // computes it (earliest withdraw / latest arrives across the group's
-    // static per-bill fields), so seeking to any t before the change still
-    // shows the exact values the row was mounted with. "Fast" is computed
-    // the same way the drawer's own radio-row meta line computes it for
-    // any tier: arrival = the group's earliest due date minus 1 day (same
-    // regardless of speed — addDays/addBusinessDays/parseMMDDYY are the
-    // same functions the drawer itself uses, not a second formula).
-    function s3DateKeyMD(mmdd) {
-      var p = mmdd.split("/");
-      return parseInt(p[0], 10) * 100 + parseInt(p[1], 10);
-    }
-    function s3BarnettStandardDates() {
-      var bills = ROWS.filter(function (r) { return r.vendor === "Barnett Lawn Care"; });
-      var withdrawVals = bills.map(function (r) { return r.withdraw; });
-      var arrivesVals = bills.map(function (r) { return r.arrives; });
-      return {
-        withdraw: withdrawVals.reduce(function (a, b) { return s3DateKeyMD(a) < s3DateKeyMD(b) ? a : b; }),
-        arrives: arrivesVals.reduce(function (a, b) { return s3DateKeyMD(a) > s3DateKeyMD(b) ? a : b; })
-      };
-    }
+    // Barnett's speed-cell change (new beat, Part 2) — the table's "Fast"
+    // state is applied once, at S3_MARKS.clickCloseStart (see renderScene3
+    // below), via computeTierDates() — the same engine renderVendorRow and
+    // the drawer's own radio group use, not a bespoke formula.
     var BARNETT_FAST_DAYS = 2; // matches DELIVERY_OPTIONS["latest-safe"] / SPEED_TABS["fast"]
-    var BARNETT_FAST_DATES = (function () {
-      var bills = ROWS.filter(function (r) { return r.vendor === "Barnett Lawn Care"; });
-      var per = bills.map(function (r) {
-        var arrival = addDays(parseMMDDYY(r.due), -1);
-        return { arrival: arrival, withdraw: addBusinessDays(arrival, -BARNETT_FAST_DAYS) };
-      });
-      var earliestWithdraw = per.reduce(function (a, b) { return a.withdraw < b.withdraw ? a : b; }).withdraw;
-      var latestArrives = per.reduce(function (a, b) { return a.arrival > b.arrival ? a : b; }).arrival;
-      return { withdraw: fmtMD(earliestWithdraw), arrives: fmtMD(latestArrives) };
-    })();
 
     // Small, restrained scale-bump on a figure that just changed — the
     // same curve vocabulary as scene 1/2's own pops (easeOut rise /
@@ -2981,6 +2971,15 @@
       instance.rowsScroll.scrollTop = 0;
       instance.rowsScroll.classList.remove("is-scrolled");
       instance.s3BarnettNaturalHeight = null; // remeasure against the fresh DOM
+      // renderRows() above just rendered Barnett's row via renderVendorRow,
+      // which always renders the Standard tier - so the "last applied"
+      // state below (see the Barnett-speed-cell block in renderScene3)
+      // must be forced back in sync with that, not left stale from
+      // whatever pass through scene 3 last set it. Otherwise a seek that
+      // lands directly past clickCloseStart, on a stale-true flag from an
+      // earlier pass, would wrongly read as "already applied" and skip
+      // correcting this fresh Standard DOM to Fast.
+      instance.s3BarnettFastApplied = false;
       instance.s3Mounted = true;
     }
 
@@ -3402,19 +3401,38 @@
       // only commits once the drawer is closed again (clickCloseStart):
       // matches the task's own sequencing ("clicks close... In the
       // table..."), and means the change is never revealed while the
-      // speed cell itself is still width-0 under narrow mode. The pop
-      // itself is timed to start only once the cell is fully back at full
-      // width (drawerCloseBarnettEnd), so it plays on a visible cell
-      // rather than an invisible one. */
-      var barnettRow = instance.rowsScroll.querySelector('[data-vendor-row="' + instance.barnettVendor + '"]');
+      // speed cell itself is still width-0 under narrow mode. renderRows'
+      // own initial render already has the correct Standard-tier text
+      // (computeStandardDates, same engine the drawer uses), so this block
+      // only needs to touch the DOM on an actual STATE CHANGE - guarded by
+      // comparing barnettFast against instance.s3BarnettFastApplied, the
+      // last value actually written. That's a deliberate change-detector,
+      // not a plain "run once, forward only" one-shot: t here isn't
+      // monotonic (the timeline loops via modulo, and the parent can seek
+      // it backward via postMessage), so a one-shot with no revert would
+      // leave the row stuck on Fast after a seek back below
+      // clickCloseStart. Comparing against the last-applied value catches
+      // transitions in EITHER direction and reverts to Standard (via the
+      // same computeTierDates engine) just as readily as it commits to
+      // Fast - still just one DOM write per actual crossing, not one per
+      // frame. (ensureScene3Mounted resets this same flag on its own
+      // full-rebuild path, for the same reason.) The pop itself is timed to
+      // start only once the cell is fully back at full width
+      // (drawerCloseBarnettEnd), so it plays on a visible cell rather than
+      // an invisible one - that part still runs every frame since it's a
+      // continuous eased transform, not a state commit. */
       if (barnettRow) {
         var barnettFast = t >= S3_MARKS.clickCloseStart;
-        var barnettDates = barnettFast ? BARNETT_FAST_DATES : s3BarnettStandardDates();
-        var speedLabelEl = barnettRow.querySelector(".bp-speed__label");
-        var metaSpans = barnettRow.querySelectorAll(".bp-speed__meta > span");
-        if (speedLabelEl) speedLabelEl.textContent = barnettFast ? "Fast" : "Standard";
-        if (metaSpans[0]) metaSpans[0].textContent = "Withdraw " + barnettDates.withdraw;
-        if (metaSpans[2]) metaSpans[2].textContent = "Arrives " + barnettDates.arrives;
+        if (barnettFast !== instance.s3BarnettFastApplied) {
+          instance.s3BarnettFastApplied = barnettFast;
+          var barnettGroupNow = vendorGroups().filter(function (g) { return g.vendor === instance.barnettVendor; })[0];
+          var tierDates = computeTierDates(barnettGroupNow, barnettFast ? BARNETT_FAST_DAYS : 5);
+          var speedLabelEl = barnettRow.querySelector(".bp-speed__label");
+          var metaSpans = barnettRow.querySelectorAll(".bp-speed__meta > span");
+          if (speedLabelEl) speedLabelEl.textContent = barnettFast ? "Fast" : "Standard";
+          if (metaSpans[0]) metaSpans[0].textContent = "Withdraw " + fmtMD(tierDates.withdraw);
+          if (metaSpans[2]) metaSpans[2].textContent = "Arrives " + fmtMD(tierDates.arrival);
+        }
         var barnettSpeedBump = s3NumberBump(t - S3_MARKS.drawerCloseBarnettEnd, 90, 40, 90, FIGURE_BUMP_MAGNITUDE);
         var speedCell = barnettRow.querySelector(".bp-cell--speed");
         if (speedCell) speedCell.style.transform = "scale(" + barnettSpeedBump + ")";

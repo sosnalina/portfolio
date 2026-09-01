@@ -155,7 +155,7 @@ Compute at render time; recompute whenever mode changes or a row's amount change
 ### 6.6 Custom payment delivery flow (calendar)
 
 **Naming alignment (radios and Custom tabs share names):**
-The 4 radios in the drawer are Standard / Faster / Instant / Custom. The 3 Custom tabs are Standard / Faster / Instant. The first three names are the same across both — radios are the preset picks, Custom tabs let the user tweak within the same speed tier.
+The 4 radios in the drawer are Standard / Fast / Instant / Custom. The 3 Custom tabs are Standard / Fast / Instant. The first three names are the same across both — radios are the preset picks, Custom tabs let the user tweak within the same speed tier.
 
 **Entry & exit:**
 - Drawer opens with 4 radio options. Standard is selected by default.
@@ -163,15 +163,15 @@ The 4 radios in the drawer are Standard / Faster / Instant / Custom. The 3 Custo
 - Click "Show more" → calendar dissolves → 4 radios reappear → Standard is selected (NOT Custom).
 - "Show more" is ONLY visible while Custom view is active. Not visible in the default radio view.
 
-**Radio option dates (Standard / Faster / Instant radios):**
+**Radio option dates (Standard / Fast / Instant radios):**
 Each of the three speed radios shows "Withdraw MM/DD → Arrives MM/DD" computed from the drawer's bill data using the business-buffer logic:
-- Arrival = bill's due date − 1 day (safety buffer)
-- Withdraw = arrival − N business days (Standard = 5, Faster = 2, Instant = 1)
+- Arrival = bill's due date − 1 day (safety buffer), then rolled BACK to the previous business day if that lands on a weekend. This normalized value is the anchor every radio's withdraw date counts back from — without it, the backward (radio) and forward (Custom tab) computations stop agreeing whenever due date − 1 falls on a weekend.
+- Withdraw = normalized arrival − N business days (Standard = 5, Fast = 2, Instant = 0)
 - Business day = weekday (Sat/Sun excluded)
 - The old placeholder dates (02/07, 02/12) are wrong — replace with computed real dates.
 
 **Calendar UI structure (Custom view):**
-- Top: 3 tabs — Standard $0.50 / Faster $10.00 / Instant $15.00 (each showing its fee). Default active tab: Standard.
+- Top: 3 tabs — Standard $0.50 / Fast $10.00 / Instant $15.00 (each showing its fee). Default active tab: Standard.
 - Body: 2 calendars side by side (August 2025 + September 2025, matching the mock data date range). Vertical divider between them.
 - Bottom: legend — 2 rows, each a colored dot + dynamic text:
   - "Withdraw [selected date]"
@@ -201,15 +201,15 @@ Stacked vertically:
 - **Collision rule:** if two bills share the same due date, they collapse to ONE mark on that cell (not stacked).
 
 **Default dates when entering Custom (business buffer logic):**
-- **Batch drawer (1 bill):** arrival = bill's due date − 1 day; withdrawal = arrival − 5 business days (Standard tab default).
-- **Bulk drawer (N bills):** arrival = **earliest** bill's due date − 1 day; withdrawal = arrival − 5 business days. Payment must arrive before every bill's due date.
+- **Batch drawer (1 bill):** arrival = bill's due date − 1 day, rolled BACK to the previous business day if that lands on a weekend; withdrawal = normalized arrival − 5 business days (Standard tab default).
+- **Bulk drawer (N bills):** arrival = **earliest** bill's due date − 1 day, rolled BACK to the previous business day if that lands on a weekend; withdrawal = normalized arrival − 5 business days. Payment must arrive before every bill's due date.
 - Rationale: business wants money in account as long as possible while still paying every bill before its due date.
-- Business day = weekday (Saturday and Sunday excluded).
+- Business day = weekday (Saturday and Sunday excluded). Roll back, never forward — arriving after the due date would be late.
 
 **Tab logic (business days between withdrawal and arrival):**
 - Standard → 5 business days
-- Faster → 2 business days
-- Instant → 1 business day (next business day)
+- Fast → 2 business days
+- Instant → 0 business days (same day — arrival lands on the withdraw date)
 
 **User interactions:**
 - Click a valid calendar date → sets that as withdrawal date. Arrival auto-updates.

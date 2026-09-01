@@ -827,15 +827,7 @@
       var expanded = !!state.expanded[group.vendor];
       var narrowHideSpeed = rowCellsCommon(true);
       var feeTotal = 1.0;
-      var withdrawVals = group.rows.map(function (r) { return r.withdraw; }).filter(Boolean);
-      var arrivesVals = group.rows.map(function (r) { return r.arrives; }).filter(Boolean);
-      function dateKey(mmdd) {
-        if (!mmdd) return 999999;
-        var parts = mmdd.split('/');
-        return parseInt(parts[0], 10) * 100 + parseInt(parts[1], 10);
-      }
-      var earliestWithdraw = withdrawVals.length ? withdrawVals.reduce(function (a, b) { return dateKey(a) < dateKey(b) ? a : b; }) : '';
-      var latestArrives = arrivesVals.length ? arrivesVals.reduce(function (a, b) { return dateKey(a) > dateKey(b) ? a : b; }) : '';
+      var dates = computeStandardDates(group);
 
       var vendorRowHtml =
         '<div class="bp-row" data-vendor-row="' + group.vendor + '">' +
@@ -855,7 +847,7 @@
           '<div class="bp-cell bp-cell--due" style="opacity:0"></div>' +
           '<div class="bp-cell bp-cell--speed"' + narrowHideSpeed + ">" +
             '<div class="bp-speed__top"><p class="bp-speed__label">Standard</p><span class="bp-badge"><span>On time</span></span></div>' +
-            '<div class="bp-speed__meta"><span>Withdraw ' + (earliestWithdraw || '') + "</span><span style=\"display:inline-flex\">" + GLYPH.arrow + "</span><span>Arrives " + (latestArrives || '') + "</span></div>" +
+            '<div class="bp-speed__meta"><span>Withdraw ' + fmtMD(dates.withdraw) + "</span><span style=\"display:inline-flex\">" + GLYPH.arrow + "</span><span>Arrives " + fmtMD(dates.arrival) + "</span></div>" +
           "</div>" +
           '<div class="bp-cell bp-cell--fee"' + narrowHideSpeed + '><div class="bp-fee"><span>' + money(feeTotal) + "</span><span>" + GLYPH.info + "</span></div></div>" +
           '<div class="bp-cell bp-cell--balance"><span>' + money(group.total) + "</span></div>" +
@@ -911,6 +903,16 @@
       }
       return d;
     }
+    // Arrival anchor must itself be a business day before counting back N
+    // business days for withdraw - rolls back to the closest earlier
+    // weekday; no-op if already a business day.
+    function normalizeArrival(d) {
+      var r = new Date(d);
+      while (!isBusinessDay(r)) {
+        r.setDate(r.getDate() - 1);
+      }
+      return r;
+    }
     function fmtMD(d) { return pad2(d.getMonth() + 1) + "/" + pad2(d.getDate()); }
     function getDrawerDueDates(payload) {
       var rows = payload.rows ? payload.rows : [payload];
@@ -924,17 +926,26 @@
       out.sort(function (a, b) { return a - b; });
       return out;
     }
+    // Table rows derive dates from the same engine the drawer uses
+    // (Standard tier, 5 business days), instead of storing them, so the
+    // two surfaces cannot drift apart.
+    function computeStandardDates(payload) {
+      var dueDates = getDrawerDueDates(payload);
+      var arrival = normalizeArrival(addDays(dueDates[0], -1));
+      var withdraw = addBusinessDays(arrival, -5);
+      return { withdraw: withdraw, arrival: arrival };
+    }
 
     var DELIVERY_OPTIONS = [
       { key: "standard", titleStrong: "Standard", titleMedium: " | 3-5 business days", subtitle: "Maximum safety buffer", fee: "$0.50 fee", days: 5 },
       { key: "latest-safe", titleStrong: "Fast", titleMedium: " | 1-2 business days", subtitle: "Optimal cash flow", fee: "$10.00 fee", days: 2 },
-      { key: "expedited", titleStrong: "Instant", titleMedium: " | Same day", subtitle: "Latest possible", fee: "$15.00 fee", days: 1 },
+      { key: "expedited", titleStrong: "Instant", titleMedium: " | Same day", subtitle: "Latest possible", fee: "$15.00 fee", days: 0 },
       { key: "custom", titleStrong: "Custom", titleMedium: "", subtitle: "Choose specific dates and delivery speed", fee: null, days: null }
     ];
 
     function renderRadioGroup(dueDates, selectedKey) {
       var earliestDue = dueDates[0];
-      var baseArrival = addDays(earliestDue, -1);
+      var baseArrival = normalizeArrival(addDays(earliestDue, -1));
       return (
         '<div class="bp-radio-group">' +
         DELIVERY_OPTIONS.map(function (opt) {
