@@ -720,6 +720,15 @@
         padding-right: 12px;
         padding-left: 0;
       }
+      /* Selected row (its card is visible - schedule-payment.js's
+         updateSelectedRowCard() mirrors the card's own reveal state onto
+         .bp-row[data-selected]): 12px clearance so the vendor name/chevron
+         aren't flush against the card's left edge. Padding-left only, not
+         a width/margin change - .bp-cell--vendor keeps its 230px
+         border-box, so no sibling cell shifts. */
+      .bp-row[data-selected="true"] .bp-cell--vendor {
+        padding-left: var(--spacing-12);
+      }
       .bp-cell--bill {
         width: 76px;
       }

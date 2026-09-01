@@ -401,6 +401,19 @@
     bindRowEvents();
   }
 
+  /* Selected-row card and drawer selection both key off the drawer's
+     payload shape, not state.mode: a batch payload is a single ROWS entry
+     (has .bill, rendered as .bp-row[data-row-id]); a bulk payload is a
+     vendor group (no .bill, has .rows, rendered as .bp-row[data-vendor-row]).
+     Same distinguishing field revealSelectedRow()/openDrawer() already use
+     (see "!payload.bill" below and in openDrawer()). One lookup for both
+     modes - the card mechanism itself doesn't branch on mode anywhere else. */
+  function selectedRowEl(payload) {
+    return payload.bill
+      ? els.rowsScroll.querySelector('.bp-row[data-row-id="' + payload.id + '"]')
+      : els.rowsScroll.querySelector('.bp-row[data-vendor-row="' + cssEscape(payload.vendor) + '"]');
+  }
+
   /* Keeps the selected-row card (see .bp-row-card-layer / .bp-row-selected-
      card in schedule-payment.html) locked to its row's live position, and
      toggles its visibility. Re-run whenever anything could move that row
@@ -420,6 +433,13 @@
      control directly to sequence the reveal against the drawer's own
      motion - see those functions for why.
 
+     Works identically in batch and bulk (see selectedRowEl() above) - a
+     mode switch while a drawer is open re-renders the row list for the
+     NEW mode (setMode() calls renderRows() then this), so a stale
+     drawer.row from the old mode simply won't match any element in the
+     new DOM and the card hides via the !rowEl branch below, rather than
+     needing its own mode-change handling.
+
      Math mirrors scenes.html's nativeRect(): getBoundingClientRect()
      returns already-scaled (visual) pixels, but this card's own top/left/
      width are read by the browser BEFORE .scaler's transform is applied
@@ -428,10 +448,30 @@
      written back as a plain CSS px value - otherwise the position would be
      right at 100% width and increasingly wrong at any other size. */
   function updateSelectedRowCard() {
-    var hasSelection = state.mode === "bulk" && state.drawer.open && !!state.drawer.row;
-    var rowEl = hasSelection
-      ? els.rowsScroll.querySelector('.bp-row[data-vendor-row="' + cssEscape(state.drawer.row.vendor) + '"]')
-      : null;
+    var hasSelection = state.drawer.open && !!state.drawer.row;
+    var rowEl = hasSelection ? selectedRowEl(state.drawer.row) : null;
+    var revealed = !!(rowEl && state.drawer.revealed);
+
+    /* Mirrors the card's own [data-visible] onto the row itself, so
+       .bp-cell--vendor's 12px inset (below) shows exactly while the card
+       is visible - not for the whole open-drawer window, same as the
+       card. Cleared from any PREVIOUS row explicitly rather than relying
+       on renderRows() to wipe it: this function also runs from scroll/
+       resize/expand-collapse, none of which re-render the rows, so a
+       stale flag from a row that's no longer selected would otherwise
+       stick until the next full render. */
+    var prevSelectedRow = els.rowsScroll.querySelector('.bp-row[data-selected="true"]');
+    if (prevSelectedRow && prevSelectedRow !== rowEl) {
+      prevSelectedRow.removeAttribute("data-selected");
+    }
+    if (rowEl) {
+      if (revealed) {
+        rowEl.setAttribute("data-selected", "true");
+      } else {
+        rowEl.removeAttribute("data-selected");
+      }
+    }
+
     if (!rowEl) {
       els.rowCard.removeAttribute("data-visible");
       return;
@@ -449,7 +489,7 @@
     els.rowCard.style.top = nativeTop + 11 + "px";
     els.rowCard.style.left = nativeLeft + "px";
     els.rowCard.style.width = nativeWidth + "px";
-    if (state.drawer.revealed) {
+    if (revealed) {
       els.rowCard.setAttribute("data-visible", "true");
     } else {
       els.rowCard.removeAttribute("data-visible");
@@ -565,9 +605,13 @@
      staggering them further would read as choreography, not response.
      alreadyExpanded is measured back in openDrawer() BEFORE this fires,
      so a group that was already open stays exactly as it was - no expand
-     animation runs for it. */
+     animation runs for it. Batch payloads have no chevron to hide (only
+     vendor rows carry .bp-vendor__chevron), so that step is a harmless
+     no-op for them - but the row lookup itself must still succeed via
+     selectedRowEl() or updateSelectedRowCard() below never runs and the
+     card never reveals. */
   function revealSelectedRow(payload, alreadyExpanded) {
-    var rowEl = els.rowsScroll.querySelector('.bp-row[data-vendor-row="' + cssEscape(payload.vendor) + '"]');
+    var rowEl = selectedRowEl(payload);
     if (!rowEl) return;
     var chevron = rowEl.querySelector(".bp-vendor__chevron");
     if (chevron) chevron.setAttribute("data-selected", "true");
@@ -658,7 +702,7 @@
   function closeDrawer() {
     state.drawer.revealed = false;
     if (state.drawer.row) {
-      var rowEl = els.rowsScroll.querySelector('.bp-row[data-vendor-row="' + cssEscape(state.drawer.row.vendor) + '"]');
+      var rowEl = selectedRowEl(state.drawer.row);
       var chevron = rowEl ? rowEl.querySelector(".bp-vendor__chevron") : null;
       if (chevron) chevron.removeAttribute("data-selected");
     }
