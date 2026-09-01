@@ -93,6 +93,7 @@
     --bp-text-radio-subtitle: 400 14px/21.65px var(--bp-font-body);
     --bp-text-radio-meta: 400 16px/21.65px var(--bp-font-body);
     --bp-text-radio-fee: 600 16px/24px var(--bp-font-body);
+    --bp-text-show-more: 600 14px/20px var(--bp-font-body);
 
     /* ---- Calendar (task 2) — ported verbatim from schedule-payment.html's
        own :root, same as every other --bp-* token above. Wasn't needed
@@ -131,6 +132,9 @@
     --ag-panel-active-width: 627px;
     --ag-panel-collapsed-width: 141px;
     --ag-panel-height: 461px;
+    --ag-magnifier-scale: 0.461; /* --ag-panel-height / 1000 — spans the full panel height per spec ("scale driven by container height"). Fixed, not measured live: --ag-panel-height is itself a fixed px token (this gallery is desktop-only, no responsive breakpoint to react to), so there's nothing for a live getBoundingClientRect() to catch that this hand-computed ratio wouldn't already have — same reasoning --ag-mock-scale is a fixed literal, not a runtime measurement. */
+    --ag-magnifier-width: calc(435px * var(--ag-magnifier-scale)); /* 435 = --bp-drawer-width's own value (custom properties can't cross-reference across the two token blocks in this file, --bp-* vs --ag-*, so mirrored as a literal — same pattern --ag-shadow-bleed uses for --shadow-soft's blur radius). Width "falls out of" the scale per spec, not set independently. */
+    --ag-magnifier-shadow: -10px 0px 30px color-mix(in srgb, var(--primitive-black) 10%, transparent); /* Fixed in QA: an earlier version mirrored --bp-shadow-drawer's own 25%-opacity black — correct for the drawer's own small, tightly-rendered mock UI, too heavy once appropriated for this much larger accordion-scene element. Rebuilt from --shadow-soft (tokens.css) instead — the portfolio's own existing "ambient card shadow" token, already the baseline for the mock itself and floating cards 1-3 elsewhere in this file, at its native 30px blur/10% opacity. --shadow-soft's own offset is 0px 0px (fully ambient, no direction); CSS can't reuse a token's blur/color while overriding just its offset, so the 30px/10% values are mirrored here (same "mirror the number, can't cross-reference" pattern --ag-shadow-bleed already uses for this exact token) with an explicit -10px X offset added — roughly a third of the blur radius, enough to read as directional without the shadow racing ahead of the blur itself — to bias it left per spec ("shadow on the left side only"). */
     --ag-inset-y: 48px; /* panel top to tag, and mock bottom to panel bottom — equal by design, same as Gallery 2 */
     --ag-tag-mock-gap: 120px; /* tag's own bottom edge to mock's top edge */
     --ag-mock-height: 223px;
@@ -671,6 +675,66 @@
     transform: scale(var(--ag-mock-scale));
   }
 
+  /* ---- Magnifier — Quality_Of_Decisions Scene 1, beats 7-24. Exists
+     because the mock renders too small (0.223 scale) for the drawer's
+     own text/calendar to read; this mirrors that same drawer markup at
+     a legible size. Same outer-real-size / inner-native-size-scaler
+     split .ag-mock-wrap/.ag-mock-scaler already use — .ag-magnifier
+     sits at its own final size (right edge of the panel, full panel
+     height); .ag-magnifier__scaler holds a native 435x1000 (the
+     drawer's own real dimensions) copy of .bp-drawer's markup and is
+     what actually gets transform:scale()'d down.
+     .ag-magnifier-clip is a real fix, not decoration: .ag-panel.is-active
+     sets `overflow: visible` (needed for the mock's own shadow/overhang
+     bleed — see that rule's own comment) and is never overridden back
+     for the grey panel specifically, so nesting the magnifier inside
+     .ag-panel alone does NOT clip it — confirmed by reading that rule,
+     not assumed. QA caught this: the magnifier rendered on top of the
+     panel's own rounded corner instead of inside it. This wrapper is a
+     dedicated absolute overlay matching the panel's own box exactly
+     (inset:0 against .ag-panel, its containing block) with its own
+     overflow:hidden + matching border-radius (right corners only — its
+     left edge sits mid-panel, nothing to round there) — clipping the
+     magnifier to the panel's real visual bounds without touching
+     .ag-panel's own overflow property at all, so the mock's bleed is
+     completely unaffected. The magnifier's shadow (below) bleeds left
+     from the drawer's own box into this wrapper's interior, staying
+     visible right up to the panel's real edge, then clipped there —
+     "shadow containment... follows from" this structural fix (task's
+     own framing), not a second thing to solve. ---- */
+  .ag-magnifier-clip {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    border-radius: var(--spacing-24);
+    pointer-events: none;
+  }
+  .ag-magnifier {
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 100%;
+    width: var(--ag-magnifier-width);
+    overflow: visible;
+  }
+  .ag-magnifier__scaler {
+    width: 435px;
+    height: 1000px;
+    transform-origin: top left;
+    transform: scale(var(--ag-magnifier-scale));
+  }
+  /* Reuses .bp-drawer's own class (border-radius, background, base
+     display:none/closed transform) so the magnifier's copy gets
+     identical styling for free — its open/close display+transform is
+     driven by the exact same openness(t) value as the real drawer
+     (Phase D), just with its own shadow (left-only, see
+     --ag-magnifier-shadow) instead of the drawer's own all-around one,
+     since this panel isn't tucked against a table it needs to shadow
+     onto — it's floating in the grey panel's own empty space. */
+  .ag-magnifier__drawer.bp-drawer {
+    box-shadow: var(--ag-magnifier-shadow);
+  }
+
   /* Floating cards (phase 1: static placement/styling only — drift is a
      separate task) — payment-speed option rows lifted out of the
      mock's drawer, floating in the grey panel's own empty space to the
@@ -1065,6 +1129,7 @@
   .bp-speed__label { margin: 0; font: var(--bp-text-cell-strong); color: var(--primitive-black); white-space: nowrap; }
   .bp-badge { display: inline-flex; align-items: center; padding: 0 4px; border-radius: var(--bp-radius-input); background: var(--primitive-green); }
   .bp-badge span { font: var(--bp-text-badge); text-transform: uppercase; color: var(--primitive-white); }
+  .bp-badge--overdue { background: var(--bp-color-calendar-due); }
   .bp-speed__meta { display: flex; align-items: center; gap: 3px; height: 24px; margin-top: -2px; }
   .bp-speed__meta span { font: var(--bp-text-cell-small); color: var(--primitive-grey-dark); white-space: nowrap; }
   .bp-speed__meta img { width: 18px; height: 18px; }
@@ -1094,8 +1159,10 @@
   .bp-row-card-layer { position: absolute; top: 40px; left: 0; right: 0; bottom: 0; overflow: hidden; pointer-events: none; }
   .bp-row-selected-card { position: absolute; height: 68px; border-radius: var(--bp-radius-subrow); box-shadow: var(--bp-shadow-row-card); opacity: 0; }
 
-  /* ---- Drawer — default step only, static "open" state via inline
-     style on the markup below. ---- */
+  /* ---- Drawer — default step only. Closed by default (CSS
+     display:none below); the scene's own renderScene0/openness(t)
+     drives display + transform per frame once the beat sequence opens
+     it — no inline "starts open" style on the markup anymore. ---- */
   .bp-drawer { position: absolute; top: 0; right: 0; width: var(--bp-drawer-width); height: 1000px; background: var(--primitive-white); border-radius: 0 var(--bp-radius-drawer-top) 0 0; box-shadow: var(--bp-shadow-drawer); display: none; flex-direction: column; z-index: 5; }
   .bp-drawer__scroll { position: relative; flex: 1; overflow-y: auto; padding: 48px 30px 0; scrollbar-width: none; -ms-overflow-style: none; }
   .bp-drawer__scroll::-webkit-scrollbar { width: 0 !important; height: 0 !important; background: transparent !important; }
@@ -1119,6 +1186,9 @@
 
   .bp-radio-group { display: flex; flex-direction: column; align-items: flex-start; gap: 29px; width: 100%; }
   .bp-radio-item { display: flex; align-items: flex-start; gap: 16px; }
+  .bp-radio-item--custom { gap: 12px; }
+  .bp-radio-group__divider { height: 1px; width: 100%; background: var(--bp-color-divider); }
+  .bp-show-more { font: var(--bp-text-show-more); color: var(--bp-color-action-green); background: none; border: none; padding: 0; cursor: pointer; white-space: nowrap; }
   .bp-radio { width: 20px; height: 20px; border-radius: var(--bp-radius-full); border: 1px solid var(--bp-color-border-input); background: var(--primitive-white); flex-shrink: 0; margin-top: 4px; position: relative; }
   .bp-radio[data-checked="true"] { border: none; }
   .bp-radio[data-checked="true"]::after { content: ""; position: absolute; inset: 0; border-radius: var(--bp-radius-full); background: var(--bp-color-action-green); box-shadow: inset 0 0 0 4px var(--primitive-white), 0 0 0 1px var(--bp-color-action-green); }
@@ -1165,25 +1235,29 @@
   .bp-cal-day[data-cal-pick] { cursor: pointer; }
   .bp-cal-day__num { font: var(--bp-text-calendar-date); letter-spacing: var(--bp-calendar-letter-spacing); color: var(--bp-color-calendar-text); }
   .bp-cal-day__num--past { color: var(--bp-color-calendar-past-text); }
-  .bp-cal-day--range, .bp-cal-day--mid-left, .bp-cal-day--mid-right { background: var(--bp-color-calendar-range-bg); }
-  .bp-cal-day--mid-left { border-radius: var(--bp-radius-calendar-mid) 0 0 var(--bp-radius-calendar-mid); }
-  .bp-cal-day--mid-right { border-radius: 0 var(--bp-radius-calendar-mid) var(--bp-radius-calendar-mid) 0; }
-  .bp-cal-day--start, .bp-cal-day--end { background: var(--bp-color-calendar-range-bg); }
+  .bp-cal-day--band-grey { background: var(--bp-color-calendar-range-bg); }
+  .bp-cal-day--band-orange { background: #ffd5b0; }
+  .bp-cal-day--band-grad-due { background: linear-gradient(to right, var(--bp-color-calendar-range-bg) 50%, #ffd5b0 50%); }
+  .bp-cal-day--band-grad-arrival-orange { background: linear-gradient(to right, #ffd5b0 50%, transparent 50%); }
+  .bp-cal-day--band-grad-arrival-grey { background: linear-gradient(to right, var(--bp-color-calendar-range-bg) 50%, transparent 50%); }
+  .bp-cal-day--cap-left { border-radius: var(--bp-radius-calendar-mid) 0 0 var(--bp-radius-calendar-mid); }
+  .bp-cal-day--cap-right { border-radius: 0 var(--bp-radius-calendar-mid) var(--bp-radius-calendar-mid) 0; }
   .bp-cal-day--start { border-radius: var(--bp-radius-calendar-marker) 0 0 var(--bp-radius-calendar-marker); }
   .bp-cal-day--end { border-radius: 0 var(--bp-radius-calendar-marker) var(--bp-radius-calendar-marker) 0; }
   .bp-cal-day__marker { width: 24px; height: 24px; border-radius: 50%; box-sizing: border-box; display: flex; align-items: center; justify-content: center; }
-  .bp-cal-day__marker--start { background: var(--bp-color-action-green); }
-  .bp-cal-day__marker--end { background: var(--primitive-white); border: 1px solid var(--bp-color-action-green); }
+  .bp-cal-day__marker--start { background: var(--primitive-black); }
+  .bp-cal-day__marker--end { background: var(--primitive-white); border: 1px solid var(--primitive-black); }
   .bp-cal-day__marker-num { font: var(--bp-text-calendar-date-strong); letter-spacing: var(--bp-calendar-letter-spacing); }
   .bp-cal-day__marker--start .bp-cal-day__marker-num { color: var(--primitive-white); }
-  .bp-cal-day__marker--end .bp-cal-day__marker-num { color: var(--bp-color-action-green); }
-  .bp-cal-day__due-wrap { width: 24px; height: 24px; border-radius: var(--bp-radius-calendar-marker); box-sizing: border-box; background: var(--primitive-white); border: 1px solid var(--bp-color-calendar-due); display: flex; align-items: center; justify-content: center; padding: 2px 5px 2px 6px; }
-  .bp-cal-day__num--due { font: var(--bp-text-calendar-date-strong); letter-spacing: var(--bp-calendar-letter-spacing); color: var(--bp-color-calendar-due); white-space: nowrap; }
+  .bp-cal-day__marker--end .bp-cal-day__marker-num { color: var(--primitive-black); }
+  .bp-cal-day__due-wrap { width: 24px; height: 24px; border-radius: var(--bp-radius-calendar-marker); box-sizing: border-box; background: var(--bp-color-calendar-due); display: flex; align-items: center; justify-content: center; padding: 2px 5px 2px 6px; }
+  .bp-cal-day__num--due { font: var(--bp-text-calendar-date-strong); letter-spacing: var(--bp-calendar-letter-spacing); color: var(--primitive-white); white-space: nowrap; }
   .bp-cal-legend { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding: 8px 0; margin-top: 20px; }
   .bp-cal-legend__item { display: flex; align-items: center; gap: 8px; }
   .bp-cal-legend__dot { width: 12px; height: 12px; border-radius: 50%; box-sizing: border-box; flex-shrink: 0; }
-  .bp-cal-legend__dot--withdraw { background: var(--bp-color-action-green); }
-  .bp-cal-legend__dot--arrival { background: var(--primitive-white); border: 1px solid var(--bp-color-action-green); }
+  .bp-cal-legend__dot--withdraw { background: var(--primitive-black); }
+  .bp-cal-legend__dot--arrival { background: var(--primitive-white); border: 1px solid var(--primitive-black); }
+  .bp-cal-legend__dot--due { background: var(--bp-color-calendar-due); }
   .bp-cal-legend__text { margin: 0; font: var(--bp-text-legend); color: var(--primitive-black); }
   .bp-cal-legend__text span { color: var(--primitive-grey-dark); font: var(--bp-text-calendar-date-strong); }
 
@@ -1208,6 +1282,21 @@
   .bp-drawer__footer .bp-btn { width: var(--bp-footer-button-width); }
   .bp-drawer__footer .bp-btn--cancel { border-color: var(--bp-color-border-input); color: var(--primitive-black); }
   .bp-drawer__footer .bp-btn--continue { background: transparent; border-color: var(--bp-color-action-green); color: var(--bp-color-action-green); }
+
+  /* ---- Cursor / ripple / spark canvas — Quality_Of_Decisions Scene 1.
+     Ported from Gallery 1's scenes.html (.scene2-cursor/.scene2-ripple/
+     .scene2-spark-canvas), renamed to this scene's own scene0- prefix.
+     Siblings of #mock-screen inside .ag-mock-scaler (not children of
+     .bp-screen) so they live in the same native-1440 coordinate space
+     and scale down for free via .ag-mock-scaler's own transform:scale()
+     — .ag-mock-scaler establishes their containing block even though it
+     has no explicit `position`, because any element with a `transform`
+     does that per spec. ---- */
+  .scene0-cursor { position: absolute; left: 0; top: 0; width: 48px; height: 48px; transform: translate(-4px, -3px); pointer-events: none; z-index: 10; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.35)); opacity: 0; }
+  .scene0-cursor svg { display: block; width: 100%; height: 100%; }
+  .scene0-ripple { position: absolute; left: 0; top: 0; width: 0; height: 0; pointer-events: none; z-index: 9; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.35)); }
+  .scene0-ripple__disc { position: absolute; left: 0; top: 0; width: 64px; height: 64px; border-radius: 50%; background: radial-gradient(circle, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.75) 40%, rgba(255, 255, 255, 0.25) 72%, rgba(255, 255, 255, 0) 100%); opacity: 0; transform: translate(-50%, -50%) scale(0.02); }
+  .scene0-spark-canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 11; }
 </style>
 </head>
 <body>
@@ -1220,7 +1309,7 @@
         </div>
         <div class="ag-mock-wrap">
           <div class="ag-mock-scaler">
-            <div class="bp-screen bp-screen--narrow" id="mock-screen">
+            <div class="bp-screen" id="mock-screen">
               <header class="bp-header">
                 <h1 class="bp-header__title">Schedule bill payment</h1>
                 <button class="bp-header__close" type="button" aria-label="Close" tabindex="-1">
@@ -1239,7 +1328,7 @@
                     <p class="bp-combine__label">Combine multiple bills</p>
                     <div class="bp-combine__row">
                       <p class="bp-combine__toggle-label">Make one payment per vendor</p>
-                      <button class="bp-switch" type="button" role="switch" aria-checked="true" aria-label="Make one payment per vendor" tabindex="-1">
+                      <button class="bp-switch" type="button" role="switch" aria-checked="false" aria-label="Make one payment per vendor" tabindex="-1">
                         <span class="bp-switch__thumb"></span>
                       </button>
                     </div>
@@ -1300,7 +1389,7 @@
                 </div>
               </footer>
 
-              <aside class="bp-drawer" id="mock-drawer" style="display: flex; transform: translate3d(0, 0, 0)">
+              <aside class="bp-drawer" id="mock-drawer">
                 <div class="bp-drawer__scroll">
                   <div class="bp-drawer__head">
                     <button class="bp-drawer__chevron" type="button" tabindex="-1" aria-label="Back">
@@ -1324,6 +1413,20 @@
                 </div>
               </aside>
             </div>
+            <!-- Siblings of #mock-screen (not children — .bp-screen has
+                 overflow:hidden, which would clip the cursor whenever a
+                 beat moves it off the 1440x1000 canvas, e.g. beat 2's
+                 "enters from the bottom edge"). .ag-mock-scaler has no
+                 overflow clipping of its own. -->
+            <div class="scene0-cursor" id="scene0-cursor">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4 2 L4 20 L8.5 16.5 L11.2 22 L14 20.6 L11.3 15.2 L17 15 Z" fill="white" stroke="black" stroke-width="1.2" stroke-linejoin="round" />
+              </svg>
+            </div>
+            <div class="scene0-ripple" id="scene0-ripple">
+              <div class="scene0-ripple__disc"></div>
+            </div>
+            <canvas class="scene0-spark-canvas" id="scene0-spark-canvas" width="1440" height="1000"></canvas>
           </div>
         </div>
 
@@ -1353,6 +1456,66 @@
         <div class="ag-cal-row" id="ag-cal-row">
           <div class="ag-float-card__scaler" id="ag-cal-row-scaler"></div>
         </div>
+
+        <!-- Magnifier (beats 7-24) — structural mirror of #mock-drawer's
+             own markup, not a runtime clone: content is kept in lockstep
+             via syncDrawerContent() writing the same HTML string to both
+             drawers in one call (see the script's own comment on
+             syncDrawerContent for why this file deliberately does NOT
+             clone one drawer's DOM into the other). Starts closed,
+             matching .bp-drawer's own CSS default. -->
+        <div class="ag-magnifier-clip">
+          <div class="ag-magnifier" id="ag-magnifier">
+            <div class="ag-magnifier__scaler" id="ag-magnifier-scaler">
+              <aside class="bp-drawer ag-magnifier__drawer" id="magnifier-drawer">
+                <div class="bp-drawer__scroll">
+                  <div class="bp-drawer__head">
+                    <button class="bp-drawer__chevron" type="button" tabindex="-1" aria-label="Back">
+                      <span style="display: inline-flex; transform: rotate(90deg)">
+                        <img src="../../icons/bill-pay-mock/dropdown-chevron.svg" alt="" style="display: block; width: 12px; height: 6.86px" />
+                      </span>
+                    </button>
+                    <div class="bp-drawer__head-text">
+                      <p class="bp-drawer__title" id="magnifier-drawer-vendor-name"></p>
+                      <p class="bp-drawer__meta" id="magnifier-drawer-subtitle"></p>
+                    </div>
+                    <button class="bp-drawer__close" type="button" tabindex="-1" aria-label="Close">
+                      <img class="bp-action-icon" src="../../icons/bill-pay-mock/narrow-action.svg" alt="" />
+                    </button>
+                  </div>
+                  <div class="bp-drawer__inner" id="magnifier-drawer-inner"></div>
+                </div>
+                <div class="bp-drawer__footer" id="magnifier-drawer-footer" style="display: none">
+                  <button class="bp-btn bp-btn--cancel" type="button" tabindex="-1">Cancel</button>
+                  <button class="bp-btn bp-btn--continue" type="button" tabindex="-1">Apply changes</button>
+                </div>
+              </aside>
+              <!-- Fix 1 (QA): gestures from beat 7 onward happen here, not
+                   in the mock — the mock is too small to read, which is
+                   the whole reason the magnifier exists. Sibling of
+                   .ag-magnifier__drawer (not a child — same
+                   overflow-clipping reasoning as the mock's own cursor),
+                   reusing the mock's cursor/ripple/spark-canvas CSS
+                   classes verbatim so no new rules are needed — native
+                   pixel dimensions (48px cursor, 64px ripple disc) stay
+                   identical to the mock's own; visual size scales up for
+                   free via this container's own 0.461 transform instead
+                   of 0.223, same physical-size-relative-to-the-UI
+                   reasoning as the mock cursor. Spark canvas sized to
+                   this scaler's own native 435x1000 (not the mock's
+                   1440x1000) so spark coordinates map 1:1. -->
+              <div class="scene0-cursor" id="scene0-cursor-magnifier">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M4 2 L4 20 L8.5 16.5 L11.2 22 L14 20.6 L11.3 15.2 L17 15 Z" fill="white" stroke="black" stroke-width="1.2" stroke-linejoin="round" />
+                </svg>
+              </div>
+              <div class="scene0-ripple" id="scene0-ripple-magnifier">
+                <div class="scene0-ripple__disc"></div>
+              </div>
+              <canvas class="scene0-spark-canvas" id="scene0-spark-canvas-magnifier" width="435" height="1000"></canvas>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1381,18 +1544,25 @@
 
   <script>
   (function () {
-    // Two equal-length panels, a starting point not a final timing
-    // decision — see js/bill-pay/scene-accordion.js for the fuller
-    // comment. Must match SCENE_BOUNDARIES/TOTAL_DURATION there
-    // exactly; this file owns the actual clock, same hand-synced,
-    // no-shared-module pattern as Gallery 1's and Gallery 2's own
-    // boundaries/parent-JS pairs.
+    // Panel 0's boundary is the scene's own length — a starting point
+    // not a final timing decision (real value set once beats 1-25 are
+    // built, Phase D). Must match SCENE_BOUNDARIES/TOTAL_DURATION in
+    // js/bill-pay/scene-accordion.js exactly; this file owns the actual
+    // clock, same hand-synced, no-shared-module pattern as Gallery 1's
+    // and Gallery 2's own boundaries/parent-JS pairs.
     var BOUNDARIES = [0, 6000];
     var TOTAL_DURATION = 12000;
+    var SCENE_DURATION = BOUNDARIES[1];
 
     var row = document.getElementById("ag-row");
     var panels = [document.getElementById("ag-panel-0"), document.getElementById("ag-panel-1")];
-    var epoch = performance.now();
+    // epoch stays null until the 60%-visibility trigger fires (see the
+    // IntersectionObserver near the bottom of this file) — panel 0
+    // renders its idle beat-1 baseline until then. Once set, the
+    // existing tick()/applyScene() mechanism below runs completely
+    // unmodified; only *when* epoch starts is new.
+    var epoch = null;
+    var hasTriggered = false;
     var lastIndex = -1;
 
     // Task 1 — see the .ag-narrow/html,body comment above for why this
@@ -1456,21 +1626,468 @@
     }
 
     // 223 / 1000 — this stage's own fixed mock scale (see
-    // --ag-mock-scale), identical to Gallery 2's. Used only to convert
-    // the Barnett row's measured rect into the native 1440x1000
-    // coordinate space the selected-row card is positioned in — a
-    // one-time call, not per-frame, since this scene never re-measures
-    // after its single static render.
+    // --ag-mock-scale), identical to Gallery 2's. Used throughout the
+    // scene (Phase B onward) to convert any measured rect into the
+    // native 1440x1000 coordinate space every gesture/animation
+    // constant is authored in — called live, per frame, from
+    // renderScene0's beat logic (unlike the one-time selected-row-card
+    // setup above, which only ever needed a single load-time call).
     var MOCK_SCALE = 0.223;
 
+    // Full shape (right/bottom/centerX/centerY added) — matches
+    // scenes.html's own nativeRect exactly, needed by
+    // circleParamsFor/underlineParamsFor below.
     function nativeRect(el, refRect) {
       var r = el.getBoundingClientRect();
       return {
         left: (r.left - refRect.left) / MOCK_SCALE,
         top: (r.top - refRect.top) / MOCK_SCALE,
+        right: (r.right - refRect.left) / MOCK_SCALE,
+        bottom: (r.bottom - refRect.top) / MOCK_SCALE,
         width: r.width / MOCK_SCALE,
-        height: r.height / MOCK_SCALE
+        height: r.height / MOCK_SCALE,
+        centerX: (r.left + r.width / 2 - refRect.left) / MOCK_SCALE,
+        centerY: (r.top + r.height / 2 - refRect.top) / MOCK_SCALE
       };
+    }
+
+    // Fix 1 (QA): the magnifier is a separate DOM subtree at its own
+    // scale (--ag-magnifier-scale) — nativeRect/MOCK_SCALE above can't
+    // serve it, since a rect measured there needs dividing by a
+    // different number against a different (0,0) origin. Same shape,
+    // own scale/origin.
+    var MAGNIFIER_SCALE = 0.461;
+    function magnifierNativeRect(el, refRect) {
+      var r = el.getBoundingClientRect();
+      return {
+        left: (r.left - refRect.left) / MAGNIFIER_SCALE,
+        top: (r.top - refRect.top) / MAGNIFIER_SCALE,
+        right: (r.right - refRect.left) / MAGNIFIER_SCALE,
+        bottom: (r.bottom - refRect.top) / MAGNIFIER_SCALE,
+        width: r.width / MAGNIFIER_SCALE,
+        height: r.height / MAGNIFIER_SCALE,
+        centerX: (r.left + r.width / 2 - refRect.left) / MAGNIFIER_SCALE,
+        centerY: (r.top + r.height / 2 - refRect.top) / MAGNIFIER_SCALE
+      };
+    }
+
+    // ============================================================
+    // Cursor gesture engine + spark burst — ported from Gallery 1's
+    // scenes.html (approach only, per the build spec's own instruction
+    // to re-measure every coordinate at this file's own 0.223 scale
+    // rather than importing Gallery 1's 0.4513888889-scale numbers).
+    // Every function below is a pure function of local time — safe to
+    // call for any t, including an arbitrary seek, same reasoning as
+    // scenes.html's own comment on these functions.
+    // ============================================================
+
+    function clamp01(x) {
+      return x < 0 ? 0 : x > 1 ? 1 : x;
+    }
+
+    // cubic-bezier evaluator (Newton-Raphson) — same implementation as
+    // scenes.html's makeEaseOut, used for both the drawer's open/close
+    // curves and the click ripple's own curve.
+    function makeEaseOut(p1x, p1y, p2x, p2y) {
+      function a(x1, x2) { return 1 - 3 * x2 + 3 * x1; }
+      function b(x1, x2) { return 3 * x2 - 6 * x1; }
+      function c(x1) { return 3 * x1; }
+      function bezier(t, x1, x2) { return ((a(x1, x2) * t + b(x1, x2)) * t + c(x1)) * t; }
+      function slope(t, x1, x2) { return 3 * a(x1, x2) * t * t + 2 * b(x1, x2) * t + c(x1); }
+      function tForX(x) {
+        var t = x;
+        for (var i = 0; i < 8; i++) {
+          var d = slope(t, p1x, p2x);
+          if (Math.abs(d) < 1e-6) break;
+          t -= (bezier(t, p1x, p2x) - x) / d;
+        }
+        return t;
+      }
+      return function (x) {
+        if (x <= 0) return 0;
+        if (x >= 1) return 1;
+        return bezier(tForX(x), p1y, p2y);
+      };
+    }
+
+    // Ported verbatim from scenes.html (itself ported from
+    // walkthrough/bill-pay's own step-1.html/step-2.html) — the
+    // gesture engine's own easing, distinct from the drawer's
+    // makeEaseOut-based curves below.
+    function easeInOutCubic(x) {
+      return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+    }
+    var easeRipple = makeEaseOut(0.25, 0.7, 0.3, 1);
+
+    function moveTo2(localT, duration, from, to) {
+      var e = easeInOutCubic(clamp01(localT / duration));
+      return { x: from.x + (to.x - from.x) * e, y: from.y + (to.y - from.y) * e };
+    }
+
+    // Continuous parametric ellipse, one revolution starting at the top,
+    // plus a low-frequency wobble on the radius.
+    function computeCircle(localT, duration, p) {
+      var e = easeInOutCubic(clamp01(localT / duration));
+      var angle = -Math.PI / 2 + e * Math.PI * 2;
+      var rxJ = p.rx * (1 + 0.10 * Math.sin(angle * 2.3 + p.seedA));
+      var ryJ = p.ry * (1 + 0.09 * Math.sin(angle * 1.7 + p.seedB));
+      return { x: p.cx + Math.cos(angle) * rxJ, y: p.cy + Math.sin(angle) * ryJ };
+    }
+
+    // Left to right and back, one continuous sweep, small perpendicular
+    // wobble.
+    function computeUnderline(localT, duration, p) {
+      var e = easeInOutCubic(clamp01(localT / duration));
+      var half = p.x2 - p.x1;
+      var dist = e * half * 2;
+      var x = dist <= half ? p.x1 + dist : p.x2 - (dist - half);
+      var y = p.y + 1.6 * Math.sin(e * Math.PI * 5 + p.seed);
+      return { x: x, y: y };
+    }
+
+    // Ported from step-2.html's @keyframes discGrow: scale runs 0%→55%→
+    // 100% (.05 → .95 → 1.3), opacity runs 0%→18%→55%→100% (0 → .95 →
+    // .85 → 0).
+    var RIPPLE_SCALE_STOPS = [{ p: 0, v: 0.05 }, { p: 0.55, v: 0.95 }, { p: 1, v: 1.3 }];
+    var RIPPLE_OPACITY_STOPS = [{ p: 0, v: 0 }, { p: 0.18, v: 0.95 }, { p: 0.55, v: 0.85 }, { p: 1, v: 0 }];
+    function lerpStops(stops, e) {
+      var i = 0;
+      while (i < stops.length - 2 && stops[i + 1].p < e) i++;
+      var a = stops[i], b = stops[i + 1];
+      var segT = (e - a.p) / (b.p - a.p || 1);
+      return a.v + (b.v - a.v) * segT;
+    }
+    function computeClickRipple(localT, duration) {
+      var e = easeRipple(clamp01(localT / duration));
+      return { scale: lerpStops(RIPPLE_SCALE_STOPS, e), opacity: lerpStops(RIPPLE_OPACITY_STOPS, e) };
+    }
+
+    // Derives a circle gesture's params from a measured rect — loose,
+    // not tight ("draws a loose ellipse around a piece of text"): half
+    // the rect's own size plus a fixed margin.
+    function circleParamsFor(rect, seedA, seedB) {
+      return { cx: rect.centerX, cy: rect.centerY, rx: rect.width / 2 + 14, ry: rect.height / 2 + 11, seedA: seedA, seedB: seedB };
+    }
+    function underlineParamsFor(rect, seed) {
+      return { x1: rect.left - 3, x2: rect.right + 3, y: rect.bottom + 4, seed: seed };
+    }
+    // Fix run 3, Part 3: the third of three sequential reads shouldn't
+    // sweep the full line — "scanning for the one number that differs,
+    // not reading every word." fromFrac shifts the sweep's own start
+    // point partway into the rect (0.55 skips past "Withdraw X ->",
+    // landing near "Arrives Y"), so both the stroke length AND the
+    // move that reaches it are genuinely shorter, not just faster.
+    function partialUnderlineParamsFor(rect, seed, fromFrac) {
+      return { x1: rect.left + fromFrac * rect.width, x2: rect.right + 3, y: rect.bottom + 4, seed: seed };
+    }
+    // Ported from scenes.html — the actual root cause of "the circle
+    // looks wrong here": every move INTO a circle/underline gesture in
+    // this file was targeting the raw rect center/left instead of
+    // these two exact points, so the circle/underline itself SNAPPED
+    // to its own true start the instant it began (computeCircle starts
+    // at angle=-PI/2, i.e. exactly circleTop; computeUnderline starts
+    // at x1, i.e. exactly underlineStart) — a visible jump Gallery 1
+    // never has, because it always moves TO these points first, not to
+    // the target's raw center.
+    function circleTop(p) { return { x: p.cx, y: p.cy - p.ry }; }
+    function underlineStart(p) { return { x: p.x1, y: p.y }; }
+    // Fix run 2 (real QA, second pass): beat 8's six stacked
+    // there-and-back underline reads drew a comb — computeUnderline
+    // always returns to x1, so six of them at slightly different y
+    // positions repeat the same shape instead of reading as an eye
+    // moving down a list. Reworked as a ONE-WAY traverse (x1 -> x2
+    // once, same easeInOutCubic easing computeUnderline itself uses,
+    // a gentler wobble since a directional sweep doesn't need as much
+    // "aliveness" as a there-and-back one to avoid looking like a flat
+    // ruler-line) — a person's eye doesn't backtrack across a line it
+    // just read. readEnd(p) (the sweep's own x2 endpoint) is the
+    // natural counterpart to underlineStart(p) — the point every
+    // subsequent diagonal transition moves FROM.
+    function computeReadSweep(localT, duration, p) {
+      var e = easeInOutCubic(clamp01(localT / duration));
+      var x = p.x1 + e * (p.x2 - p.x1);
+      var y = p.y + 1.2 * Math.sin(e * Math.PI * 2 + p.seed);
+      return { x: x, y: y };
+    }
+    function readEnd(p) { return { x: p.x2, y: p.y }; }
+
+    // ---- Spark burst — canvas-based, real-time (performance.now()),
+    // independent of the scene's own seekable t-driven render, same
+    // reasoning as scenes.html's own comment: a short, self-contained
+    // flourish layered on top of a scripted click, not itself part of
+    // the seekable state (same way a CSS transition retriggered
+    // elsewhere in this project isn't seekable state either). ----
+    var SPARK_COUNT = 8;
+    var SPARK_SIZE = 28;
+    var SPARK_RADIUS = 45;
+    var SPARK_DURATION = 500;
+    var SPARK_LINE_WIDTH = 3;
+    function sparkEaseOut(t) { return t * (2 - t); }
+    var prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var SPARK_COLOR = getComputedStyle(document.documentElement).getPropertyValue("--primitive-grey-dark").trim();
+    var sparkCanvasEl = document.getElementById("scene0-spark-canvas");
+    var sparkCtx = sparkCanvasEl.getContext("2d");
+    var sparks = [];
+    function triggerSparkBurst(x, y) {
+      if (prefersReducedMotion) return;
+      var now = performance.now();
+      for (var i = 0; i < SPARK_COUNT; i++) {
+        sparks.push({ x: x, y: y, angle: (2 * Math.PI * i) / SPARK_COUNT, startTime: now });
+      }
+    }
+    function drawSparks() {
+      sparkCtx.clearRect(0, 0, sparkCanvasEl.width, sparkCanvasEl.height);
+      if (sparks.length === 0) return;
+      var now = performance.now();
+      var next = [];
+      for (var i = 0; i < sparks.length; i++) {
+        var spark = sparks[i];
+        var elapsed = now - spark.startTime;
+        if (elapsed >= SPARK_DURATION) continue;
+        next.push(spark);
+        var progress = elapsed / SPARK_DURATION;
+        var eased = sparkEaseOut(progress);
+        var distance = eased * SPARK_RADIUS;
+        var lineLength = SPARK_SIZE * (1 - eased);
+        var x1 = spark.x + distance * Math.cos(spark.angle);
+        var y1 = spark.y + distance * Math.sin(spark.angle);
+        var x2 = spark.x + (distance + lineLength) * Math.cos(spark.angle);
+        var y2 = spark.y + (distance + lineLength) * Math.sin(spark.angle);
+        sparkCtx.strokeStyle = SPARK_COLOR;
+        sparkCtx.lineWidth = SPARK_LINE_WIDTH;
+        sparkCtx.beginPath();
+        sparkCtx.moveTo(x1, y1);
+        sparkCtx.lineTo(x2, y2);
+        sparkCtx.stroke();
+      }
+      sparks = next;
+    }
+
+    // Fix 1 (QA): a second, independent spark system for the
+    // magnifier's own canvas — beats 10/14/17/22/24's clicks all fire
+    // here now, not on the mock's canvas. Reuses every constant above
+    // (SPARK_COUNT/SIZE/RADIUS/DURATION/LINE_WIDTH/COLOR) verbatim —
+    // same "native units, let the container's own transform:scale()
+    // handle the visual size" reasoning as the magnifier's cursor/
+    // ripple. A single triggerSparkBurst(x,y) can't serve both canvases
+    // at once regardless, since a magnifier-space (x,y) and a
+    // mock-space (x,y) for the same visual point are different numbers
+    // (different scale, different origin) — two arrays, two draw calls,
+    // not a shared one with two coordinate pairs threaded through it.
+    var sparkCanvasMagEl = document.getElementById("scene0-spark-canvas-magnifier");
+    var sparkCtxMag = sparkCanvasMagEl.getContext("2d");
+    var sparksMag = [];
+    function triggerSparkBurstMag(x, y) {
+      if (prefersReducedMotion) return;
+      var now = performance.now();
+      for (var i = 0; i < SPARK_COUNT; i++) {
+        sparksMag.push({ x: x, y: y, angle: (2 * Math.PI * i) / SPARK_COUNT, startTime: now });
+      }
+    }
+    function drawSparksMag() {
+      sparkCtxMag.clearRect(0, 0, sparkCanvasMagEl.width, sparkCanvasMagEl.height);
+      if (sparksMag.length === 0) return;
+      var now = performance.now();
+      var next = [];
+      for (var i = 0; i < sparksMag.length; i++) {
+        var spark = sparksMag[i];
+        var elapsed = now - spark.startTime;
+        if (elapsed >= SPARK_DURATION) continue;
+        next.push(spark);
+        var progress = elapsed / SPARK_DURATION;
+        var eased = sparkEaseOut(progress);
+        var distance = eased * SPARK_RADIUS;
+        var lineLength = SPARK_SIZE * (1 - eased);
+        var x1 = spark.x + distance * Math.cos(spark.angle);
+        var y1 = spark.y + distance * Math.sin(spark.angle);
+        var x2 = spark.x + (distance + lineLength) * Math.cos(spark.angle);
+        var y2 = spark.y + (distance + lineLength) * Math.sin(spark.angle);
+        sparkCtxMag.strokeStyle = SPARK_COLOR;
+        sparkCtxMag.lineWidth = SPARK_LINE_WIDTH;
+        sparkCtxMag.beginPath();
+        sparkCtxMag.moveTo(x1, y1);
+        sparkCtxMag.lineTo(x2, y2);
+        sparkCtxMag.stroke();
+      }
+      sparksMag = next;
+    }
+
+    // ---- Drawer open/close + narrow-column-collapse — one shared
+    // openness(t) scalar drives both in parallel, matching Bill Pay
+    // mock spec §7.3 exactly (225ms open / 195ms close, these specific
+    // curves) and scenes.html's own s3DrawerOpennessFor pattern. ----
+    var easeDrawerOpen = makeEaseOut(0, 0, 0.2, 1);
+    var easeDrawerClose = makeEaseOut(0.4, 0, 0.6, 1);
+    function drawerOpennessFor(t, openStart, openEnd, closeStart, closeEnd) {
+      if (t < openStart) return 0;
+      if (t < openEnd) return easeDrawerOpen(clamp01((t - openStart) / (openEnd - openStart)));
+      if (t < closeStart) return 1;
+      if (t < closeEnd) return 1 - easeDrawerClose(clamp01((t - closeStart) / (closeEnd - closeStart)));
+      return 0;
+    }
+
+    // Fix run 4, item 2: "roughly the last fifth of the drawer still on
+    // screen" means openness === 0.2 (translate3d is 100*(1-openness)%,
+    // so at openness 0.2, 80% has slid off and 20% — the last fifth —
+    // remains). openness during the close is 1 - easeDrawerClose(frac),
+    // so solving easeDrawerClose(frac) = 0.8 by inverting the curve
+    // (bisection, done once by hand against the actual cubic-bezier(0.4,
+    // 0,0.6,1) this file already uses) gives frac ~= 0.6954 of
+    // drawerCloseAnim's 195ms — i.e. openness hits 0.2 about 59.4ms
+    // before the close animation's own end. Rounded to a clean 60ms;
+    // used both as the floats-return trigger's lead time and to size
+    // floatsReturn's own bookkeeping duration in SCENE0_SEQUENCE.
+    var FLOATS_RETURN_LEAD_MS = 60;
+
+    // Collapses a list of narrow-hide cells toward width 0 and fades
+    // each direct child's opacity, uniformly with p — same simplified
+    // (no separate content-fade-first stagger) approach scenes.html's
+    // own s3CollapseCells actually uses, despite the mock spec's fuller
+    // nested-timing description; ported at the reference implementation's
+    // own fidelity level, not re-derived stricter. Full width is
+    // measured live once per element and cached on the element itself —
+    // safe because the table is mounted once per trigger session (see
+    // resetScene0Baseline's rowsMounted guard), not re-rendered every
+    // frame, so the cached value survives.
+    function collapseCells(cells, p) {
+      for (var i = 0; i < cells.length; i++) {
+        var el = cells[i];
+        if (el.__fullWidth == null) el.__fullWidth = el.getBoundingClientRect().width / MOCK_SCALE;
+        el.style.width = (el.__fullWidth * (1 - p)) + "px";
+        el.style.paddingLeft = (10 * (1 - p)) + "px";
+        el.style.paddingRight = (10 * (1 - p)) + "px";
+        for (var c = 0; c < el.children.length; c++) el.children[c].style.opacity = 1 - p;
+      }
+    }
+
+    // Narrow-mode column collapse, driven by the same openness value as
+    // the drawer slide. Unlike scenes.html's own s3ApplyNarrowProgress,
+    // this does NOT set headerRowEl.style.right or touch a bulk vendor
+    // row's own Action cell: .bp-header-row has no `position` in this
+    // file's CSS (a static flex child, not absolutely positioned like
+    // Gallery 1's), so a `right` offset is inert dead CSS here — not
+    // reproduced. Bulk mode never renders in this scene (batch
+    // throughout, see the beat sheet's starting state), so there is no
+    // vendor-row Action cell to collapse either.
+    function applyNarrowProgress(instance, p) {
+      var dw = 435; // var(--bp-drawer-width)
+      collapseCells(instance.headerRowEl.querySelectorAll("[data-narrow-hide]"), p);
+      collapseCells(instance.rowsScroll.querySelectorAll(".bp-cell[data-narrow-hide]"), p);
+      var actionLabelSpan = instance.headerRowEl.querySelector("[data-action-label] span");
+      if (actionLabelSpan) actionLabelSpan.style.opacity = 1 - p;
+      if (instance.rowsScrollFullWidth == null) {
+        instance.rowsScrollFullWidth = instance.rowsScroll.getBoundingClientRect().width / MOCK_SCALE;
+      }
+      instance.rowsScroll.style.width = (instance.rowsScrollFullWidth + p * (882 - instance.rowsScrollFullWidth)) + "px";
+      instance.rowsTopDividerEl.style.right = (20 + p * (dw - 50 - 20)) + "px";
+      instance.screenEl.classList.toggle("bp-screen--narrow", p > 0);
+    }
+
+    // ---- Number-bump pop — ported from scenes.html's s3NumberBump, for
+    // beat 25's Payment speed cell update ("same treatment Gallery 1
+    // uses when a value updates"). ----
+    var easeOut = makeEaseOut(0.23, 1, 0.32, 1);
+    var easeRelease = makeEaseOut(0.32, 0.72, 0, 1);
+    var FIGURE_BUMP_MAGNITUDE = 0.072;
+    // Fix 14: neither existing magnitude fit as-is — 0.072 is tuned for
+    // a routine cell-value update (low narrative weight), 0.20 is tuned
+    // for a footer stat block's own scene-establishing reveal (a much
+    // larger element, where 20% reads as a big deal without tipping
+    // into looking bouncy). The badge is small and dense (a short
+    // uppercase pill), so 0.20 applied directly reads as cartoonish on
+    // it; but it's also the verdict the whole scene builds to three
+    // times, so 0.072's routine-update subtlety undersells it. 0.13
+    // sits between the two, reusing the same rise/hold/fall curve pair
+    // (extend the token, don't fork it) rather than inventing a new
+    // easing shape.
+    var BADGE_BUMP_MAGNITUDE = 0.13;
+    function sceneNumberBump(localT, riseDur, holdDur, fallDur, magnitude) {
+      var riseEnd = riseDur, holdEnd = riseDur + holdDur, fallEnd = holdEnd + fallDur;
+      if (localT <= 0 || localT >= fallEnd) return 1;
+      if (localT < riseEnd) return 1 + magnitude * easeOut(clamp01(localT / riseDur));
+      if (localT < holdEnd) return 1 + magnitude;
+      return 1 + magnitude - magnitude * easeRelease(clamp01((localT - holdEnd) / fallDur));
+    }
+
+    // ---- Float dismissal — beat 6. Purpose: state indication (the
+    // decision space's loose fragments clear to make room for the
+    // focused drawer interaction that follows at beat 7). Exiting →
+    // ease-out per the animate skill's decision table; reuses the same
+    // strong ease-out curve already defined above for the number-bump
+    // rather than inventing a second one. Per-element stagger (spec:
+    // "staggered starts, order irrelevant, no waiting for the previous
+    // to finish"), not a sequential queue — all 5 overlap.
+    //
+    // 70ms stagger x 4 + 200ms duration = 480ms total span — the
+    // floatsDismiss beat itself is budgeted 600ms (SCENE0_SEQUENCE),
+    // so this deliberately finishes 120ms before that beat ends (and
+    // before drawerOpen begins), not exactly at the boundary. An
+    // earlier version used 90ms/240ms = 600ms, landing exactly on the
+    // boundary with zero margin — mathematically "not overlapping,"
+    // but with no room for rAF frame granularity or the easing curve's
+    // own asymptotic tail, which read as floats still faintly visible
+    // when the drawer opened. This fix trades a still-brisk dismissal
+    // for real margin instead of a knife's-edge one.
+    //
+    // Pairs opacity with the scale (spec only says "scales to 0%," but
+    // an element at literal scale(0) with opacity still at 1 reads as
+    // a hard cutout rather than a dissolve — safe to add, doesn't
+    // contradict the spec). Setting inline transform here overrides
+    // the ambient CSS bob's own translateY for the ~200ms an
+    // individual float is dismissing (the bob pauses, then the float
+    // shrinks away) rather than composing with it — a reasonable
+    // default, open to revision on a real look.
+    var FLOAT_DISMISS_STAGGER = 70;
+    var FLOAT_DISMISS_DURATION = 200;
+    function floatDismissScale(localT, startOffset) {
+      var t = localT - startOffset;
+      if (t <= 0) return 1;
+      if (t >= FLOAT_DISMISS_DURATION) return 0;
+      return 1 - easeOut(clamp01(t / FLOAT_DISMISS_DURATION));
+    }
+    // beatLocalT is local to beat 6's own start (0 = beat 6 begins),
+    // not the scene's global t — the caller (Phase D) is responsible
+    // for that offset, same convention as every other beat-scoped
+    // function in this file.
+    function applyFloatDismissal(instance, beatLocalT) {
+      var floats = [instance.float1, instance.float2, instance.float3, instance.floatPill, instance.floatCalRow];
+      for (var i = 0; i < floats.length; i++) {
+        var scale = floatDismissScale(beatLocalT, i * FLOAT_DISMISS_STAGGER);
+        floats[i].style.transform = "scale(" + scale + ")";
+        floats[i].style.opacity = scale;
+      }
+    }
+
+    // Fix 9: floats return once the drawer closes, symmetric with
+    // their own dismissal — same stagger/duration constants, same
+    // ease-out curve (entering, per the animate skill's own table:
+    // "entering or exiting -> ease-out"), just scaling 0->1 instead of
+    // 1->0. "The scene ends where it started."
+    function floatReturnScale(localT, startOffset) {
+      var t = localT - startOffset;
+      if (t <= 0) return 0;
+      if (t >= FLOAT_DISMISS_DURATION) return 1;
+      return easeOut(clamp01(t / FLOAT_DISMISS_DURATION));
+    }
+    // beatLocalT is local to the floatsReturn segment's own start.
+    // Once a float reaches scale 1 (fully returned), clearing the
+    // inline transform/opacity lets the ambient CSS bob keyframe
+    // animation resume driving it — same "inline style overrides the
+    // bob while active, clearing it hands control back" relationship
+    // applyFloatDismissal's own comment already establishes, just in
+    // the return direction.
+    function applyFloatReturn(instance, beatLocalT) {
+      var floats = [instance.float1, instance.float2, instance.float3, instance.floatPill, instance.floatCalRow];
+      for (var i = 0; i < floats.length; i++) {
+        var scale = floatReturnScale(beatLocalT, i * FLOAT_DISMISS_STAGGER);
+        if (scale >= 1) {
+          floats[i].style.transform = "";
+          floats[i].style.opacity = "";
+        } else {
+          floats[i].style.transform = "scale(" + scale + ")";
+          floats[i].style.opacity = scale;
+        }
+      }
     }
 
     // Source of truth is the same batch-full Figma template Gallery 1's
@@ -1518,7 +2135,16 @@
       );
     }
 
-    var state = { mode: "bulk", expanded: {}, calendar: { tab: "standard", withdraw: null, arrival: null } };
+    var state = {
+      mode: "batch",
+      expanded: {},
+      drawer: {
+        row: null,
+        selectedRadio: "standard",
+        delivery: "radios",
+        calendar: { tab: "standard", withdraw: null, arrival: null }
+      }
+    };
 
     function vendorGroups() {
       var order = [];
@@ -1565,19 +2191,43 @@
       );
     }
 
+    // Ported from schedule-payment.js's own renderBatchRow — this file
+    // had no batch-mode row renderer before (bulk-only, per
+    // COMPONENT-MAP.md's "Missing: ... batch mode" note); needed now
+    // since the scene's starting state is batch, not bulk.
+    function renderBatchRow(row) {
+      var narrowHideSpeed = rowCellsCommon(true);
+      var dates = computeStandardDates(row);
+      return (
+        '<div class="bp-row" data-row-id="' + row.id + '">' +
+          '<div class="bp-cell bp-cell--vendor">' +
+            '<div class="bp-vendor">' +
+              '<div class="bp-vendor__body">' +
+                '<p class="bp-vendor__name">' + row.vendor + "</p>" +
+                renderVendorMethod(row.vendor, row.method, row.last4) +
+              "</div>" +
+            "</div>" +
+          "</div>" +
+          '<div class="bp-cell bp-cell--bill"><span>' + row.bill + "</span></div>" +
+          '<div class="bp-cell bp-cell--status"><span class="bp-status__check">' + GLYPH.statusCheck + '</span><span class="bp-status-text">Approved</span></div>' +
+          '<div class="bp-cell bp-cell--due"><span>' + row.due + "</span></div>" +
+          '<div class="bp-cell bp-cell--speed"' + narrowHideSpeed + ">" +
+            '<div class="bp-speed__top"><p class="bp-speed__label">Standard</p><span class="bp-badge"><span>On time</span></span></div>' +
+            '<div class="bp-speed__meta"><span>Withdraw ' + fmtMD(dates.withdraw) + "</span><span style=\"display:inline-flex\">" + GLYPH.arrow + "</span><span>Arrives " + fmtMD(dates.arrival) + "</span></div>" +
+          "</div>" +
+          '<div class="bp-cell bp-cell--fee"' + narrowHideSpeed + '><div class="bp-fee"><span>' + money(row.fee) + "</span><span>" + GLYPH.info + "</span></div></div>" +
+          '<div class="bp-cell bp-cell--balance"><span>' + money(row.amount) + "</span></div>" +
+          '<div class="bp-cell bp-cell--amount"><div class="bp-amount-field"><span>' + money(row.amount) + "</span></div></div>" +
+          renderActionCell(row.action) +
+        "</div>"
+      );
+    }
+
     function renderVendorRow(group) {
       var expanded = !!state.expanded[group.vendor];
       var narrowHideSpeed = rowCellsCommon(true);
       var feeTotal = 1.0;
-      var withdrawVals = group.rows.map(function (r) { return r.withdraw; }).filter(Boolean);
-      var arrivesVals = group.rows.map(function (r) { return r.arrives; }).filter(Boolean);
-      function dateKey(mmdd) {
-        if (!mmdd) return 999999;
-        var parts = mmdd.split('/');
-        return parseInt(parts[0], 10) * 100 + parseInt(parts[1], 10);
-      }
-      var earliestWithdraw = withdrawVals.length ? withdrawVals.reduce(function (a, b) { return dateKey(a) < dateKey(b) ? a : b; }) : '';
-      var latestArrives = arrivesVals.length ? arrivesVals.reduce(function (a, b) { return dateKey(a) > dateKey(b) ? a : b; }) : '';
+      var dates = computeStandardDates(group);
 
       var vendorRowHtml =
         '<div class="bp-row" data-vendor-row="' + group.vendor + '">' +
@@ -1597,7 +2247,7 @@
           '<div class="bp-cell bp-cell--due" style="opacity:0"></div>' +
           '<div class="bp-cell bp-cell--speed"' + narrowHideSpeed + ">" +
             '<div class="bp-speed__top"><p class="bp-speed__label">Standard</p><span class="bp-badge"><span>On time</span></span></div>' +
-            '<div class="bp-speed__meta"><span>Withdraw ' + (earliestWithdraw || '') + "</span><span style=\"display:inline-flex\">" + GLYPH.arrow + "</span><span>Arrives " + (latestArrives || '') + "</span></div>" +
+            '<div class="bp-speed__meta"><span>Withdraw ' + fmtMD(dates.withdraw) + "</span><span style=\"display:inline-flex\">" + GLYPH.arrow + "</span><span>Arrives " + fmtMD(dates.arrival) + "</span></div>" +
           "</div>" +
           '<div class="bp-cell bp-cell--fee"' + narrowHideSpeed + '><div class="bp-fee"><span>' + money(feeTotal) + "</span><span>" + GLYPH.info + "</span></div></div>" +
           '<div class="bp-cell bp-cell--balance"><span>' + money(group.total) + "</span></div>" +
@@ -1612,14 +2262,18 @@
     }
 
     function renderRows(rowsScroll) {
-      rowsScroll.innerHTML = vendorGroups().map(renderVendorRow).join("");
+      if (state.mode === "batch") {
+        rowsScroll.innerHTML = ROWS.map(renderBatchRow).join("");
+      } else {
+        rowsScroll.innerHTML = vendorGroups().map(renderVendorRow).join("");
+      }
     }
 
     function updateAggregates() {
       var bills = ROWS.length;
       var groups = vendorGroups();
       var vendors = groups.length;
-      var payments = vendors; // bulk mode: one payment per vendor
+      var payments = state.mode === "batch" ? bills : vendors;
       var totalAmount = ROWS.reduce(function (s, r) { return s + r.amount; }, 0);
       var totalFee = 1.0 * payments;
       document.getElementById("mock-total-amount").textContent = money(totalAmount);
@@ -1653,6 +2307,16 @@
       }
       return d;
     }
+    // Arrival anchor must itself be a business day before counting back N
+    // business days for withdraw - rolls back to the closest earlier
+    // weekday; no-op if already a business day.
+    function normalizeArrival(d) {
+      var r = new Date(d);
+      while (!isBusinessDay(r)) {
+        r.setDate(r.getDate() - 1);
+      }
+      return r;
+    }
     function fmtMD(d) { return pad2(d.getMonth() + 1) + "/" + pad2(d.getDate()); }
     function getDrawerDueDates(payload) {
       var rows = payload.rows ? payload.rows : [payload];
@@ -1666,27 +2330,27 @@
       out.sort(function (a, b) { return a - b; });
       return out;
     }
+    // Table rows derive dates from the same engine the drawer uses
+    // (Standard tier, 5 business days), instead of storing them, so the
+    // two surfaces cannot drift apart.
+    function computeStandardDates(payload) {
+      var dueDates = getDrawerDueDates(payload);
+      var arrival = normalizeArrival(addDays(dueDates[0], -1));
+      var withdraw = addBusinessDays(arrival, -5);
+      return { withdraw: withdraw, arrival: arrival };
+    }
 
-    // ---- Calendar (task 2) — ported from
-    // assets/mock-screen/bill-pay/schedule-payment.js's own
-    // renderDeliveryCalendar/renderCalendarColumn/renderCalendarCell/
+    // ---- Calendar — ported from assets/mock-screen/bill-pay/schedule-payment.js's
+    // own renderDeliveryCalendar/renderCalendarColumn/renderCalendarCell/
     // classifyCell/buildMonthGrid/CALENDAR_MONTHS/MONTH_NAMES/
-    // SPEED_TABS/fmtLong — none of this existed in this file before.
-    // pad2/addDays/isBusinessDay/addBusinessDays/fmtMD/getDrawerDueDates
-    // above were already ported earlier (for the radio group below) and
-    // are reused as-is, not re-ported a second time. This is real scene
-    // content (task: "not scaffolding for the clone... will be needed
-    // regardless"), not built only to serve the floating calendar row
-    // further down — the drawer's own default state is untouched
-    // (this scene's own state.delivery-equivalent stays "radios", see
-    // renderDrawerDefault below, unchanged), so nothing here changes
-    // what the visible drawer opens on; renderDeliveryCalendar is
-    // renderable, just never called as part of that default flow. It
-    // reads a plain state.calendar (see state's own declaration below)
-    // rather than schedule-payment.js's state.drawer.calendar — same
-    // shape, just not nested under a .drawer object this scene never
-    // builds (it has no drawer open/close, view, or delivery-mode state
-    // at all — this scene's drawer is permanently, statically open).
+    // SPEED_TABS/fmtLong. pad2/addDays/isBusinessDay/addBusinessDays/
+    // fmtMD/getDrawerDueDates above were already ported earlier (for the
+    // radio group below) and are reused as-is, not re-ported a second
+    // time. renderDeliveryCalendar reads state.drawer.calendar (same
+    // shape as the source's own state.drawer.calendar) and is called
+    // live from renderDrawerDefault's isCustomView branch below, as well
+    // as from the one-time offscreen-sandbox render further down (kept
+    // for the floating calendar row's clone source).
     var CALENDAR_MONTHS = [
       { year: 2025, month: 7 },
       { year: 2025, month: 8 }
@@ -1696,7 +2360,7 @@
     var SPEED_TABS = [
       { key: "standard", label: "Standard", fee: 0.5, days: 5 },
       { key: "fast", label: "Fast", fee: 10.0, days: 2 },
-      { key: "instant", label: "Instant", fee: 15.0, days: 1 }
+      { key: "instant", label: "Instant", fee: 15.0, days: 0 }
     ];
 
     function fmtLong(d) {
@@ -1714,50 +2378,102 @@
       return cells;
     }
 
-    function classifyCell(cell, withdraw, arrival, dueDates) {
-      if (!cell.inMonth) return { variant: "past", clickable: false };
+    /* Three orthogonal concerns per cell — mark (what's drawn inside),
+       band (background fill: green/grey/orange are mutually exclusive —
+       on-time ranges are solid green, overdue ranges are grey up to the
+       earliest due date in scope then orange from there to arrival, with
+       the due-date cell and the arrival cell each a hard-stop half
+       gradient), and cap (row-edge rounding for a range cell continuing
+       into/from an adjacent grid row). Ported verbatim from
+       schedule-payment.js — see COMPONENT-MAP.md's Bill Pay mock
+       duplication entry for this file. No hover wiring here: this file has
+       no interactive drawer, just a static render into an offscreen
+       sandbox (see calSandbox below), so there's nothing to hover. */
+    function classifyCell(cell, withdraw, arrival, dueDates, splitDate, overdue) {
+      if (!cell.inMonth) return { mark: "past", clickable: false, band: "none", cap: "none" };
       var t = cell.date.getTime();
       var w = withdraw.getTime();
       var a = arrival.getTime();
-      if (t === w) return { variant: "start", clickable: true };
-      if (t === a) return { variant: "end", clickable: true };
-      if (t > w && t < a) {
-        if (cell.col === 0) return { variant: "mid-left", clickable: false };
-        if (cell.col === 6) return { variant: "mid-right", clickable: false };
-        return { variant: "range", clickable: false };
-      }
-      var isDue = dueDates.some(function (d) { return d.getTime() === t; });
-      if (isDue) return { variant: "due", clickable: true };
+      var inRange = t >= w && t <= a;
       var isWeekend = cell.col === 0 || cell.col === 6;
-      if (isWeekend) return { variant: "past", clickable: false };
-      return { variant: "normal", clickable: true };
+      var isDue = dueDates.some(function (d) { return d.getTime() === t; });
+      var mark, clickable;
+      if (t === w) {
+        mark = "start";
+        clickable = true;
+      } else if (t === a) {
+        mark = "end";
+        clickable = true;
+      } else if (isDue) {
+        mark = "due";
+        clickable = true;
+      } else if (inRange) {
+        // Every business day is a valid pick, in range or not — see
+        // schedule-payment.js's classifyCell for the full rationale.
+        mark = "range";
+        clickable = !isWeekend;
+      } else if (isWeekend) {
+        mark = "past";
+        clickable = false;
+      } else {
+        mark = "normal";
+        clickable = true;
+      }
+
+      // On-time and overdue-before-the-due-date both read as the same
+      // grey — green was tried and reverted; orange is the only color
+      // signal (overdue, from the due date to arrival).
+      var band = "none";
+      if (mark === "end") {
+        band = overdue ? "grad-arrival-orange" : "grad-arrival-grey";
+      } else if (inRange) {
+        if (overdue && t > splitDate) {
+          band = "orange";
+        } else if (overdue && t === splitDate) {
+          band = "grad-due";
+        } else {
+          band = "grey";
+        }
+      }
+
+      var cap = "none";
+      if (inRange && mark !== "start" && mark !== "end") {
+        if (cell.col === 0) cap = "left";
+        else if (cell.col === 6) cap = "right";
+      }
+
+      return { mark: mark, clickable: clickable, band: band, cap: cap };
+    }
+
+    function cellMarkup(v, day) {
+      var classes = ["bp-cal-day", "bp-cal-day--" + v.mark];
+      if (v.band !== "none") classes.push("bp-cal-day--band-" + v.band);
+      if (v.cap !== "none") classes.push("bp-cal-day--cap-" + v.cap);
+      var inner;
+      if (v.mark === "start" || v.mark === "end") {
+        inner = '<span class="bp-cal-day__marker bp-cal-day__marker--' + v.mark + '"><span class="bp-cal-day__marker-num">' + day + "</span></span>";
+      } else if (v.mark === "due") {
+        inner = '<span class="bp-cal-day__due-wrap"><span class="bp-cal-day__num--due">' + day + "</span></span>";
+      } else {
+        var numCls = v.mark === "past" ? "bp-cal-day__num bp-cal-day__num--past" : "bp-cal-day__num";
+        inner = '<span class="' + numCls + '">' + day + "</span>";
+      }
+      return { className: classes.join(" "), inner: inner };
     }
 
     function renderCalendarCell(cell, v) {
       var day = cell.date.getDate();
       var iso = cell.date.getFullYear() + "-" + pad2(cell.date.getMonth() + 1) + "-" + pad2(cell.date.getDate());
+      var built = cellMarkup(v, day);
       var pick = v.clickable ? ' data-cal-pick="' + iso + '"' : "";
-      if (v.variant === "start" || v.variant === "end") {
-        return (
-          '<div class="bp-cal-day bp-cal-day--' + v.variant + '"' + pick + ">" +
-            '<span class="bp-cal-day__marker bp-cal-day__marker--' + v.variant + '">' +
-              '<span class="bp-cal-day__marker-num">' + day + "</span>" +
-            "</span>" +
-          "</div>"
-        );
-      }
-      if (v.variant === "due") {
-        return (
-          '<div class="bp-cal-day bp-cal-day--due"' + pick + ">" +
-            '<span class="bp-cal-day__due-wrap"><span class="bp-cal-day__num--due">' + day + "</span></span>" +
-          "</div>"
-        );
-      }
-      var numCls = v.variant === "past" ? "bp-cal-day__num bp-cal-day__num--past" : "bp-cal-day__num";
-      return '<div class="bp-cal-day bp-cal-day--' + v.variant + '"' + pick + '><span class="' + numCls + '">' + day + "</span></div>";
+      return (
+        '<div class="' + built.className + '" data-cal-date="' + iso + '" data-cal-col="' + cell.col + '" data-cal-in-month="' + cell.inMonth + '"' + pick + ">" +
+          built.inner +
+        "</div>"
+      );
     }
 
-    function renderCalendarColumn(year, month, withdraw, arrival, dueDates) {
+    function renderCalendarColumn(year, month, withdraw, arrival, dueDates, splitDate, overdue) {
       var cells = buildMonthGrid(year, month);
       var label = MONTH_NAMES[month] + " " + year;
       return (
@@ -1771,17 +2487,41 @@
             '<div class="bp-cal-dow-header"><span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span></div>' +
             '<div class="bp-cal-divider-h"></div>' +
             '<div class="bp-cal-grid">' +
-              cells.map(function (c) { return renderCalendarCell(c, classifyCell(c, withdraw, arrival, dueDates)); }).join("") +
+              cells.map(function (c) { return renderCalendarCell(c, classifyCell(c, withdraw, arrival, dueDates, splitDate, overdue)); }).join("") +
             "</div>" +
           "</div>" +
         "</div>"
       );
     }
 
-    function renderDeliveryCalendar(dueDates) {
-      var cal = state.calendar;
+    /* On time only if arrival lands on/before every due date in the payment;
+       one late due date (bulk, multiple bills) makes the whole thing overdue. */
+    function isDeliveryOverdue(arrival, dueDates) {
+      return dueDates.some(function (d) {
+        return arrival.getTime() > d.getTime();
+      });
+    }
+
+    // showBadge=false reproduces the source mock's hover-preview state
+    // (badge hidden while a range is only previewed, not committed —
+    // Bill Pay mock spec §6.6: "badge is hidden during hover and
+    // returns on commit") as a FULL re-render rather than the source's
+    // in-place updateCalendarView() DOM mutation. That in-place
+    // optimization exists in the source to keep real mouse-move-driven
+    // hover cheap; this scene has no real pointer events (a handful of
+    // scripted hover beats, not continuous tracking), so there's no
+    // performance reason to keep it — and a full re-render is what lets
+    // one render call answer both the drawer AND the magnifier
+    // identically (see renderDrawerHTML/syncDrawerContent below), which
+    // an in-place mutation of the drawer's own DOM nodes could never do
+    // for a separate cloned tree.
+    function renderDeliveryCalendar(dueDates, showBadge) {
+      var cal = state.drawer.calendar;
       var withdraw = cal.withdraw;
       var arrival = cal.arrival;
+      var splitDate = dueDates[0].getTime();
+      var overdue = isDeliveryOverdue(arrival, dueDates);
+      var badgeHtml = showBadge === false ? "" : '<span class="bp-badge bp-cal-legend__badge' + (overdue ? " bp-badge--overdue" : "") + '"><span>' + (overdue ? "Overdue" : "On time") + "</span></span>";
       return (
         '<div class="bp-speed-tabs">' +
           SPEED_TABS.map(function (t, i) {
@@ -1795,12 +2535,13 @@
         "</div>" +
         '<div class="bp-cal-row">' +
           CALENDAR_MONTHS.map(function (m, idx) {
-            return renderCalendarColumn(m.year, m.month, withdraw, arrival, dueDates) + (idx === 0 ? '<div class="bp-cal-divider-v"></div>' : "");
+            return renderCalendarColumn(m.year, m.month, withdraw, arrival, dueDates, splitDate, overdue) + (idx === 0 ? '<div class="bp-cal-divider-v"></div>' : "");
           }).join("") +
         "</div>" +
         '<div class="bp-cal-legend">' +
-          '<div class="bp-cal-legend__item"><span class="bp-cal-legend__dot bp-cal-legend__dot--withdraw"></span><p class="bp-cal-legend__text">Withdraw <span>' + fmtLong(withdraw) + "</span></p></div>" +
-          '<div class="bp-cal-legend__item"><span class="bp-cal-legend__dot bp-cal-legend__dot--arrival"></span><p class="bp-cal-legend__text">Est. arrival <span>' + fmtLong(arrival) + '</span></p><span class="bp-badge"><span>On time</span></span></div>' +
+          '<div class="bp-cal-legend__item"><span class="bp-cal-legend__dot bp-cal-legend__dot--due"></span><p class="bp-cal-legend__text bp-cal-legend__text--due">Due Date <span>' + fmtLong(dueDates[0]) + "</span></p></div>" +
+          '<div class="bp-cal-legend__item"><span class="bp-cal-legend__dot bp-cal-legend__dot--withdraw"></span><p class="bp-cal-legend__text bp-cal-legend__text--withdraw">Withdraw <span>' + fmtLong(withdraw) + "</span></p></div>" +
+          '<div class="bp-cal-legend__item"><span class="bp-cal-legend__dot bp-cal-legend__dot--arrival"></span><p class="bp-cal-legend__text bp-cal-legend__text--arrival">Est. arrival <span>' + fmtLong(arrival) + "</span></p>" + badgeHtml + "</div>" +
         "</div>"
       );
     }
@@ -1808,21 +2549,28 @@
     var DELIVERY_OPTIONS = [
       { key: "standard", titleStrong: "Standard", titleMedium: " | 3-5 business days", subtitle: "Maximum safety buffer", fee: "$0.50 fee", days: 5 },
       { key: "latest-safe", titleStrong: "Fast", titleMedium: " | 1-2 business days", subtitle: "Optimal cash flow", fee: "$10.00 fee", days: 2 },
-      { key: "expedited", titleStrong: "Instant", titleMedium: " | Same day", subtitle: "Latest possible", fee: "$15.00 fee", days: 1 },
+      { key: "expedited", titleStrong: "Instant", titleMedium: " | Same day", subtitle: "Latest possible", fee: "$15.00 fee", days: 0 },
       { key: "custom", titleStrong: "Custom", titleMedium: "", subtitle: "Choose specific dates and delivery speed", fee: null, days: null }
     ];
 
-    function renderRadioGroup(dueDates, selectedKey) {
+    // Reads state.drawer.selectedRadio rather than taking a param —
+    // matches schedule-payment.js's own renderRadioGroup exactly (incl.
+    // the divider + bp-radio-item--custom styling before the Custom
+    // option), since this scene calls it repeatedly as drawer state
+    // changes, same as the source's real click-driven re-renders do.
+    function renderRadioGroup(dueDates) {
       var earliestDue = dueDates[0];
-      var baseArrival = addDays(earliestDue, -1);
+      var baseArrival = normalizeArrival(addDays(earliestDue, -1));
+      var selected = state.drawer.selectedRadio;
       return (
         '<div class="bp-radio-group">' +
         DELIVERY_OPTIONS.map(function (opt) {
-          var checked = opt.key === selectedKey;
+          var checked = opt.key === selected;
           var isCustom = opt.key === "custom";
           var withdraw = isCustom ? null : addBusinessDays(baseArrival, -opt.days);
           return (
-            '<div class="bp-radio-item" data-radio="' + opt.key + '">' +
+            (isCustom ? '<div class="bp-radio-group__divider"></div>' : "") +
+            '<div class="bp-radio-item' + (isCustom ? " bp-radio-item--custom" : "") + '" data-radio="' + opt.key + '">' +
               '<div class="bp-radio" data-checked="' + checked + '"></div>' +
               '<div class="bp-radio-item__content">' +
                 '<div class="bp-radio-item__text">' +
@@ -1843,9 +2591,39 @@
       );
     }
 
-    function renderDrawerDefault(payload, selectedKey) {
+    // Builds the full drawer inner HTML — reads state.drawer.row rather
+    // than taking a payload param, matching schedule-payment.js's own
+    // renderDrawerDefault signature, since the scene re-renders this
+    // drawer many times across the beat sequence (radios <-> custom
+    // calendar, tab switches, date picks) and always wants "whatever's
+    // currently in state," not a stale payload closed over at
+    // drawer-open time. No bank-details Edit link — that view isn't
+    // ported into this file (see COMPONENT-MAP.md's "Missing:
+    // bank-details fields") and no beat in this scene needs it.
+    //
+    // previewCalendar (optional): a scripted hover's {withdraw, arrival}
+    // — never a real pointer event, see beats 13/13b/13c/19/20/21 — that
+    // renders the calendar at THOSE dates with its badge hidden, without
+    // touching state.drawer.calendar (mirrors the source's hover/commit
+    // split; see renderDeliveryCalendar's own comment on why this is a
+    // full re-render here rather than an in-place DOM mutation).
+    function renderDrawerHTML(previewCalendar) {
+      var payload = state.drawer.row;
+      if (!payload) return "";
       var total = typeof payload.total === "number" ? payload.total : payload.amount;
       var dueDates = getDrawerDueDates(payload);
+      var isCustomView = state.drawer.delivery === "custom";
+      var calendarHtml = "";
+      if (isCustomView) {
+        if (previewCalendar) {
+          var savedCalendar = state.drawer.calendar;
+          state.drawer.calendar = { tab: savedCalendar.tab, withdraw: previewCalendar.withdraw, arrival: previewCalendar.arrival };
+          calendarHtml = renderDeliveryCalendar(dueDates, false);
+          state.drawer.calendar = savedCalendar;
+        } else {
+          calendarHtml = renderDeliveryCalendar(dueDates, true);
+        }
+      }
       return (
         '<p class="bp-drawer__total-amount">' + money(total) + "</p>" +
         '<div class="bp-drawer__divider"></div>' +
@@ -1857,10 +2635,11 @@
         '<div class="bp-drawer__section-title-row">' +
           '<div class="bp-drawer__section-title-group">' +
             '<p class="bp-drawer__section-title">Payment delivery options</p>' +
-            '<span class="bp-badge"><span>On time</span></span>' +
+            (isCustomView ? "" : '<span class="bp-badge"><span>On time</span></span>') +
           "</div>" +
+          (isCustomView ? '<button type="button" class="bp-show-more" id="mock-show-more">Show more</button>' : "") +
         "</div>" +
-        renderRadioGroup(dueDates, selectedKey || "standard") +
+        (isCustomView ? calendarHtml : renderRadioGroup(dueDates)) +
         '<div class="bp-drawer__divider"></div>' +
         '<p class="bp-drawer__section-title">Note to vendor</p>' +
         '<textarea class="bp-note-field" placeholder="Add a note (optional)"></textarea>' +
@@ -1868,21 +2647,59 @@
       );
     }
 
-    // ---- Build the one, permanently-static frame ----
+    // Thin wrapper — keeps the existing renderDrawerDefault() call sites
+    // (initial build below) working unchanged for the non-preview case.
+    function renderDrawerDefault() {
+      return renderDrawerHTML(null);
+    }
+
+    // The ONE place that writes drawer content, to either surface.
+    // Always computes a single HTML string and assigns it to both the
+    // real drawer AND the magnifier in the same synchronous call — never
+    // a clone of one into the other — so the two cannot drift: whatever
+    // renderDrawerHTML() would show is what both show, every time this
+    // is called, including every hover-preview beat (which calls this
+    // with previewCalendar set, not just on commit/tab-switch). Safe to
+    // call with instance.magnifierInnerEl still null (pre-Phase-C-build
+    // or pre-drawer-open) — magnifier sync is just skipped.
+    function syncDrawerContent(instance, previewCalendar) {
+      var html = renderDrawerHTML(previewCalendar);
+      instance.drawerInnerEl.innerHTML = html;
+      if (instance.magnifierInnerEl) instance.magnifierInnerEl.innerHTML = html;
+    }
+
+    // Head text (vendor name + subtitle) changes once per drawer-open,
+    // not per frame like syncDrawerContent's inner content — set
+    // directly on both elements at open time rather than folded into
+    // the per-frame sync path.
+    function setDrawerHead(instance, vendorName, subtitle) {
+      instance.drawerVendorNameEl.textContent = vendorName;
+      instance.drawerSubtitleEl.textContent = subtitle;
+      instance.magnifierVendorNameEl.textContent = vendorName;
+      instance.magnifierSubtitleEl.textContent = subtitle;
+    }
+
+    // ---- Initial build — populates the table/drawer/floats once at
+    // load (needed before buildMockInstance() below can query them,
+    // and as the clone source for the floating cards/calendar row
+    // further down). resetScene0Baseline()/renderScene0() (also below)
+    // take over from here for every actual frame once the clock starts
+    // — this initial render just needs to exist, not stay authoritative. ----
     var rowsScroll = document.getElementById("mock-rows-scroll");
     var screenEl = document.getElementById("mock-screen");
     var rowCardLayerEl = screenEl.querySelector(".bp-row-card-layer");
     var rowCardEl = document.getElementById("mock-row-selected-card");
 
     var barnettVendor = "Barnett Lawn Care";
-    state.expanded[barnettVendor] = true;
     renderRows(rowsScroll);
     updateAggregates();
 
     var barnettGroup = vendorGroups().filter(function (g) { return g.vendor === barnettVendor; })[0];
     document.getElementById("mock-drawer-vendor-name").textContent = barnettGroup.vendor;
     document.getElementById("mock-drawer-subtitle").textContent = barnettGroup.rows.length + " Bills • Total Amount:";
-    document.getElementById("mock-drawer-inner").innerHTML = renderDrawerDefault(barnettGroup, "standard");
+    state.drawer.row = barnettGroup;
+    state.drawer.selectedRadio = "standard";
+    document.getElementById("mock-drawer-inner").innerHTML = renderDrawerDefault();
 
     // Floating cards (phase 1, static placement only — see
     // .ag-float-card's own comment in the <style> block above for the
@@ -1906,11 +2723,12 @@
     // Green pill — cloned from the table's own PAYMENT SPEED column
     // badge (real .bp-badge, not re-authored), same take-the-element
     // approach as the cards above; only its text is changed after
-    // cloning (task: "Clone it, then change its text"). Barnett Lawn
-    // Care's own row specifically, for the same reason the drawer
-    // above is Barnett's — one vendor's worth of fragments, not a
-    // different one grabbed at random.
-    var speedBadge = document.querySelector('#mock-rows-scroll [data-vendor-row="Barnett Lawn Care"] .bp-badge');
+    // cloning (task: "Clone it, then change its text"). Sourced from
+    // Barnett Lawn Care's first batch row (id 1) rather than a
+    // [data-vendor-row] vendor-summary badge — the table now defaults
+    // to batch mode (the scene's own starting state), which has no
+    // vendor-summary rows, only per-bill rows.
+    var speedBadge = document.querySelector('#mock-rows-scroll [data-row-id="1"] .bp-badge');
     var pillClone = speedBadge.cloneNode(true);
     pillClone.querySelector('span').textContent = 'Arrives on time';
     document.getElementById("ag-float-pill-scaler").appendChild(pillClone);
@@ -1941,7 +2759,7 @@
     // real classifyCell() above exactly like any other date would; the
     // start/range/range/range/end states are genuinely computed by that
     // shared function, not hand-assigned classes.
-    state.calendar = { tab: "standard", withdraw: new Date(2025, 7, 4), arrival: new Date(2025, 7, 8) };
+    state.drawer.calendar = { tab: "standard", withdraw: new Date(2025, 7, 4), arrival: new Date(2025, 7, 8) };
     var calSandbox = document.createElement("div");
     calSandbox.style.cssText = "position:absolute;left:-9999px;top:0;visibility:hidden;";
     calSandbox.innerHTML = renderDeliveryCalendar(getDrawerDueDates(barnettGroup));
@@ -1960,18 +2778,1155 @@
     document.body.removeChild(calSandbox);
 
     // Selected-row card overlay — same +11px offset formula as Gallery
-    // 1's/Gallery 2's own selected-row-card positioning, just measured
-    // once instead of per-frame since this scene never animates.
+    // 1's/Gallery 2's own selected-row-card positioning. Position is
+    // precomputed once here at load, against a batch-mode row (table
+    // now defaults to batch, not bulk — see COMPONENT-MAP.md's note on
+    // this file's batch/bulk switch); visibility is NOT set here —
+    // this card must stay hidden until the beat sequence actually
+    // selects a row (drawer opens at beat 5+), so opacity is left at
+    // its CSS default (0) and is owned by resetScene0Baseline/
+    // renderScene0 (Phase D) from here on, not by this one-time setup.
     var screenRect = screenEl.getBoundingClientRect();
     var layerRect = rowCardLayerEl.getBoundingClientRect();
-    var barnettRowEl = rowsScroll.querySelector('[data-vendor-row="' + barnettVendor + '"]');
+    var barnettRowEl = rowsScroll.querySelector('[data-row-id="1"]');
     var rowRect = barnettRowEl.getBoundingClientRect();
     rowCardEl.style.top = ((rowRect.top - layerRect.top) / MOCK_SCALE + 11) + "px";
     rowCardEl.style.left = ((rowRect.left - layerRect.left) / MOCK_SCALE) + "px";
     rowCardEl.style.width = (rowRect.width / MOCK_SCALE) + "px";
-    rowCardEl.style.opacity = 1;
 
-    // ---- Clock — drives only the active-panel class + progress
+    // ---- Instance + baseline reset — Quality_Of_Decisions Scene 1.
+    // Mirrors scenes.html's own buildMockInstance/resetSharedMockBaseline
+    // pattern: one bundled object for every DOM ref the beat sequence
+    // touches, and one function that resets all of it before every
+    // render so an arbitrary seek always renders correctly instead of
+    // depending on beats having actually played in order. Cursor,
+    // ripple, spark canvas, and magnifier refs are added in later build
+    // passes (Phase B/C) once those elements exist — this pass only
+    // wires what state/drawer rendering already needs.
+    function buildMockInstance() {
+      return {
+        screenEl: screenEl,
+        screenRect: screenEl.getBoundingClientRect(),
+        rowsScroll: rowsScroll,
+        headerRowEl: document.getElementById("mock-header-row"),
+        rowsTopDividerEl: screenEl.querySelector(".bp-rows-top-divider"),
+        toggleEl: screenEl.querySelector(".bp-switch"),
+        drawerEl: document.getElementById("mock-drawer"),
+        drawerInnerEl: document.getElementById("mock-drawer-inner"),
+        drawerVendorNameEl: document.getElementById("mock-drawer-vendor-name"),
+        drawerSubtitleEl: document.getElementById("mock-drawer-subtitle"),
+        drawerFooterEl: document.getElementById("mock-drawer-footer"),
+        // Magnifier's structural mirror of #mock-drawer — see the
+        // markup's own comment on why this is a static structural
+        // twin, not a runtime clone.
+        magnifierDrawerEl: document.getElementById("magnifier-drawer"),
+        magnifierInnerEl: document.getElementById("magnifier-drawer-inner"),
+        magnifierVendorNameEl: document.getElementById("magnifier-drawer-vendor-name"),
+        magnifierSubtitleEl: document.getElementById("magnifier-drawer-subtitle"),
+        magnifierFooterEl: document.getElementById("magnifier-drawer-footer"),
+        rowCardLayerEl: rowCardLayerEl,
+        rowCardEl: rowCardEl,
+        cursorEl: document.getElementById("scene0-cursor"),
+        rippleEl: document.getElementById("scene0-ripple"),
+        rippleDisc: document.querySelector("#scene0-ripple .scene0-ripple__disc"),
+        // Fix 1 (QA) — the magnifier's own cursor/ripple, and the
+        // stable (never-transformed) reference rect gestures inside it
+        // measure against. Deliberately NOT magnifierDrawerEl's own
+        // rect — that element gets translate3d'd by the open/close
+        // slide, so its measured position moves with it; the scaler
+        // around it (fixed at native 435x1000, only its CHILD slides)
+        // is the stable reference, same relationship screenRect above
+        // has to #mock-drawer's own sliding.
+        cursorMagEl: document.getElementById("scene0-cursor-magnifier"),
+        rippleMagEl: document.getElementById("scene0-ripple-magnifier"),
+        rippleMagDisc: document.querySelector("#scene0-ripple-magnifier .scene0-ripple__disc"),
+        magnifierScalerEl: document.getElementById("ag-magnifier-scaler"),
+        magnifierScreenRect: document.getElementById("ag-magnifier-scaler").getBoundingClientRect(),
+        float1: document.querySelector(".ag-float-card--1"),
+        float2: document.querySelector(".ag-float-card--2"),
+        float3: document.querySelector(".ag-float-card--3"),
+        floatPill: document.querySelector(".ag-float-pill"),
+        floatCalRow: document.getElementById("ag-cal-row"),
+        // Guards a one-time mount, not a per-frame re-render — see
+        // resetScene0Baseline's own comment on why (table content is
+        // static almost the entire scene; re-rendering ROWS.length
+        // rows' worth of innerHTML every rAF frame would be wasteful
+        // and would also defeat collapseCells' own width caching,
+        // since cached values live on DOM nodes that innerHTML
+        // reassignment would otherwise destroy every frame).
+        rowsMounted: false,
+        // Phase D beat-timeline bookkeeping — see updateDrawerState's
+        // own comment (lastDrawerSyncKey), updateSparkFlag's own
+        // comment (the spark*Fired flags), and updateCursorAndSparks'/
+        // updateMagnifierCursorAndSparks' own comments on the
+        // drawerCloseAnim/popHold cursor branch (lastClosePos).
+        // sparkManageFired stays on the mock's own canvas (beat 5,
+        // unaffected by Fix 1); sparkSep8/Fast/Sep10Fired now trigger
+        // on the magnifier's canvas (their beats moved there);
+        // sparkCustomFired/sparkCloseFired are new (Fix 1's explicit
+        // "sparks fire in the magnifier too" list adds beats 10 and 24,
+        // which the original spec's beat sheet didn't call out).
+        lastDrawerSyncKey: null,
+        lastClosePos: null,
+        sparkManageFired: false,
+        sparkCustomFired: false,
+        sparkSep8Fired: false,
+        sparkFastFired: false,
+        sparkSep10Fired: false,
+        sparkCloseFired: false
+      };
+    }
+
+    // Called before every render (idle, in-progress, and frozen-final
+    // alike) — resets state and DOM back to the beat-1 starting look.
+    // Deliberately does NOT touch drawer inner HTML content beyond
+    // what's listed here, same reasoning as scenes.html's own reset:
+    // display:none already hides the drawer, and renderScene0
+    // re-renders drawer content fresh whenever a beat needs it visible,
+    // so there's nothing stale left to leak. Table ROW content is
+    // mounted once (rowsMounted guard) rather than re-rendered every
+    // frame — see buildMockInstance's own comment.
+    function resetScene0Baseline(instance) {
+      state.mode = "batch";
+      state.expanded = {};
+      state.drawer.row = null;
+      state.drawer.selectedRadio = "standard";
+      state.drawer.delivery = "radios";
+      state.drawer.calendar = { tab: "standard", withdraw: null, arrival: null };
+
+      if (!instance.rowsMounted) {
+        renderRows(instance.rowsScroll);
+        updateAggregates();
+        instance.rowsMounted = true;
+      }
+
+      instance.drawerEl.style.display = "none";
+      instance.drawerEl.style.transform = "translate3d(100%, 0, 0)";
+      instance.drawerFooterEl.style.display = "none";
+      // Magnifier drawer mirrors the real one's open/closed state
+      // exactly (same values, same reasoning as syncDrawerContent —
+      // one source of truth applied to both, never independently
+      // timed).
+      instance.magnifierDrawerEl.style.display = "none";
+      instance.magnifierDrawerEl.style.transform = "translate3d(100%, 0, 0)";
+      instance.magnifierFooterEl.style.display = "none";
+      applyNarrowProgress(instance, 0);
+      instance.toggleEl.setAttribute("aria-checked", "false");
+      // Hidden until a beat actually selects a row (drawer opens,
+      // beat 5+) — clears any inline opacity a previous frame's beat
+      // rendering left behind, reverting to the CSS default (0).
+      instance.rowCardEl.style.opacity = "";
+
+      instance.cursorEl.style.opacity = 0;
+      instance.rippleDisc.style.opacity = 0;
+      instance.cursorMagEl.style.opacity = 0;
+      instance.rippleMagDisc.style.opacity = 0;
+
+      [instance.float1, instance.float2, instance.float3, instance.floatPill, instance.floatCalRow].forEach(function (el) {
+        el.style.transform = "";
+        el.style.opacity = "";
+      });
+    }
+
+    // ============================================================
+    // Beat timeline — Quality_Of_Decisions Scene 1. Named-mark table,
+    // same reduce-a-sequence-of-durations pattern as scenes.html's own
+    // S3_SEQUENCE/S3_MARKS. Fix run 2 (real QA against Gallery 1's own
+    // code, not just its summary table) found the previous pass's
+    // circle/underline gestures snapped on entry — moves targeted a
+    // rect's raw center/left instead of circleTop(p)/underlineStart(p),
+    // so the circle/underline itself jumped to its own true start the
+    // instant it began. Fixed throughout by always moving to
+    // circleTop/underlineStart first, matching scenes.html's own
+    // pattern exactly. Also corrected: Gallery 1's own underline
+    // duration is 400ms (verified from its real segment list), not the
+    // 380ms this file guessed by analogy to the circle gesture last
+    // pass. Beat 8 rebuilt as 6 reads (label + dates, per option,
+    // holds between reads, moves between options) instead of 3. Beat 9
+    // is now a circle (Custom + start of "Choose specific") instead of
+    // a static hold; beat 10 now clicks the actual radio button
+    // element, not the text, via a new short move after the circle.
+    // Beat 16→17's missing move (flagged, not fixed, last pass) is
+    // filled in. Cursor fade-out (250ms, linear clamp — scenes.html's
+    // own drawer-close fade uses the same shape, not eased) and a
+    // floats-return tail (drawer closes -> floats un-dismiss -> 1.5s
+    // ambient hold) are new — see updateMagnifierCursorAndSparks' and
+    // applyFloatReturn's own comments. hasCompletedOnce (the old
+    // play-once freeze) is gone entirely — this scene now replays from
+    // idle every time panel 0 becomes active, whether by the
+    // accordion's own cycle or a manual seek.
+    //
+    // Reported total: 21.33s, OVER the 20s cap — not compressed to
+    // fit, per instruction to report rather than force it. Breakdown
+    // of the growth from the prior 16.16s: beat 8's restructuring
+    // (3 segments -> 11) adds ~2.1s: readStandard/Fast/Instant (380
+    // each) -> readLabel(260)+holdMid(170)+readDates(400) per option
+    // plus a 260ms move between options, x3, versus the prior single
+    // 380ms segment each. The floats-return tail (new, beats 24+) adds
+    // 220+480+1500 = 2.2s on its own — over half the overage is that
+    // one addition. scanRow's 40% (280->392) and beat 9's new circle
+    // (380, replacing what had been folded into the old holdCustom)
+    // add the rest. Every added ms traces to a specific instruction in
+    // this pass, not padding.
+    // ============================================================
+    var SCENE0_SEQUENCE = [
+      ["floatsOnly", 1500], ["enterMove", 280], ["scanRow", 392], ["moveToSpeed", 260], ["circleSpeed", 380],
+      ["holdAfterCircleSpeed", 300], ["moveToManage", 260], ["holdBeforeManage", 120], ["clickManage", 200], ["holdAfterManage", 170],
+      ["floatsDismiss", 600], ["drawerOpen", 225], ["moveToReading", 180],
+      // Beat 8 (fix 4/4b) — one-way reads, diagonal transitions, first
+      // read slowest, settling faster per option (300/440 -> 240/380 ->
+      // 220/350 label/dates). Holds and the within-option/between-option
+      // moves stay flat (170/150/260) — only the reads themselves vary,
+      // per the task's own "stroke length and speed should differ,
+      // first slower" framing; nothing asked the holds to vary too.
+      ["readStandardLabel", 300], ["holdAfterStandardLabel", 170], ["moveLabelToDatesStandard", 150],
+      ["readStandardDates", 440], ["holdAfterStandardDates", 170],
+      // Fix run 3, Part 3: repetition, not the underline primitive
+      // itself, was the "comb" problem — every within/between-option
+      // transition ran at the exact same duration regardless of option,
+      // which reads as a machine even though each read's own duration
+      // already shrank per option. Now the transitions shrink too
+      // (260->220 between options, 150->130->110 within an option), and
+      // Instant's dates-read below stops sweeping the full line.
+      ["moveToFastOption", 260], ["readFastLabel", 240], ["holdAfterFastLabel", 170], ["moveLabelToDatesFast", 130],
+      ["readFastDates", 380], ["holdAfterFastDates", 170],
+      ["moveToInstantOption", 220], ["readInstantLabel", 220], ["holdAfterInstantLabel", 170], ["moveLabelToDatesInstant", 110],
+      // readInstantDates: partial-width sweep (see partialUnderlineParamsFor)
+      // — "scanning for the one number that differs," not reading the
+      // whole "Withdraw X -> Arrives Y" line a third time. Shorter
+      // physical stroke, so a shorter duration is correct, not just faster-feeling.
+      ["readInstantDates", 220], ["holdAfterInstantDates", 170],
+      // Fix run 3, Part 2 — the calendar sequence, rewritten. Two
+      // deliberate holds bracket the Custom selection itself (settle
+      // before marking it; 0.5s after it's marked, before the calendar
+      // opens) — narrower/more literal than the old shape, which only
+      // held after the circle. holdCustom (post-circle "consideration"
+      // pause, fix-run-2) is unchanged and still valid; nothing here
+      // rescinds it.
+      ["moveToCustom", 260], ["holdBeforeCircleCustom", 180], ["circleCustom", 380], ["holdCustom", 500],
+      ["moveToRadio", 150], ["holdBeforeCustomClick", 120], ["clickCustom", 200],
+      ["holdAfterCustomSelect", 500],
+      ["dissolveToCalendar", 200], ["holdCalendarResting", 500],
+      // Step 3: identifying what's off — a real back-and-forth
+      // underline (computeUnderline, not the one-way computeReadSweep;
+      // "back and forth" is explicit here, unlike beat 8's fix, and
+      // computeUnderline's own there-and-back shape is exactly that
+      // gesture already).
+      ["moveToWithdrawLegend", 260], ["underlineWithdrawLegend", 400],
+      ["moveToSep10", 260],
+      // Steps 5/7/8: 1500/1000/650 — first failure is the longest hold
+      // (he has to read the orange to understand it), each later one
+      // shorter as recognition speeds up. Steeper decline than fix-run
+      // 2's old 550/400/500 because this round's own intent explicitly
+      // sizes step 5 at "~1.5s," not a flat register.
+      ["holdSep10", 1500],
+      ["moveToSep9", 150], ["holdSep9", 1000],
+      ["moveToSep8", 150], ["holdSep8", 650],
+      ["clickSep8", 200],
+      // Fix run 5, item 2: registers the problem he just created —
+      // circles the OVERDUE badge itself, after its own bump finishes
+      // (the bump's 220ms window starts at clickSep8's own Start and
+      // is long done before this move's own 260ms even completes).
+      // Same circle character as elsewhere in the scene (380ms,
+      // circleTop entry) and the reference vocabulary's own "hold
+      // hover after circling: 300ms," not a bespoke value.
+      ["moveToOverdueBadge", 260], ["circleOverdueBadge", 380], ["holdAfterOverdueBadgeCircle", 300],
+      // Step 10 — a thinking beat: cursor rests on neutral space, not a
+      // target, so the pause itself has to carry the beat. Longer than
+      // a routine post-click hold for exactly that reason.
+      ["moveToLegendRest1", 260], ["holdLegendRest1", 600],
+      // Step 11 — three underline passes on the Fast tab only, alternating
+      // direction (R->L, L->R, a short R-side flourish), decreasing
+      // duration per pass — same "settles into a pattern" shape as beat
+      // 8's three reads, applied to three passes on one target instead
+      // of one pass on three targets.
+      ["moveToFastTabRead", 280],
+      ["underlineFastTab1", 380], ["underlineFastTab2", 300], ["underlineFastTab3", 220],
+      ["holdBeforeFastClick", 120], ["clickFast", 200],
+      ["holdAfterFastClick", 1000],
+      ["moveToSep10Fast", 280], ["holdSep10Fast", 1000], ["clickSep10Fast", 200],
+      // Fix run 5, item 2: the payoff — circles the ON TIME badge after
+      // its own bump finishes, confirming he got what he wanted, then
+      // goes straight to closing. Task gives this occurrence's full
+      // sequence explicitly (circle -> hold -> move to the X) with no
+      // legend-rest step in between, unlike the first occurrence which
+      // names the legend rest as its own next step — replaces the old
+      // moveToLegendRest2/holdLegendRest2 rather than sitting alongside
+      // it, since there's nothing left to think over after this commit.
+      ["moveToOnTimeBadge", 260], ["circleOnTimeBadge", 380], ["holdAfterOnTimeBadgeCircle", 300],
+      ["moveToClose", 280], ["holdBeforeClose", 300], ["clickClose", 200], ["drawerCloseAnim", 195],
+      // Fix run 4, item 2: the floats' own return animation now starts
+      // FLOATS_RETURN_LEAD_MS before drawerCloseAnim's own end (see that
+      // constant's own comment for the derivation) — visually, floats
+      // begin coming back while roughly the drawer's own last fifth is
+      // still on screen, so the two motions overlap and the space is
+      // never empty. floatsReturn's own duration here (420, not the
+      // return animation's true 480) is only the array's bookkeeping
+      // remainder after the overlap; applyFloatReturn is actually
+      // triggered FLOATS_RETURN_LEAD_MS early (see renderScene0) and
+      // still runs its own full 480ms — the two numbers are constructed
+      // so floatsReturnEnd (this mark) lands exactly where the return
+      // animation visually finishes either way.
+      // Fix run 4, item 3: 2500, one second longer than the previous
+      // 1500 — the hold after floats have resumed bobbing, before the
+      // accordion advances.
+      ["floatsReturn", 420], ["floatsReturnHold", 2500]
+    ];
+    var SCENE0_MARKS = (function () {
+      var marks = {};
+      var cursorT = 0;
+      for (var i = 0; i < SCENE0_SEQUENCE.length; i++) {
+        marks[SCENE0_SEQUENCE[i][0] + "Start"] = cursorT;
+        cursorT += SCENE0_SEQUENCE[i][1];
+        marks[SCENE0_SEQUENCE[i][0] + "End"] = cursorT;
+      }
+      marks.total = cursorT;
+      return marks;
+    })();
+    // Re-derive the panel-swap boundary from the sequence above (single
+    // source of truth) rather than hand-mirroring the number — both
+    // BOUNDARIES and SCENE_DURATION were only placeholder values at
+    // declaration time (top of this script), long before this point
+    // ever executes, and both are read only later (tick()/boot, further
+    // below), so this reassignment is safe.
+    //
+    // TOTAL_DURATION must grow by the same amount BOUNDARIES[1] just
+    // did (real bug, found in QA: an earlier version updated
+    // BOUNDARIES[1] here but left TOTAL_DURATION at its original 12000
+    // placeholder — with the real sequence running ~15.5s,
+    // BOUNDARIES[1] ended up GREATER than TOTAL_DURATION, so
+    // `elapsed = (now-epoch) % TOTAL_DURATION` could never actually
+    // reach BOUNDARIES[1] at all: the modulo wrapped the clock back to
+    // 0 first, so panel 1 was permanently unreachable, both by the
+    // automatic clock and by direct seeks — the very thing this was
+    // supposed to make possible ("scene completion drives the swap")
+    // never triggered for real. Panel 1's own budgeted span (6000ms,
+    // the original TOTAL_DURATION - BOUNDARIES[1]) is preserved
+    // unchanged, just added on top of the real panel-0 length instead
+    // of the placeholder one.
+    var PANEL1_DURATION = TOTAL_DURATION - BOUNDARIES[1];
+    BOUNDARIES[1] = SCENE0_MARKS.total;
+    SCENE_DURATION = BOUNDARIES[1];
+    TOTAL_DURATION = BOUNDARIES[1] + PANEL1_DURATION;
+
+    var GREENFIELD_ROW = ROWS.filter(function (r) { return r.id === 5; })[0];
+    var SEP8 = new Date(2025, 8, 8);
+    var SEP9 = new Date(2025, 8, 9);
+    var SEP10 = new Date(2025, 8, 10);
+    var SEP11 = new Date(2025, 8, 11);
+    function tabDaysFor(key) {
+      return SPEED_TABS.filter(function (t) { return t.key === key; })[0].days;
+    }
+    // Scripted outcome of the whole sequence (beat 22's commit) — known
+    // at author time since nothing here is user-driven; used by beat
+    // 25's table-cell update, independent of state.drawer (which
+    // resetScene0Baseline wipes every frame).
+    var FINAL_WITHDRAW = SEP10;
+    var FINAL_ARRIVAL = addBusinessDays(FINAL_WITHDRAW, tabDaysFor("fast"));
+
+    // ---- Live measurement helpers — always query fresh, never cache a
+    // DOM reference, since syncDrawerContent() replaces drawer-inner
+    // nodes on every content change (calendar cells/tabs from one
+    // render do not survive into the next). Geometry itself is stable
+    // across re-renders (same grid layout every time), just not the
+    // specific node references. ----
+    function greenfieldRowRect(instance) {
+      return nativeRect(instance.rowsScroll.querySelector('[data-row-id="5"]'), instance.screenRect);
+    }
+    function greenfieldCellRect(instance, cls) {
+      var el = instance.rowsScroll.querySelector('[data-row-id="5"] .' + cls);
+      return el ? nativeRect(el, instance.screenRect) : null;
+    }
+    function drawerElRect(instance, selector) {
+      var el = instance.drawerInnerEl.querySelector(selector);
+      return el ? nativeRect(el, instance.screenRect) : null;
+    }
+    function calDateRect(instance, iso) {
+      return drawerElRect(instance, '.bp-cal-day[data-cal-date="' + iso + '"]');
+    }
+    function calTabRect(instance, key) {
+      return drawerElRect(instance, '[data-cal-tab="' + key + '"]');
+    }
+    function drawerCloseRect(instance) {
+      var el = instance.drawerEl.querySelector(".bp-drawer__close");
+      return el ? nativeRect(el, instance.screenRect) : null;
+    }
+
+    // Fix 1 (QA) — magnifier-scoped mirrors of the four helpers above.
+    // Query instance.magnifierInnerEl/magnifierDrawerEl (not
+    // drawerInnerEl/drawerEl) and convert via magnifierNativeRect/
+    // magnifierScreenRect (not nativeRect/screenRect) — everything else
+    // about the selectors is identical, since syncDrawerContent()
+    // always writes the same HTML to both drawers.
+    function magnifierElRect(instance, selector) {
+      var el = instance.magnifierInnerEl.querySelector(selector);
+      return el ? magnifierNativeRect(el, instance.magnifierScreenRect) : null;
+    }
+    function magnifierCalDateRect(instance, iso) {
+      return magnifierElRect(instance, '.bp-cal-day[data-cal-date="' + iso + '"]');
+    }
+    function magnifierCalTabRect(instance, key) {
+      return magnifierElRect(instance, '[data-cal-tab="' + key + '"]');
+    }
+    function magnifierCloseRect(instance) {
+      var el = instance.magnifierDrawerEl.querySelector(".bp-drawer__close");
+      return el ? magnifierNativeRect(el, instance.magnifierScreenRect) : null;
+    }
+    // Fix run 3, Part 2 (steps 10, 16): a synthetic rest point in the
+    // empty white space to the right of the legend column — not a rect
+    // around a real element (.bp-cal-legend is column-flex and left-
+    // aligned, so there's real empty width beside it), same
+    // synthesized-rect pattern as magnifierCustomComboRect. Clamped to
+    // the drawer's own right edge minus a margin so it never lands
+    // outside the visible content column.
+    function magnifierLegendRestRect(instance) {
+      var legend = magnifierElRect(instance, ".bp-cal-legend");
+      if (!legend) return null;
+      var container = magnifierNativeRect(instance.magnifierInnerEl, instance.magnifierScreenRect);
+      var restX = Math.min(legend.right + 60, container.right - 20);
+      return { centerX: restX, centerY: legend.top + legend.height * 0.35 };
+    }
+
+    function isoFor(d) {
+      return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
+    }
+
+    // One-shot spark trigger, gated on a t-range — fires exactly once
+    // per forward pass through [fireStart, fireEnd), resets when t
+    // falls back below fireStart (backward seek/loop), same pattern as
+    // scenes.html's own sparkClickFired/sparkManageClickFired.
+    // triggerFn is which canvas's burst to fire (triggerSparkBurst for
+    // the mock, triggerSparkBurstMag for the magnifier — Fix 1 (QA)
+    // moved most of these to the magnifier's own canvas).
+    function updateSparkFlag(instance, flagName, rectFn, triggerFn, fireStart, fireEnd, t) {
+      if (t >= fireStart && t < fireEnd) {
+        if (!instance[flagName]) {
+          var r = rectFn();
+          if (r) {
+            triggerFn(r.centerX, r.centerY);
+            instance[flagName] = true;
+          }
+        }
+      } else {
+        instance[flagName] = false;
+      }
+    }
+
+    // ---- Drawer state + content sync — cumulative layering: each
+    // block below is guarded only by "has t reached this beat's
+    // threshold," not "is t currently within this beat's own window,"
+    // and later blocks unconditionally overwrite state.drawer.calendar
+    // set by earlier ones. This is what makes an arbitrary seek correct
+    // without replaying beats in order: for any t, running every layer
+    // in chronological order reconstructs the exact cumulative state a
+    // real forward playback would have reached by then.
+    //
+    // syncDrawerContent (real re-render, not free) is called only when
+    // the effective content-affecting state actually changed since the
+    // last call (lastDrawerSyncKey guard) — see Phase C's own note on
+    // why hover-preview beats need this guard specifically: unlike a
+    // commit (which happens once), a hover-preview's t-range holds for
+    // ~400ms, and without this guard every frame in that window would
+    // trigger a full ~168-cell calendar re-render x2 (drawer +
+    // magnifier), not just the frame where the preview actually starts.
+    function updateDrawerState(instance, t) {
+      var M = SCENE0_MARKS;
+
+      if (t < M.clickManageStart) {
+        instance.lastDrawerSyncKey = null;
+        return;
+      }
+
+      state.drawer.row = GREENFIELD_ROW;
+      // Fix run 4, item 1: the click itself commits the radio's own
+      // selected state, same click-commits principle as the calendar's
+      // dates (fix run 3, Part 1.2) — without this the 0.5s hold after
+      // clickCustom has nothing to show and reads as a stall.
+      state.drawer.selectedRadio = t >= M.clickCustomStart ? "custom" : "standard";
+      setDrawerHead(instance, GREENFIELD_ROW.vendor, "1 Bill • Total Amount:");
+
+      // Radios <-> custom-calendar crossfade (beat 10) — content swaps
+      // at the midpoint, opacity fades out over the first 100ms and
+      // back in over the second 100ms of dissolveToCalendar's 200ms
+      // window (Bill Pay mock spec §7.4's own crossfade duration,
+      // reused here since no other spec exists for this swap — see
+      // COMPONENT-MAP.md/plan notes on this being invented, not ported).
+      var dissolveMid = M.dissolveToCalendarStart + 100;
+      var crossfadeOpacity = 1;
+      if (t >= M.dissolveToCalendarStart && t < dissolveMid) {
+        crossfadeOpacity = 1 - (t - M.dissolveToCalendarStart) / 100;
+      } else if (t >= dissolveMid && t < M.dissolveToCalendarEnd) {
+        crossfadeOpacity = (t - dissolveMid) / 100;
+      }
+      instance.drawerInnerEl.style.opacity = crossfadeOpacity;
+      if (instance.magnifierInnerEl) instance.magnifierInnerEl.style.opacity = crossfadeOpacity;
+
+      if (t >= dissolveMid) {
+        state.drawer.delivery = "custom";
+        var std = computeStandardDates(GREENFIELD_ROW);
+        state.drawer.calendar = { tab: "standard", withdraw: std.withdraw, arrival: std.arrival };
+      }
+      // Part 1.2 — the click itself commits: each block below is keyed
+      // to the click's own Start mark (not hover-out, not the click's
+      // End), so the committed value and the badge (which only shows
+      // when previewCalendar is null, see below) both land on the same
+      // frame the ripple begins on.
+      if (t >= M.clickSep8Start) {
+        state.drawer.calendar = { tab: "standard", withdraw: SEP8, arrival: addBusinessDays(SEP8, tabDaysFor("standard")) };
+      }
+      if (t >= M.clickFastStart) {
+        state.drawer.calendar = { tab: "fast", withdraw: state.drawer.calendar.withdraw, arrival: addBusinessDays(state.drawer.calendar.withdraw, tabDaysFor("fast")) };
+      }
+      if (t >= M.clickSep10FastStart) {
+        state.drawer.calendar = { tab: "fast", withdraw: SEP10, arrival: addBusinessDays(SEP10, tabDaysFor("fast")) };
+      }
+
+      // Part 1.1 — a preview's own window now extends through the
+      // TRANSIT that follows it (ends at the next hold's Start, not the
+      // next move's Start), so the display holds whatever it's already
+      // showing while the cursor is in transit and only switches once
+      // on arrival — never mid-move, and never reverting to a stale
+      // committed value for the move's duration. The very first move
+      // into a date (moveToSep10, moveToSep10Fast) has no prior preview
+      // to persist, so it correctly shows nothing until its own hold —
+      // "nothing fires in transit" holds there too, trivially.
+      var previewCalendar = null;
+      if (t >= M.holdSep10Start && t < M.holdSep9Start) {
+        previewCalendar = { withdraw: SEP10, arrival: addBusinessDays(SEP10, tabDaysFor("standard")) };
+      } else if (t >= M.holdSep9Start && t < M.holdSep8Start) {
+        previewCalendar = { withdraw: SEP9, arrival: addBusinessDays(SEP9, tabDaysFor("standard")) };
+      } else if (t >= M.holdSep8Start && t < M.clickSep8Start) {
+        previewCalendar = { withdraw: SEP8, arrival: addBusinessDays(SEP8, tabDaysFor("standard")) };
+      } else if (t >= M.holdSep10FastStart && t < M.clickSep10FastStart) {
+        previewCalendar = { withdraw: SEP10, arrival: addBusinessDays(SEP10, tabDaysFor("fast")) };
+      }
+
+      var cal = state.drawer.calendar;
+      var syncKey = state.drawer.delivery + "|" + state.drawer.selectedRadio + "|" + cal.tab +
+        "|" + (cal.withdraw ? cal.withdraw.getTime() : "") + "|" + (cal.arrival ? cal.arrival.getTime() : "") +
+        "|" + (previewCalendar ? previewCalendar.withdraw.getTime() + "-" + previewCalendar.arrival.getTime() : "");
+      if (instance.lastDrawerSyncKey !== syncKey) {
+        syncDrawerContent(instance, previewCalendar);
+        instance.lastDrawerSyncKey = syncKey;
+      }
+    }
+
+    // ---- Cursor / ripple / sparks — mock surface only, beats 2-5 (+
+    // floatsDismiss, where the cursor just stays parked at Manage's
+    // position). Fix 1 (QA): everything from drawerOpenStart onward
+    // moved to updateMagnifierCursorAndSparks below — the mock is too
+    // small to read, which is the entire reason the magnifier exists,
+    // so gestures happening on it defeated the point. ----
+    function updateCursorAndSparks(instance, t) {
+      var M = SCENE0_MARKS;
+      if (t < M.enterMoveStart) {
+        instance.cursorEl.style.opacity = 0;
+        instance.rippleDisc.style.opacity = 0;
+        return;
+      }
+
+      var rowRect = greenfieldRowRect(instance);
+      var vendorRect = greenfieldCellRect(instance, "bp-cell--vendor");
+      var speedRect = greenfieldCellRect(instance, "bp-cell--speed");
+      var actionRect = greenfieldCellRect(instance, "bp-cell--action");
+
+      var pos = { x: actionRect.centerX, y: rowRect.centerY };
+      var cursorOpacity = 1;
+      var rippleOpacity = 0;
+      var rippleScale = 0.02;
+      var ripplePos = null;
+
+      if (t < M.enterMoveEnd) {
+        var enterFrom = { x: vendorRect.left + 10, y: 1080 };
+        var enterTo = { x: vendorRect.left + 10, y: rowRect.centerY };
+        pos = moveTo2(t - M.enterMoveStart, M.enterMoveEnd - M.enterMoveStart, enterFrom, enterTo);
+        cursorOpacity = clamp01((t - M.enterMoveStart) / 100);
+      } else if (t < M.scanRowEnd) {
+        var scanFrom = { x: vendorRect.left + 10, y: rowRect.centerY };
+        var scanTo = { x: actionRect.right - 10, y: rowRect.centerY };
+        pos = moveTo2(t - M.scanRowStart, M.scanRowEnd - M.scanRowStart, scanFrom, scanTo);
+      } else if (t < M.moveToSpeedEnd) {
+        // Fix run 2: targets circleTop, not the rect's raw center — the
+        // root cause of "the circle looks wrong here." computeCircle's
+        // own sweep starts at angle=-PI/2 (circleTop), so moving to the
+        // center left the circle snapping to circleTop the instant it
+        // began. Gallery 1 always moves to circleTop first; matched here.
+        var mtsFrom = { x: actionRect.right - 10, y: rowRect.centerY };
+        var mtsTo = circleTop(circleParamsFor(speedRect, 1.3, 2.1));
+        pos = moveTo2(t - M.moveToSpeedStart, M.moveToSpeedEnd - M.moveToSpeedStart, mtsFrom, mtsTo);
+      } else if (t < M.circleSpeedEnd) {
+        pos = computeCircle(t - M.circleSpeedStart, M.circleSpeedEnd - M.circleSpeedStart, circleParamsFor(speedRect, 1.3, 2.1));
+      } else if (t < M.holdAfterCircleSpeedEnd) {
+        // circleTop(p), not computeCircle(dur,dur,p) — the latter still
+        // carries a small wobble-phase offset at e=1 (the wobble is a
+        // continuous function of angle, not zeroed at completion), a
+        // second, subtler version of the exact same snap. circleTop is
+        // the clean geometric point Gallery 1 itself holds at.
+        pos = circleTop(circleParamsFor(speedRect, 1.3, 2.1));
+      } else if (t < M.moveToManageEnd) {
+        var mtmFrom = circleTop(circleParamsFor(speedRect, 1.3, 2.1));
+        var mtmTo = { x: actionRect.centerX, y: actionRect.centerY };
+        pos = moveTo2(t - M.moveToManageStart, M.moveToManageEnd - M.moveToManageStart, mtmFrom, mtmTo);
+      } else if (t < M.holdBeforeManageEnd) {
+        pos = { x: actionRect.centerX, y: actionRect.centerY };
+      } else if (t < M.clickManageEnd) {
+        pos = { x: actionRect.centerX, y: actionRect.centerY };
+        var rpManage = computeClickRipple(t - M.clickManageStart, M.clickManageEnd - M.clickManageStart);
+        rippleOpacity = rpManage.opacity; rippleScale = rpManage.scale; ripplePos = pos;
+      } else if (t < M.holdAfterManageEnd) {
+        pos = { x: actionRect.centerX, y: actionRect.centerY };
+      } else if (t < M.floatsDismissEnd) {
+        pos = { x: actionRect.centerX, y: actionRect.centerY };
+      } else {
+        // Fix 1 (QA): floatsDismissEnd === drawerOpenStart in the
+        // current sequence — this IS the hard cut. Hidden, no fade,
+        // the instant the magnifier starts opening; it never
+        // reappears (see updateMagnifierCursorAndSparks for
+        // everything from here on).
+        cursorOpacity = 0;
+      }
+
+      instance.cursorEl.style.left = pos.x + "px";
+      instance.cursorEl.style.top = pos.y + "px";
+      instance.cursorEl.style.opacity = cursorOpacity;
+      if (ripplePos) {
+        instance.rippleEl.style.left = ripplePos.x + "px";
+        instance.rippleEl.style.top = ripplePos.y + "px";
+      }
+      instance.rippleDisc.style.opacity = rippleOpacity;
+      instance.rippleDisc.style.transform = "translate(-50%, -50%) scale(" + rippleScale + ")";
+
+      updateSparkFlag(instance, "sparkManageFired", function () { return actionRect; }, triggerSparkBurst, M.clickManageStart, M.clickManageEnd, t);
+    }
+
+    // ---- Cursor / ripple / sparks — magnifier surface, beat 7 onward.
+    // Fix 1 (QA): mirrors updateCursorAndSparks' own cascade shape but
+    // targets the magnifier's own DOM/scale throughout (magnifierElRect/
+    // magnifierCalDateRect/magnifierCalTabRect/magnifierCloseRect
+    // instead of drawerElRect/calDateRect/calTabRect/drawerCloseRect;
+    // cursorMagEl/rippleMagEl/rippleMagDisc instead of cursorEl/
+    // rippleEl/rippleDisc; triggerSparkBurstMag instead of
+    // triggerSparkBurst). moveToReading is a static hold now, not a
+    // move — "arrives with it, not after": the magnifier cursor is
+    // simply present, already resting at the Standard radio's label
+    // (beat 8 now reads label first), the instant the magnifier starts
+    // opening, not traveling
+    // there from the mock (the two surfaces aren't spatially adjacent;
+    // a literal cross-panel move would look like a stray jump through
+    // empty space, not a purposeful gesture). ----
+    // Beat 9's circle target: "Custom" plus the start of "Choose
+    // specific" — one combined rect, not two gestures. There's no way
+    // to measure a literal sub-string's width without much more
+    // text-layout code than this scene needs, so "the beginning of
+    // Choose specific" is a reasoned visual approximation — 40% of the
+    // subtitle's own rendered width ("Choose specific" is 2 of the
+    // subtitle's 6 words, "Choose specific dates and delivery speed"),
+    // not a precise character measurement. Flagged here rather than
+    // silently guessed.
+    function magnifierCustomComboRect(instance) {
+      var titleRect = magnifierElRect(instance, '[data-radio="custom"] .bp-radio-item__title strong');
+      var subtitleRect = magnifierElRect(instance, '[data-radio="custom"] .bp-radio-item__subtitle');
+      if (!titleRect || !subtitleRect) return null;
+      var subtitlePartialRight = subtitleRect.left + subtitleRect.width * 0.4;
+      var left = Math.min(titleRect.left, subtitleRect.left);
+      var right = Math.max(titleRect.right, subtitlePartialRight);
+      var top = titleRect.top;
+      var bottom = subtitleRect.bottom;
+      return { left: left, top: top, right: right, bottom: bottom, width: right - left, height: bottom - top, centerX: (left + right) / 2, centerY: (top + bottom) / 2 };
+    }
+    function magnifierCustomRadioRect(instance) {
+      return magnifierElRect(instance, '[data-radio="custom"] .bp-radio');
+    }
+
+    function updateMagnifierCursorAndSparks(instance, t) {
+      var M = SCENE0_MARKS;
+      if (t < M.drawerOpenStart) {
+        instance.cursorMagEl.style.opacity = 0;
+        instance.rippleMagDisc.style.opacity = 0;
+        return;
+      }
+
+      var pos = { x: 0, y: 0 };
+      var cursorOpacity = 1;
+      var rippleOpacity = 0;
+      var rippleScale = 0.02;
+      var ripplePos = null;
+
+      // ---- Beat 8 — six reads (label, then dates, per option), holds
+      // between reads within an option, moves between options. Every
+      // move targets underlineStart(p), every read starts from exactly
+      // there — no snap, matching Gallery 1's own move->underline->move
+      // pattern (scenes.html's buildScene2Segments, pToggleLabel). ----
+      if (t < M.moveToReadingEnd) {
+        // "Arrives with it, not after" (Fix 1) — resting at the label's
+        // own underlineStart (a one-way sweep's entry point), since
+        // beat 8 now reads the label first.
+        var stdLabelRect0 = magnifierElRect(instance, '[data-radio="standard"] .bp-radio-item__title strong');
+        if (stdLabelRect0) pos = underlineStart(underlineParamsFor(stdLabelRect0, 0.5));
+      } else if (t < M.readStandardLabelEnd) {
+        var stdLabelRect = magnifierElRect(instance, '[data-radio="standard"] .bp-radio-item__title strong');
+        if (stdLabelRect) pos = computeReadSweep(t - M.readStandardLabelStart, M.readStandardLabelEnd - M.readStandardLabelStart, underlineParamsFor(stdLabelRect, 0.5));
+      } else if (t < M.holdAfterStandardLabelEnd) {
+        var stdLabelRect2 = magnifierElRect(instance, '[data-radio="standard"] .bp-radio-item__title strong');
+        if (stdLabelRect2) pos = readEnd(underlineParamsFor(stdLabelRect2, 0.5));
+      } else if (t < M.moveLabelToDatesStandardEnd) {
+        // Fix 4b: a real diagonal move, not a vertical drop — FROM the
+        // label's own end point (right side) TO the dates line's own
+        // start point (left side, one line down). The x/y both differ,
+        // which is what reads as an eye dropping to the next line
+        // instead of a machine stroke repeating at a fixed x.
+        var stdLabelRect3 = magnifierElRect(instance, '[data-radio="standard"] .bp-radio-item__title strong');
+        var stdDatesRect0 = magnifierElRect(instance, '[data-radio="standard"] .bp-radio-item__meta');
+        var mldsFrom = stdLabelRect3 ? readEnd(underlineParamsFor(stdLabelRect3, 0.5)) : pos;
+        if (stdDatesRect0) pos = moveTo2(t - M.moveLabelToDatesStandardStart, M.moveLabelToDatesStandardEnd - M.moveLabelToDatesStandardStart, mldsFrom, underlineStart(underlineParamsFor(stdDatesRect0, 0.9)));
+      } else if (t < M.readStandardDatesEnd) {
+        var stdDatesRect = magnifierElRect(instance, '[data-radio="standard"] .bp-radio-item__meta');
+        if (stdDatesRect) pos = computeReadSweep(t - M.readStandardDatesStart, M.readStandardDatesEnd - M.readStandardDatesStart, underlineParamsFor(stdDatesRect, 0.9));
+      } else if (t < M.holdAfterStandardDatesEnd) {
+        var stdDatesRect1 = magnifierElRect(instance, '[data-radio="standard"] .bp-radio-item__meta');
+        if (stdDatesRect1) pos = readEnd(underlineParamsFor(stdDatesRect1, 0.9));
+      } else if (t < M.moveToFastOptionEnd) {
+        var stdDatesRect2 = magnifierElRect(instance, '[data-radio="standard"] .bp-radio-item__meta');
+        var fastLabelRect0 = magnifierElRect(instance, '[data-radio="latest-safe"] .bp-radio-item__title strong');
+        var mfoFrom = stdDatesRect2 ? readEnd(underlineParamsFor(stdDatesRect2, 0.9)) : pos;
+        if (fastLabelRect0) pos = moveTo2(t - M.moveToFastOptionStart, M.moveToFastOptionEnd - M.moveToFastOptionStart, mfoFrom, underlineStart(underlineParamsFor(fastLabelRect0, 1.3)));
+      } else if (t < M.readFastLabelEnd) {
+        var fastLabelRect = magnifierElRect(instance, '[data-radio="latest-safe"] .bp-radio-item__title strong');
+        if (fastLabelRect) pos = computeReadSweep(t - M.readFastLabelStart, M.readFastLabelEnd - M.readFastLabelStart, underlineParamsFor(fastLabelRect, 1.3));
+      } else if (t < M.holdAfterFastLabelEnd) {
+        var fastLabelRect2 = magnifierElRect(instance, '[data-radio="latest-safe"] .bp-radio-item__title strong');
+        if (fastLabelRect2) pos = readEnd(underlineParamsFor(fastLabelRect2, 1.3));
+      } else if (t < M.moveLabelToDatesFastEnd) {
+        var fastLabelRect3 = magnifierElRect(instance, '[data-radio="latest-safe"] .bp-radio-item__title strong');
+        var fastDatesRect0 = magnifierElRect(instance, '[data-radio="latest-safe"] .bp-radio-item__meta');
+        var mldfFrom = fastLabelRect3 ? readEnd(underlineParamsFor(fastLabelRect3, 1.3)) : pos;
+        if (fastDatesRect0) pos = moveTo2(t - M.moveLabelToDatesFastStart, M.moveLabelToDatesFastEnd - M.moveLabelToDatesFastStart, mldfFrom, underlineStart(underlineParamsFor(fastDatesRect0, 1.6)));
+      } else if (t < M.readFastDatesEnd) {
+        var fastDatesRect = magnifierElRect(instance, '[data-radio="latest-safe"] .bp-radio-item__meta');
+        if (fastDatesRect) pos = computeReadSweep(t - M.readFastDatesStart, M.readFastDatesEnd - M.readFastDatesStart, underlineParamsFor(fastDatesRect, 1.6));
+      } else if (t < M.holdAfterFastDatesEnd) {
+        var fastDatesRect1 = magnifierElRect(instance, '[data-radio="latest-safe"] .bp-radio-item__meta');
+        if (fastDatesRect1) pos = readEnd(underlineParamsFor(fastDatesRect1, 1.6));
+      } else if (t < M.moveToInstantOptionEnd) {
+        var fastDatesRect2 = magnifierElRect(instance, '[data-radio="latest-safe"] .bp-radio-item__meta');
+        var instLabelRect0 = magnifierElRect(instance, '[data-radio="expedited"] .bp-radio-item__title strong');
+        var mioFrom = fastDatesRect2 ? readEnd(underlineParamsFor(fastDatesRect2, 1.6)) : pos;
+        if (instLabelRect0) pos = moveTo2(t - M.moveToInstantOptionStart, M.moveToInstantOptionEnd - M.moveToInstantOptionStart, mioFrom, underlineStart(underlineParamsFor(instLabelRect0, 2.1)));
+      } else if (t < M.readInstantLabelEnd) {
+        var instLabelRect = magnifierElRect(instance, '[data-radio="expedited"] .bp-radio-item__title strong');
+        if (instLabelRect) pos = computeReadSweep(t - M.readInstantLabelStart, M.readInstantLabelEnd - M.readInstantLabelStart, underlineParamsFor(instLabelRect, 2.1));
+      } else if (t < M.holdAfterInstantLabelEnd) {
+        var instLabelRect2 = magnifierElRect(instance, '[data-radio="expedited"] .bp-radio-item__title strong');
+        if (instLabelRect2) pos = readEnd(underlineParamsFor(instLabelRect2, 2.1));
+      } else if (t < M.moveLabelToDatesInstantEnd) {
+        // Part 3: the third read no longer sweeps the full dates line —
+        // moves to the partial sweep's own start (~55% in), not the
+        // line's true left edge, so the move itself is shorter too.
+        var instLabelRect3 = magnifierElRect(instance, '[data-radio="expedited"] .bp-radio-item__title strong');
+        var instDatesRect0 = magnifierElRect(instance, '[data-radio="expedited"] .bp-radio-item__meta');
+        var mldiFrom = instLabelRect3 ? readEnd(underlineParamsFor(instLabelRect3, 2.1)) : pos;
+        if (instDatesRect0) pos = moveTo2(t - M.moveLabelToDatesInstantStart, M.moveLabelToDatesInstantEnd - M.moveLabelToDatesInstantStart, mldiFrom, underlineStart(partialUnderlineParamsFor(instDatesRect0, 2.4, 0.55)));
+      } else if (t < M.readInstantDatesEnd) {
+        var instDatesRect = magnifierElRect(instance, '[data-radio="expedited"] .bp-radio-item__meta');
+        if (instDatesRect) pos = computeReadSweep(t - M.readInstantDatesStart, M.readInstantDatesEnd - M.readInstantDatesStart, partialUnderlineParamsFor(instDatesRect, 2.4, 0.55));
+      } else if (t < M.holdAfterInstantDatesEnd) {
+        var instDatesRect3 = magnifierElRect(instance, '[data-radio="expedited"] .bp-radio-item__meta');
+        if (instDatesRect3) pos = readEnd(partialUnderlineParamsFor(instDatesRect3, 2.4, 0.55));
+      } else if (t < M.moveToCustomEnd) {
+        // Beat 9: circles "Custom" + the start of "Choose specific" —
+        // targets circleTop of the combined rect, not the radio-item's
+        // raw center (same circleTop fix as beat 4).
+        var instDatesRect2 = magnifierElRect(instance, '[data-radio="expedited"] .bp-radio-item__meta');
+        var comboRect0 = magnifierCustomComboRect(instance);
+        // readEnd, not underlineStart — the dates read is one-way now
+        // (Fix 4b), so it rests at x2, matching holdAfterInstantDates.
+        // x2 is identical between underlineParamsFor and
+        // partialUnderlineParamsFor (only x1 differs), but using the
+        // partial variant here keeps this line visibly consistent with
+        // what the read actually was, not an equivalence a reader has
+        // to work out.
+        var mcFrom = instDatesRect2 ? readEnd(partialUnderlineParamsFor(instDatesRect2, 2.4, 0.55)) : pos;
+        if (comboRect0) pos = moveTo2(t - M.moveToCustomStart, M.moveToCustomEnd - M.moveToCustomStart, mcFrom, circleTop(circleParamsFor(comboRect0, 0.8, 1.6)));
+      } else if (t < M.holdBeforeCircleCustomEnd) {
+        // Fix run 3, step 0: settles on Custom before marking it — a
+        // real hold at the arrival point, not straight into the circle.
+        var comboRectSettle = magnifierCustomComboRect(instance);
+        if (comboRectSettle) pos = circleTop(circleParamsFor(comboRectSettle, 0.8, 1.6));
+      } else if (t < M.circleCustomEnd) {
+        var comboRect1 = magnifierCustomComboRect(instance);
+        if (comboRect1) pos = computeCircle(t - M.circleCustomStart, M.circleCustomEnd - M.circleCustomStart, circleParamsFor(comboRect1, 0.8, 1.6));
+      } else if (t < M.holdCustomEnd) {
+        var comboRect2 = magnifierCustomComboRect(instance);
+        if (comboRect2) pos = circleTop(circleParamsFor(comboRect2, 0.8, 1.6));
+      } else if (t < M.moveToRadioEnd) {
+        // Beat 10: the click must land on the radio button itself, not
+        // the text beat 9 just circled — a real move to it, not a
+        // click at the circle's own resting point.
+        var comboRect3 = magnifierCustomComboRect(instance);
+        var radioRect0 = magnifierCustomRadioRect(instance);
+        var mtrFrom = comboRect3 ? circleTop(circleParamsFor(comboRect3, 0.8, 1.6)) : pos;
+        if (radioRect0) pos = moveTo2(t - M.moveToRadioStart, M.moveToRadioEnd - M.moveToRadioStart, mtrFrom, { x: radioRect0.centerX, y: radioRect0.centerY });
+      } else if (t < M.holdBeforeCustomClickEnd) {
+        var radioRect1 = magnifierCustomRadioRect(instance);
+        if (radioRect1) pos = { x: radioRect1.centerX, y: radioRect1.centerY };
+      } else if (t < M.clickCustomEnd) {
+        var radioRect2 = magnifierCustomRadioRect(instance);
+        if (radioRect2) {
+          pos = { x: radioRect2.centerX, y: radioRect2.centerY };
+          var rpCustom = computeClickRipple(t - M.clickCustomStart, M.clickCustomEnd - M.clickCustomStart);
+          rippleOpacity = rpCustom.opacity; rippleScale = rpCustom.scale; ripplePos = pos;
+        }
+      } else if (t < M.holdAfterCustomSelectEnd) {
+        // Fix run 3, step 1: 0.5s at the just-selected radio before the
+        // calendar opens — the pause between "marked" and "acted on."
+        var radioRectSel = magnifierCustomRadioRect(instance);
+        if (radioRectSel) pos = { x: radioRectSel.centerX, y: radioRectSel.centerY };
+      } else if (t < M.dissolveToCalendarEnd) {
+        var radioRect3 = magnifierCustomRadioRect(instance) || magnifierCalTabRect(instance, "standard");
+        if (radioRect3) pos = { x: radioRect3.centerX, y: radioRect3.centerY };
+      } else if (t < M.holdCalendarRestingEnd) {
+        var stdTabRect0 = magnifierCalTabRect(instance, "standard");
+        if (stdTabRect0) pos = { x: stdTabRect0.centerX, y: stdTabRect0.centerY };
+      } else if (t < M.moveToWithdrawLegendEnd) {
+        // Fix run 3, step 3: identifying what's off, before he ever
+        // touches the grid — moves to the legend's own Withdraw date.
+        var fromRestingWL = magnifierCalTabRect(instance, "standard");
+        var withdrawLegendRect0 = magnifierElRect(instance, ".bp-cal-legend__text--withdraw span");
+        if (withdrawLegendRect0) pos = moveTo2(t - M.moveToWithdrawLegendStart, M.moveToWithdrawLegendEnd - M.moveToWithdrawLegendStart, fromRestingWL ? { x: fromRestingWL.centerX, y: fromRestingWL.centerY } : pos, underlineStart(underlineParamsFor(withdrawLegendRect0, 3.1)));
+      } else if (t < M.underlineWithdrawLegendEnd) {
+        // computeUnderline, not computeReadSweep — "back and forth" is
+        // explicit here (unlike beat 8's fix), and that's exactly what
+        // computeUnderline's own there-and-back shape already is.
+        var withdrawLegendRect1 = magnifierElRect(instance, ".bp-cal-legend__text--withdraw span");
+        if (withdrawLegendRect1) pos = computeUnderline(t - M.underlineWithdrawLegendStart, M.underlineWithdrawLegendEnd - M.underlineWithdrawLegendStart, underlineParamsFor(withdrawLegendRect1, 3.1));
+      } else if (t < M.moveToSep10End) {
+        var withdrawLegendRect2 = magnifierElRect(instance, ".bp-cal-legend__text--withdraw span");
+        var sep10Rect0 = magnifierCalDateRect(instance, isoFor(SEP10));
+        var mtsFromWL = withdrawLegendRect2 ? underlineStart(underlineParamsFor(withdrawLegendRect2, 3.1)) : pos;
+        if (sep10Rect0) pos = moveTo2(t - M.moveToSep10Start, M.moveToSep10End - M.moveToSep10Start, mtsFromWL, { x: sep10Rect0.centerX, y: sep10Rect0.centerY });
+      } else if (t < M.holdSep10End) {
+        var sep10Rect1 = magnifierCalDateRect(instance, isoFor(SEP10));
+        if (sep10Rect1) pos = { x: sep10Rect1.centerX, y: sep10Rect1.centerY };
+      } else if (t < M.moveToSep9End) {
+        var s10a = magnifierCalDateRect(instance, isoFor(SEP10)), s9a = magnifierCalDateRect(instance, isoFor(SEP9));
+        if (s10a && s9a) pos = moveTo2(t - M.moveToSep9Start, M.moveToSep9End - M.moveToSep9Start, { x: s10a.centerX, y: s10a.centerY }, { x: s9a.centerX, y: s9a.centerY });
+      } else if (t < M.holdSep9End) {
+        var s9a2 = magnifierCalDateRect(instance, isoFor(SEP9));
+        if (s9a2) pos = { x: s9a2.centerX, y: s9a2.centerY };
+      } else if (t < M.moveToSep8End) {
+        var s9b = magnifierCalDateRect(instance, isoFor(SEP9)), s8a = magnifierCalDateRect(instance, isoFor(SEP8));
+        if (s9b && s8a) pos = moveTo2(t - M.moveToSep8Start, M.moveToSep8End - M.moveToSep8Start, { x: s9b.centerX, y: s9b.centerY }, { x: s8a.centerX, y: s8a.centerY });
+      } else if (t < M.holdSep8End) {
+        var s8b = magnifierCalDateRect(instance, isoFor(SEP8));
+        if (s8b) pos = { x: s8b.centerX, y: s8b.centerY };
+      } else if (t < M.clickSep8End) {
+        var s8c = magnifierCalDateRect(instance, isoFor(SEP8));
+        if (s8c) {
+          pos = { x: s8c.centerX, y: s8c.centerY };
+          var rpSep8 = computeClickRipple(t - M.clickSep8Start, M.clickSep8End - M.clickSep8Start);
+          rippleOpacity = rpSep8.opacity; rippleScale = rpSep8.scale; ripplePos = pos;
+        }
+      } else if (t < M.moveToOverdueBadgeEnd) {
+        // Fix run 5, item 2: registers the problem he just created —
+        // moves to the OVERDUE badge itself, after its own bump has
+        // already finished (bump window is 220ms from clickSep8Start,
+        // well inside this 260ms move that only starts at clickSep8End).
+        var s8d0 = magnifierCalDateRect(instance, isoFor(SEP8));
+        var overdueBadgeRect0 = magnifierElRect(instance, ".bp-cal-legend__badge");
+        if (overdueBadgeRect0) pos = moveTo2(t - M.moveToOverdueBadgeStart, M.moveToOverdueBadgeEnd - M.moveToOverdueBadgeStart, s8d0 ? { x: s8d0.centerX, y: s8d0.centerY } : pos, circleTop(circleParamsFor(overdueBadgeRect0, 4.4, 5.2)));
+      } else if (t < M.circleOverdueBadgeEnd) {
+        var overdueBadgeRect1 = magnifierElRect(instance, ".bp-cal-legend__badge");
+        if (overdueBadgeRect1) pos = computeCircle(t - M.circleOverdueBadgeStart, M.circleOverdueBadgeEnd - M.circleOverdueBadgeStart, circleParamsFor(overdueBadgeRect1, 4.4, 5.2));
+      } else if (t < M.holdAfterOverdueBadgeCircleEnd) {
+        var overdueBadgeRect2 = magnifierElRect(instance, ".bp-cal-legend__badge");
+        if (overdueBadgeRect2) pos = circleTop(circleParamsFor(overdueBadgeRect2, 4.4, 5.2));
+      } else if (t < M.moveToLegendRest1End) {
+        // Fix run 3, step 10: a thinking beat — cursor rests on empty
+        // space, not a target, right after registering the OVERDUE badge.
+        var restRect1 = magnifierLegendRestRect(instance);
+        var overdueBadgeRect3 = magnifierElRect(instance, ".bp-cal-legend__badge");
+        var mlr1From = overdueBadgeRect3 ? circleTop(circleParamsFor(overdueBadgeRect3, 4.4, 5.2)) : pos;
+        if (restRect1) pos = moveTo2(t - M.moveToLegendRest1Start, M.moveToLegendRest1End - M.moveToLegendRest1Start, mlr1From, { x: restRect1.centerX, y: restRect1.centerY });
+      } else if (t < M.holdLegendRest1End) {
+        var restRect1b = magnifierLegendRestRect(instance);
+        if (restRect1b) pos = { x: restRect1b.centerX, y: restRect1b.centerY };
+      } else if (t < M.moveToFastTabReadEnd) {
+        // Fix run 3, step 11: arrives at the Fast tab's own right edge —
+        // the triple-underline below starts right, per readEnd/ftp's x2.
+        var restRect2 = magnifierLegendRestRect(instance);
+        var fastTabRead0 = magnifierCalTabRect(instance, "fast");
+        if (fastTabRead0) pos = moveTo2(t - M.moveToFastTabReadStart, M.moveToFastTabReadEnd - M.moveToFastTabReadStart, restRect2 ? { x: restRect2.centerX, y: restRect2.centerY } : pos, readEnd(underlineParamsFor(fastTabRead0, 1.3)));
+      } else if (t < M.underlineFastTab1End) {
+        // Three continuous passes, alternating direction (R->L, L->R,
+        // a short R->L flourish) — "underlines it three times... only
+        // the Fast tab." Reuses computeReadSweep by feeding it reversed
+        // (and partial) param objects rather than inventing a new
+        // primitive: computeReadSweep always sweeps p.x1->p.x2, so
+        // swapping x1/x2 reverses direction, and narrowing the range
+        // shortens the stroke.
+        var fastTabU1 = magnifierCalTabRect(instance, "fast");
+        if (fastTabU1) {
+          var ftp1 = underlineParamsFor(fastTabU1, 1.3);
+          pos = computeReadSweep(t - M.underlineFastTab1Start, M.underlineFastTab1End - M.underlineFastTab1Start, { x1: ftp1.x2, x2: ftp1.x1, y: ftp1.y, seed: ftp1.seed });
+        }
+      } else if (t < M.underlineFastTab2End) {
+        var fastTabU2 = magnifierCalTabRect(instance, "fast");
+        if (fastTabU2) pos = computeReadSweep(t - M.underlineFastTab2Start, M.underlineFastTab2End - M.underlineFastTab2Start, underlineParamsFor(fastTabU2, 1.3));
+      } else if (t < M.underlineFastTab3End) {
+        var fastTabU3 = magnifierCalTabRect(instance, "fast");
+        if (fastTabU3) {
+          var ftp3 = underlineParamsFor(fastTabU3, 1.3);
+          pos = computeReadSweep(t - M.underlineFastTab3Start, M.underlineFastTab3End - M.underlineFastTab3Start, { x1: ftp3.x2, x2: ftp3.x2 - 0.3 * (ftp3.x2 - ftp3.x1), y: ftp3.y, seed: ftp3.seed });
+        }
+      } else if (t < M.holdBeforeFastClickEnd) {
+        var fastTabPre = magnifierCalTabRect(instance, "fast");
+        if (fastTabPre) {
+          var ftpHold = underlineParamsFor(fastTabPre, 1.3);
+          pos = { x: ftpHold.x2 - 0.3 * (ftpHold.x2 - ftpHold.x1), y: ftpHold.y };
+        }
+      } else if (t < M.clickFastEnd) {
+        var fastTab2 = magnifierCalTabRect(instance, "fast");
+        if (fastTab2) {
+          pos = { x: fastTab2.centerX, y: fastTab2.centerY };
+          var rpFast = computeClickRipple(t - M.clickFastStart, M.clickFastEnd - M.clickFastStart);
+          rippleOpacity = rpFast.opacity; rippleScale = rpFast.scale; ripplePos = pos;
+        }
+      } else if (t < M.holdAfterFastClickEnd) {
+        var fastTab3 = magnifierCalTabRect(instance, "fast");
+        if (fastTab3) pos = { x: fastTab3.centerX, y: fastTab3.centerY };
+      } else if (t < M.moveToSep10FastEnd) {
+        // Fix run 3, Part 2: the Sep9/Sep11 sweep after Fast is removed
+        // — goes straight to Sep10, "too much" per the task.
+        var fastTab4 = magnifierCalTabRect(instance, "fast");
+        var s10Fast0 = magnifierCalDateRect(instance, isoFor(SEP10));
+        if (fastTab4 && s10Fast0) pos = moveTo2(t - M.moveToSep10FastStart, M.moveToSep10FastEnd - M.moveToSep10FastStart, { x: fastTab4.centerX, y: fastTab4.centerY }, { x: s10Fast0.centerX, y: s10Fast0.centerY });
+      } else if (t < M.holdSep10FastEnd) {
+        var s10Fast1 = magnifierCalDateRect(instance, isoFor(SEP10));
+        if (s10Fast1) pos = { x: s10Fast1.centerX, y: s10Fast1.centerY };
+      } else if (t < M.clickSep10FastEnd) {
+        var s10Fast2 = magnifierCalDateRect(instance, isoFor(SEP10));
+        if (s10Fast2) {
+          pos = { x: s10Fast2.centerX, y: s10Fast2.centerY };
+          var rpSep10 = computeClickRipple(t - M.clickSep10FastStart, M.clickSep10FastEnd - M.clickSep10FastStart);
+          rippleOpacity = rpSep10.opacity; rippleScale = rpSep10.scale; ripplePos = pos;
+        }
+      } else if (t < M.moveToOnTimeBadgeEnd) {
+        // Fix run 5, item 2: the payoff — moves to the ON TIME badge
+        // after its own bump has already finished, same margin
+        // reasoning as the OVERDUE occurrence above.
+        var s10g0 = magnifierCalDateRect(instance, isoFor(SEP10));
+        var onTimeBadgeRect0 = magnifierElRect(instance, ".bp-cal-legend__badge");
+        if (onTimeBadgeRect0) pos = moveTo2(t - M.moveToOnTimeBadgeStart, M.moveToOnTimeBadgeEnd - M.moveToOnTimeBadgeStart, s10g0 ? { x: s10g0.centerX, y: s10g0.centerY } : pos, circleTop(circleParamsFor(onTimeBadgeRect0, 6.1, 6.9)));
+      } else if (t < M.circleOnTimeBadgeEnd) {
+        var onTimeBadgeRect1 = magnifierElRect(instance, ".bp-cal-legend__badge");
+        if (onTimeBadgeRect1) pos = computeCircle(t - M.circleOnTimeBadgeStart, M.circleOnTimeBadgeEnd - M.circleOnTimeBadgeStart, circleParamsFor(onTimeBadgeRect1, 6.1, 6.9));
+      } else if (t < M.holdAfterOnTimeBadgeCircleEnd) {
+        var onTimeBadgeRect2 = magnifierElRect(instance, ".bp-cal-legend__badge");
+        if (onTimeBadgeRect2) pos = circleTop(circleParamsFor(onTimeBadgeRect2, 6.1, 6.9));
+      } else if (t < M.moveToCloseEnd) {
+        // Fix run 5, item 2: task's own sequence for this occurrence
+        // goes straight from the circle's hold to the X — no legend
+        // rest in between (unlike the first occurrence, which names it
+        // explicitly as the next step) — nothing left to think over
+        // after the scene's own final commit.
+        var onTimeBadgeRect3 = magnifierElRect(instance, ".bp-cal-legend__badge");
+        var closeRect0 = magnifierCloseRect(instance);
+        var mtcFrom = onTimeBadgeRect3 ? circleTop(circleParamsFor(onTimeBadgeRect3, 6.1, 6.9)) : pos;
+        if (closeRect0) pos = moveTo2(t - M.moveToCloseStart, M.moveToCloseEnd - M.moveToCloseStart, mtcFrom, { x: closeRect0.centerX, y: closeRect0.centerY });
+      } else if (t < M.holdBeforeCloseEnd) {
+        // 300ms, not the generic 120ms pre-click hold — matches the
+        // reference vocabulary's own specific "hold before closing"
+        // value (closing reads as a more deliberate/final action than
+        // an ordinary click, and the vocabulary calls it out by name).
+        var closeRectHold = magnifierCloseRect(instance);
+        if (closeRectHold) pos = { x: closeRectHold.centerX, y: closeRectHold.centerY };
+      } else if (t < M.clickCloseEnd) {
+        var closeRect1 = magnifierCloseRect(instance);
+        if (closeRect1) {
+          pos = { x: closeRect1.centerX, y: closeRect1.centerY };
+          instance.lastClosePos = pos;
+          var rpClose = computeClickRipple(t - M.clickCloseStart, M.clickCloseEnd - M.clickCloseStart);
+          rippleOpacity = rpClose.opacity; rippleScale = rpClose.scale; ripplePos = pos;
+        }
+      } else {
+        // Fix 8: the drawer is sliding shut/gone, so its close button
+        // is no longer a stable measurement target — hold at the last
+        // position captured the moment it was clicked (not a fresh,
+        // by-then-off-canvas re-measurement), and fade out in place —
+        // scenes.html's own drawer-close cursor fade is a plain linear
+        // clamp over 250ms, not eased, matched here exactly rather
+        // than reusing the position-easing curve for an opacity fade.
+        pos = instance.lastClosePos || pos;
+        cursorOpacity = 1 - clamp01((t - M.clickCloseEnd) / 250);
+      }
+
+      instance.cursorMagEl.style.left = pos.x + "px";
+      instance.cursorMagEl.style.top = pos.y + "px";
+      instance.cursorMagEl.style.opacity = cursorOpacity;
+      if (ripplePos) {
+        instance.rippleMagEl.style.left = ripplePos.x + "px";
+        instance.rippleMagEl.style.top = ripplePos.y + "px";
+      }
+      instance.rippleMagDisc.style.opacity = rippleOpacity;
+      instance.rippleMagDisc.style.transform = "translate(-50%, -50%) scale(" + rippleScale + ")";
+
+      updateSparkFlag(instance, "sparkCustomFired", function () { return magnifierCustomRadioRect(instance); }, triggerSparkBurstMag, M.clickCustomStart, M.clickCustomEnd, t);
+      updateSparkFlag(instance, "sparkSep8Fired", function () { return magnifierCalDateRect(instance, isoFor(SEP8)); }, triggerSparkBurstMag, M.clickSep8Start, M.clickSep8End, t);
+      updateSparkFlag(instance, "sparkFastFired", function () { return magnifierCalTabRect(instance, "fast"); }, triggerSparkBurstMag, M.clickFastStart, M.clickFastEnd, t);
+      updateSparkFlag(instance, "sparkSep10Fired", function () { return magnifierCalDateRect(instance, isoFor(SEP10)); }, triggerSparkBurstMag, M.clickSep10FastStart, M.clickSep10FastEnd, t);
+      updateSparkFlag(instance, "sparkCloseFired", function () { return magnifierCloseRect(instance); }, triggerSparkBurstMag, M.clickCloseStart, M.clickCloseEnd, t);
+    }
+
+    // ---- Beat 25 — table cell update + pop. Targeted DOM mutation
+    // (label + two meta spans), not a full row re-render — consistent
+    // with the rest of this file's "mount once, mutate what changes"
+    // architecture. Runs every frame (cheap: one cell), unconditionally
+    // reset-then-conditionally-overridden so a backward seek past this
+    // point correctly restores "Standard." ----
+    function updateFinalCellUpdate(instance, t) {
+      var M = SCENE0_MARKS;
+      var speedCell = instance.rowsScroll.querySelector('[data-row-id="5"] .bp-cell--speed');
+      if (!speedCell) return;
+      var labelEl = speedCell.querySelector(".bp-speed__label");
+      // Direct-child combinator, not a descendant selector — the meta
+      // line's middle "span" is GLYPH.arrow, itself built from 2 nested
+      // spans (layeredIcon's own wrapper + layer span), so a plain
+      // ".bp-speed__meta span" query would match 4 spans (Withdraw,
+      // arrow-wrapper, arrow-layer, Arrives), not 3 — metaSpans[2] would
+      // silently hit the arrow icon's own inner span instead of
+      // "Arrives". "> span" scopes to .bp-speed__meta's direct children
+      // only, correctly 3.
+      var metaSpans = speedCell.querySelectorAll(".bp-speed__meta > span");
+
+      if (t >= M.drawerCloseAnimEnd) {
+        labelEl.textContent = "Fast";
+        metaSpans[0].textContent = "Withdraw " + fmtMD(FINAL_WITHDRAW);
+        metaSpans[2].textContent = "Arrives " + fmtMD(FINAL_ARRIVAL);
+        var bump = sceneNumberBump(t - M.drawerCloseAnimEnd, 90, 40, 90, FIGURE_BUMP_MAGNITUDE);
+        speedCell.style.transform = "scale(" + bump + ")";
+      } else {
+        var orig = computeStandardDates(GREENFIELD_ROW);
+        labelEl.textContent = "Standard";
+        metaSpans[0].textContent = "Withdraw " + fmtMD(orig.withdraw);
+        metaSpans[2].textContent = "Arrives " + fmtMD(orig.arrival);
+        speedCell.style.transform = "";
+      }
+    }
+
+    // ---- Fix 14 — badge bump on commit. Purely a function of t against
+    // the three commit marks already used to write state.drawer.calendar
+    // in updateDrawerState (clickSep8Start = beat 9/OVERDUE,
+    // clickFastStart = beat 12/ON TIME, clickSep10FastStart = beat
+    // 15/ON TIME) — not a stateful flag, so it needs no reset logic to
+    // be correct on a backward seek: any t just recomputes the right
+    // instantaneous scale against fixed marks, the same way beat 25's
+    // own updateFinalCellUpdate bump does. The three windows never
+    // overlap (each is 220ms; the commits are thousands of ms apart),
+    // so "first non-1 wins" is equivalent to summing them. Queries the
+    // badge fresh every frame rather than caching a reference — syncDrawerContent
+    // replaces both innerHTML trees wholesale on every content change,
+    // so any cached node would go stale. Returns no badge (null,
+    // harmlessly skipped) whenever the badge itself isn't in the DOM —
+    // which is exactly the hover-preview windows (showBadge=false), so
+    // "never bumps during a preview" falls out for free rather than
+    // needing its own guard.
+    function updateBadgeBump(instance, t) {
+      var M = SCENE0_MARKS;
+      var bump = sceneNumberBump(t - M.clickSep8Start, 90, 40, 90, BADGE_BUMP_MAGNITUDE);
+      if (bump === 1) bump = sceneNumberBump(t - M.clickFastStart, 90, 40, 90, BADGE_BUMP_MAGNITUDE);
+      if (bump === 1) bump = sceneNumberBump(t - M.clickSep10FastStart, 90, 40, 90, BADGE_BUMP_MAGNITUDE);
+      var transform = bump === 1 ? "" : "scale(" + bump + ")";
+      var drawerBadge = instance.drawerInnerEl && instance.drawerInnerEl.querySelector(".bp-cal-legend__badge");
+      if (drawerBadge) drawerBadge.style.transform = transform;
+      var magBadge = instance.magnifierInnerEl && instance.magnifierInnerEl.querySelector(".bp-cal-legend__badge");
+      if (magBadge) magBadge.style.transform = transform;
+    }
+
+    // Beat-by-beat rendering. t=0 (idle, pre-trigger, and beat 1
+    // "floats only") is just the baseline reset — nothing further to
+    // apply. Fix 10: no play-once freeze — every pass through index 0
+    // (tick(), below) hands this function the real, current elapsed
+    // value, so the scene genuinely replays from idle each time the
+    // grey panel becomes active, whether via the accordion's own
+    // panel-cycle loop or a manual seek.
+    function renderScene0(instance, t) {
+      resetScene0Baseline(instance);
+      if (t <= 0) return;
+
+      var M = SCENE0_MARKS;
+      // Fix run 5: the open-side dismissal and the close-side return
+      // must never share a boundary condition — three explicit,
+      // independently-named phases instead of the previous two-branch
+      // shape (dismiss while t < floatsReturnVisualStart, return
+      // after). The open's own condition below references only
+      // floatsDismissStart/End, nothing from the close side, so a
+      // future change to the return's own timing structurally cannot
+      // reach back and affect the open again.
+      var floatsReturnVisualStart = M.floatsReturnStart - FLOATS_RETURN_LEAD_MS;
+      // Guaranteed >= FLOAT_DISMISS_DURATION for every float's own
+      // staggered offset (worst case is the last float, offset 4 *
+      // FLOAT_DISMISS_STAGGER) — passing this constant, not a
+      // continuously-growing t-derived value, makes the held phase an
+      // explicit resting state rather than the dismiss function's own
+      // clamp behavior stretched across most of the scene.
+      var FLOATS_FULLY_DISMISSED_T = FLOAT_DISMISS_DURATION + 4 * FLOAT_DISMISS_STAGGER;
+
+      if (t >= M.floatsDismissStart && t < M.floatsDismissEnd) {
+        // Open-side: animates out over floatsDismiss's own window only
+        // — fully gone well before drawerOpenStart (floatsDismissEnd
+        // === drawerOpenStart already, with 120ms of real margin inside
+        // the dismiss window itself).
+        applyFloatDismissal(instance, t - M.floatsDismissStart);
+      } else if (t >= M.floatsDismissEnd && t < floatsReturnVisualStart) {
+        applyFloatDismissal(instance, FLOATS_FULLY_DISMISSED_T);
+      } else if (t >= floatsReturnVisualStart) {
+        // Fix 9 / fix run 4: floats return overlapping the drawer's own
+        // close, then hold, bobbing, for floatsReturnHold's own 2.5s —
+        // "the scene ends where it started."
+        applyFloatReturn(instance, t - floatsReturnVisualStart);
+      }
+
+      var openness = drawerOpennessFor(t, M.drawerOpenStart, M.drawerOpenEnd, M.drawerCloseAnimStart, M.drawerCloseAnimEnd);
+      instance.drawerEl.style.display = openness > 0 ? "flex" : "none";
+      instance.drawerEl.style.transform = "translate3d(" + (100 * (1 - openness)) + "%, 0, 0)";
+      instance.magnifierDrawerEl.style.display = openness > 0 ? "flex" : "none";
+      instance.magnifierDrawerEl.style.transform = "translate3d(" + (100 * (1 - openness)) + "%, 0, 0)";
+      applyNarrowProgress(instance, openness);
+
+      updateDrawerState(instance, t);
+      updateBadgeBump(instance, t);
+      updateCursorAndSparks(instance, t);
+      updateMagnifierCursorAndSparks(instance, t);
+      updateFinalCellUpdate(instance, t);
+    }
+
+    var instance = buildMockInstance();
+
+    // ---- Trigger — Quality_Of_Decisions Scene 1 plays once, gated on
+    // 60% scroll visibility. Same-origin same-document IntersectionObserver
+    // with root:null correctly reflects this iframe's own visibility
+    // within the parent page's viewport (a well-established technique —
+    // the observer's implicit root is the top-level browsing context's
+    // viewport, which for a nested browsing context is clipped by
+    // whatever the parent page is doing, scroll included). Never
+    // re-fires once triggered.
+    var visibilityObserver = new IntersectionObserver(
+      function (entries) {
+        if (hasTriggered) return;
+        for (var i = 0; i < entries.length; i++) {
+          if (entries[i].intersectionRatio >= 0.6) {
+            hasTriggered = true;
+            epoch = performance.now();
+            visibilityObserver.disconnect();
+            break;
+          }
+        }
+      },
+      { threshold: 0.6 }
+    );
+    visibilityObserver.observe(document.body);
+
+    // ---- Clock — drives the active-panel class + progress
     // announcements; the mock content built above never changes (it's
     // permanently inside panel 0 — see build spec: only widths change,
     // nothing slides or swaps content). Same continuous-clock /
@@ -1991,13 +3946,23 @@
       );
     }
 
+    // Manually forcing a point in time (seek or panel click) counts as
+    // triggering — a dev/QA seek, or the parent's arrow-click seek,
+    // wants to see that point rendered immediately, not wait on scroll
+    // visibility. Idempotent if already triggered.
+    function forceTrigger(targetMs) {
+      hasTriggered = true;
+      visibilityObserver.disconnect();
+      epoch = performance.now() - targetMs;
+    }
+
     // Advancing never stops (task: "there is no pause state") — this
     // just re-anchors epoch so tick() keeps playing forward from
     // wherever it lands, exactly like Gallery 1's/Gallery 2's own
     // seek handling; nothing here ever cancels/pauses the rAF loop.
     function seekToIndex(index) {
       var targetMs = BOUNDARIES[index];
-      epoch = performance.now() - targetMs;
+      forceTrigger(targetMs);
       lastIndex = index;
       applyScene(index);
       announce(targetMs, index);
@@ -2005,23 +3970,53 @@
 
     // Task: "clicking the collapsed panel jumps to that panel and
     // autoplay continues from there." Clicking the already-active
-    // panel is a harmless no-op (nothing to jump to).
+    // panel is a harmless no-op (nothing to jump to). Before the scene
+    // has triggered, elapsed is always 0/index 0 — clicking panel 0
+    // itself is still a no-op; clicking panel 1 seeks (and, per
+    // forceTrigger, starts the clock).
     panels.forEach(function (panel, index) {
       panel.addEventListener("click", function () {
-        if (index !== sceneIndexForTime((performance.now() - epoch) % TOTAL_DURATION)) {
+        var elapsed = hasTriggered ? (performance.now() - epoch) % TOTAL_DURATION : 0;
+        if (index !== sceneIndexForTime(elapsed)) {
           seekToIndex(index);
         }
       });
     });
 
+    // Every frame: pre-trigger, panel 0 renders its idle baseline
+    // (t=0) and the panel-swap clock doesn't run at all. Post-trigger,
+    // the existing sceneIndexForTime/applyScene mechanism runs exactly
+    // as it always has — BOUNDARIES[1] (= SCENE_DURATION) is what
+    // already causes it to swap to panel 1 on its own, so "scene
+    // completion drives the swap" falls out of the unmodified
+    // mechanism once epoch starts late instead of at load. Fix 10: no
+    // freeze — elapsed is handed to renderScene0 exactly as computed,
+    // every pass through index 0, including every time the loop's own
+    // % TOTAL_DURATION wrap brings it back around. That's the whole
+    // mechanism for "the scene replays every time the grey panel
+    // becomes active" — nothing here needs to know it's a replay.
     function tick() {
-      var elapsed = (performance.now() - epoch) % TOTAL_DURATION;
-      var index = sceneIndexForTime(elapsed);
-      if (index !== lastIndex) {
-        lastIndex = index;
-        applyScene(index);
-        announce(elapsed, index);
+      if (hasTriggered) {
+        var elapsed = (performance.now() - epoch) % TOTAL_DURATION;
+        var index = sceneIndexForTime(elapsed);
+        if (index !== lastIndex) {
+          lastIndex = index;
+          applyScene(index);
+          announce(elapsed, index);
+        }
+        if (index === 0) {
+          renderScene0(instance, elapsed);
+        }
+      } else {
+        renderScene0(instance, 0);
       }
+      // Real-time, independent of scene index/t — same reasoning as
+      // scenes.html's own tick(): sparks are a short flourish, not
+      // seekable state, so they run every frame regardless. Both
+      // canvases, unconditionally — each is a no-op clearRect when its
+      // own array is empty.
+      drawSparks();
+      drawSparksMag();
       requestAnimationFrame(tick);
     }
 
@@ -2031,7 +4026,7 @@
       var data = event.data;
       if (!data || data.type !== "scene-accordion-seek" || typeof data.ms !== "number") return;
 
-      epoch = performance.now() - data.ms;
+      forceTrigger(data.ms);
       var index = sceneIndexForTime(data.ms);
       lastIndex = index;
       applyScene(index);
@@ -2042,6 +4037,7 @@
     lastIndex = initialIndex;
     applyScene(initialIndex);
     announce(0, initialIndex);
+    renderScene0(instance, 0);
     requestAnimationFrame(tick);
   })();
   </script>
