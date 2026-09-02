@@ -3571,6 +3571,11 @@
       // Beat 6 (fix item 4) — BILLS, VENDORS, PAYMENTS bump in
       // sequence, front face, 400ms each = 1200ms total.
       ["blockBumpFront", 1200],
+      // Beat 6b (fix round 2 item 5; reordered after blockBumpFront in
+      // fix round 4) — the whole footer strip scales up once and
+      // settles, after the three per-block bumps: "three blocks bump in
+      // sequence, then the whole strip bumps once."
+      ["footerTotalBump", 400],
       // Beat 7. Hold before the turn.
       ["holdBeforeCascade", 1000],
       // Beat 8 (fix item 5, spec §3/§9.4 corrected) — the cascade
@@ -3579,8 +3584,14 @@
       // fixed ~2s window. Not driven by travel speed or queue position
       // — see CASCADE_ELEMENT_KINDS/collectCascadeTargets, further down.
       ["cascade", 2000],
-      // Beat 9. Brief beat before the flip.
-      ["briefBeat", 400],
+      // Beat 9. Hold before the flip — 400ms → 1500ms (fix round 3
+      // item 4): "the turn needs a moment to land — right now the flip
+      // fires while the eye is still taking in that everything went
+      // orange." Name kept as `briefBeat` even though it no longer is
+      // one — renaming a beat that already has history in this file
+      // and in COMPONENT-MAP.md's own record isn't worth the churn for
+      // a duration change alone.
+      ["briefBeat", 1500],
       // Beat 10. Flip curve/duration unchanged from the very first
       // (pre-redesign) build (spec §9.1/§9.4).
       ["footerFlip", 500],
@@ -3591,8 +3602,15 @@
       // Beat 12 (fix item 4) — same bump sequence as beat 6, alerted
       // face this time.
       ["blockBumpBack", 1200],
-      // Beat 13. Hold before exit.
-      ["holdBeforeExit", 800],
+      // Beat 12b (fix round 4) — the whole-footer bump, alerted face
+      // this time, matching beat 6b: "both faces should read: three
+      // blocks bump in sequence, then the whole strip bumps once." The
+      // orange face never had this beat before fix round 4 — it only
+      // ever ran the three block bumps.
+      ["footerTotalBumpBack", 400],
+      // Beat 13. Hold before exit — 800ms → 2000ms (fix round 3 item
+      // 4): "same reason at the other end. Let the alerted state sit."
+      ["holdBeforeExit", 2000],
       // Beat 14. Anticipation curve out — signed off, unchanged from
       // the very first build (spec §9.1/§9.2: "do not retime, recurve
       // or restructure it").
@@ -3615,6 +3633,14 @@
       marks.total = cursorT;
       return marks;
     })();
+    // Flip midpoint (fix round 2 item 3) — "the footer is edge-on,
+    // moving fastest, and that is the moment it displaces the air."
+    // The flip's own row-reaction ripple (renderRowReactions, further
+    // down) fires from this mark now, not footerFlipEnd — moved off the
+    // "reacts after the motion completes" pattern the entrance/exit
+    // reactions still use, since only a 180° flip has a true "fastest,
+    // edge-on" instant partway through; a rise or a drop doesn't.
+    SCENE1_MARKS.footerFlipMid = SCENE1_MARKS.footerFlipStart + (SCENE1_MARKS.footerFlipEnd - SCENE1_MARKS.footerFlipStart) / 2;
     // Panel 1's real span (spec §10: "set by how long the colour turn
     // needs at a comfortable travel speed... lengthen the scene instead"
     // of rushing the tracks) — no longer the phase-1 placeholder.
@@ -4475,35 +4501,39 @@
     var TRACK_CARD_GAP = 66; // mirrors --qod2-track-card-gap
     var TRACK_UNIT = ROW_CARD_NATIVE_WIDTH + TRACK_CARD_GAP; // = 1367 — one card + its trailing gap, native
     var ROW_CARD_SCALE = 32 / 88; // mirrors --qod2-row-card-height / --qod2-row-card-native-height
+    var PANEL_WIDTH_NATIVE = 627 / ROW_CARD_SCALE; // mirrors --ag-panel-active-width (627px on screen), converted into the same native space TRACK_UNIT/trackOffsetNative already work in — fix round 3 item 1 needs this to anchor a track's own queue against the real window width, not just an arbitrary reference point
 
     // ---- Per-track config (spec §7: alternating direction; §9.2:
     // "vary the track speeds slightly... rather than locking all four
-    // in step"). Speeds cut by 30% (fix item 1) from the first pass's
-    // 290/280/300/285 — those read uncomfortable to watch in real-time
-    // playback; the relative few-percent variation between tracks is
-    // preserved, just the whole set scaled down together. phaseFraction
-    // carries phase 1's own stagger forward unchanged (1/6, 1/2, 5/6 of
-    // a card+gap unit). ----
+    // in step"). Speeds cut a further 50% (fix round 4 item 1) on top
+    // of fix rounds 1-3's own 30%/20%/20% cuts — still too fast at
+    // 129.92/125.44/134.4/127.68 in real-time playback; the relative
+    // few-percent variation between tracks is preserved, just the whole
+    // set scaled down together again (290/280/300/285 × 0.7 × 0.8 ×
+    // 0.8 × 0.5). phaseFraction carries phase 1's own stagger forward
+    // unchanged (1/6, 1/2, 5/6 of a card+gap unit) — composed into
+    // trackOffsetNative's own centering rather than an edge anchor, see
+    // that function's own comment (fix round 3 item 1). ----
     var TRACKS_CONFIG = [
-      { direction: 1, speed: 203, phaseFraction: 1 / 6 },   // track 1 — right (290 × 0.7)
-      { direction: -1, speed: 196, phaseFraction: 1 / 2 },  // track 2 — left (280 × 0.7)
-      { direction: 1, speed: 210, phaseFraction: 5 / 6 },   // track 3 — right (300 × 0.7)
-      { direction: -1, speed: 199.5, phaseFraction: 1 / 6 } // track 4 — left (285 × 0.7, repeats track 1's fraction — fine, not adjacent to it)
+      { direction: 1, speed: 65, phaseFraction: 1 / 6 },     // track 1 — right (290 × 0.7 × 0.8 × 0.8 × 0.5)
+      { direction: -1, speed: 62.72, phaseFraction: 1 / 2 }, // track 2 — left (280 × 0.7 × 0.8 × 0.8 × 0.5)
+      { direction: 1, speed: 67.2, phaseFraction: 5 / 6 },   // track 3 — right (300 × 0.7 × 0.8 × 0.8 × 0.5)
+      { direction: -1, speed: 63.84, phaseFraction: 1 / 6 }  // track 4 — left (285 × 0.7 × 0.8 × 0.8 × 0.5, repeats track 1's fraction — fine, not adjacent to it)
     ];
-    // Queue length (fix item 2: "at t=0, and at every frame after it,
-    // every track is filled edge to edge... never an empty stretch").
-    // Raised from an initial 8 (one pass through the authored rows) —
-    // that measured comfortably at the FIRST pass's own higher speeds/
-    // longer duration (worst case ~7845 native px of usable travel
-    // against a ~6720 native px real need), but Hadar's own real-time
-    // browser viewing (continuous, not the discrete seek-and-screenshot
-    // QA used to verify it) still found empty stretches — this fix is
-    // "more cards," not a re-derivation of the same math, so the value
-    // is raised well past the minimum rather than re-optimized to a new
-    // tighter bound. 16 (two full cycles of the 8 authored rows) against
-    // a real need, at the CURRENT (slower) speeds and ~12.4s duration,
-    // of roughly 210 × 12.43 ≈ 2610 native px — 16 × 1367 = 21872
-    // available, better than 8× headroom.
+    // Queue length. Raised from an initial 8 to 16 (two full cycles of
+    // the 8 authored rows) in fix round 1 item 2, on the theory that 8
+    // wasn't enough coverage — it WAS enough (worst case ~7845 native
+    // px of usable travel against a real need on the order of a few
+    // thousand native px at any speed/duration this scene has used),
+    // so 16 never hurt, but it didn't fix fix round 1's own reported
+    // gap either. Two rounds of investigation (fix round 2 item 2, then
+    // fix round 3 item 1 — see trackOffsetNative's own comment for
+    // both) found the real causes: a sign error, then a wrong anchoring
+    // shape, both in the phase-offset math, neither related to queue
+    // length at any size. 16 is left as-is here — harmless, comfortable
+    // headroom now that trackOffsetNative actually centers it on the
+    // window — rather than reverted, since reverting it risks
+    // re-introducing a real edge-of-duration shortfall for no benefit.
     var TRACK_QUEUE_LENGTH = 16;
 
     function rotateArray(arr, n) {
@@ -4546,15 +4576,40 @@
       return domOrder.join("");
     }
 
-    // Track position (spec §9.2/§9.3 corrected: travel no longer drives
-    // the colour turn — see the cascade below — so this is unchanged
-    // from the first pass except TRACK_QUEUE_LENGTH/speed's own new
-    // values). startK is which DOM index (0 or N-1) is closest to the
-    // window at t=0, matching whichever end buildTrackQueueHTML's own
-    // reversal puts there.
+    // Track position.
+    //
+    // Fix round 2 item 2 fixed a sign error here (`+phaseFraction`
+    // instead of `-phaseFraction`), but the formula it lived in —
+    // anchoring the queue's own DOM index 0 or N-1 (`startK`) at the
+    // window — was itself the wrong shape, found by fix round 3's own
+    // investigation: `startK` puts the window at ONE END of the
+    // 16-card strip, so at t=0 the strip's own 15 other cards all trail
+    // off to a single side. Rightward tracks had nothing covering the
+    // window's own right portion (track 1 stopped at x≈390 of 627,
+    // track 3 at x≈59); leftward tracks had the mirror gap. Confirmed
+    // by direct measurement before touching this formula, same as fix
+    // round 2 item 2's own investigation — this file doesn't guess at
+    // root causes.
+    //
+    // Fix round 3 item 1 — re-anchored to CENTER the queue's own total
+    // span on the window instead: `centerOffset` places the strip's own
+    // midpoint at the window's own midpoint, so roughly half the queue
+    // already trails the window and half already leads it from the very
+    // first frame — cards approaching and departing from t=0 onward, not
+    // built up gradually from one edge. `phaseFraction` is now a small
+    // stagger layered on TOP of that shared center (still -1/6, -1/2,
+    // -5/6, -1/6 of one unit) — without it every track's `centerOffset`
+    // is identical (same TRACK_UNIT/PANEL_WIDTH_NATIVE for all four), so
+    // this is what keeps adjacent tracks from sharing a card edge x, same
+    // job it always did, just no longer also carrying the (wrong) job of
+    // anchoring the whole queue to an edge. `startK`/TRACK_QUEUE_LENGTH's
+    // own edge-relative role is gone — direction still flips which DOM
+    // index arrives first (buildTrackQueueHTML's own reversal, above,
+    // unchanged) but no longer decides WHERE the strip sits.
     function trackOffsetNative(config, t) {
-      var startK = config.direction === 1 ? (TRACK_QUEUE_LENGTH - 1) : 0;
-      var offset0 = -startK * TRACK_UNIT + config.phaseFraction * TRACK_UNIT;
+      var totalSpan = (TRACK_QUEUE_LENGTH - 1) * TRACK_UNIT + ROW_CARD_NATIVE_WIDTH;
+      var centerOffset = (PANEL_WIDTH_NATIVE - totalSpan) / 2;
+      var offset0 = centerOffset - config.phaseFraction * TRACK_UNIT;
       return offset0 + config.direction * config.speed * (t / 1000);
     }
 
@@ -4604,8 +4659,22 @@
     // sceneNumberBump directly (already defined above, panel 0's own
     // number-bump curve) rather than inventing a new one. Fires twice:
     // once on the front face after the count-up settles, once on the
-    // back face after the flip lands, same sequence both times. ----
-    var BLOCK_BUMP_MAGNITUDE = 0.10;
+    // back face after the flip lands, same sequence both times.
+    //
+    // Magnitude raised 0.10 → 0.70 in fix round 2 item 6, solving
+    // purely for "must not touch the footer's top/bottom edge at peak"
+    // (every `.bp-stat` block measured 23.1px tall inside the footer's
+    // own 42px height, 9.45px clear each side at rest, hitting 0
+    // clearance at scale 42/23.1 ≈ 1.818 — 0.70 landed ≈1.36px inside
+    // that). Satisfying the clip constraint isn't the same as reading
+    // right, though — fix round 3 item 3 called 1.70 "a lurch, not an
+    // emphasis... the blocks nearly fill the footer at peak," and asked
+    // for ~1.25, "adjust from there by eye." Landed on 0.25 (peak
+    // 1.25) — the number named in the brief read correctly on screen
+    // (block registers, doesn't jump), so there was nothing to adjust
+    // away from it. Still comfortably inside the clip constraint from
+    // round 2 (scale 1.25 clears ≈4.9px each side, vs. 1.36px at 1.70). ----
+    var BLOCK_BUMP_MAGNITUDE = 0.25;
     var BLOCK_BUMP_RISE_MS = 120, BLOCK_BUMP_HOLD_MS = 80, BLOCK_BUMP_FALL_MS = 200; // 400ms per block, 3 blocks = 1200ms sequence
     function applyBlockBump(el, localT) {
       if (!el) return;
@@ -4705,55 +4774,105 @@
       }
     }
 
-    // ---- Flip displacement (fix item 6, spec §6: "let the flip
-    // displace the rows... lifts slightly and settles back... a small
-    // overshoot, then rest"). Per-track translateY on the OUTER
-    // `.qod2-track` (not the scaler, which already carries the card
-    // scale/position — this stays independent) — a ripple, per-track
-    // delay increasing outward from the footer (track 4, `.qod2-track--4`,
+    // ---- Row reaction ripple (spec §6; fix round 2 items 3/4). The
+    // row stack lifts/settles whenever the FOOTER displaces air —
+    // originally just the flip, now three separate physical moments:
+    //   - Entrance: the footer rises INTO place, pushing air upward
+    //     into the rows above it — rows LIFT, fired once the rise has
+    //     landed (footerRiseEnd — nothing to react to before that).
+    //   - Flip (fix round 2 item 3 — moved off footerFlipEnd, where the
+    //     first pass fired it, onto footerFlipMid instead): "the footer
+    //     is edge-on, moving fastest, and that is the moment it
+    //     displaces the air," not once it's already settled flat again.
+    //   - Exit (fix round 2 item 4): the footer drops AWAY, dragging
+    //     air down after it — rows are TUGGED DOWNWARD, the opposite
+    //     sign from the other two, fired once the drop has fully
+    //     carried the footer off (footerDropEnd). The footer's own drop
+    //     motion is signed off and untouched — this only adds a
+    //     reaction in the rows, per the fix brief's own instruction.
+    // All three reuse the same magnitude/curve/stagger — "same physical
+    // logic... same subtlety, same eased material feel" (spec) — and
+    // are simply summed per track: the three windows never overlap (each
+    // well under a second, separated by multi-second holds), so summing
+    // is equivalent to whichever one happens to be active. Per-track
+    // translateY on the OUTER `.qod2-track` (not the scaler, which
+    // already carries the card scale/position — stays independent),
+    // staggered outward from the footer (track 4, `.qod2-track--4`,
     // sits closest to the footer and leads; track 1 trails), per the
     // spec's own preference ("reads more like real displacement").
     // Reuses easeOvershoot (already defined above for the footer's own
     // entrance) rather than inventing a spring curve — applied twice,
-    // once to rise into the lift (overshooting slightly past it, same
-    // as the footer's own rise does past its resting position) and once
-    // to fall back to rest (overshooting slightly past rest before
-    // settling), which is what turns a single existing curve into a
-    // "lift, catch, settle" impulse instead of the one-directional
-    // entrance it was built for. ----
+    // once to rise into the impulse (overshooting slightly past it,
+    // same as the footer's own rise does past its resting position) and
+    // once to fall back to rest (overshooting slightly past rest before
+    // settling), turning a single existing one-directional curve into a
+    // "catch, then settle" impulse in either direction. ----
     var RIPPLE_MAGNITUDE = 5; // px — "subtle... should register without being noticed as an effect"
     var RIPPLE_RISE_MS = 180, RIPPLE_FALL_MS = 280;
     var RIPPLE_TRACK_STAGGER_MS = 60;
-    function rippleOffset(localT) {
+    // sign: -1 lifts (entrance, flip), +1 tugs down (exit).
+    function rippleOffset(localT, sign) {
       if (localT <= 0) return 0;
-      if (localT < RIPPLE_RISE_MS) return -RIPPLE_MAGNITUDE * easeOvershoot(clamp01(localT / RIPPLE_RISE_MS));
+      if (localT < RIPPLE_RISE_MS) return sign * RIPPLE_MAGNITUDE * easeOvershoot(clamp01(localT / RIPPLE_RISE_MS));
       var fallT = localT - RIPPLE_RISE_MS;
-      if (fallT < RIPPLE_FALL_MS) return -RIPPLE_MAGNITUDE * (1 - easeOvershoot(clamp01(fallT / RIPPLE_FALL_MS)));
+      if (fallT < RIPPLE_FALL_MS) return sign * RIPPLE_MAGNITUDE * (1 - easeOvershoot(clamp01(fallT / RIPPLE_FALL_MS)));
       return 0;
     }
-    function renderRipple(instance1, t, M) {
+    function renderRowReactions(instance1, t, M) {
       var n = instance1.tracks.length;
       for (var i = 0; i < n; i++) {
-        // Outward from the footer: track index n-1 (.qod2-track--4,
-        // nearest the footer) leads with zero delay; track index 0
-        // (.qod2-track--1, farthest) trails most.
         var delay = (n - 1 - i) * RIPPLE_TRACK_STAGGER_MS;
-        var y = rippleOffset(t - M.footerFlipEnd - delay);
+        var y = rippleOffset(t - M.footerRiseEnd - delay, -1)
+              + rippleOffset(t - M.footerFlipMid - delay, -1)
+              + rippleOffset(t - M.footerDropEnd - delay, 1);
         instance1.tracks[i].trackEl.style.transform = y !== 0 ? "translateY(" + y + "px)" : "";
       }
+    }
+
+    // ---- Whole-footer bump (fix round 2 item 5) — after the three
+    // per-block bumps, the entire footer strip scales up once and
+    // settles: "three blocks bump in sequence, then the whole strip
+    // bumps once." Fix round 4 gave the orange (alerted) face its own
+    // copy of this beat (`footerTotalBumpBack`, after `blockBumpBack`)
+    // so both faces read the same way — previously only the green face
+    // had it, firing before the block bumps instead of after. Small —
+    // a gentler magnitude than the per-block bumps (item 6 raised
+    // those; this one stays modest since it moves the whole 530px-wide
+    // strip, not one small block, and the panel's own overflow:hidden
+    // has less spare margin around it). Reuses sceneNumberBump, same as
+    // every other bump in this scene. Composed into `.qod2-footer`'s
+    // own transform string alongside its translateY (renderScene1,
+    // below) — the two are independent (position vs. this bump), not
+    // sequential, so they're just concatenated, not layered through a
+    // wrapper element. The two marks (front/back) never overlap, so
+    // checking both and returning whichever is active is safe — at
+    // most one contributes a non-1 value at any given t. ----
+    var FOOTER_TOTAL_BUMP_MAGNITUDE = 0.05;
+    var FOOTER_TOTAL_BUMP_RISE_MS = 120, FOOTER_TOTAL_BUMP_HOLD_MS = 80, FOOTER_TOTAL_BUMP_FALL_MS = 200; // 400ms
+    var FOOTER_TOTAL_BUMP_WINDOW_MS = FOOTER_TOTAL_BUMP_RISE_MS + FOOTER_TOTAL_BUMP_HOLD_MS + FOOTER_TOTAL_BUMP_FALL_MS;
+    function footerTotalBumpScale(t, M) {
+      var frontLocalT = t - M.footerTotalBumpStart;
+      if (frontLocalT > 0 && frontLocalT < FOOTER_TOTAL_BUMP_WINDOW_MS) {
+        return sceneNumberBump(frontLocalT, FOOTER_TOTAL_BUMP_RISE_MS, FOOTER_TOTAL_BUMP_HOLD_MS, FOOTER_TOTAL_BUMP_FALL_MS, FOOTER_TOTAL_BUMP_MAGNITUDE);
+      }
+      var backLocalT = t - M.footerTotalBumpBackStart;
+      if (backLocalT > 0 && backLocalT < FOOTER_TOTAL_BUMP_WINDOW_MS) {
+        return sceneNumberBump(backLocalT, FOOTER_TOTAL_BUMP_RISE_MS, FOOTER_TOTAL_BUMP_HOLD_MS, FOOTER_TOTAL_BUMP_FALL_MS, FOOTER_TOTAL_BUMP_MAGNITUDE);
+      }
+      return 1;
     }
 
     function renderScene1(instance1, t) {
       var M = SCENE1_MARKS;
 
-      instance1.footerEl.style.transform = "translateY(" + computeFooterY(t, M) + "px)";
+      instance1.footerEl.style.transform = "translateY(" + computeFooterY(t, M) + "px) scale(" + footerTotalBumpScale(t, M) + ")";
       instance1.footerEl.style.opacity = 1; // constant — position/clip hides it, not opacity (see resetScene1Baseline)
       instance1.footerFlipInnerEl.style.transform = "rotateX(" + computeFlipAngle(t, M) + "deg)";
 
       renderFooterCounts(instance1, t, M);
       renderBlockBumps(instance1, t, M);
       renderCascadeTargets(instance1.cascadeTargets, t);
-      renderRipple(instance1, t, M);
+      renderRowReactions(instance1, t, M);
 
       for (var i = 0; i < instance1.tracks.length; i++) {
         var track = instance1.tracks[i];
@@ -4764,13 +4883,13 @@
 
     // Deactivation baseline (mirrors resetScene0Baseline's own role) —
     // footer back to its hidden, below-panel resting position and
-    // front (clean) face; counts back to 0; block bumps and the ripple
-    // cleared; every cascade target back to its own clean state; tracks
-    // back to their own t=0 position — so a stray frame between
-    // deactivation and the next activation's first render call never
-    // shows mid-scene state.
+    // front (clean) face; counts back to 0; block/footer-total bumps
+    // and the row-reaction ripple cleared; every cascade target back to
+    // its own clean state; tracks back to their own t=0 position — so a
+    // stray frame between deactivation and the next activation's first
+    // render call never shows mid-scene state.
     function resetScene1Baseline(instance1) {
-      instance1.footerEl.style.transform = "translateY(" + FOOTER_ENTRY_OFFSET + "px)";
+      instance1.footerEl.style.transform = "translateY(" + FOOTER_ENTRY_OFFSET + "px) scale(1)";
       instance1.footerEl.style.opacity = 1;
       instance1.footerFlipInnerEl.style.transform = "rotateX(0deg)";
       instance1.billsCountEl.textContent = 0;

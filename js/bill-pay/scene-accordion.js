@@ -9,16 +9,15 @@
   // Panel 0's own span is the Quality_Of_Decisions scene's real length
   // (SCENE0_MARKS.total, computed from SCENE0_SEQUENCE) — unchanged by
   // Scene 2's redesign, since panel 0 isn't part of it. Panel 1's own
-  // span is Scene 2's real fix-round-1 beat-sheet length (SCENE1_MARKS.
-  // total, computed from SCENE1_SEQUENCE — 12430ms: 1480 entrance delay
-  // + 450 footer rise + 500 hold + 1000 count-up + 1200 block-bump
-  // (front) + 1000 hold + 2000 cascade + 400 brief beat + 500 flip +
-  // 1000 hold + 1200 block-bump (back) + 800 hold + 500 footer drop +
-  // 400 stage-empty margin — shorter than the prior pass's 22400ms now
-  // that the colour turn (spec §9.4, fix item 5) is a fixed ~2s cascade
-  // instead of something the tracks' own travel had to wait out; see
-  // that beat's own comment in the iframe's script for the full
-  // correction). Must match BOUNDARIES/TOTAL_DURATION inside
+  // span is Scene 2's real fix-round-4 beat-sheet length (SCENE1_MARKS.
+  // total, computed from SCENE1_SEQUENCE — 15530ms: fix round 3's own
+  // 15130ms plus fix round 4's new `footerTotalBumpBack` beat (400ms),
+  // giving the orange face the same "three blocks, then the whole
+  // strip" whole-footer bump the green face already had (fix round 4
+  // also reordered the green face's own copy to fire after its block
+  // bumps, not before — no duration change from that part) — see those
+  // beats' own comments in the iframe's script. Must match
+  // BOUNDARIES/TOTAL_DURATION inside
   // assets/scene-gallery/bill-pay/scenes-accordion.html exactly — the
   // iframe owns the actual clock and is the one hand-synced source of
   // truth for these numbers, same no-shared-module pattern as Gallery
@@ -29,7 +28,7 @@
   // silently seeked to a mid-scene timestamp instead of ever reaching
   // panel 1 — keep both files' numbers moving together.)
   var SCENE_BOUNDARIES = [0, 26732];
-  var TOTAL_DURATION = 39162;
+  var TOTAL_DURATION = 42262;
   var SCENE_COUNT = SCENE_BOUNDARIES.length;
 
   var state = { sceneIndex: 0 };
