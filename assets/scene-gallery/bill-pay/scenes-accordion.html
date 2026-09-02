@@ -326,6 +326,92 @@
     --ag-cal-row-left: calc(-1 * var(--ag-overhang) + 1440px * var(--ag-mock-scale) + var(--ag-cal-row-gap-from-mock)); /* "mock's right edge" expressed the same way card 2's own `left` above already does (-overhang + native width × scale). The anchor named in the brief is the green start-circle's own left edge, not the row wrapper's — but that circle sits centered in the row's first (start) cell (a 24px marker inside a ~24.57px-wide cell), only ~0.29px from the cell's own left edge — under the 3px measurement tolerance, so the row wrapper is positioned directly here rather than adding a sub-pixel correction term for it */
   }
 
+  /* ---- Panel 1 ("Quality_of_decisions" gallery, Scene 2 — "Persistent
+     summary strip"). Redesigned per the "Quality_Of_Decisions — Scene
+     2" build spec — the scaled-down mock + cursor choreography built
+     in an earlier, uncommitted pass is abandoned outright (at that
+     scale the table cells were ~30×17px, illegible), not iterated on.
+     See COMPONENT-MAP.md's own panel-1 entry for the full record of
+     what was removed and why.
+
+     Two independent siblings remain in the green panel: four horizontal
+     tracks of frozen row cards (spec §7) and the footer (kept from the
+     prior build per spec §4, only its scale/position changed to match
+     the new track stack below it — see .qod2-footer's own CSS further
+     down). No mock, no cursor, no drawer/calendar/table-as-such —
+     "a run is not a screen you read... green rows drift past" (spec §3).
+
+     Phase 1 (this pass): static layout only, no motion — see the build
+     spec's own build-order gate (§8) is now cleared (Hadar QA'd phase 1
+     in the browser) — phase 2 (motion, spec §9–§11) is built below,
+     mostly in the script at the bottom of this file (track travel and
+     the footer's own entrance/flip/exit are all computed per frame
+     from local time, per spec §9.5's own "everything is a pure
+     function of t" — no CSS transition or keyframe animation drives
+     any of it). All coordinates below are the panel's own real
+     on-screen pixels (panel height 461px, spec §5) — nothing in this
+     redesign lives inside a native-canvas-and-scale space the way the
+     old mock did, except the row card itself, which is scaled on its
+     own terms (--qod2-row-card-height ÷ --qod2-row-card-native-height,
+     just below — mirrored as the JS literal ROW_CARD_SCALE, since the
+     script needs this as a plain number, not a CSS calc()). ---- */
+  :root {
+    /* ---- Row card (spec §6) — lifted from the existing .bp-row
+       markup (native height 75px: shared .bp-row's own 14px
+       padding-top + shared .bp-cell's own 60px height + shared 1px
+       border-top), turned into a standalone card, then scaled down to
+       render 32px tall. Column widths/typography/content come across
+       unchanged — see the scoped `.qod2-track-scaler .bp-row`
+       overrides further down for the only structural adjustments this
+       spec calls for: no border-top, +14px bottom padding, left
+       padding (43px — raised from the spec's own starting 18px per
+       Hadar's follow-up, see that property's own comment below),
+       corner radius, drop shadow. The card's own native WIDTH (used to
+       be a CSS var here, --qod2-row-card-native-width) and the phase-1
+       static per-track transform rules that consumed it are both gone
+       as of phase 2 — track position is now computed per frame in the
+       script (ROW_CARD_NATIVE_WIDTH/TRACK_UNIT there mirror the same
+       230+76+…+43 sum this comment used to hold in CSS; see that
+       constant's own comment for the exact arithmetic). ---- */
+    --qod2-row-card-native-height: 88px; /* .bp-row's own shared 14px padding-top + .bp-cell's own shared 60px height + this card's own new 14px padding-bottom (spec §6) — the shared 1px border-top is dropped from the sum entirely, not carried forward, since spec §6 removes it */
+    --qod2-row-card-height: 32px; /* spec §5/§6 */
+    --qod2-row-card-radius: 32px; /* spec §6, raw value — tokenization exemption (build spec §1) */
+    --qod2-track-card-gap: 66px; /* native gap between cards within one track — not spec'd (renders ~24px on screen at this card's own scale); a phase-1 judgment call, also mirrored in the script as TRACK_CARD_GAP since track position math needs it as a plain number */
+
+    /* ---- Track stack (spec §5) — 190px top edge is strict, locked to
+       panel 0's own mock top, and must not drift; everything below it
+       is additive from the row height/gap. Sums to the panel's own
+       461px height exactly: 190 + (4×32) + (3×15) + 28 + 42 + 28. ---- */
+    --qod2-row-gap: 15px;
+    --qod2-track-top-1: 190px;
+    --qod2-track-top-2: calc(var(--qod2-track-top-1) + var(--qod2-row-card-height) + var(--qod2-row-gap));
+    --qod2-track-top-3: calc(var(--qod2-track-top-2) + var(--qod2-row-card-height) + var(--qod2-row-gap));
+    --qod2-track-top-4: calc(var(--qod2-track-top-3) + var(--qod2-row-card-height) + var(--qod2-row-gap));
+    --qod2-track-mask-width: 80px; /* spec §7/§12 — starting value from Figma, tune on screen */
+
+    /* ---- Footer (spec §5) — same real .bp-footer duplicate kept from
+       the prior build (spec §4/§11: "do not author a replacement");
+       only its scale and position change here, to a new fixed 42px
+       height (was 40px) and a top derived from the track stack above
+       instead of the old mock's own row geometry. ---- */
+    --qod2-footer-width: 530px; /* unchanged from the prior build — not respecified here */
+    --qod2-footer-radius: 30px; /* unchanged from the prior build — not respecified here, raw value, tokenization exemption */
+    --qod2-footer-native-height: 100px; /* .bp-footer's own native height, source-verbatim */
+    --qod2-footer-height: 42px; /* spec §5 */
+    --qod2-footer-scale: calc(var(--qod2-footer-height) / var(--qod2-footer-native-height));
+    /* Width — same two-step technique as the prior build (see
+       COMPONENT-MAP.md's own footer entry): scaling the full native
+       1440px width by the new scale alone would overshoot 530px, so
+       the native width is back-solved to land there directly, without
+       re-deriving the scale — .bp-footer__stats' own `flex:1` (source
+       rule, untouched) absorbs the difference out of the gap between
+       the stats group and the button group, same as before. */
+    --qod2-footer-native-width: calc(var(--qod2-footer-width) / var(--qod2-footer-scale));
+    --qod2-footer-gap-above: 28px; /* spec §5 */
+    --qod2-footer-top: calc(var(--qod2-track-top-4) + var(--qod2-row-card-height) + var(--qod2-footer-gap-above));
+    --qod2-footer-left: calc((var(--ag-panel-active-width) - var(--qod2-footer-width)) / 2); /* spec gives no explicit x-position for the footer now that there's no mock to align to — centered on the panel itself is the least-arbitrary default, same reasoning the prior build's --qod2-mock-left used */
+  }
+
   /* No background here on purpose, same reasoning as Gallery 1's
      scenes.html / Gallery 2's scenes-gallery-2.html — the panels paint
      their own backgrounds; nothing else should. Unlike Gallery 2, this
@@ -483,10 +569,19 @@
      rule above (two classes each) — wins on source order, appearing
      after it. Grey never gets this override: its own tag/mock/cards
      genuinely need to render outside its box, which is the entire
-     point of .ag-panel.is-active's shared `overflow: visible` above. */
+     point of .ag-panel.is-active's shared `overflow: visible` above.
+
+     overflow-y was `visible` here until Scene 2 (panel 1's real
+     content) landed — nothing in the green panel needed a vertical
+     clip before. Scene 2's own mock (qod2-mock-wrap below) is taller
+     than the panel by design (build spec §4: "the mock's bottom edge
+     runs past the panel boundary and is cut off... without the clip
+     the mock's drop shadow reveals along the bottom") and its footer
+     must not peek out before/after this panel's future enter/exit
+     motion either — so both axes are hidden now, unconditionally,
+     same as this rule's existing X-axis clip. */
   .ag-panel--green.is-active {
-    overflow-x: hidden;
-    overflow-y: visible;
+    overflow: hidden;
   }
 
   .ag-panel--grey { background: var(--primitive-grey-light); }
@@ -499,7 +594,7 @@
      spec-exact animation (see .ag-caption__headline/__description
      below) that would otherwise be double-applied on top of this
      wrapper's opacity — so the fade moved down onto .ag-mock-wrap /
-     .ag-placeholder-body individually instead (same 200ms/350ms timing
+     .qod2-mock-wrap individually instead (same 200ms/350ms timing
      as before, just scoped per-element rather than on the shared
      wrapper). The tag is no longer part of this at all — it's not
      nested inside a panel's content anymore, see .ag-tag below. */
@@ -508,9 +603,9 @@
   }
 
   /* Collapsed-state hiding for the mock and floating cards (grey
-     panel) and the placeholder paragraph (green panel) — task: "at
-     149px a panel cannot show its content — clip or hide the contents
-     so nothing spills or wraps awkwardly." Fades out immediately on
+     panel), the row-card tracks (green panel) — task: "at 149px a
+     panel cannot show its content — clip or hide the contents so
+     nothing spills or wraps awkwardly." Fades out immediately on
      collapse (so nothing is still visible while the panel is
      shrinking); fades in only after a delay on expand (so content
      doesn't pop in while the panel is still narrow) — same "swap the
@@ -520,17 +615,32 @@
      fully hide content, they dim/tilt it) — both are this project's
      own choice for a problem the reference doesn't have; the floating
      cards (added later, in the same phase-1 pass as the shadow above)
+     and the row-card tracks (added later still, in Scene 2's redesign)
      reuse them rather than inventing their own, per that task's own
-     "durations or easing" out-of-scope note. The caption is
-     deliberately not included here — see its own rules below. The tag
-     isn't either: it's no longer per-panel content that hides when its
-     panel collapses, it's a single element that travels between
-     panels — see .ag-tag below. */
+     "durations or easing" out-of-scope note. `.qod2-footer` was here
+     too, briefly (phase 1 QA caught panel 1 visible fully collapsed,
+     since nothing hid it — a leftover gap from the redesign: the
+     deleted mock used to be listed here as `.qod2-mock-wrap`, and its
+     replacements were never added back in) — but it's gone again as
+     of phase 2, same reasoning `.qod2-mock-wrap`/`.qod2-footer` were
+     dropped from the reduced-motion pair below during the OLD build's
+     own phase 2: renderScene1/resetScene1Baseline (script, further
+     down) now own the footer's opacity (a constant 1) AND position
+     unconditionally, every frame including while inactive — there's
+     no bare CSS-default resting state left for this transition to
+     matter for. `.qod2-track` stays here, though — the tracks have no
+     entrance/exit motion of their own (spec §9.2: they just travel
+     continuously), so this plain opacity fade is still the only thing
+     that hides them on collapse. The caption is deliberately not
+     included here — see its own rules below. The tag isn't either:
+     it's no longer per-panel content that hides when its panel
+     collapses, it's a single element that travels between panels —
+     see .ag-tag below. */
   .ag-mock-wrap,
   .ag-float-card,
   .ag-float-pill,
   .ag-cal-row,
-  .ag-placeholder-body {
+  .qod2-track {
     opacity: 0;
     transition: opacity var(--ag-content-fade) ease;
   }
@@ -538,7 +648,7 @@
   .ag-panel.is-active .ag-float-card,
   .ag-panel.is-active .ag-float-pill,
   .ag-panel.is-active .ag-cal-row,
-  .ag-panel.is-active .ag-placeholder-body {
+  .ag-panel.is-active .qod2-track {
     opacity: 1;
     transition: opacity var(--ag-content-fade) ease var(--ag-content-reveal-delay);
   }
@@ -646,19 +756,9 @@
                 transform var(--ag-duration) var(--ag-ease) var(--ag-caption-stagger);
   }
 
-  /* Placeholder-only, same as Gallery 2's own .sg2-placeholder-body —
-     the green panel's real content isn't designed yet. Sits in the
-     same slot the mock occupies in the grey panel. */
-  .ag-placeholder-body {
-    position: absolute;
-    left: var(--spacing-64);
-    top: calc(var(--ag-inset-y) + var(--ag-tag-height) + var(--ag-tag-mock-gap));
-    width: 420px;
-    max-width: calc(var(--ag-panel-active-width) - var(--spacing-64) * 2);
-    margin: 0;
-    font: var(--text-widget-step-subheadline);
-    color: var(--primitive-black);
-  }
+  /* Panel 1 ("Quality_of_decisions" Scene 2) real content replaces the
+     old .ag-placeholder-body Lorem ipsum — see the qod2-* block below,
+     after the accordion's own --ag-* composition coordinates. */
 
   .ag-mock-wrap {
     position: absolute;
@@ -991,11 +1091,11 @@
     .ag-float-card,
     .ag-float-pill,
     .ag-cal-row,
-    .ag-placeholder-body {
+    .qod2-track {
       transition-duration: 1ms;
       transition-delay: 0s;
     }
-    /* The .is-active variants of these four rules redeclare their own
+    /* The .is-active variants of these rules redeclare their own
        `transition` at higher specificity (.ag-panel.is-active
        .ag-mock-wrap etc., 3 classes) than the plain selectors above (1
        class) — without matching that specificity here too, the
@@ -1005,12 +1105,21 @@
        .ag-panel.is-active, so it doesn't have this problem; neither is
        .ag-tag's — the .ag-panel--green.is-active ~ .ag-tag rule only
        touches `transform`, never `transition`, so .ag-tag's own
-       reduced-motion override above already covers both states.) */
+       reduced-motion override above already covers both states.
+       `.qod2-footer` is NOT in this pair — same reasoning as its own
+       withdrawal from the plain opacity-fade rule above: renderScene1/
+       resetScene1Baseline own its opacity/position unconditionally
+       every frame now (phase 2), so it carries no plain CSS
+       `transition` for a reduced-motion override to shorten — same
+       "no per-frame JS gesture in this file has a reduced-motion
+       guard" scope panel 0's own cursor/circle/bump gestures already
+       sit in, pre-existing, not narrowed by this pass. `.qod2-track`
+       stays, matching its own inclusion above.) */
     .ag-panel.is-active .ag-mock-wrap,
     .ag-panel.is-active .ag-float-card,
     .ag-panel.is-active .ag-float-pill,
     .ag-panel.is-active .ag-cal-row,
-    .ag-panel.is-active .ag-placeholder-body {
+    .ag-panel.is-active .qod2-track {
       transition-duration: 1ms;
       transition-delay: 0s;
     }
@@ -1130,6 +1239,25 @@
   .bp-badge { display: inline-flex; align-items: center; padding: 0 4px; border-radius: var(--bp-radius-input); background: var(--primitive-green); }
   .bp-badge span { font: var(--bp-text-badge); text-transform: uppercase; color: var(--primitive-white); }
   .bp-badge--overdue { background: var(--bp-color-calendar-due); }
+  /* ---- Cascade toggle (Scene 2 fix round 1, spec §5/§9.4) — status
+     and speed-badge each get the SAME dual-child, attribute-toggled
+     pattern `.bp-vendor__method[data-vendor-state]` already uses above
+     (itself ported from schedule-payment.html's own Vendors-stat
+     wiring) — not a new technique, applied to two more elements that
+     never needed it before (the source table never toggles status or
+     the speed badge at all — see COMPONENT-MAP.md's own "date-logic
+     engine" entry). `data-cascade-state` (not `data-vendor-state`,
+     to avoid implying these two care about vendor delivery details
+     specifically) on the parent, `data-state="clean"`/`"alert"` on
+     each sibling pair; the script (renderCascade, further down) flips
+     the parent's own attribute per element, once, at that element's
+     own seeded fire time — never both children visible at once. ---- */
+  .bp-cell--status[data-cascade-state] > [data-state] { display: none; }
+  .bp-cell--status[data-cascade-state="clean"] > [data-state="clean"],
+  .bp-cell--status[data-cascade-state="alert"] > [data-state="alert"] { display: inline-flex; }
+  .bp-speed__top[data-cascade-state] > .bp-badge[data-state] { display: none; }
+  .bp-speed__top[data-cascade-state="clean"] > .bp-badge[data-state="clean"],
+  .bp-speed__top[data-cascade-state="alert"] > .bp-badge[data-state="alert"] { display: inline-flex; }
   .bp-speed__meta { display: flex; align-items: center; gap: 3px; height: 24px; margin-top: -2px; }
   .bp-speed__meta span { font: var(--bp-text-cell-small); color: var(--primitive-grey-dark); white-space: nowrap; }
   .bp-speed__meta img { width: 18px; height: 18px; }
@@ -1282,6 +1410,162 @@
   .bp-drawer__footer .bp-btn { width: var(--bp-footer-button-width); }
   .bp-drawer__footer .bp-btn--cancel { border-color: var(--bp-color-border-input); color: var(--primitive-black); }
   .bp-drawer__footer .bp-btn--continue { background: transparent; border-color: var(--bp-color-action-green); color: var(--bp-color-action-green); }
+
+  /* ---- Panel 1 tracks — Quality_Of_Decisions Scene 2 ("Persistent
+     summary strip"), redesigned. Four horizontal lanes of frozen row
+     cards, one card-height each, stacked per spec §5 — replaces the
+     abandoned scaled-down mock entirely (no header/toggle/totals/table
+     chrome survives; see COMPONENT-MAP.md's own panel-1 entry for the
+     record). Phase 1 (this pass): static only — no travel, no colour
+     turn (spec §8) — so every track shows the same frozen frame every
+     frame, positioned once in CSS, nothing computed per frame.
+
+     Each `.qod2-track` is a fixed-height lane clipped to the panel's
+     own width, masked at both edges (spec §7) so cards fade rather
+     than hard-clip. `.qod2-track-scaler` is its one child: a flex row
+     of `.bp-row` cards at native size, scaled down as a single unit
+     via `transform: scale()` — the same "lay out at native size, scale
+     the whole composition down" technique --ag-mock-scaler/
+     .qod2-footer-scaler already use elsewhere in this file. Phase 1
+     set each track's own phase offset here in CSS, as a `translateX()`
+     composed INSIDE that same transform, before the scale — confirmed
+     that a plain `left` doesn't work for this (transform-origin sits
+     at the box's own already-shifted top-left corner, so scale()
+     never touches a `left` offset applied ahead of it; `translateX()`
+     composed inside the transform list, by contrast, is evaluated in
+     the scaler's own pre-scale coordinate space, so scale() picks it
+     up correctly). Phase 2 (spec §9.2: "each track translates
+     horizontally... computed per frame from t") replaces that static
+     CSS transform with an inline one the script sets every frame —
+     same `scale(ROW_CARD_SCALE) translateX(nativeOffset)` shape, same
+     reason for the ordering, just t-dependent now. No CSS `transform`
+     rule remains on `.qod2-track-scaler` itself for this reason — see
+     renderScene1/trackOffsetNative in the script, further down. ---- */
+  .qod2-track {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: var(--qod2-row-card-height);
+    overflow: hidden;
+    mask-image: linear-gradient(to right, transparent 0, black var(--qod2-track-mask-width), black calc(100% - var(--qod2-track-mask-width)), transparent 100%);
+  }
+  .qod2-track-scaler {
+    display: flex;
+    align-items: flex-start;
+    width: max-content;
+    gap: var(--qod2-track-card-gap);
+    transform-origin: top left;
+  }
+  .qod2-track--1 { top: var(--qod2-track-top-1); }
+  .qod2-track--2 { top: var(--qod2-track-top-2); }
+  .qod2-track--3 { top: var(--qod2-track-top-3); }
+  .qod2-track--4 { top: var(--qod2-track-top-4); }
+  /* The standalone card (spec §6) — scoped to this track context only,
+     so panel 0's own shared .bp-row (still a plain table row there)
+     is untouched. Column widths/typography/cell content are the
+     shared rules, unchanged; only these five properties diverge. */
+  .qod2-track-scaler .bp-row {
+    flex-shrink: 0; /* width hugs contents (spec §6) — never compressed by the flex row's own default shrink */
+    border-top: none; /* spec §6: the shared border-top is the table's own divider; reads as a stray line on a standalone card */
+    padding-bottom: 14px; /* spec §6: source has 14px top only (shared rule) — this card adds a matching bottom padding to close itself */
+    padding-left: 43px; /* raised from the spec's own starting 18px, per Hadar's follow-up ask: balance the space before the vendor name against the space after the Manage link. Measured, not guessed — at 18px the on-screen gap before "Vendor" was 6.5px against 15.5px after "Manage" (the Manage cell's own fixed 10px right padding plus the "Manage" text's own width short of the cell's 106px); 43px lands the left gap at 15.6px, within 0.1px on screen, imperceptible. The right-side gap is invariant to this value — padding-left only shifts content, it doesn't touch the action cell's own fixed width/padding — so solving for equality was linear: target-gap ÷ card scale (32/88) = native padding. No right padding, .bp-cell--action already carries its own via the shared .bp-cell rule. */
+    border-radius: var(--qod2-row-card-radius);
+    box-shadow: var(--shadow-soft); /* spec §1/§6: the row's drop shadow is one of this scene's two token exceptions inside an otherwise tokenization-exempt mock reproduction */
+  }
+
+  /* ---- Panel 1 footer — a real duplicate of the mock's own .bp-footer
+     markup/classes (defined above), kept from the prior build per spec
+     §4/§11: "duplicate .bp-footer... do not author a replacement." A
+     sibling of the four .qod2-track lanes above (not nested in any of
+     them) with its own independent scaler at a fixed scale (see
+     --qod2-footer-scale's own comment in the :root block above — not
+     derived from row geometry), so it reads at a larger, legible size
+     over the smaller row cards. Centered on the panel's own horizontal
+     midpoint (--qod2-footer-left, :root block above); vertical
+     position sits the spec's own 28px below the fourth track (spec
+     §5, --qod2-footer-top, ditto). ---- */
+  .qod2-footer {
+    position: absolute;
+    left: var(--qod2-footer-left);
+    top: var(--qod2-footer-top);
+    width: var(--qod2-footer-width);
+    height: var(--qod2-footer-height);
+    border-radius: var(--qod2-footer-radius);
+    box-shadow: var(--shadow-soft);
+    overflow: hidden;
+    z-index: 1; /* above the .qod2-track lanes in source order already; explicit so a future motion pass can rely on it */
+  }
+  .qod2-footer-scaler {
+    width: var(--qod2-footer-native-width);
+    height: var(--qod2-footer-native-height);
+    transform-origin: top left;
+    transform: scale(var(--qod2-footer-scale));
+  }
+  /* .bp-footer's own shared rule is position:absolute/left:0/bottom:0,
+     sized 1440×100 to sit inside a 1440×1000 .bp-screen — none of that
+     applies here (this footer isn't nested inside a mock canvas at
+     all), so it's overridden to fill its own scaler exactly. Width is
+     --qod2-footer-native-width (not 1440px) per spec §4.4 — see that
+     variable's own comment for why no further gap/padding edits are
+     needed to reach it. Padding/gaps inside (.bp-footer__stats,
+     .bp-stat, .bp-footer__buttons, .bp-btn) are all untouched, reused
+     verbatim from the shared rules above. */
+  .qod2-footer-scaler .bp-footer {
+    position: static;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* ---- Flip (phase 2, spec §10) — perspective on the outer, unscaled
+     wrapper; preserve-3d on its own direct child, the element a future
+     phase-2 pass will rotate per-frame (rotateX, computed from t —
+     never a CSS transition); at rest (no script touches it yet, this
+     pass is phase 1) it sits at its CSS default rotateX(0deg), showing
+     the front face. The two faces are ITS direct children in turn,
+     each backface-hidden, the back pre-rotated a static 180deg so it
+     reads right-side-up once the shared rotation has itself turned
+     180deg — standard two-face technique (spec's own w3bits reference,
+     adapted from its Y axis to X). Each face's own .qod2-footer-scaler
+     (defined above) nests one level deeper still, applying its
+     independent scale() — a transform on a grandchild of the
+     preserve-3d element, not on the rotating element itself, so it
+     doesn't flatten anything; only a transform on .qod2-footer-flip-
+     inner or the faces themselves would do that (spec's own warning
+     is about the footer's ANCESTRY, not its interior — this footer
+     was already a sibling of the mock, never nested in its scale(),
+     see .qod2-footer's own comment above; that's what the warning
+     required, and it already held before this pass). */
+  .qod2-footer-flip {
+    position: absolute;
+    inset: 0;
+    perspective: 1600px;
+  }
+  .qod2-footer-flip-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+  }
+  .qod2-footer-face {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+  }
+  .qod2-footer-face--back {
+    transform: rotateX(180deg);
+  }
+
+  /* ---- Hover-underline (phase 2) — ported verbatim from
+     schedule-payment.html's own .bp-hover-underline/.is-hover (the
+     Vendors stat's existing pattern, now also used by Bills/Payments
+     per Hadar's phase-2 correction). `.is-hover` stands in for a real
+     :hover — this scene has no pointer, only a scripted cursor, same
+     reasoning the source's own comment gives ("lets a scripted scene
+     apply the same visual without ever triggering a real :hover").
+     Spec §7: "appears with no transition" — no transition property
+     here, matching that instruction exactly (not an omission). ---- */
+  .bp-hover-underline { text-decoration: none; }
+  .bp-hover-underline.is-hover { text-decoration: underline; }
 
   /* ---- Cursor / ripple / spark canvas — Quality_Of_Decisions Scene 1.
      Ported from Gallery 1's scenes.html (.scene2-cursor/.scene2-ripple/
@@ -1522,15 +1806,177 @@
     <div class="ag-panel ag-panel--green" id="ag-panel-1" data-index="1">
       <div class="ag-panel__content">
         <div class="ag-caption">
-          <p class="ag-caption__headline">Fee &amp; Delivery Options tradeoffs</p>
-          <p class="ag-caption__description">A visual display overlapping factors</p>
+          <p class="ag-caption__headline">Persistent summary strip</p>
+          <p class="ag-caption__description">flags urgency, cash impact and risk</p>
         </div>
-        <p class="ag-placeholder-body">
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod
-          tempor incididunt ut labore et dolore magna aliqua, ut enim ad minim
-          veniam.
-        </p>
       </div>
+
+      <!-- Redesigned per the "Quality_Of_Decisions — Scene 2" build
+           spec (§3: "the mock is removed... what remains is four
+           horizontal tracks of bill rows drifting past, and the summary
+           footer"). Five independent siblings sit outside
+           .ag-panel__content (which is pointer-events:none and exists
+           to own the caption's own click-passthrough) as direct
+           children of .ag-panel--green: the four .qod2-track lanes
+           (spec §7) and the footer, in stacking order. No cursor, no
+           mock, no table chrome — spec §1: "That design is abandoned."
+
+           Phase 2 (spec §9.2/§9.5), fix round 1: each track's own card
+           queue is built by the script at boot (buildTrackQueueHTML/
+           renderScene1 further down) and travels continuously, computed
+           per frame from local time. `.qod2-track-scaler` starts EMPTY
+           in markup on purpose; the script fills it once at boot with a
+           finite, non-looping queue (spec §9.2) long enough to cover
+           the whole scene without a lane ever running dry (16 cards per
+           track as of fix round 1 item 2, cycling the 8 authored rows
+           twice — see COMPONENT-MAP.md's own "fix round 1" entry for
+           why 8 wasn't enough). Still no re-authored row markup
+           anywhere (spec §11) — the script's own QOD2_ROWS are the same
+           8 authored `.bp-row` strings phase 1 carried, just restructured
+           (fix round 1 item 5) so every row carries BOTH its clean and
+           alert content at once — WHICH state shows is a cascade toggle
+           (renderCascadeTargets), not a per-card authoring choice, so
+           there's no more "clean pool vs alert pool" split to describe
+           here; see that function's own comment for the corrected
+           colour-turn mechanism. -->
+      <div class="qod2-track qod2-track--1" data-track-index="0">
+        <div class="qod2-track-scaler"></div>
+      </div>
+      <div class="qod2-track qod2-track--2" data-track-index="1">
+        <div class="qod2-track-scaler"></div>
+      </div>
+      <div class="qod2-track qod2-track--3" data-track-index="2">
+        <div class="qod2-track-scaler"></div>
+      </div>
+      <div class="qod2-track qod2-track--4" data-track-index="3">
+        <div class="qod2-track-scaler"></div>
+      </div>
+
+
+      <!-- Footer: a real duplicate of #mock-screen's own .bp-footer
+           markup (see panel 0 above), not a re-authored replacement —
+           spec §4/§11. The flip markup/CSS below (two-face 3D card,
+           spec §10 "Flip") is kept from the prior build but is phase-2,
+           inert-for-now machinery — .qod2-footer-flip carries
+           `perspective`, .qod2-footer-flip-inner carries `preserve-3d`
+           and rests at rotateX(0deg) (no script rotates it yet, this
+           pass is phase 1: static layout only), and the two faces
+           are each backface-hidden, the back pre-rotated 180deg so it
+           reads right-side-up once the wrapper itself has turned. Each
+           face is its own full .bp-footer copy — not because the
+           content differs structurally, but because a flip needs two
+           physically separate, oppositely-rotated elements to reveal;
+           see the flip's own CSS comment further down for why nesting
+           this inside .qod2-footer-scaler's own scale() would be a
+           mistake (it isn't, here — the scale lives one level deeper,
+           inside each face, not on the rotating elements themselves).
+
+           Per Hadar's phase-2 correction: all three stats (not just
+           Vendors) carry the source's own resolved/alert dual-child
+           toggle pattern (`data-vendor-state` on `.bp-stat__sub`,
+           `data-state` on each child — see schedule-payment.html's own
+           Vendors stat, the only one the true source wires up) with
+           the alert copy from spec §7 and the same alert-circle.svg
+           already used elsewhere. Both faces carry the full pattern,
+           matching the source's own "built together, made available"
+           shape — the front face's own alert children and the back
+           face's own resolved children are simply never toggled on,
+           same as the source's Payments/Bills stats (which the source
+           itself never toggles either). Only the back face's alert
+           spans get ids — front-face targets are read from the whole
+           .bp-stat block instead (circle gestures, beats 7–9), and the
+           front face is never hovered. -->
+      <div class="qod2-footer">
+        <div class="qod2-footer-flip">
+          <div class="qod2-footer-flip-inner" id="p1-footer-flip-inner">
+            <div class="qod2-footer-face qod2-footer-face--front" id="p1-footer-face-front">
+              <div class="qod2-footer-scaler">
+                <footer class="bp-footer">
+                  <div class="bp-footer__stats">
+                    <div class="bp-stat" id="p1-footer-stat-bills-front">
+                      <p class="bp-stat__label">Bills</p>
+                      <p class="bp-stat__num" id="p1-mock-stat-bills">0</p>
+                      <div class="bp-stat__sub" data-vendor-state="resolved">
+                        <img data-state="resolved" src="../../icons/bill-pay-mock/footer-check.svg" alt="" />
+                        <span data-state="resolved">Approved</span>
+                        <img data-state="alert" src="../../icons/bill-pay-mock/alert-circle.svg" alt="" />
+                        <span data-state="alert">2 <span class="bp-hover-underline">pending approval</span></span>
+                      </div>
+                    </div>
+                    <div class="bp-stat" id="p1-footer-stat-vendors-front">
+                      <p class="bp-stat__label">Vendors</p>
+                      <p class="bp-stat__num" id="p1-mock-stat-vendors">0</p>
+                      <div class="bp-stat__sub" data-vendor-state="resolved">
+                        <img data-state="resolved" src="../../icons/bill-pay-mock/footer-check.svg" alt="" />
+                        <span data-state="resolved">Authorized</span>
+                        <img data-state="alert" src="../../icons/bill-pay-mock/alert-circle.svg" alt="" />
+                        <span data-state="alert">4 need <span class="bp-hover-underline">delivery details</span></span>
+                      </div>
+                    </div>
+                    <div class="bp-stat" id="p1-footer-stat-payments-front">
+                      <p class="bp-stat__label">Payments</p>
+                      <p class="bp-stat__num" id="p1-mock-stat-payments">0</p>
+                      <div class="bp-stat__sub" data-vendor-state="resolved">
+                        <img data-state="resolved" src="../../icons/bill-pay-mock/footer-check.svg" alt="" />
+                        <span data-state="resolved">Arrives on time</span>
+                        <img data-state="alert" src="../../icons/bill-pay-mock/alert-circle.svg" alt="" />
+                        <span data-state="alert">3 arrive <span class="bp-hover-underline">after due date</span></span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="bp-footer__buttons">
+                    <button class="bp-btn bp-btn--cancel" type="button" tabindex="-1">Cancel</button>
+                    <button class="bp-btn bp-btn--continue" type="button" tabindex="-1">Continue</button>
+                  </div>
+                </footer>
+              </div>
+            </div>
+            <div class="qod2-footer-face qod2-footer-face--back" id="p1-footer-face-back">
+              <div class="qod2-footer-scaler">
+                <footer class="bp-footer">
+                  <div class="bp-footer__stats">
+                    <div class="bp-stat" id="p1-footer-stat-bills-back">
+                      <p class="bp-stat__label">Bills</p>
+                      <p class="bp-stat__num">13</p>
+                      <div class="bp-stat__sub" data-vendor-state="alert">
+                        <img data-state="resolved" src="../../icons/bill-pay-mock/footer-check.svg" alt="" />
+                        <span data-state="resolved">Approved</span>
+                        <img data-state="alert" src="../../icons/bill-pay-mock/alert-circle.svg" alt="" />
+                        <span data-state="alert" id="p1-footer-back-bills-text">2 <span class="bp-hover-underline" id="p1-footer-back-bills-link">pending approval</span></span>
+                      </div>
+                    </div>
+                    <div class="bp-stat" id="p1-footer-stat-vendors-back">
+                      <p class="bp-stat__label">Vendors</p>
+                      <p class="bp-stat__num">5</p>
+                      <div class="bp-stat__sub" data-vendor-state="alert">
+                        <img data-state="resolved" src="../../icons/bill-pay-mock/footer-check.svg" alt="" />
+                        <span data-state="resolved">Authorized</span>
+                        <img data-state="alert" src="../../icons/bill-pay-mock/alert-circle.svg" alt="" />
+                        <span data-state="alert" id="p1-footer-back-vendors-text">4 need <span class="bp-hover-underline" id="p1-footer-back-vendors-link">delivery details</span></span>
+                      </div>
+                    </div>
+                    <div class="bp-stat" id="p1-footer-stat-payments-back">
+                      <p class="bp-stat__label">Payments</p>
+                      <p class="bp-stat__num">5</p>
+                      <div class="bp-stat__sub" data-vendor-state="alert">
+                        <img data-state="resolved" src="../../icons/bill-pay-mock/footer-check.svg" alt="" />
+                        <span data-state="resolved">Arrives on time</span>
+                        <img data-state="alert" src="../../icons/bill-pay-mock/alert-circle.svg" alt="" />
+                        <span data-state="alert" id="p1-footer-back-payments-text">3 arrive <span class="bp-hover-underline" id="p1-footer-back-payments-link">after due date</span></span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="bp-footer__buttons">
+                    <button class="bp-btn bp-btn--cancel" type="button" tabindex="-1">Cancel</button>
+                    <button class="bp-btn bp-btn--continue" type="button" tabindex="-1">Continue</button>
+                  </div>
+                </footer>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
 
     <!-- The gallery's single tag — a row-level sibling of both panels,
@@ -3083,28 +3529,96 @@
       marks.total = cursorT;
       return marks;
     })();
-    // Re-derive the panel-swap boundary from the sequence above (single
-    // source of truth) rather than hand-mirroring the number — both
-    // BOUNDARIES and SCENE_DURATION were only placeholder values at
-    // declaration time (top of this script), long before this point
-    // ever executes, and both are read only later (tick()/boot, further
-    // below), so this reassignment is safe.
+    // Scene 2 ("Persistent summary strip", panel 1) — redesigned per
+    // the "Quality_Of_Decisions — Scene 2" build spec. This was a
+    // ground-up rebuild: the old scaled-down mock + cursor choreography
+    // (its own SCENE1_SEQUENCE/SCENE1_MARKS beat sheet, its own phase-2
+    // render block) was deleted outright, not carried forward — see
+    // COMPONENT-MAP.md's own panel-1 entry for the record of what was
+    // removed and why. Phase 1 (spec §4–§7) built four frozen row-card
+    // tracks + the footer, no motion. This is phase 2 (spec §9–§11):
+    // track travel, the colour turn, and the footer's own entrance/
+    // flip/exit, all computed per frame from local time (spec §9.5:
+    // "everything is a pure function of t... no CSS transition or
+    // keyframe animation for scene state").
     //
-    // TOTAL_DURATION must grow by the same amount BOUNDARIES[1] just
-    // did (real bug, found in QA: an earlier version updated
-    // BOUNDARIES[1] here but left TOTAL_DURATION at its original 12000
-    // placeholder — with the real sequence running ~15.5s,
-    // BOUNDARIES[1] ended up GREATER than TOTAL_DURATION, so
-    // `elapsed = (now-epoch) % TOTAL_DURATION` could never actually
-    // reach BOUNDARIES[1] at all: the modulo wrapped the clock back to
-    // 0 first, so panel 1 was permanently unreachable, both by the
-    // automatic clock and by direct seeks — the very thing this was
-    // supposed to make possible ("scene completion drives the swap")
-    // never triggered for real. Panel 1's own budgeted span (6000ms,
-    // the original TOTAL_DURATION - BOUNDARIES[1]) is preserved
-    // unchanged, just added on top of the real panel-0 length instead
-    // of the placeholder one.
-    var PANEL1_DURATION = TOTAL_DURATION - BOUNDARIES[1];
+    // Beat sheet — fix round 1 (spec §9.1's own corrected table, plus
+    // fix items 3/4/7). Same [name, duration] cumulative-sum pattern as
+    // SCENE0_SEQUENCE above. The tracks have no beats of their own —
+    // they travel continuously the whole scene (spec §9.3) — but the
+    // COLOUR TURN now does: it's beat 8's own fixed cascade window
+    // (spec §9.4 corrected), not an emergent consequence of queue
+    // position the way the first (wrong) pass built it. Unlike the old,
+    // pre-redesign build, the footer's entrance no longer needs to
+    // overlap a "mock" (gone), so there's no FOOTER_LAUNCH_LEAD_MS-style
+    // derived mark here — every mark falls directly out of the sequence.
+    var SCENE1_SEQUENCE = [
+      // Beat 1–2. Mirrors --ag-duration's own 480ms value (same "mirror
+      // the number, CSS/JS can't cross-reference" limitation --ag-
+      // shadow-bleed's own comment documents elsewhere in this file),
+      // plus one more second — fix item 3 — so the footer's own rise
+      // reads as a clearly separate beat from the panel's own grow
+      // transition, not a continuation of it.
+      ["entranceDelay", 1480],
+      // Beat 2. Overshoot curve in (spec §9.1/§9.2), unchanged shape.
+      ["footerRise", 450],
+      // Beat 4. Hold, footer settled, clean face, tracks already
+      // drifting (spec: "rows already drifting, all green").
+      ["holdAtRest", 500],
+      // Beat 5 (fix item 4, spec §9.1/§9.5) — counts run up together,
+      // 0 → 13/5/5, ~1s.
+      ["countUp", 1000],
+      // Beat 6 (fix item 4) — BILLS, VENDORS, PAYMENTS bump in
+      // sequence, front face, 400ms each = 1200ms total.
+      ["blockBumpFront", 1200],
+      // Beat 7. Hold before the turn.
+      ["holdBeforeCascade", 1000],
+      // Beat 8 (fix item 5, spec §3/§9.4 corrected) — the cascade
+      // itself: every alertable element on every on-screen row pops to
+      // its alert state, in place, at its own seeded moment inside this
+      // fixed ~2s window. Not driven by travel speed or queue position
+      // — see CASCADE_ELEMENT_KINDS/collectCascadeTargets, further down.
+      ["cascade", 2000],
+      // Beat 9. Brief beat before the flip.
+      ["briefBeat", 400],
+      // Beat 10. Flip curve/duration unchanged from the very first
+      // (pre-redesign) build (spec §9.1/§9.4).
+      ["footerFlip", 500],
+      // Beat 11. Hold, alerted face, tracks still travelling (spec:
+      // "the rows never stop... including through the cascade and the
+      // footer's exit").
+      ["holdAfterFlip", 1000],
+      // Beat 12 (fix item 4) — same bump sequence as beat 6, alerted
+      // face this time.
+      ["blockBumpBack", 1200],
+      // Beat 13. Hold before exit.
+      ["holdBeforeExit", 800],
+      // Beat 14. Anticipation curve out — signed off, unchanged from
+      // the very first build (spec §9.1/§9.2: "do not retime, recurve
+      // or restructure it").
+      ["footerDrop", 500],
+      // Beat 15 tail. Rows fade out while still drifting as the panel
+      // closes (spec) — the CSS collapse-opacity fade (`.qod2-track`,
+      // unchanged from phase 1) handles the actual fade once the panel
+      // itself starts deactivating; this margin just gives the empty
+      // stage a beat to read before the clock loops back to panel 0.
+      ["stageEmpty", 400]
+    ];
+    var SCENE1_MARKS = (function () {
+      var marks = {};
+      var cursorT = 0;
+      for (var i = 0; i < SCENE1_SEQUENCE.length; i++) {
+        marks[SCENE1_SEQUENCE[i][0] + "Start"] = cursorT;
+        cursorT += SCENE1_SEQUENCE[i][1];
+        marks[SCENE1_SEQUENCE[i][0] + "End"] = cursorT;
+      }
+      marks.total = cursorT;
+      return marks;
+    })();
+    // Panel 1's real span (spec §10: "set by how long the colour turn
+    // needs at a comfortable travel speed... lengthen the scene instead"
+    // of rushing the tracks) — no longer the phase-1 placeholder.
+    var PANEL1_DURATION = SCENE1_MARKS.total;
     BOUNDARIES[1] = SCENE0_MARKS.total;
     SCENE_DURATION = BOUNDARIES[1];
     TOTAL_DURATION = BOUNDARIES[1] + PANEL1_DURATION;
@@ -3900,7 +4414,424 @@
       updateFinalCellUpdate(instance, t);
     }
 
+    // ============================================================
+    // Scene 2 ("Persistent summary strip", panel 1) — phase 2 render.
+    // SCENE1_SEQUENCE/SCENE1_MARKS are defined above, alongside
+    // BOUNDARIES/TOTAL_DURATION's own re-derivation. Reuses
+    // clamp01/makeEaseOut directly — already defined above, in scope
+    // for this whole closure.
+    // ============================================================
+
+    // ---- Row templates (fix round 1, spec §5). Byte-identical vendor/
+    // icon/amount content to the 8 rows phase 1 and the original build
+    // authored (spec §11: "do not author new markup") — but restructured
+    // from two separate pools (4 clean, 4 alert) into ONE dual-state
+    // template per row, since the corrected §3/§9.4 cascade needs every
+    // row capable of EITHER state (fix item 5: "every alertable element
+    // on every row goes alerted... full alert, not a subset" — the old
+    // pool split could never produce that, only a fixed mix). Each of
+    // the three toggle points (vendor method, status, speed badge)
+    // carries both its clean and alert children at once, exactly the
+    // way `.bp-vendor__method[data-vendor-state]` already worked for
+    // the footer's own Vendors stat (ported from schedule-payment.html)
+    // — extended here to all three points on all eight rows, and to two
+    // elements (status, speed badge) the source mock never toggles at
+    // all (see COMPONENT-MAP.md's own "date-logic engine" entry). CSS
+    // for the two new toggle points lives with `.bp-badge--overdue`
+    // above. `qod2-alert-dim` is gone — the corrected cascade is a pop
+    // + instant content swap at a seeded moment, not a persistent dim.
+    //
+    // Arrives dates: every row's own Arrives date is now past its Due
+    // date, including the four rows that used to be permanently clean
+    // (Greenfield ×2, Red Ocean, Bluebird/1789 — nudged 1 day later
+    // than their phase-1 values). Not asked for verbatim — a direct
+    // consequence of fix item 5's "full alert on every row": once every
+    // row's badge reads Overdue after the cascade (the state the scene
+    // now holds for the rest of its own run), an Arrives date still
+    // reading before Due would contradict it, the same reasoning the
+    // original build's own "nudge" comment already established for its
+    // own 3 alert rows. Bluebird/1764's own Arrives also moves (09/05
+    // → 09/07) for the same reason — its due date is 09/06, and the old
+    // build never gave it an Overdue state to reconcile against at all.
+    var QOD2_ROWS = [
+      '<div class="bp-row"><div class="bp-cell bp-cell--vendor"><div class="bp-vendor"><div class="bp-vendor__body"><p class="bp-vendor__name">Barnett Lawn Care</p><div class="bp-vendor__method" data-vendor-state="resolved"><span class="bp-vendor__method-icon" data-state="resolved"><span style="position:relative;display:inline-block;width:14px;height:14px"><span style="position:absolute;inset:4.36% 8.33% 8.33% 8.33%"><img src="../../icons/bill-pay-mock/bank-1.svg" alt="" style="display:block;width:100%;height:100%" /></span><span style="position:absolute;inset:20.83% 45.83% 70.83% 45.83%"><img src="../../icons/bill-pay-mock/bank-2.svg" alt="" style="display:block;width:100%;height:100%" /></span></span></span><p class="bp-vendor__method-text" data-state="resolved">Bank payment (ACH)...3456</p><span class="bp-vendor__method-icon bp-vendor__method-icon--alert" data-state="alert"><img src="../../icons/bill-pay-mock/alert-circle.svg" alt="" style="display:block;width:100%;height:100%" /></span><p class="bp-vendor__method-text" data-state="alert">Add delivery details</p></div></div></div></div><div class="bp-cell bp-cell--bill"><span>153</span></div><div class="bp-cell bp-cell--status" data-cascade-state="clean"><span class="bp-status__check" data-state="clean"><img src="../../icons/bill-pay-mock/status-check.svg" alt="" style="display:block;width:100%;height:100%" /></span><span class="bp-status-text" data-state="clean">Approved</span><span class="bp-status__check" data-state="alert"><img src="../../icons/bill-pay-mock/alert-circle.svg" alt="" style="display:block;width:100%;height:100%" /></span><span class="bp-status-text" data-state="alert">Pending</span></div><div class="bp-cell bp-cell--due"><span>08/29/25</span></div><div class="bp-cell bp-cell--speed"><div class="bp-speed__top" data-cascade-state="clean"><p class="bp-speed__label">Standard</p><span class="bp-badge" data-state="clean"><span>On time</span></span><span class="bp-badge bp-badge--overdue" data-state="alert"><span>Overdue</span></span></div><div class="bp-speed__meta"><span>Withdraw 08/25</span><span style="display:inline-flex"><span style="position:relative;display:inline-block;width:18px;height:18px"><span style="position:absolute;inset:32.99% 16.69% 33.04% 16.67%"><img src="../../icons/bill-pay-mock/withdraw-arrives-arrow.svg" alt="" style="display:block;width:100%;height:100%" /></span></span></span><span>Arrives 08/30</span></div></div><div class="bp-cell bp-cell--fee"><div class="bp-fee"><span>$1.00</span><span><span style="position:relative;display:inline-block;width:20px;height:20px"><span style="position:absolute;inset:45.83% 45.83% 33.33% 45.83%"><img src="../../icons/bill-pay-mock/info-circle-1.svg" alt="" style="display:block;width:100%;height:100%" /></span><span style="position:absolute;inset:33.33% 45.82% 58.33% 45.85%"><img src="../../icons/bill-pay-mock/info-circle-2.svg" alt="" style="display:block;width:100%;height:100%" /></span><span style="position:absolute;inset:8.33% 8.3% 8.33% 8.3%"><img src="../../icons/bill-pay-mock/info-circle-3.svg" alt="" style="display:block;width:100%;height:100%" /></span></span></span></div></div><div class="bp-cell bp-cell--balance"><span>$650.00</span></div><div class="bp-cell bp-cell--amount"><div class="bp-amount-field"><span>$650.00</span></div></div><div class="bp-cell bp-cell--action"><span class="bp-action-text">Manage</span></div></div>',
+      '<div class="bp-row"><div class="bp-cell bp-cell--vendor"><div class="bp-vendor"><div class="bp-vendor__body"><p class="bp-vendor__name">Bluebird Office Supplies</p><div class="bp-vendor__method" data-vendor-state="resolved"><span class="bp-vendor__method-icon" data-state="resolved"><span style="position:relative;display:inline-block;width:14px;height:14px"><span style="position:absolute;inset:20.81% 8.31% 20.79% 8.31%"><img src="../../icons/bill-pay-mock/check-1.svg" alt="" style="display:block;width:100%;height:100%" /></span><span style="position:absolute;inset:37.46% 41.67% 54.17% 20.83%"><img src="../../icons/bill-pay-mock/check-2.svg" alt="" style="display:block;width:100%;height:100%" /></span><span style="position:absolute;inset:37.54% 20.83% 54.13% 62.5%"><img src="../../icons/bill-pay-mock/check-3.svg" alt="" style="display:block;width:100%;height:100%" /></span><span style="position:absolute;inset:52.07% 20.84% 35.38% 45.79%"><img src="../../icons/bill-pay-mock/check-4.svg" alt="" style="display:block;width:100%;height:100%" /></span></span></span><p class="bp-vendor__method-text" data-state="resolved">Check</p><span class="bp-vendor__method-icon bp-vendor__method-icon--alert" data-state="alert"><img src="../../icons/bill-pay-mock/alert-circle.svg" alt="" style="display:block;width:100%;height:100%" /></span><p class="bp-vendor__method-text" data-state="alert">Add delivery details</p></div></div></div></div><div class="bp-cell bp-cell--bill"><span>1764</span></div><div class="bp-cell bp-cell--status" data-cascade-state="clean"><span class="bp-status__check" data-state="clean"><img src="../../icons/bill-pay-mock/status-check.svg" alt="" style="display:block;width:100%;height:100%" /></span><span class="bp-status-text" data-state="clean">Approved</span><span class="bp-status__check" data-state="alert"><img src="../../icons/bill-pay-mock/alert-circle.svg" alt="" style="display:block;width:100%;height:100%" /></span><span class="bp-status-text" data-state="alert">Pending</span></div><div class="bp-cell bp-cell--due"><span>09/06/25</span></div><div class="bp-cell bp-cell--speed"><div class="bp-speed__top" data-cascade-state="clean"><p class="bp-speed__label">Standard</p><span class="bp-badge" data-state="clean"><span>On time</span></span><span class="bp-badge bp-badge--overdue" data-state="alert"><span>Overdue</span></span></div><div class="bp-speed__meta"><span>Withdraw 09/02</span><span style="display:inline-flex"><span style="position:relative;display:inline-block;width:18px;height:18px"><span style="position:absolute;inset:32.99% 16.69% 33.04% 16.67%"><img src="../../icons/bill-pay-mock/withdraw-arrives-arrow.svg" alt="" style="display:block;width:100%;height:100%" /></span></span></span><span>Arrives 09/07</span></div></div><div class="bp-cell bp-cell--fee"><div class="bp-fee"><span>$1.00</span><span><span style="position:relative;display:inline-block;width:20px;height:20px"><span style="position:absolute;inset:45.83% 45.83% 33.33% 45.83%"><img src="../../icons/bill-pay-mock/info-circle-1.svg" alt="" style="display:block;width:100%;height:100%" /></span><span style="position:absolute;inset:33.33% 45.82% 58.33% 45.85%"><img src="../../icons/bill-pay-mock/info-circle-2.svg" alt="" style="display:block;width:100%;height:100%" /></span><span style="position:absolute;inset:8.33% 8.3% 8.33% 8.3%"><img src="../../icons/bill-pay-mock/info-circle-3.svg" alt="" style="display:block;width:100%;height:100%" /></span></span></span></div></div><div class="bp-cell bp-cell--balance"><span>$385.00</span></div><div class="bp-cell bp-cell--amount"><div class="bp-amount-field"><span>$385.00</span></div></div><div class="bp-cell bp-cell--action"><span class="bp-action-text">Manage</span></div></div>',
+      '<div class="bp-row"><div class="bp-cell bp-cell--vendor"><div class="bp-vendor"><div class="bp-vendor__body"><p class="bp-vendor__name">Barnett Lawn Care</p><div class="bp-vendor__method" data-vendor-state="resolved"><span class="bp-vendor__method-icon" data-state="resolved"><span style="position:relative;display:inline-block;width:14px;height:14px"><span style="position:absolute;inset:4.36% 8.33% 8.33% 8.33%"><img src="../../icons/bill-pay-mock/bank-1.svg" alt="" style="display:block;width:100%;height:100%" /></span><span style="position:absolute;inset:20.83% 45.83% 70.83% 45.83%"><img src="../../icons/bill-pay-mock/bank-2.svg" alt="" style="display:block;width:100%;height:100%" /></span></span></span><p class="bp-vendor__method-text" data-state="resolved">Bank payment (ACH)...3456</p><span class="bp-vendor__method-icon bp-vendor__method-icon--alert" data-state="alert"><img src="../../icons/bill-pay-mock/alert-circle.svg" alt="" style="display:block;width:100%;height:100%" /></span><p class="bp-vendor__method-text" data-state="alert">Add delivery details</p></div></div></div></div><div class="bp-cell bp-cell--bill"><span>154</span></div><div class="bp-cell bp-cell--status" data-cascade-state="clean"><span class="bp-status__check" data-state="clean"><img src="../../icons/bill-pay-mock/status-check.svg" alt="" style="display:block;width:100%;height:100%" /></span><span class="bp-status-text" data-state="clean">Approved</span><span class="bp-status__check" data-state="alert"><img src="../../icons/bill-pay-mock/alert-circle.svg" alt="" style="display:block;width:100%;height:100%" /></span><span class="bp-status-text" data-state="alert">Pending</span></div><div class="bp-cell bp-cell--due"><span>09/09/25</span></div><div class="bp-cell bp-cell--speed"><div class="bp-speed__top" data-cascade-state="clean"><p class="bp-speed__label">Standard</p><span class="bp-badge" data-state="clean"><span>On time</span></span><span class="bp-badge bp-badge--overdue" data-state="alert"><span>Overdue</span></span></div><div class="bp-speed__meta"><span>Withdraw 09/05</span><span style="display:inline-flex"><span style="position:relative;display:inline-block;width:18px;height:18px"><span style="position:absolute;inset:32.99% 16.69% 33.04% 16.67%"><img src="../../icons/bill-pay-mock/withdraw-arrives-arrow.svg" alt="" style="display:block;width:100%;height:100%" /></span></span></span><span>Arrives 09/10</span></div></div><div class="bp-cell bp-cell--fee"><div class="bp-fee"><span>$1.00</span><span><span style="position:relative;display:inline-block;width:20px;height:20px"><span style="position:absolute;inset:45.83% 45.83% 33.33% 45.83%"><img src="../../icons/bill-pay-mock/info-circle-1.svg" alt="" style="display:block;width:100%;height:100%" /></span><span style="position:absolute;inset:33.33% 45.82% 58.33% 45.85%"><img src="../../icons/bill-pay-mock/info-circle-2.svg" alt="" style="display:block;width:100%;height:100%" /></span><span style="position:absolute;inset:8.33% 8.3% 8.33% 8.3%"><img src="../../icons/bill-pay-mock/info-circle-3.svg" alt="" style="display:block;width:100%;height:100%" /></span></span></span></div></div><div class="bp-cell bp-cell--balance"><span>$725.00</span></div><div class="bp-cell bp-cell--amount"><div class="bp-amount-field"><span>$725.00</span></div></div><div class="bp-cell bp-cell--action"><span class="bp-action-text">Manage</span></div></div>',
+      '<div class="bp-row"><div class="bp-cell bp-cell--vendor"><div class="bp-vendor"><div class="bp-vendor__body"><p class="bp-vendor__name">Good Heart Catering</p><div class="bp-vendor__method" data-vendor-state="resolved"><span class="bp-vendor__method-icon" data-state="resolved"><span style="position:relative;display:inline-block;width:14px;height:14px"><span style="position:absolute;inset:20.81% 8.31% 20.79% 8.31%"><img src="../../icons/bill-pay-mock/check-1.svg" alt="" style="display:block;width:100%;height:100%" /></span><span style="position:absolute;inset:37.46% 41.67% 54.17% 20.83%"><img src="../../icons/bill-pay-mock/check-2.svg" alt="" style="display:block;width:100%;height:100%" /></span><span style="position:absolute;inset:37.54% 20.83% 54.13% 62.5%"><img src="../../icons/bill-pay-mock/check-3.svg" alt="" style="display:block;width:100%;height:100%" /></span><span style="position:absolute;inset:52.07% 20.84% 35.38% 45.79%"><img src="../../icons/bill-pay-mock/check-4.svg" alt="" style="display:block;width:100%;height:100%" /></span></span></span><p class="bp-vendor__method-text" data-state="resolved">Check</p><span class="bp-vendor__method-icon bp-vendor__method-icon--alert" data-state="alert"><img src="../../icons/bill-pay-mock/alert-circle.svg" alt="" style="display:block;width:100%;height:100%" /></span><p class="bp-vendor__method-text" data-state="alert">Add delivery details</p></div></div></div></div><div class="bp-cell bp-cell--bill"><span>9092</span></div><div class="bp-cell bp-cell--status" data-cascade-state="clean"><span class="bp-status__check" data-state="clean"><img src="../../icons/bill-pay-mock/status-check.svg" alt="" style="display:block;width:100%;height:100%" /></span><span class="bp-status-text" data-state="clean">Approved</span><span class="bp-status__check" data-state="alert"><img src="../../icons/bill-pay-mock/alert-circle.svg" alt="" style="display:block;width:100%;height:100%" /></span><span class="bp-status-text" data-state="alert">Pending</span></div><div class="bp-cell bp-cell--due"><span>09/12/25</span></div><div class="bp-cell bp-cell--speed"><div class="bp-speed__top" data-cascade-state="clean"><p class="bp-speed__label">Standard</p><span class="bp-badge" data-state="clean"><span>On time</span></span><span class="bp-badge bp-badge--overdue" data-state="alert"><span>Overdue</span></span></div><div class="bp-speed__meta"><span>Withdraw 09/08</span><span style="display:inline-flex"><span style="position:relative;display:inline-block;width:18px;height:18px"><span style="position:absolute;inset:32.99% 16.69% 33.04% 16.67%"><img src="../../icons/bill-pay-mock/withdraw-arrives-arrow.svg" alt="" style="display:block;width:100%;height:100%" /></span></span></span><span>Arrives 09/13</span></div></div><div class="bp-cell bp-cell--fee"><div class="bp-fee"><span>$1.00</span><span><span style="position:relative;display:inline-block;width:20px;height:20px"><span style="position:absolute;inset:45.83% 45.83% 33.33% 45.83%"><img src="../../icons/bill-pay-mock/info-circle-1.svg" alt="" style="display:block;width:100%;height:100%" /></span><span style="position:absolute;inset:33.33% 45.82% 58.33% 45.85%"><img src="../../icons/bill-pay-mock/info-circle-2.svg" alt="" style="display:block;width:100%;height:100%" /></span><span style="position:absolute;inset:8.33% 8.3% 8.33% 8.3%"><img src="../../icons/bill-pay-mock/info-circle-3.svg" alt="" style="display:block;width:100%;height:100%" /></span></span></span></div></div><div class="bp-cell bp-cell--balance"><span>$1,250.00</span></div><div class="bp-cell bp-cell--amount"><div class="bp-amount-field"><span>$1,250.00</span></div></div><div class="bp-cell bp-cell--action"><span class="bp-action-text">Manage</span></div></div>',
+      '<div class="bp-row"><div class="bp-cell bp-cell--vendor"><div class="bp-vendor"><div class="bp-vendor__body"><p class="bp-vendor__name">Greenfield Solutions</p><div class="bp-vendor__method" data-vendor-state="resolved"><span class="bp-vendor__method-icon" data-state="resolved"><span style="position:relative;display:inline-block;width:14px;height:14px"><span style="position:absolute;inset:4.36% 8.33% 8.33% 8.33%"><img src="../../icons/bill-pay-mock/bank-1.svg" alt="" style="display:block;width:100%;height:100%" /></span><span style="position:absolute;inset:20.83% 45.83% 70.83% 45.83%"><img src="../../icons/bill-pay-mock/bank-2.svg" alt="" style="display:block;width:100%;height:100%" /></span></span></span><p class="bp-vendor__method-text" data-state="resolved">Bank payment (ACH)...1278</p><span class="bp-vendor__method-icon bp-vendor__method-icon--alert" data-state="alert"><img src="../../icons/bill-pay-mock/alert-circle.svg" alt="" style="display:block;width:100%;height:100%" /></span><p class="bp-vendor__method-text" data-state="alert">Add delivery details</p></div></div></div></div><div class="bp-cell bp-cell--bill"><span>7562</span></div><div class="bp-cell bp-cell--status" data-cascade-state="clean"><span class="bp-status__check" data-state="clean"><img src="../../icons/bill-pay-mock/status-check.svg" alt="" style="display:block;width:100%;height:100%" /></span><span class="bp-status-text" data-state="clean">Approved</span><span class="bp-status__check" data-state="alert"><img src="../../icons/bill-pay-mock/alert-circle.svg" alt="" style="display:block;width:100%;height:100%" /></span><span class="bp-status-text" data-state="alert">Pending</span></div><div class="bp-cell bp-cell--due"><span>09/14/25</span></div><div class="bp-cell bp-cell--speed"><div class="bp-speed__top" data-cascade-state="clean"><p class="bp-speed__label">Standard</p><span class="bp-badge" data-state="clean"><span>On time</span></span><span class="bp-badge bp-badge--overdue" data-state="alert"><span>Overdue</span></span></div><div class="bp-speed__meta"><span>Withdraw 09/10</span><span style="display:inline-flex"><span style="position:relative;display:inline-block;width:18px;height:18px"><span style="position:absolute;inset:32.99% 16.69% 33.04% 16.67%"><img src="../../icons/bill-pay-mock/withdraw-arrives-arrow.svg" alt="" style="display:block;width:100%;height:100%" /></span></span></span><span>Arrives 09/15</span></div></div><div class="bp-cell bp-cell--fee"><div class="bp-fee"><span>$1.00</span><span><span style="position:relative;display:inline-block;width:20px;height:20px"><span style="position:absolute;inset:45.83% 45.83% 33.33% 45.83%"><img src="../../icons/bill-pay-mock/info-circle-1.svg" alt="" style="display:block;width:100%;height:100%" /></span><span style="position:absolute;inset:33.33% 45.82% 58.33% 45.85%"><img src="../../icons/bill-pay-mock/info-circle-2.svg" alt="" style="display:block;width:100%;height:100%" /></span><span style="position:absolute;inset:8.33% 8.3% 8.33% 8.3%"><img src="../../icons/bill-pay-mock/info-circle-3.svg" alt="" style="display:block;width:100%;height:100%" /></span></span></span></div></div><div class="bp-cell bp-cell--balance"><span>$1,800.00</span></div><div class="bp-cell bp-cell--amount"><div class="bp-amount-field"><span>$1,800.00</span></div></div><div class="bp-cell bp-cell--action"><span class="bp-action-text">Manage</span></div></div>',
+      '<div class="bp-row"><div class="bp-cell bp-cell--vendor"><div class="bp-vendor"><div class="bp-vendor__body"><p class="bp-vendor__name">Red Ocean Developer</p><div class="bp-vendor__method" data-vendor-state="resolved"><span class="bp-vendor__method-icon" data-state="resolved"><span style="position:relative;display:inline-block;width:14px;height:14px"><span style="position:absolute;inset:4.36% 8.33% 8.33% 8.33%"><img src="../../icons/bill-pay-mock/bank-1.svg" alt="" style="display:block;width:100%;height:100%" /></span><span style="position:absolute;inset:20.83% 45.83% 70.83% 45.83%"><img src="../../icons/bill-pay-mock/bank-2.svg" alt="" style="display:block;width:100%;height:100%" /></span></span></span><p class="bp-vendor__method-text" data-state="resolved">Bank payment (ACH)...7989</p><span class="bp-vendor__method-icon bp-vendor__method-icon--alert" data-state="alert"><img src="../../icons/bill-pay-mock/alert-circle.svg" alt="" style="display:block;width:100%;height:100%" /></span><p class="bp-vendor__method-text" data-state="alert">Add delivery details</p></div></div></div></div><div class="bp-cell bp-cell--bill"><span>349</span></div><div class="bp-cell bp-cell--status" data-cascade-state="clean"><span class="bp-status__check" data-state="clean"><img src="../../icons/bill-pay-mock/status-check.svg" alt="" style="display:block;width:100%;height:100%" /></span><span class="bp-status-text" data-state="clean">Approved</span><span class="bp-status__check" data-state="alert"><img src="../../icons/bill-pay-mock/alert-circle.svg" alt="" style="display:block;width:100%;height:100%" /></span><span class="bp-status-text" data-state="alert">Pending</span></div><div class="bp-cell bp-cell--due"><span>09/15/25</span></div><div class="bp-cell bp-cell--speed"><div class="bp-speed__top" data-cascade-state="clean"><p class="bp-speed__label">Standard</p><span class="bp-badge" data-state="clean"><span>On time</span></span><span class="bp-badge bp-badge--overdue" data-state="alert"><span>Overdue</span></span></div><div class="bp-speed__meta"><span>Withdraw 09/11</span><span style="display:inline-flex"><span style="position:relative;display:inline-block;width:18px;height:18px"><span style="position:absolute;inset:32.99% 16.69% 33.04% 16.67%"><img src="../../icons/bill-pay-mock/withdraw-arrives-arrow.svg" alt="" style="display:block;width:100%;height:100%" /></span></span></span><span>Arrives 09/16</span></div></div><div class="bp-cell bp-cell--fee"><div class="bp-fee"><span>$1.00</span><span><span style="position:relative;display:inline-block;width:20px;height:20px"><span style="position:absolute;inset:45.83% 45.83% 33.33% 45.83%"><img src="../../icons/bill-pay-mock/info-circle-1.svg" alt="" style="display:block;width:100%;height:100%" /></span><span style="position:absolute;inset:33.33% 45.82% 58.33% 45.85%"><img src="../../icons/bill-pay-mock/info-circle-2.svg" alt="" style="display:block;width:100%;height:100%" /></span><span style="position:absolute;inset:8.33% 8.3% 8.33% 8.3%"><img src="../../icons/bill-pay-mock/info-circle-3.svg" alt="" style="display:block;width:100%;height:100%" /></span></span></span></div></div><div class="bp-cell bp-cell--balance"><span>$1,500.00</span></div><div class="bp-cell bp-cell--amount"><div class="bp-amount-field"><span>$1,500.00</span></div></div><div class="bp-cell bp-cell--action"><span class="bp-action-text">Manage</span></div></div>',
+      '<div class="bp-row"><div class="bp-cell bp-cell--vendor"><div class="bp-vendor"><div class="bp-vendor__body"><p class="bp-vendor__name">Bluebird Office Supplies</p><div class="bp-vendor__method" data-vendor-state="resolved"><span class="bp-vendor__method-icon" data-state="resolved"><span style="position:relative;display:inline-block;width:14px;height:14px"><span style="position:absolute;inset:20.81% 8.31% 20.79% 8.31%"><img src="../../icons/bill-pay-mock/check-1.svg" alt="" style="display:block;width:100%;height:100%" /></span><span style="position:absolute;inset:37.46% 41.67% 54.17% 20.83%"><img src="../../icons/bill-pay-mock/check-2.svg" alt="" style="display:block;width:100%;height:100%" /></span><span style="position:absolute;inset:37.54% 20.83% 54.13% 62.5%"><img src="../../icons/bill-pay-mock/check-3.svg" alt="" style="display:block;width:100%;height:100%" /></span><span style="position:absolute;inset:52.07% 20.84% 35.38% 45.79%"><img src="../../icons/bill-pay-mock/check-4.svg" alt="" style="display:block;width:100%;height:100%" /></span></span></span><p class="bp-vendor__method-text" data-state="resolved">Check</p><span class="bp-vendor__method-icon bp-vendor__method-icon--alert" data-state="alert"><img src="../../icons/bill-pay-mock/alert-circle.svg" alt="" style="display:block;width:100%;height:100%" /></span><p class="bp-vendor__method-text" data-state="alert">Add delivery details</p></div></div></div></div><div class="bp-cell bp-cell--bill"><span>1789</span></div><div class="bp-cell bp-cell--status" data-cascade-state="clean"><span class="bp-status__check" data-state="clean"><img src="../../icons/bill-pay-mock/status-check.svg" alt="" style="display:block;width:100%;height:100%" /></span><span class="bp-status-text" data-state="clean">Approved</span><span class="bp-status__check" data-state="alert"><img src="../../icons/bill-pay-mock/alert-circle.svg" alt="" style="display:block;width:100%;height:100%" /></span><span class="bp-status-text" data-state="alert">Pending</span></div><div class="bp-cell bp-cell--due"><span>09/16/25</span></div><div class="bp-cell bp-cell--speed"><div class="bp-speed__top" data-cascade-state="clean"><p class="bp-speed__label">Standard</p><span class="bp-badge" data-state="clean"><span>On time</span></span><span class="bp-badge bp-badge--overdue" data-state="alert"><span>Overdue</span></span></div><div class="bp-speed__meta"><span>Withdraw 09/12</span><span style="display:inline-flex"><span style="position:relative;display:inline-block;width:18px;height:18px"><span style="position:absolute;inset:32.99% 16.69% 33.04% 16.67%"><img src="../../icons/bill-pay-mock/withdraw-arrives-arrow.svg" alt="" style="display:block;width:100%;height:100%" /></span></span></span><span>Arrives 09/17</span></div></div><div class="bp-cell bp-cell--fee"><div class="bp-fee"><span>$1.00</span><span><span style="position:relative;display:inline-block;width:20px;height:20px"><span style="position:absolute;inset:45.83% 45.83% 33.33% 45.83%"><img src="../../icons/bill-pay-mock/info-circle-1.svg" alt="" style="display:block;width:100%;height:100%" /></span><span style="position:absolute;inset:33.33% 45.82% 58.33% 45.85%"><img src="../../icons/bill-pay-mock/info-circle-2.svg" alt="" style="display:block;width:100%;height:100%" /></span><span style="position:absolute;inset:8.33% 8.3% 8.33% 8.3%"><img src="../../icons/bill-pay-mock/info-circle-3.svg" alt="" style="display:block;width:100%;height:100%" /></span></span></span></div></div><div class="bp-cell bp-cell--balance"><span>$520.00</span></div><div class="bp-cell bp-cell--amount"><div class="bp-amount-field"><span>$520.00</span></div></div><div class="bp-cell bp-cell--action"><span class="bp-action-text">Manage</span></div></div>',
+      '<div class="bp-row"><div class="bp-cell bp-cell--vendor"><div class="bp-vendor"><div class="bp-vendor__body"><p class="bp-vendor__name">Greenfield Solutions</p><div class="bp-vendor__method" data-vendor-state="resolved"><span class="bp-vendor__method-icon" data-state="resolved"><span style="position:relative;display:inline-block;width:14px;height:14px"><span style="position:absolute;inset:4.36% 8.33% 8.33% 8.33%"><img src="../../icons/bill-pay-mock/bank-1.svg" alt="" style="display:block;width:100%;height:100%" /></span><span style="position:absolute;inset:20.83% 45.83% 70.83% 45.83%"><img src="../../icons/bill-pay-mock/bank-2.svg" alt="" style="display:block;width:100%;height:100%" /></span></span></span><p class="bp-vendor__method-text" data-state="resolved">Bank payment (ACH)...1278</p><span class="bp-vendor__method-icon bp-vendor__method-icon--alert" data-state="alert"><img src="../../icons/bill-pay-mock/alert-circle.svg" alt="" style="display:block;width:100%;height:100%" /></span><p class="bp-vendor__method-text" data-state="alert">Add delivery details</p></div></div></div></div><div class="bp-cell bp-cell--bill"><span>7562</span></div><div class="bp-cell bp-cell--status" data-cascade-state="clean"><span class="bp-status__check" data-state="clean"><img src="../../icons/bill-pay-mock/status-check.svg" alt="" style="display:block;width:100%;height:100%" /></span><span class="bp-status-text" data-state="clean">Approved</span><span class="bp-status__check" data-state="alert"><img src="../../icons/bill-pay-mock/alert-circle.svg" alt="" style="display:block;width:100%;height:100%" /></span><span class="bp-status-text" data-state="alert">Pending</span></div><div class="bp-cell bp-cell--due"><span>09/19/25</span></div><div class="bp-cell bp-cell--speed"><div class="bp-speed__top" data-cascade-state="clean"><p class="bp-speed__label">Standard</p><span class="bp-badge" data-state="clean"><span>On time</span></span><span class="bp-badge bp-badge--overdue" data-state="alert"><span>Overdue</span></span></div><div class="bp-speed__meta"><span>Withdraw 09/15</span><span style="display:inline-flex"><span style="position:relative;display:inline-block;width:18px;height:18px"><span style="position:absolute;inset:32.99% 16.69% 33.04% 16.67%"><img src="../../icons/bill-pay-mock/withdraw-arrives-arrow.svg" alt="" style="display:block;width:100%;height:100%" /></span></span></span><span>Arrives 09/20</span></div></div><div class="bp-cell bp-cell--fee"><div class="bp-fee"><span>$1.00</span><span><span style="position:relative;display:inline-block;width:20px;height:20px"><span style="position:absolute;inset:45.83% 45.83% 33.33% 45.83%"><img src="../../icons/bill-pay-mock/info-circle-1.svg" alt="" style="display:block;width:100%;height:100%" /></span><span style="position:absolute;inset:33.33% 45.82% 58.33% 45.85%"><img src="../../icons/bill-pay-mock/info-circle-2.svg" alt="" style="display:block;width:100%;height:100%" /></span><span style="position:absolute;inset:8.33% 8.3% 8.33% 8.3%"><img src="../../icons/bill-pay-mock/info-circle-3.svg" alt="" style="display:block;width:100%;height:100%" /></span></span></span></div></div><div class="bp-cell bp-cell--balance"><span>$1,950.00</span></div><div class="bp-cell bp-cell--amount"><div class="bp-amount-field"><span>$1,950.00</span></div></div><div class="bp-cell bp-cell--action"><span class="bp-action-text">Manage</span></div></div>'
+    ];
+
+
+    // ---- Native geometry — mirrors the row card's own CSS values
+    // (--qod2-row-card-height/--qod2-row-card-native-height and the
+    // 9 .bp-cell--* widths' sum, :root block above), as plain numbers:
+    // CSS calc() can't be read back into JS, same "mirror the number"
+    // limitation --ag-shadow-bleed's own comment documents elsewhere
+    // in this file. ----
+    var ROW_CARD_NATIVE_WIDTH = 230 + 76 + 106 + 84 + 203 + 122 + 115 + 120 + 106 + 8 * 12 + 43; // = 1301, same sum the CSS --qod2-row-card-native-width comment used to hold
+    var TRACK_CARD_GAP = 66; // mirrors --qod2-track-card-gap
+    var TRACK_UNIT = ROW_CARD_NATIVE_WIDTH + TRACK_CARD_GAP; // = 1367 — one card + its trailing gap, native
+    var ROW_CARD_SCALE = 32 / 88; // mirrors --qod2-row-card-height / --qod2-row-card-native-height
+
+    // ---- Per-track config (spec §7: alternating direction; §9.2:
+    // "vary the track speeds slightly... rather than locking all four
+    // in step"). Speeds cut by 30% (fix item 1) from the first pass's
+    // 290/280/300/285 — those read uncomfortable to watch in real-time
+    // playback; the relative few-percent variation between tracks is
+    // preserved, just the whole set scaled down together. phaseFraction
+    // carries phase 1's own stagger forward unchanged (1/6, 1/2, 5/6 of
+    // a card+gap unit). ----
+    var TRACKS_CONFIG = [
+      { direction: 1, speed: 203, phaseFraction: 1 / 6 },   // track 1 — right (290 × 0.7)
+      { direction: -1, speed: 196, phaseFraction: 1 / 2 },  // track 2 — left (280 × 0.7)
+      { direction: 1, speed: 210, phaseFraction: 5 / 6 },   // track 3 — right (300 × 0.7)
+      { direction: -1, speed: 199.5, phaseFraction: 1 / 6 } // track 4 — left (285 × 0.7, repeats track 1's fraction — fine, not adjacent to it)
+    ];
+    // Queue length (fix item 2: "at t=0, and at every frame after it,
+    // every track is filled edge to edge... never an empty stretch").
+    // Raised from an initial 8 (one pass through the authored rows) —
+    // that measured comfortably at the FIRST pass's own higher speeds/
+    // longer duration (worst case ~7845 native px of usable travel
+    // against a ~6720 native px real need), but Hadar's own real-time
+    // browser viewing (continuous, not the discrete seek-and-screenshot
+    // QA used to verify it) still found empty stretches — this fix is
+    // "more cards," not a re-derivation of the same math, so the value
+    // is raised well past the minimum rather than re-optimized to a new
+    // tighter bound. 16 (two full cycles of the 8 authored rows) against
+    // a real need, at the CURRENT (slower) speeds and ~12.4s duration,
+    // of roughly 210 × 12.43 ≈ 2610 native px — 16 × 1367 = 21872
+    // available, better than 8× headroom.
+    var TRACK_QUEUE_LENGTH = 16;
+
+    function rotateArray(arr, n) {
+      var i = ((n % arr.length) + arr.length) % arr.length;
+      return arr.slice(i).concat(arr.slice(0, i));
+    }
+
+    // Fills a track's own queue by cycling the 8 authored rows (fix
+    // round 1 dropped the old clean/alert split entirely — every row
+    // is dual-state now, spec §9.4's "in place" cascade owns WHEN a
+    // card looks alerted, not WHICH rows get authored that way — so
+    // there's no longer a "view order" content decision to make here,
+    // only which vendor shows first, for variety). Each track starts
+    // its own cycle at a different rotation (by trackIndex) so all
+    // four don't show the same vendor first — same variety phase 1's
+    // own static layout already had.
+    function trackQueueOrder(trackIndex) {
+      var rotated = rotateArray(QOD2_ROWS, trackIndex);
+      var queue = [];
+      while (queue.length < TRACK_QUEUE_LENGTH) {
+        queue = queue.concat(rotated);
+      }
+      return queue.slice(0, TRACK_QUEUE_LENGTH);
+    }
+
+    // DOM order vs. on-screen arrival order — the two only coincide for
+    // LEFTWARD tracks. A track's own on-screen position at time t is
+    // domIndex*TRACK_UNIT + offset(t), and offset(t) only ever
+    // increases (rightward) or only ever decreases (leftward) — never
+    // wraps — so which DOM index becomes visible at large t depends on
+    // direction: leftward tracks reveal HIGHER dom indices later (dom
+    // order already is arrival order), rightward tracks reveal LOWER
+    // dom indices later (dom order is the REVERSE of arrival order).
+    // Confirmed via direct measurement during the first pass's own
+    // tuning (see COMPONENT-MAP.md) — kept unchanged here; the cascade
+    // redesign only touches WHICH state a card shows, not WHERE.
+    function buildTrackQueueHTML(config, trackIndex) {
+      var order = trackQueueOrder(trackIndex);
+      var domOrder = config.direction === 1 ? order.slice().reverse() : order;
+      return domOrder.join("");
+    }
+
+    // Track position (spec §9.2/§9.3 corrected: travel no longer drives
+    // the colour turn — see the cascade below — so this is unchanged
+    // from the first pass except TRACK_QUEUE_LENGTH/speed's own new
+    // values). startK is which DOM index (0 or N-1) is closest to the
+    // window at t=0, matching whichever end buildTrackQueueHTML's own
+    // reversal puts there.
+    function trackOffsetNative(config, t) {
+      var startK = config.direction === 1 ? (TRACK_QUEUE_LENGTH - 1) : 0;
+      var offset0 = -startK * TRACK_UNIT + config.phaseFraction * TRACK_UNIT;
+      return offset0 + config.direction * config.speed * (t / 1000);
+    }
+
+    // ---- Footer entrance/exit — overshoot in, anticipation out (spec
+    // §9.1/§9.2: "unchanged from the current build... the exit is
+    // signed off"). Unchanged from the first pass.
+    var easeOvershoot = makeEaseOut(0.175, 0.885, 0.32, 1.275);
+    var easeAnticipate = makeEaseOut(0.6, -0.28, 0.735, 0.045);
+    // Flip curve (spec §9.1): cubic-bezier(.65,0,.35,1).
+    var easeFlip = makeEaseOut(0.65, 0, 0.35, 1);
+    // How far below its own resting position the footer starts (and
+    // returns to on exit) — real on-screen panel-relative px.
+    var FOOTER_ENTRY_OFFSET = 150;
+
+    function computeFooterY(t, M) {
+      if (t < M.footerRiseStart) return FOOTER_ENTRY_OFFSET;
+      if (t < M.footerRiseEnd) return FOOTER_ENTRY_OFFSET * (1 - easeOvershoot(clamp01((t - M.footerRiseStart) / (M.footerRiseEnd - M.footerRiseStart))));
+      if (t < M.footerDropStart) return 0;
+      if (t < M.footerDropEnd) return FOOTER_ENTRY_OFFSET * easeAnticipate(clamp01((t - M.footerDropStart) / (M.footerDropEnd - M.footerDropStart)));
+      return FOOTER_ENTRY_OFFSET;
+    }
+    function computeFlipAngle(t, M) {
+      if (t < M.footerFlipStart) return 0;
+      if (t < M.footerFlipEnd) return 180 * easeFlip(clamp01((t - M.footerFlipStart) / (M.footerFlipEnd - M.footerFlipStart)));
+      return 180;
+    }
+
+    // ---- Footer counts (fix item 4, spec §9.1 beat 5 / §9.5). "All
+    // three numbers count from 0 to their values together, not
+    // staggered" — one shared eased progress (easeOut, already defined
+    // above for the drawer's own number-bump work) drives all three.
+    // Back face shows the same totals but never counts — it's revealed
+    // already-formed by the flip, its own numbers are static markup. ----
+    var FOOTER_FINAL_COUNTS = { bills: 13, vendors: 5, payments: 5 };
+    function renderFooterCounts(instance1, t, M) {
+      var progress;
+      if (t < M.countUpStart) progress = 0;
+      else if (t < M.countUpEnd) progress = easeOut(clamp01((t - M.countUpStart) / (M.countUpEnd - M.countUpStart)));
+      else progress = 1;
+      instance1.billsCountEl.textContent = Math.round(progress * FOOTER_FINAL_COUNTS.bills);
+      instance1.vendorsCountEl.textContent = Math.round(progress * FOOTER_FINAL_COUNTS.vendors);
+      instance1.paymentsCountEl.textContent = Math.round(progress * FOOTER_FINAL_COUNTS.payments);
+    }
+
+    // ---- Footer block bumps (fix item 4, spec §9.1 beats 6/12) —
+    // BILLS, VENDORS, PAYMENTS bump in sequence, scale only, reusing
+    // sceneNumberBump directly (already defined above, panel 0's own
+    // number-bump curve) rather than inventing a new one. Fires twice:
+    // once on the front face after the count-up settles, once on the
+    // back face after the flip lands, same sequence both times. ----
+    var BLOCK_BUMP_MAGNITUDE = 0.10;
+    var BLOCK_BUMP_RISE_MS = 120, BLOCK_BUMP_HOLD_MS = 80, BLOCK_BUMP_FALL_MS = 200; // 400ms per block, 3 blocks = 1200ms sequence
+    function applyBlockBump(el, localT) {
+      if (!el) return;
+      if (localT > 0 && localT < BLOCK_BUMP_RISE_MS + BLOCK_BUMP_HOLD_MS + BLOCK_BUMP_FALL_MS) {
+        el.style.transform = "scale(" + sceneNumberBump(localT, BLOCK_BUMP_RISE_MS, BLOCK_BUMP_HOLD_MS, BLOCK_BUMP_FALL_MS, BLOCK_BUMP_MAGNITUDE) + ")";
+      } else {
+        el.style.transform = "";
+      }
+    }
+    function renderBlockBumps(instance1, t, M) {
+      var frontStart = M.blockBumpFrontStart;
+      applyBlockBump(instance1.billsBlockFront, t - frontStart);
+      applyBlockBump(instance1.vendorsBlockFront, t - (frontStart + 400));
+      applyBlockBump(instance1.paymentsBlockFront, t - (frontStart + 800));
+      var backStart = M.blockBumpBackStart;
+      applyBlockBump(instance1.billsBlockBack, t - backStart);
+      applyBlockBump(instance1.vendorsBlockBack, t - (backStart + 400));
+      applyBlockBump(instance1.paymentsBlockBack, t - (backStart + 800));
+    }
+
+    // ---- The cascade (fix item 5, spec §3/§9.4 corrected) — "the turn
+    // happens to cards already on screen, in place, at a fixed moment.
+    // It does not depend on travel speed and is not driven by queue
+    // position." Every alertable element on every authored row instance
+    // (vendor method, status, speed badge — CASCADE_ELEMENT_KINDS) gets
+    // its own fire time, seeded once at boot from a fixed hash (never
+    // Math.random() at runtime — spec: "a seek has to reproduce the
+    // same frame"), scattered across the cascade beat's own window.
+    // Per-frame, an element instantly swaps its own clean/alert content
+    // (toggling the same attribute the CSS above already keys off) the
+    // moment t crosses its fire time, with a brief scale pop riding
+    // along — "each element pops... the text swaps with it" (spec).
+    // Cards not yet on screen when their own fire time passes are
+    // simply born alerted once they arrive — nothing tracks visibility
+    // here, t alone decides, so "every card that enters after the
+    // cascade is already fully alerted" (spec) falls out for free. ----
+    var CASCADE_ELEMENT_KINDS = [
+      { selector: ".bp-vendor__method", attr: "data-vendor-state", cleanValue: "resolved", alertValue: "alert" },
+      { selector: ".bp-cell--status", attr: "data-cascade-state", cleanValue: "clean", alertValue: "alert" },
+      { selector: ".bp-speed__top", attr: "data-cascade-state", cleanValue: "clean", alertValue: "alert" }
+    ];
+    // Fixed hash, not Math.random() — same seed always yields the same
+    // fraction, so a seek reproduces the same frame (spec's own
+    // explicit requirement). Standard sine-hash trick, not tied to any
+    // library.
+    function seededFraction(seed) {
+      var x = Math.sin(seed * 12.9898) * 43758.5453;
+      return x - Math.floor(x);
+    }
+    // Walks one track's own freshly-inserted queue and assigns every
+    // toggle point a fire time inside the cascade window. seed keys off
+    // (trackIndex, dom position, element kind) — stable and arbitrary,
+    // not meant to encode meaning, just to scatter deterministically.
+    function collectCascadeTargets(scalerEl, trackIndex, cascadeStart, cascadeDuration) {
+      var targets = [];
+      for (var k = 0; k < CASCADE_ELEMENT_KINDS.length; k++) {
+        var kind = CASCADE_ELEMENT_KINDS[k];
+        var els = scalerEl.querySelectorAll(kind.selector);
+        for (var i = 0; i < els.length; i++) {
+          var seed = trackIndex * 1000 + i * 10 + k;
+          var fireTime = cascadeStart + seededFraction(seed) * cascadeDuration;
+          targets.push({
+            el: els[i], attr: kind.attr, cleanValue: kind.cleanValue, alertValue: kind.alertValue,
+            fireTime: fireTime, state: null
+          });
+        }
+      }
+      return targets;
+    }
+    // Small and quiet, per the spec's own "not fireworks... a light
+    // catching" register — a light bump, not the 0.35 the deleted
+    // original table-cell build once used for a similar swap.
+    var CASCADE_BUMP_MAGNITUDE = 0.20;
+    var CASCADE_BUMP_RISE_MS = 120, CASCADE_BUMP_HOLD_MS = 60, CASCADE_BUMP_FALL_MS = 150; // 330ms per element
+    function renderCascadeTargets(targets, t) {
+      for (var i = 0; i < targets.length; i++) {
+        var target = targets[i];
+        var localT = t - target.fireTime;
+        var nextState = localT >= 0 ? target.alertValue : target.cleanValue;
+        if (target.state !== nextState) {
+          target.el.setAttribute(target.attr, nextState);
+          target.state = nextState;
+        }
+        if (localT > 0 && localT < CASCADE_BUMP_RISE_MS + CASCADE_BUMP_HOLD_MS + CASCADE_BUMP_FALL_MS) {
+          target.el.style.transform = "scale(" + sceneNumberBump(localT, CASCADE_BUMP_RISE_MS, CASCADE_BUMP_HOLD_MS, CASCADE_BUMP_FALL_MS, CASCADE_BUMP_MAGNITUDE) + ")";
+        } else {
+          target.el.style.transform = "";
+        }
+      }
+    }
+    function resetCascadeTargets(targets) {
+      for (var i = 0; i < targets.length; i++) {
+        var target = targets[i];
+        target.el.setAttribute(target.attr, target.cleanValue);
+        target.el.style.transform = "";
+        target.state = target.cleanValue;
+      }
+    }
+
+    // ---- Flip displacement (fix item 6, spec §6: "let the flip
+    // displace the rows... lifts slightly and settles back... a small
+    // overshoot, then rest"). Per-track translateY on the OUTER
+    // `.qod2-track` (not the scaler, which already carries the card
+    // scale/position — this stays independent) — a ripple, per-track
+    // delay increasing outward from the footer (track 4, `.qod2-track--4`,
+    // sits closest to the footer and leads; track 1 trails), per the
+    // spec's own preference ("reads more like real displacement").
+    // Reuses easeOvershoot (already defined above for the footer's own
+    // entrance) rather than inventing a spring curve — applied twice,
+    // once to rise into the lift (overshooting slightly past it, same
+    // as the footer's own rise does past its resting position) and once
+    // to fall back to rest (overshooting slightly past rest before
+    // settling), which is what turns a single existing curve into a
+    // "lift, catch, settle" impulse instead of the one-directional
+    // entrance it was built for. ----
+    var RIPPLE_MAGNITUDE = 5; // px — "subtle... should register without being noticed as an effect"
+    var RIPPLE_RISE_MS = 180, RIPPLE_FALL_MS = 280;
+    var RIPPLE_TRACK_STAGGER_MS = 60;
+    function rippleOffset(localT) {
+      if (localT <= 0) return 0;
+      if (localT < RIPPLE_RISE_MS) return -RIPPLE_MAGNITUDE * easeOvershoot(clamp01(localT / RIPPLE_RISE_MS));
+      var fallT = localT - RIPPLE_RISE_MS;
+      if (fallT < RIPPLE_FALL_MS) return -RIPPLE_MAGNITUDE * (1 - easeOvershoot(clamp01(fallT / RIPPLE_FALL_MS)));
+      return 0;
+    }
+    function renderRipple(instance1, t, M) {
+      var n = instance1.tracks.length;
+      for (var i = 0; i < n; i++) {
+        // Outward from the footer: track index n-1 (.qod2-track--4,
+        // nearest the footer) leads with zero delay; track index 0
+        // (.qod2-track--1, farthest) trails most.
+        var delay = (n - 1 - i) * RIPPLE_TRACK_STAGGER_MS;
+        var y = rippleOffset(t - M.footerFlipEnd - delay);
+        instance1.tracks[i].trackEl.style.transform = y !== 0 ? "translateY(" + y + "px)" : "";
+      }
+    }
+
+    function renderScene1(instance1, t) {
+      var M = SCENE1_MARKS;
+
+      instance1.footerEl.style.transform = "translateY(" + computeFooterY(t, M) + "px)";
+      instance1.footerEl.style.opacity = 1; // constant — position/clip hides it, not opacity (see resetScene1Baseline)
+      instance1.footerFlipInnerEl.style.transform = "rotateX(" + computeFlipAngle(t, M) + "deg)";
+
+      renderFooterCounts(instance1, t, M);
+      renderBlockBumps(instance1, t, M);
+      renderCascadeTargets(instance1.cascadeTargets, t);
+      renderRipple(instance1, t, M);
+
+      for (var i = 0; i < instance1.tracks.length; i++) {
+        var track = instance1.tracks[i];
+        var offset = trackOffsetNative(track.config, t);
+        track.scalerEl.style.transform = "scale(" + ROW_CARD_SCALE + ") translateX(" + offset + "px)";
+      }
+    }
+
+    // Deactivation baseline (mirrors resetScene0Baseline's own role) —
+    // footer back to its hidden, below-panel resting position and
+    // front (clean) face; counts back to 0; block bumps and the ripple
+    // cleared; every cascade target back to its own clean state; tracks
+    // back to their own t=0 position — so a stray frame between
+    // deactivation and the next activation's first render call never
+    // shows mid-scene state.
+    function resetScene1Baseline(instance1) {
+      instance1.footerEl.style.transform = "translateY(" + FOOTER_ENTRY_OFFSET + "px)";
+      instance1.footerEl.style.opacity = 1;
+      instance1.footerFlipInnerEl.style.transform = "rotateX(0deg)";
+      instance1.billsCountEl.textContent = 0;
+      instance1.vendorsCountEl.textContent = 0;
+      instance1.paymentsCountEl.textContent = 0;
+      instance1.billsBlockFront.style.transform = "";
+      instance1.vendorsBlockFront.style.transform = "";
+      instance1.paymentsBlockFront.style.transform = "";
+      instance1.billsBlockBack.style.transform = "";
+      instance1.vendorsBlockBack.style.transform = "";
+      instance1.paymentsBlockBack.style.transform = "";
+      resetCascadeTargets(instance1.cascadeTargets);
+      for (var i = 0; i < instance1.tracks.length; i++) {
+        var track = instance1.tracks[i];
+        var offset0 = trackOffsetNative(track.config, 0);
+        track.scalerEl.style.transform = "scale(" + ROW_CARD_SCALE + ") translateX(" + offset0 + "px)";
+        track.trackEl.style.transform = "";
+      }
+    }
+
+    // Instance — DOM refs + each track's own config, the one-time queue
+    // build (spec §9.2's "finite queue" is authored once, at boot, not
+    // regenerated per frame), and the one-time cascade fire-time
+    // assignment (also boot-only — see collectCascadeTargets's own
+    // comment above for why per-frame regeneration would break seeking).
+    function buildScene1Instance() {
+      var panelEl = document.getElementById("ag-panel-1");
+      var footerEl = panelEl.querySelector(".qod2-footer");
+      var footerFlipInnerEl = document.getElementById("p1-footer-flip-inner");
+      var trackEls = panelEl.querySelectorAll(".qod2-track");
+      var tracks = [];
+      var cascadeTargets = [];
+      var cascadeStart = SCENE1_MARKS.cascadeStart;
+      var cascadeDuration = SCENE1_MARKS.cascadeEnd - SCENE1_MARKS.cascadeStart;
+      for (var i = 0; i < trackEls.length; i++) {
+        var config = TRACKS_CONFIG[i];
+        var scalerEl = trackEls[i].querySelector(".qod2-track-scaler");
+        scalerEl.innerHTML = buildTrackQueueHTML(config, i);
+        tracks.push({ config: config, trackEl: trackEls[i], scalerEl: scalerEl });
+        cascadeTargets = cascadeTargets.concat(collectCascadeTargets(scalerEl, i, cascadeStart, cascadeDuration));
+      }
+      return {
+        panelEl: panelEl,
+        footerEl: footerEl,
+        footerFlipInnerEl: footerFlipInnerEl,
+        tracks: tracks,
+        cascadeTargets: cascadeTargets,
+        billsCountEl: document.getElementById("p1-mock-stat-bills"),
+        vendorsCountEl: document.getElementById("p1-mock-stat-vendors"),
+        paymentsCountEl: document.getElementById("p1-mock-stat-payments"),
+        billsBlockFront: document.getElementById("p1-footer-stat-bills-front"),
+        vendorsBlockFront: document.getElementById("p1-footer-stat-vendors-front"),
+        paymentsBlockFront: document.getElementById("p1-footer-stat-payments-front"),
+        billsBlockBack: document.getElementById("p1-footer-stat-bills-back"),
+        vendorsBlockBack: document.getElementById("p1-footer-stat-vendors-back"),
+        paymentsBlockBack: document.getElementById("p1-footer-stat-payments-back")
+      };
+    }
+
     var instance = buildMockInstance();
+    var instance1 = buildScene1Instance();
 
     // ---- Trigger — Quality_Of_Decisions Scene 1 plays once, gated on
     // 60% scroll visibility. Same-origin same-document IntersectionObserver
@@ -3937,6 +4868,22 @@
     function applyScene(index) {
       panels[0].classList.toggle("is-active", index === 0);
       panels[1].classList.toggle("is-active", index === 1);
+      // Panel 0 loses .is-active whenever index !== 0 — tick() then
+      // stops calling renderScene0 for it entirely, so without this
+      // the mock would hold whatever frame it was mid-scene (drawer
+      // open, magnifier out, floats dismissed) and, since .is-active
+      // is what grants the overflow:visible the magnifier/cursor
+      // overhang needs, that frozen content would bleed past the
+      // collapsed panel's bounds. Resetting to baseline here — the
+      // one place every deactivation path (autoplay, seekToIndex,
+      // the postMessage handler) already funnels through — means
+      // there's nothing left painted to bleed.
+      if (index !== 0) {
+        resetScene0Baseline(instance);
+      }
+      if (index !== 1) {
+        resetScene1Baseline(instance1);
+      }
     }
 
     function announce(ms, index) {
@@ -4006,6 +4953,8 @@
         }
         if (index === 0) {
           renderScene0(instance, elapsed);
+        } else if (index === 1) {
+          renderScene1(instance1, elapsed - BOUNDARIES[1]);
         }
       } else {
         renderScene0(instance, 0);
@@ -4038,6 +4987,7 @@
     applyScene(initialIndex);
     announce(0, initialIndex);
     renderScene0(instance, 0);
+    renderScene1(instance1, 0);
     requestAnimationFrame(tick);
   })();
   </script>
