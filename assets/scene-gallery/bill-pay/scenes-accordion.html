@@ -410,6 +410,26 @@
     --qod2-footer-gap-above: 28px; /* spec §5 */
     --qod2-footer-top: calc(var(--qod2-track-top-4) + var(--qod2-row-card-height) + var(--qod2-footer-gap-above));
     --qod2-footer-left: calc((var(--ag-panel-active-width) - var(--qod2-footer-width)) / 2); /* spec gives no explicit x-position for the footer now that there's no mock to align to — centered on the panel itself is the least-arbitrary default, same reasoning the prior build's --qod2-mock-left used */
+
+    /* Panel 1 stat block widths (fix: pixel-identical faces) — .bp-stat
+       (shared rule) has no width of its own and sizes to content, so
+       the alerted back face's longer status text ("2 pending approval"
+       vs "Approved", etc.) rendered each block wider than its clean
+       front-face counterpart and pushed every later block right —
+       confirmed via getBoundingClientRect in native (unscaled) space:
+       BILLS 70.45→123.00, VENDORS 75.64→138.81, PAYMENTS 97.66→135.61
+       (front→back). Each var below is that back-face natural width
+       plus a few px headroom, so the alert text — the wider of the
+       two on every block — never sits at an exact zero-margin fit;
+       applied to BOTH faces' copy of a given stat (see the
+       #p1-footer-stat-* rules further down) so front and back start
+       every block at the identical x regardless of which is showing.
+       Raw px, not tokenized — same class of scene-local, measured
+       exception as --qod2-footer-radius/--qod2-footer-width above,
+       not a Figma value. */
+    --qod2-footer-stat-bills-width: 130px;
+    --qod2-footer-stat-vendors-width: 145px;
+    --qod2-footer-stat-payments-width: 142px;
   }
 
   /* No background here on purpose, same reasoning as Gallery 1's
@@ -1509,12 +1529,39 @@
      variable's own comment for why no further gap/padding edits are
      needed to reach it. Padding/gaps inside (.bp-footer__stats,
      .bp-stat, .bp-footer__buttons, .bp-btn) are all untouched, reused
-     verbatim from the shared rules above. */
+     verbatim from the shared rules above — except each stat block's
+     own width, fixed just below this rule (both faces land pixel-
+     identical; see that rule's own comment and the vars' comment in
+     the :root block above for why and by how much). */
   .qod2-footer-scaler .bp-footer {
     position: static;
     width: 100%;
     height: 100%;
   }
+  /* Fix: .bp-stat (shared rule above) has no width, so it sizes to
+     content — the alerted back face's longer status text rendered
+     each block wider and pushed every later block right (Vendors,
+     Payments) relative to the clean front face. Scoped by id, not the
+     shared .bp-stat rule itself, so panel 0's own #mock-screen footer
+     (same class, real .bp-stat blocks, untouched) isn't affected —
+     only these six ids exist, one pair per stat name across the two
+     faces. Same width on both faces' copy of a stat, so BILLS/
+     VENDORS/PAYMENTS start at the same x whichever face is showing;
+     the values themselves are the back face's own natural content
+     width plus headroom (:root block above). .bp-footer__stats' own
+     flex:1 (shared rule) already reserves ~818.67px of native-space
+     room for these three blocks + their two 120px gaps regardless of
+     content — see that rule's comment above — and even the widest
+     combination here (417px content + 240px gap = 657px) fits inside
+     that with room to spare, so the 120px gap didn't need to shrink
+     to make this fit; Cancel/Continue stay exactly where they were,
+     also thanks to that same flex:1. */
+  #p1-footer-stat-bills-front,
+  #p1-footer-stat-bills-back { width: var(--qod2-footer-stat-bills-width); }
+  #p1-footer-stat-vendors-front,
+  #p1-footer-stat-vendors-back { width: var(--qod2-footer-stat-vendors-width); }
+  #p1-footer-stat-payments-front,
+  #p1-footer-stat-payments-back { width: var(--qod2-footer-stat-payments-width); }
 
   /* ---- Flip (phase 2, spec §10) — perspective on the outer, unscaled
      wrapper; preserve-3d on its own direct child, the element a future
@@ -4675,7 +4722,13 @@
     // away from it. Still comfortably inside the clip constraint from
     // round 2 (scale 1.25 clears ≈4.9px each side, vs. 1.36px at 1.70). ----
     var BLOCK_BUMP_MAGNITUDE = 0.25;
-    var BLOCK_BUMP_RISE_MS = 120, BLOCK_BUMP_HOLD_MS = 80, BLOCK_BUMP_FALL_MS = 200; // 400ms per block, 3 blocks = 1200ms sequence
+    // Motion audit proposal 2: hold cut 80ms → 30ms — a dead-flat plateau
+    // at peak reads as a freeze-frame, not a bounce. Rise/fall unchanged;
+    // total per block now 350ms, not 400 — the beat sheet's own 400ms
+    // per-block spacing (renderBlockBumps below) is untouched, so this
+    // just leaves each block fully settled ~50ms before the next one
+    // starts, instead of landing exactly as the next one begins.
+    var BLOCK_BUMP_RISE_MS = 120, BLOCK_BUMP_HOLD_MS = 30, BLOCK_BUMP_FALL_MS = 200; // 350ms per block, sequenced 400ms apart
     function applyBlockBump(el, localT) {
       if (!el) return;
       if (localT > 0 && localT < BLOCK_BUMP_RISE_MS + BLOCK_BUMP_HOLD_MS + BLOCK_BUMP_FALL_MS) {
@@ -4684,9 +4737,20 @@
         el.style.transform = "";
       }
     }
+    // Motion audit proposal 3: the front face's first block (BILLS) used
+    // to wait for blockBumpFrontStart exactly — the instant the count-up
+    // beat's own fixed length ends. Unlike the block→strip handoff above,
+    // the count-up is one continuous eased tween with no rise/hold/fall
+    // structure of its own, so there's no fall-completion instant to
+    // derive an exact lead from; landing mid-range in the audit's 80-
+    // 120ms overlap window (100ms) is what's used here. Only the FIRST
+    // block gets the early start — VENDORS/PAYMENTS keep their existing
+    // 400ms/800ms spacing off the unshifted mark, since only the count-up
+    // handoff was flagged, not the block-to-block cadence between them.
+    var COUNT_UP_TO_BLOCK_LEAD_MS = 100;
     function renderBlockBumps(instance1, t, M) {
       var frontStart = M.blockBumpFrontStart;
-      applyBlockBump(instance1.billsBlockFront, t - frontStart);
+      applyBlockBump(instance1.billsBlockFront, t - (frontStart - COUNT_UP_TO_BLOCK_LEAD_MS));
       applyBlockBump(instance1.vendorsBlockFront, t - (frontStart + 400));
       applyBlockBump(instance1.paymentsBlockFront, t - (frontStart + 800));
       var backStart = M.blockBumpBackStart;
@@ -4703,10 +4767,13 @@
     // its own fire time, seeded once at boot from a fixed hash (never
     // Math.random() at runtime — spec: "a seek has to reproduce the
     // same frame"), scattered across the cascade beat's own window.
-    // Per-frame, an element instantly swaps its own clean/alert content
-    // (toggling the same attribute the CSS above already keys off) the
-    // moment t crosses its fire time, with a brief scale pop riding
-    // along — "each element pops... the text swaps with it" (spec).
+    // Per-frame, an element swaps its own clean/alert content (toggling
+    // the same attribute the CSS above already keys off) once its own
+    // bump has risen to peak — CASCADE_BUMP_RISE_MS after its fire time,
+    // not at the fire time itself (motion audit proposal 5: swapping at
+    // the pop's peak instead of the instant t crosses fire time lands the
+    // value change and the pop as one event) — "each element pops... the
+    // text swaps with it" (spec).
     // Cards not yet on screen when their own fire time passes are
     // simply born alerted once they arrive — nothing tracks visibility
     // here, t alone decides, so "every card that enters after the
@@ -4748,12 +4815,14 @@
     // catching" register — a light bump, not the 0.35 the deleted
     // original table-cell build once used for a similar swap.
     var CASCADE_BUMP_MAGNITUDE = 0.20;
-    var CASCADE_BUMP_RISE_MS = 120, CASCADE_BUMP_HOLD_MS = 60, CASCADE_BUMP_FALL_MS = 150; // 330ms per element
+    // Motion audit proposal 2: hold cut 60ms → 30ms, same reasoning as the
+    // block bump's own cut above — no dead plateau at peak.
+    var CASCADE_BUMP_RISE_MS = 120, CASCADE_BUMP_HOLD_MS = 30, CASCADE_BUMP_FALL_MS = 150; // 300ms per element
     function renderCascadeTargets(targets, t) {
       for (var i = 0; i < targets.length; i++) {
         var target = targets[i];
         var localT = t - target.fireTime;
-        var nextState = localT >= 0 ? target.alertValue : target.cleanValue;
+        var nextState = localT >= CASCADE_BUMP_RISE_MS ? target.alertValue : target.cleanValue;
         if (target.state !== nextState) {
           target.el.setAttribute(target.attr, nextState);
           target.state = nextState;
@@ -4848,14 +4917,34 @@
     // checking both and returning whichever is active is safe — at
     // most one contributes a non-1 value at any given t. ----
     var FOOTER_TOTAL_BUMP_MAGNITUDE = 0.05;
-    var FOOTER_TOTAL_BUMP_RISE_MS = 120, FOOTER_TOTAL_BUMP_HOLD_MS = 80, FOOTER_TOTAL_BUMP_FALL_MS = 200; // 400ms
+    // Motion audit proposal 1: this used to share the per-block bump's own
+    // 120/80/200 timing verbatim, despite moving an object roughly 5x the
+    // size (the whole 530px-wide strip vs. one ~100px stat block) right
+    // after those blocks settle — no sense of the added mass. Slower rise,
+    // shorter hold, slower fall: the strip visibly takes longer to get
+    // moving and longer to settle than the blocks that preceded it.
+    var FOOTER_TOTAL_BUMP_RISE_MS = 160, FOOTER_TOTAL_BUMP_HOLD_MS = 60, FOOTER_TOTAL_BUMP_FALL_MS = 280; // 500ms
     var FOOTER_TOTAL_BUMP_WINDOW_MS = FOOTER_TOTAL_BUMP_RISE_MS + FOOTER_TOTAL_BUMP_HOLD_MS + FOOTER_TOTAL_BUMP_FALL_MS;
+    // Motion audit proposal 3: the strip's bump used to wait for this
+    // beat's own mark (footerTotalBumpStart/BackStart), which lands the
+    // exact instant the third per-block bump's fixed-length slot in the
+    // beat sheet ends — a hard, zero-gap handoff. The third block's own
+    // bump (BLOCK_BUMP_RISE_MS+HOLD_MS+FALL_MS = 350ms, starting 800ms
+    // into the beat) actually finishes falling at localT 1150ms, 50ms
+    // before that 1200ms mark. Starting the strip's rise 150ms ahead of
+    // the mark lands it at localT 1050 — 100ms before the block's own
+    // fall completes, inside the audit's 80-120ms overlap window — so the
+    // two gestures read as one continuous move instead of stop-then-
+    // restart. Purely a local trigger-time shift: the beat sheet's own
+    // marks (and everything timed off them downstream, e.g.
+    // holdBeforeCascade/holdBeforeExit) are untouched.
+    var FOOTER_TOTAL_BUMP_LEAD_MS = 150;
     function footerTotalBumpScale(t, M) {
-      var frontLocalT = t - M.footerTotalBumpStart;
+      var frontLocalT = t - (M.footerTotalBumpStart - FOOTER_TOTAL_BUMP_LEAD_MS);
       if (frontLocalT > 0 && frontLocalT < FOOTER_TOTAL_BUMP_WINDOW_MS) {
         return sceneNumberBump(frontLocalT, FOOTER_TOTAL_BUMP_RISE_MS, FOOTER_TOTAL_BUMP_HOLD_MS, FOOTER_TOTAL_BUMP_FALL_MS, FOOTER_TOTAL_BUMP_MAGNITUDE);
       }
-      var backLocalT = t - M.footerTotalBumpBackStart;
+      var backLocalT = t - (M.footerTotalBumpBackStart - FOOTER_TOTAL_BUMP_LEAD_MS);
       if (backLocalT > 0 && backLocalT < FOOTER_TOTAL_BUMP_WINDOW_MS) {
         return sceneNumberBump(backLocalT, FOOTER_TOTAL_BUMP_RISE_MS, FOOTER_TOTAL_BUMP_HOLD_MS, FOOTER_TOTAL_BUMP_FALL_MS, FOOTER_TOTAL_BUMP_MAGNITUDE);
       }
