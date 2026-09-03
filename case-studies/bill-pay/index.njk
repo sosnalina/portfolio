@@ -11,6 +11,7 @@ stylesheets:
   - ../../css/components/video.css
   - ../../css/components/image-group.css
   - ../../css/components/principles.css
+  - ../../css/components/ap-manager-orbit.css
   - ../../css/widgets/bill-pay/scene-gallery-accordion/scene-gallery-accordion.css
   - ../../css/widgets/bill-pay/scene-gallery-2/scene-gallery-2.css
   - ../../css/widgets/bill-pay/scene-accordion/scene-accordion.css
@@ -168,6 +169,65 @@ scripts:
   {# 6. The AP manager #}
   {% call section("section--grey-light") %}
   {{ sectionHeader("The AP Manager", "Problem definition") }}
+  <div class="ap-manager-orbit">
+    <div class="ap-manager-orbit__asset ap-manager-orbit__quote-blob-wrap">
+      <img src="../../assets/illustrations/bill-pay/ap-manager-orbit/quote-blob.svg" alt="" />
+    </div>
+    <svg class="ap-manager-orbit__rings" viewBox="0 0 800 397">
+      <circle class="ap-manager-orbit__ring" cx="190" cy="212.23" r="150" />
+      <circle class="ap-manager-orbit__ring" cx="190" cy="212.23" r="100" />
+      <circle class="ap-manager-orbit__ring" cx="190" cy="212.23" r="125" />
+    </svg>
+    <div class="ap-manager-orbit__asset ap-manager-orbit__finance-director">
+      <img src="../../assets/illustrations/bill-pay/ap-manager-orbit/finance-director.png" alt="" />
+    </div>
+    <div class="ap-manager-orbit__asset ap-manager-orbit__ap-clerk">
+      <img src="../../assets/illustrations/bill-pay/ap-manager-orbit/ap-clerk.png" alt="" />
+    </div>
+    <div class="ap-manager-orbit__asset ap-manager-orbit__ap-manager">
+      <img src="../../assets/illustrations/bill-pay/ap-manager-orbit/ap-manager.png" alt="" />
+    </div>
+    <div class="ap-manager-orbit__asset ap-manager-orbit__procurement-manager">
+      <img src="../../assets/illustrations/bill-pay/ap-manager-orbit/procurement-manager.png" alt="" />
+    </div>
+    <div class="ap-manager-orbit__asset ap-manager-orbit__coin-1">
+      <img src="../../assets/illustrations/bill-pay/ap-manager-orbit/coin.png" alt="" />
+    </div>
+    <div class="ap-manager-orbit__asset ap-manager-orbit__coin-2">
+      <img src="../../assets/illustrations/bill-pay/ap-manager-orbit/coin.png" alt="" />
+    </div>
+    <div class="ap-manager-orbit__asset ap-manager-orbit__coin-3">
+      <img src="../../assets/illustrations/bill-pay/ap-manager-orbit/coin.png" alt="" />
+    </div>
+    <div class="ap-manager-orbit__asset ap-manager-orbit__hashtag">
+      <img src="../../assets/illustrations/bill-pay/ap-manager-orbit/hashtag.png" alt="" />
+    </div>
+    <div class="ap-manager-orbit__asset ap-manager-orbit__trend-arrow">
+      <img src="../../assets/illustrations/bill-pay/ap-manager-orbit/trend-arrow.png" alt="" />
+    </div>
+    <div class="ap-manager-orbit__asset ap-manager-orbit__banknote-small">
+      <img src="../../assets/illustrations/bill-pay/ap-manager-orbit/banknote-small.png" alt="" />
+    </div>
+    <div class="ap-manager-orbit__asset ap-manager-orbit__banknote-big-wrap">
+      <img class="ap-manager-orbit__banknote-big" src="../../assets/illustrations/bill-pay/ap-manager-orbit/banknote-big.png" alt="" />
+    </div>
+    <div class="ap-manager-orbit__asset ap-manager-orbit__star-1">
+      <img src="../../assets/illustrations/bill-pay/ap-manager-orbit/star.png" alt="" />
+    </div>
+    <div class="ap-manager-orbit__asset ap-manager-orbit__star-2">
+      <img src="../../assets/illustrations/bill-pay/ap-manager-orbit/star.png" alt="" />
+    </div>
+    <div class="ap-manager-orbit__asset ap-manager-orbit__star-3">
+      <img src="../../assets/illustrations/bill-pay/ap-manager-orbit/star.png" alt="" />
+    </div>
+    <div class="ap-manager-orbit__asset ap-manager-orbit__star-4">
+      <img src="../../assets/illustrations/bill-pay/ap-manager-orbit/star.png" alt="" />
+    </div>
+    <div class="ap-manager-orbit__asset ap-manager-orbit__quote-mark">
+      <img src="../../assets/illustrations/bill-pay/ap-manager-orbit/quote-mark.svg" alt="" />
+    </div>
+    <p class="ap-manager-orbit__asset ap-manager-orbit__quote-text">I review bills individually, yet execute payments in batches.<br>Deciding when and how to pay means sequencing factors like cashflow and vendor terms for each batch. They don't always align.</p>
+  </div>
   {{ sectionBody([
     "The next thing was to deep dive into our primary user, the one who drives payment execution. On this seat, mindset is built around payment runs, while keeping a delicate balance between compliance, efficiency, and cash flow control.",
     "We also looked at how organizational dynamics define their role, and how their success is ultimately measured. For these AP managers, payment execution isn't a series of independent tasks. It's a high-stakes orchestration, a cohorted move, where every micro-adjustment ripples through the entire run."

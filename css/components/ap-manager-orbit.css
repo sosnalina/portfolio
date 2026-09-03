@@ -1,0 +1,203 @@
+/* Figma node 478:8539 — "The AP Manager" section illustration + quote.
+   Fixed 800x397 composite: three dashed orbit rings sharing one center,
+   overlapping character/object PNGs, and a quote blob + mark + paragraph.
+   All coordinates below are literal px, sourced directly from the Figma
+   node (not spacing-scale values), same convention as this project's other
+   absolutely-positioned widget/illustration compositions. */
+
+.ap-manager-orbit {
+  position: relative;
+  width: 800px;
+  height: 397px;
+  background: var(--primitive-grey-light);
+  overflow: hidden;
+}
+
+.ap-manager-orbit__rings {
+  position: absolute;
+  inset: 0;
+  width: 800px;
+  height: 397px;
+}
+
+.ap-manager-orbit__ring {
+  fill: none;
+  stroke: var(--primitive-disable);
+  stroke-width: 1px;
+  stroke-dasharray: 5 9;
+}
+
+.ap-manager-orbit__asset {
+  position: absolute;
+  display: block;
+}
+
+.ap-manager-orbit__asset img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Characters */
+
+.ap-manager-orbit__ap-manager {
+  left: 104px;
+  top: 127.79px;
+  width: 171.683px;
+  height: 169px;
+}
+
+.ap-manager-orbit__ap-clerk {
+  left: 266px;
+  top: 109.23px;
+  width: 48px;
+  height: 47.25px;
+}
+
+.ap-manager-orbit__finance-director {
+  left: 54px;
+  top: 62.23px;
+  width: 64px;
+  height: 63px;
+}
+
+/* enlarged 20% from the original spec's 24x33.018 @ (51,270), scaled from
+   its center point so it stays visually centered on the same spot */
+.ap-manager-orbit__procurement-manager {
+  left: 48.6px;
+  top: 266.7px;
+  width: 28.8px;
+  height: 39.62px;
+}
+
+/* Objects */
+
+.ap-manager-orbit__coin-1 {
+  left: 299px;
+  top: 229px;
+  width: 22.384px;
+  height: 23.24px;
+}
+
+.ap-manager-orbit__coin-2 {
+  left: 86px;
+  top: 235px;
+  width: 22.384px;
+  height: 23.24px;
+}
+
+.ap-manager-orbit__coin-3 {
+  left: 255px;
+  top: 331px;
+  width: 22.384px;
+  height: 23.24px;
+}
+
+/* enlarged 20% from the original spec's 21x22.969 @ (223,110), scaled from
+   its center point so it stays visually centered on the same spot */
+.ap-manager-orbit__hashtag {
+  left: 220.9px;
+  top: 107.7px;
+  width: 25.2px;
+  height: 27.56px;
+}
+
+.ap-manager-orbit__trend-arrow {
+  left: 28px;
+  top: 198px;
+  width: 47.57px;
+  height: 30.78px;
+}
+
+.ap-manager-orbit__banknote-small {
+  left: 119px;
+  top: 303px;
+  width: 57px;
+  height: 43.098px;
+}
+
+/* banknote-big is rotated: the outer box below is the rotated bounding box
+   (positions the asset correctly), the inner img is the unrotated native
+   size, rotated in place around its own center via flex-centering. */
+
+.ap-manager-orbit__banknote-big-wrap {
+  left: 185.89px;
+  top: 35px;
+  width: 54.808px;
+  height: 61.752px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ap-manager-orbit__banknote-big {
+  display: block;
+  width: 53.091px;
+  height: 60.244px;
+  transform: rotate(1.65deg);
+}
+
+/* Stars — one shared asset, four static transforms (deliberate, not a
+   Figma re-export per orientation). */
+
+.ap-manager-orbit__star-1 {
+  left: 140px;
+  top: 86px;
+  width: 20.632px;
+  height: 18.131px;
+}
+
+.ap-manager-orbit__star-2 {
+  left: 327px;
+  top: 160.23px;
+  width: 20.632px;
+  height: 18.131px;
+  transform: scaleX(-1);
+}
+
+.ap-manager-orbit__star-3 {
+  left: 39px;
+  top: 153px;
+  width: 20.632px;
+  height: 18.131px;
+  transform: scaleY(-1);
+}
+
+.ap-manager-orbit__star-4 {
+  left: 229px;
+  top: 283px;
+  width: 20.632px;
+  height: 18.131px;
+  transform: rotate(180deg);
+}
+
+/* Quote */
+
+/* quote-blob.svg is already exported in its correct final landscape
+   orientation — no rotation applied. Renders as the component's backdrop
+   (see markup: first child / lowest in paint order), behind the rings,
+   every character/object, and the quote text. */
+
+.ap-manager-orbit__quote-blob-wrap {
+  left: 197px;
+  top: 67.32px;
+  width: 349.575px;
+  height: 243.993px;
+}
+
+.ap-manager-orbit__quote-mark {
+  left: 396.16px;
+  top: 92.27px;
+  width: 33.352px;
+  height: 26.224px;
+}
+
+.ap-manager-orbit__quote-text {
+  left: 398px;
+  top: 140px;
+  width: 380px;
+  margin: 0;
+  font: var(--text-quote);
+  color: var(--primitive-black);
+}
