@@ -153,7 +153,6 @@
   top: 160.23px;
   width: 20.632px;
   height: 18.131px;
-  transform: scaleX(-1);
 }
 
 .ap-manager-orbit__star-3 {
@@ -161,7 +160,6 @@
   top: 153px;
   width: 20.632px;
   height: 18.131px;
-  transform: scaleY(-1);
 }
 
 .ap-manager-orbit__star-4 {
@@ -169,6 +167,22 @@
   top: 283px;
   width: 20.632px;
   height: 18.131px;
+}
+
+/* Static flip/rotate for the shared star asset lives on the <img>, not
+   the positioned wrapper div — the wrapper is the orbit motion's own
+   transform target (js/bill-pay/ap-manager-orbit.js), so it has to stay
+   free of any other transform. */
+
+.ap-manager-orbit__star-flip-x {
+  transform: scaleX(-1);
+}
+
+.ap-manager-orbit__star-flip-y {
+  transform: scaleY(-1);
+}
+
+.ap-manager-orbit__star-flip-180 {
   transform: rotate(180deg);
 }
 
@@ -200,4 +214,144 @@
   margin: 0;
   font: var(--text-quote);
   color: var(--primitive-black);
+}
+
+/* Motion (Phase 2, node 478:8539 static layout unchanged).
+   Orbit drift/wobble/settle for the 15 characters+objects+stars is
+   computed per-frame in js/bill-pay/ap-manager-orbit.js (a pure
+   function of elapsed visible time, same convention as this project's
+   other continuous-motion widgets, e.g. scene-accordion.js). Everything
+   below is plain CSS — rings, the blob's sway, and the quote's entrance
+   — with animation-play-state toggled by that same script's shared
+   IntersectionObserver so all of it pauses/resumes together with the
+   orbit loop instead of running off-screen. */
+
+.ap-manager-orbit__orbit-item {
+  will-change: transform;
+}
+
+/* Paint order. DOM position alone can't determine visual stacking here —
+   the settle mechanic above periodically pulls a different orbit item
+   right up against ap-manager's silhouette, and each item's fixed DOM
+   position relative to him is otherwise arbitrary (a leftover of markup
+   authoring order, not a depth cue). Explicit z-index gives a fixed
+   baseline — manager above every resting orbit item — with one dynamic
+   exception: whichever item currently owns the round-robin close pass
+   is promoted above him for the duration of that settle window via
+   .ap-manager-orbit__orbit-item--settling (toggled per-frame in
+   js/bill-pay/ap-manager-orbit.js), then dropped back to baseline once
+   its turn ends. Quote mark/text stay above all of it, matching their
+   original DOM-last/topmost position. */
+
+.ap-manager-orbit__quote-blob-wrap {
+  z-index: 0;
+}
+
+.ap-manager-orbit__rings {
+  z-index: 1;
+}
+
+.ap-manager-orbit__orbit-item {
+  z-index: 2;
+}
+
+.ap-manager-orbit__ap-manager {
+  z-index: 3;
+}
+
+.ap-manager-orbit__orbit-item--settling {
+  z-index: 4;
+}
+
+.ap-manager-orbit__quote-mark,
+.ap-manager-orbit__quote-text {
+  z-index: 5;
+}
+
+/* Guide rings — outer and inner rotate continuously, counter to each
+   other, each slower than any orbiting object (base orbit speed is
+   8deg/s min; these are 3.5 and 2.2deg/s). The middle ring (Ring C) is
+   not named in the motion spec and stays static. */
+
+.ap-manager-orbit__ring--outer {
+  animation: ap-manager-orbit-ring-outer 102.857s linear infinite;
+  animation-play-state: paused;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.ap-manager-orbit__ring--inner {
+  animation: ap-manager-orbit-ring-inner 163.636s linear infinite;
+  animation-play-state: paused;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@keyframes ap-manager-orbit-ring-outer {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(-360deg); }
+}
+
+@keyframes ap-manager-orbit-ring-inner {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Quote-blob sway — whole shape rotates around its own center,
+   angle = sin(t * 0.60) * 5deg, ~10.5s full cycle. Expressed as discrete
+   keyframes per the spec's own stated fallback, each quarter-cycle
+   using --ease-in-out (cubic-bezier(0.77,0,0.175,1)). */
+
+.ap-manager-orbit__quote-blob-wrap {
+  animation: ap-manager-orbit-blob-sway 10.472s cubic-bezier(0.77, 0, 0.175, 1) infinite;
+  animation-play-state: paused;
+}
+
+@keyframes ap-manager-orbit-blob-sway {
+  0% { transform: rotate(0deg); }
+  25% { transform: rotate(5deg); }
+  50% { transform: rotate(0deg); }
+  75% { transform: rotate(-5deg); }
+  100% { transform: rotate(0deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ap-manager-orbit__ring--outer,
+  .ap-manager-orbit__ring--inner,
+  .ap-manager-orbit__quote-blob-wrap {
+    animation: none;
+  }
+}
+
+/* Quote entrance — mark first, text 180ms later, drift up + fade in,
+   triggered once by js/bill-pay/ap-manager-orbit.js toggling
+   .ap-manager-orbit--quote-visible on viewport entry. Duration (900ms)
+   is deliberately above the UI table range — editorial pace, not a
+   card. Fade + translate only, no scale (stated deviation). */
+
+.ap-manager-orbit__quote-mark,
+.ap-manager-orbit__quote-text {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 900ms cubic-bezier(0.23, 1, 0.32, 1),
+    transform 900ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.ap-manager-orbit__quote-text {
+  transition-delay: 180ms;
+}
+
+.ap-manager-orbit--quote-visible .ap-manager-orbit__quote-mark,
+.ap-manager-orbit--quote-visible .ap-manager-orbit__quote-text {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ap-manager-orbit__quote-mark,
+  .ap-manager-orbit__quote-text {
+    transform: none;
+    transition-duration: 300ms, 300ms;
+    transition-timing-function: ease, ease;
+  }
 }
