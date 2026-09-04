@@ -216,56 +216,20 @@
   color: var(--primitive-black);
 }
 
-/* Motion (Phase 2, node 478:8539 static layout unchanged).
-   Orbit drift/wobble/settle for the 15 characters+objects+stars is
-   computed per-frame in js/bill-pay/ap-manager-orbit.js (a pure
-   function of elapsed visible time, same convention as this project's
-   other continuous-motion widgets, e.g. scene-accordion.js). Everything
-   below is plain CSS — rings, the blob's sway, and the quote's entrance
-   — with animation-play-state toggled by that same script's shared
+/* Motion (v2 — case-studies/bill-pay/ap-manager-orbit-spec.md, node
+   478:8539 static layout unchanged). Each of the 14 characters/objects/
+   stars is locked to one of 3 fixed radii from the ring center, with an
+   optional small per-item "lean" — computed per-frame in
+   js/bill-pay/ap-manager-orbit.js (a pure function of elapsed visible
+   time, same convention as this project's other continuous-motion
+   widgets, e.g. scene-accordion.js). Everything below is plain CSS —
+   rings, the blob's sway, and the quote's entrance — with
+   animation-play-state toggled by that same script's shared
    IntersectionObserver so all of it pauses/resumes together with the
    orbit loop instead of running off-screen. */
 
 .ap-manager-orbit__orbit-item {
   will-change: transform;
-}
-
-/* Paint order. DOM position alone can't determine visual stacking here —
-   the settle mechanic above periodically pulls a different orbit item
-   right up against ap-manager's silhouette, and each item's fixed DOM
-   position relative to him is otherwise arbitrary (a leftover of markup
-   authoring order, not a depth cue). Explicit z-index gives a fixed
-   baseline — manager above every resting orbit item — with one dynamic
-   exception: whichever item currently owns the round-robin close pass
-   is promoted above him for the duration of that settle window via
-   .ap-manager-orbit__orbit-item--settling (toggled per-frame in
-   js/bill-pay/ap-manager-orbit.js), then dropped back to baseline once
-   its turn ends. Quote mark/text stay above all of it, matching their
-   original DOM-last/topmost position. */
-
-.ap-manager-orbit__quote-blob-wrap {
-  z-index: 0;
-}
-
-.ap-manager-orbit__rings {
-  z-index: 1;
-}
-
-.ap-manager-orbit__orbit-item {
-  z-index: 2;
-}
-
-.ap-manager-orbit__ap-manager {
-  z-index: 3;
-}
-
-.ap-manager-orbit__orbit-item--settling {
-  z-index: 4;
-}
-
-.ap-manager-orbit__quote-mark,
-.ap-manager-orbit__quote-text {
-  z-index: 5;
 }
 
 /* Guide rings — outer and inner rotate continuously, counter to each
