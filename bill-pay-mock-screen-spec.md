@@ -657,12 +657,17 @@ scrolls. Deliberate divergence — record it in `COMPONENT-MAP.md`.
 aside#bp-activity-drawer.bp-drawer.bp-drawer--activity   flex column
  ├─ div.bp-activity__head        flex: 0 0 auto;  position: relative;
  │                               padding: 48px 30px 0;
- │    ├─ button.bp-drawer__close
- │    ├─ header block            (18.6)
- │    ├─ divider                 (18.6)
- │    ├─ balance + due block     (18.6)
- │    ├─ divider                 (18.6)
- │    └─ "Bill activity" heading (18.6)
+ │    └─ div.bp-activity__head-inner   position: relative; width: 100%;
+ │         │  (unpadded, one level inside the padded head — mirrors
+ │         │  .bp-drawer__head's own role, so .bp-drawer__close's
+ │         │  absolute top:0/right:0 resolves against this box and lands
+ │         │  identical to the payment drawer's close button, x=387/y=66)
+ │         ├─ button.bp-drawer__close
+ │         ├─ header block            (18.6)
+ │         ├─ divider                 (18.6)
+ │         ├─ balance + due block     (18.6)
+ │         ├─ divider                 (18.6)
+ │         └─ "Bill activity" heading (18.6)
  └─ div.bp-activity__scroll      flex: 1; overflow-y: auto;
                                  padding: 0 30px;  position: relative;
       ├─ div.bp-activity__fade   (18.8)

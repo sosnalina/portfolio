@@ -736,6 +736,12 @@
         width: 106px;
         gap: 6px;
       }
+      /* §18.11 — batch mode only; the bulk sub-row's identical-looking
+         status cell (renderSubRow) never gets this class, so it stays
+         inert with no cursor/hover/handler, per spec. */
+      .bp-cell--status--clickable {
+        cursor: pointer;
+      }
       .bp-cell--due {
         width: 84px;
       }
@@ -1151,7 +1157,14 @@
       .bp-screen--narrow .bp-drawer {
         display: flex;
       }
-      .bp-screen--drawer-open .bp-drawer {
+      /* Scoped to the #bp-drawer ID, not the bare .bp-drawer class: the
+         activity drawer below also carries class="bp-drawer" (§18.5, to
+         reuse its static box/closed-state/close-transition declarations),
+         so a bare-class selector here would slide BOTH drawers open
+         together whenever either one's own state class is set. Necessary
+         scoping fix for §18.4's mutual-exclusivity requirement — no values
+         changed, same tokens/easings, only the selector's target narrowed. */
+      .bp-screen--drawer-open #bp-drawer {
         transform: translate3d(0, 0, 0);
         transition: transform 225ms var(--bp-ease-drawer-open);
       }
@@ -1338,6 +1351,138 @@
       .bp-drawer__section-title--note {
         font: var(--bp-text-drawer-note-title);
         font-weight: 600;
+      }
+
+      /* ---- Bill Activity drawer (§18) — a second, independent side
+         drawer, not a third view inside #bp-drawer (it has its own
+         element, its own state, no footer). Shares .bp-drawer's static
+         box (width/radius/shadow/position/closed-transform/close-
+         transition) via the base class — see class="bp-drawer
+         bp-drawer--activity" on the markup below and the #bp-drawer-ID
+         scoping fix on .bp-screen--drawer-open above.
+
+         Structural divergence from #bp-drawer, recorded per §18.5: there,
+         .bp-drawer__scroll owns overflow-y and scrolls everything, head
+         included. Here the head (.bp-activity__head) is fixed and only
+         .bp-activity__scroll scrolls — also noted in COMPONENT-MAP.md. ---- */
+      .bp-activity__head {
+        flex: 0 0 auto;
+        position: relative;
+        padding: 48px 30px 0;
+      }
+      /* Mirrors .bp-drawer__head's own role: an unpadded position:relative
+         wrapper one level inside the padded box, so .bp-drawer__close's
+         absolute top:0/right:0 resolves against THIS box (375px wide,
+         inset by .bp-activity__head's own 48px/30px padding via normal
+         flow) rather than against .bp-activity__head itself (435px wide,
+         padding-agnostic for absolute children) — the fix for the close
+         button landing at x=417/y=18 instead of the payment drawer's
+         x=387/y=66. Declarations copied verbatim from .bp-drawer__head,
+         not re-derived. */
+      .bp-activity__head-inner {
+        position: relative;
+        width: 100%;
+      }
+      .bp-activity__header {
+        padding: 9px 0;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .bp-activity__text-group {
+        padding: 1px 0;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      /* Vendor-name line sits in a 24px-tall row, vertically centred (§18.6). */
+      .bp-activity__vendor-row {
+        height: 24px;
+        display: flex;
+        align-items: center;
+      }
+      .bp-activity__status-row {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+      }
+      .bp-activity__totals {
+        display: flex;
+        flex-direction: column;
+      }
+      /* .bp-drawer__section-title / .bp-drawer__total-amount both carry
+         spacing meant for their OTHER usages elsewhere in this drawer (a
+         standalone section heading; a total sitting below a divider) —
+         here they're relabeled as a field pair stacked via .bp-field's own
+         30px/6px rhythm instead, so both need zeroing. Spec (§18.6)
+         explicitly calls out zeroing .bp-drawer__total-amount's
+         margin-top and .bp-drawer__section-title's padding-top; this also
+         zeros .bp-drawer__section-title's own 24px margin-bottom, which
+         the spec's text doesn't mention but which would otherwise stack
+         with .bp-field's 6px gap and produce a 30px label→value gap
+         instead of the 6px the spec states elsewhere in the same section —
+         flagged in the build report as an unresolved-spec-text gap, not a
+         silent guess. Scoped to .bp-drawer--activity; base classes
+         untouched, exactly as instructed. */
+      .bp-drawer--activity .bp-activity__label {
+        padding-top: 0;
+        margin-bottom: 0;
+      }
+      .bp-drawer--activity .bp-activity__value {
+        margin-top: 0;
+      }
+      .bp-activity__scroll {
+        position: relative;
+        flex: 1;
+        overflow-y: auto;
+        padding: 0 30px;
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* IE and Edge */
+      }
+      .bp-activity__scroll::-webkit-scrollbar {
+        width: 0 !important;
+        height: 0 !important;
+        background: transparent !important;
+      }
+      .bp-activity__scroll::-webkit-scrollbar-thumb { background: transparent !important; }
+      #bp-activity-drawer::-webkit-scrollbar {
+        width: 0 !important;
+        height: 0 !important;
+        background: transparent !important;
+      }
+      #bp-activity-drawer::-webkit-scrollbar-thumb { background: transparent !important; }
+      /* Right-edge white mask, duplicated from .bp-drawer__scroll::after —
+         sits inside the 30px right padding, so no content is covered. */
+      .bp-activity__scroll::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 16px;
+        height: 100%;
+        background: var(--primitive-white);
+        pointer-events: none;
+        z-index: 3;
+      }
+      /* Top fade (§18.8) — sticky, not absolute: .bp-activity__scroll's
+         own children are plain block flow (not flex), so the negative
+         margin fully cancels the sticky element's layout footprint with
+         no flex-gap side effect (unlike the .bp-rows-scroll::before
+         comment's account of that same trick failing in a flex context).
+         Always visible (no .is-scrolled gate) — spec has no bottom fade
+         and no scroll-affordance button, only this. */
+      .bp-activity__fade {
+        position: sticky;
+        top: 0;
+        height: 24px;
+        margin-bottom: -24px;
+        background: linear-gradient(to bottom, var(--primitive-white) 0%, transparent 100%);
+        pointer-events: none;
+        z-index: 2;
+      }
+      .bp-screen--activity-open #bp-activity-drawer {
+        transform: translate3d(0, 0, 0);
+        transition: transform 225ms var(--bp-ease-drawer-open);
       }
 
       .bp-radio-item {
@@ -2088,6 +2233,43 @@
           <div class="bp-drawer__footer" id="bp-drawer-footer" style="display: none">
             <button class="bp-btn bp-btn--cancel" type="button">Cancel</button>
             <button class="bp-btn bp-btn--continue" type="button" id="bp-drawer-apply">Apply changes</button>
+          </div>
+        </aside>
+
+        <aside class="bp-drawer bp-drawer--activity" id="bp-activity-drawer">
+          <div class="bp-activity__head">
+            <div class="bp-activity__head-inner">
+              <button class="bp-drawer__close" type="button" id="bp-activity-close" aria-label="Close">
+                <img class="bp-action-icon" src="../../icons/bill-pay-mock/narrow-action.svg" alt="" />
+              </button>
+              <div class="bp-activity__header">
+                <div class="bp-activity__text-group">
+                  <div class="bp-activity__vendor-row"><p class="bp-drawer__meta" id="bp-activity-vendor-name"></p></div>
+                  <p class="bp-drawer__title" id="bp-activity-bill-number"></p>
+                </div>
+                <div class="bp-activity__status-row">
+                  <span class="bp-status__check"><img src="../../icons/bill-pay-mock/status-check.svg" alt="" style="display: block; width: 100%; height: 100%" /></span>
+                  <span class="bp-status-text">Approved</span>
+                </div>
+              </div>
+              <div class="bp-drawer__divider"></div>
+              <div class="bp-activity__totals">
+                <div class="bp-field">
+                  <p class="bp-drawer__section-title bp-activity__label">Open balance:</p>
+                  <p class="bp-drawer__total-amount bp-activity__value" id="bp-activity-balance"></p>
+                </div>
+                <div class="bp-field">
+                  <p class="bp-drawer__section-title bp-activity__label">Due date:</p>
+                  <p class="bp-drawer__total-amount bp-activity__value" id="bp-activity-due"></p>
+                </div>
+              </div>
+              <div class="bp-drawer__divider"></div>
+              <p class="bp-drawer__section-title">Bill activity</p>
+            </div>
+          </div>
+          <div class="bp-activity__scroll">
+            <div class="bp-activity__fade"></div>
+            <div style="height: 32px"></div>
           </div>
         </aside>
       </div>

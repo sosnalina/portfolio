@@ -248,6 +248,12 @@
       billMeta: "", // current subtitle text for the "default" step, restored on transition back
       transitioning: false, // guards swapDrawerContent() against re-entrant clicks mid-transition
       subtitleSwapTimer: null
+    },
+    // §18: second, independent drawer — its own slot, never reusing state.drawer.
+    activityDrawer: {
+      open: false,
+      row: null,
+      revealed: false
     }
   };
 
@@ -288,7 +294,7 @@
           "</div>" +
         "</div>" +
         '<div class="bp-cell bp-cell--bill"><span>' + row.bill + "</span></div>" +
-        '<div class="bp-cell bp-cell--status"><span class="bp-status__check">' + GLYPH.statusCheck + '</span><span class="bp-status-text">Approved</span></div>' +
+        '<div class="bp-cell bp-cell--status bp-cell--status--clickable"><span class="bp-status__check">' + GLYPH.statusCheck + '</span><span class="bp-status-text bp-hover-underline">Approved</span></div>' +
         '<div class="bp-cell bp-cell--due"><span>' + row.due + "</span></div>" +
         '<div class="bp-cell bp-cell--speed"' + narrowHideSpeed + ">" +
           '<div class="bp-speed__top"><p class="bp-speed__label">Standard</p><span class="bp-badge"><span>On time</span></span></div>' +
@@ -447,10 +453,22 @@
      difference has to be divided by the current scale factor before being
      written back as a plain CSS px value - otherwise the position would be
      right at 100% width and increasingly wrong at any other size. */
+  /* The two drawers are mutually exclusive (§18.4 — opening either closes
+     the other), so at most one of these is ever open at once. Picks
+     whichever is, so updateSelectedRowCard() below stays the single,
+     un-duplicated implementation for both (§18.5's "reuse the function;
+     do not duplicate its logic"). */
+  function activeDrawerState() {
+    if (state.drawer.open) return state.drawer;
+    if (state.activityDrawer.open) return state.activityDrawer;
+    return null;
+  }
+
   function updateSelectedRowCard() {
-    var hasSelection = state.drawer.open && !!state.drawer.row;
-    var rowEl = hasSelection ? selectedRowEl(state.drawer.row) : null;
-    var revealed = !!(rowEl && state.drawer.revealed);
+    var sel = activeDrawerState();
+    var hasSelection = !!(sel && sel.row);
+    var rowEl = hasSelection ? selectedRowEl(sel.row) : null;
+    var revealed = !!(rowEl && sel.revealed);
 
     /* Mirrors the card's own [data-visible] onto the row itself, so
        .bp-cell--vendor's 12px inset (below) shows exactly while the card
@@ -504,6 +522,14 @@
     var actions = els.rowsScroll.querySelectorAll(".bp-cell--action");
     for (var j = 0; j < actions.length; j++) {
       actions[j].addEventListener("click", onActionClick);
+    }
+    /* §18.4/§18.11 — batch mode only. renderVendorRow/renderSubRow never
+       render this class, so in bulk mode this querySelectorAll is always
+       empty: no handler, no hover, no cursor, exactly as spec requires,
+       with no separate mode branch needed here. */
+    var statusCells = els.rowsScroll.querySelectorAll(".bp-cell--status--clickable");
+    for (var k = 0; k < statusCells.length; k++) {
+      statusCells[k].addEventListener("click", onStatusCellClick);
     }
   }
 
@@ -596,6 +622,19 @@
     openDrawer(payload);
   }
 
+  /* §18.10 — reads the clicked cell's closest .bp-row and looks the record
+     up fresh from ROWS, the same pattern onActionClick() uses above; no
+     copy or subset is passed. Batch-only by construction: this handler is
+     only ever bound to .bp-cell--status--clickable, which only
+     renderBatchRow emits (see bindRowEvents()). */
+  function onStatusCellClick(e) {
+    var cell = e.currentTarget;
+    var row = cell.closest(".bp-row");
+    var rowId = row.getAttribute("data-row-id");
+    var payload = ROWS.filter(function (r) { return String(r.id) === rowId; })[0];
+    if (payload) openActivityDrawer(payload);
+  }
+
   /* Resolves the row's own selected state once the drawer's opening
      motion has finished (see openDrawer()'s transitionend listener) - the
      card, the chevron-hide, and (conditionally) the group expand all
@@ -623,6 +662,10 @@
 
   /* ---- §7.3 drawer + column collapse (unified motion) ---- */
   function openDrawer(payload) {
+    // §18.4 — the two drawers are mutually exclusive; opening this one closes the other.
+    if (state.activityDrawer.open) {
+      closeActivityDrawer();
+    }
     state.drawer.open = true;
     state.drawer.row = payload;
     state.drawer.revealed = false;
@@ -710,14 +753,79 @@
 
     els.screen.classList.remove("bp-screen--drawer-open");
     var onEnd = function () {
-      els.screen.classList.remove("bp-screen--narrow");
-      state.narrow = false;
       state.drawer.open = false;
+      // Only clear narrow mode if the activity drawer isn't the one now
+      // holding it open (e.g. openActivityDrawer() closing this drawer to
+      // switch — see its own state.narrow = true, set before this fires).
+      if (!state.activityDrawer.open) {
+        els.screen.classList.remove("bp-screen--narrow");
+        state.narrow = false;
+      }
       els.drawer.removeEventListener("transitionend", onEnd);
       renderRows();
       updateSelectedRowCard();
     };
     els.drawer.addEventListener("transitionend", onEnd);
+  }
+
+  /* ---- §18: Bill Activity drawer — second, independent side drawer.
+     Mirrors openDrawer()/closeDrawer() (§7.3's motion, the row-lift via
+     updateSelectedRowCard()/revealSelectedRow(), the narrow column
+     collapse) but against its own state.activityDrawer slot, with no
+     bank-details/radios/footer machinery — this drawer has none of that
+     (§18.5's "no footer", §18.14's "Phase 2" gate on the timeline). */
+  function openActivityDrawer(row) {
+    // §18.4 — mutually exclusive with the payment drawer.
+    if (state.drawer.open) {
+      closeDrawer();
+    }
+    state.activityDrawer.open = true;
+    state.activityDrawer.row = row;
+    state.activityDrawer.revealed = false;
+    state.narrow = true;
+
+    els.activityVendorName.textContent = row.vendor;
+    els.activityBillNumber.textContent = "Bill No." + row.bill;
+    els.activityBalance.textContent = money(row.amount);
+    els.activityDue.textContent = fmtLong(parseMMDDYY(row.due));
+
+    els.screen.classList.add("bp-screen--narrow");
+    renderRows();
+    updateSelectedRowCard();
+    requestAnimationFrame(function () {
+      els.screen.classList.add("bp-screen--activity-open");
+    });
+
+    var onOpenEnd = function () {
+      els.activityDrawer.removeEventListener("transitionend", onOpenEnd);
+      if (!state.activityDrawer.open || !state.activityDrawer.row || state.activityDrawer.row.id !== row.id) return;
+      state.activityDrawer.revealed = true;
+      revealSelectedRow(row, false);
+    };
+    els.activityDrawer.addEventListener("transitionend", onOpenEnd);
+  }
+
+  function closeActivityDrawer() {
+    state.activityDrawer.revealed = false;
+    if (state.activityDrawer.row) {
+      var rowEl = selectedRowEl(state.activityDrawer.row);
+      var chevron = rowEl ? rowEl.querySelector(".bp-vendor__chevron") : null;
+      if (chevron) chevron.removeAttribute("data-selected");
+    }
+    updateSelectedRowCard();
+
+    els.screen.classList.remove("bp-screen--activity-open");
+    var onEnd = function () {
+      state.activityDrawer.open = false;
+      if (!state.drawer.open) {
+        els.screen.classList.remove("bp-screen--narrow");
+        state.narrow = false;
+      }
+      els.activityDrawer.removeEventListener("transitionend", onEnd);
+      renderRows();
+      updateSelectedRowCard();
+    };
+    els.activityDrawer.addEventListener("transitionend", onEnd);
   }
 
   function renderDrawer() {
@@ -1358,6 +1466,11 @@
     els.drawerFooter = q("#bp-drawer-footer");
     els.rowCardLayer = q("#bp-row-card-layer");
     els.rowCard = q("#bp-row-selected-card");
+    els.activityDrawer = q("#bp-activity-drawer");
+    els.activityVendorName = q("#bp-activity-vendor-name");
+    els.activityBillNumber = q("#bp-activity-bill-number");
+    els.activityBalance = q("#bp-activity-balance");
+    els.activityDue = q("#bp-activity-due");
 
     els.toggle.addEventListener("click", function () {
       setMode(state.mode === "batch" ? "bulk" : "batch");
@@ -1376,6 +1489,7 @@
     q("#bp-drawer-apply").addEventListener("click", function () {
       swapDrawerContent("default");
     });
+    q("#bp-activity-close").addEventListener("click", closeActivityDrawer);
 
     /* ---- top-of-scroll fade gradient: only shown once there's content
        scrolled away above the visible area ---- */
