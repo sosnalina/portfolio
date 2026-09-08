@@ -783,10 +783,34 @@ Build to the rules below.**
   therefore **21px**. Add no further padding.
 
 **Vertical alignment — the acceptance criterion.** Each dot's vertical centre
-sits on the **vertical centre of its item's first line**. That line has a 20px
-line-height, so the dot centre is **10px below the top of the item block**.
-Compute from the item's own position. Do not hardcode y values and do not derive
-from the rail column's height.
+sits on the **midpoint of the stage string's cap-height** — not on the vertical
+centre of the item's first line's box.
+
+*(An earlier version of this rule read: "the vertical centre of the item's
+first line... 10px below the top of the item block." That version shipped and
+was wrong — kept here as a record, not a valid alternative. This webfont's
+`fontBoundingBoxAscent + fontBoundingBoxDescent` (22px) is larger than its own
+authored 20px line-height, so the baseline sits low inside the box and the
+box's geometric centre lands measurably below the glyphs' actual visual
+weight — and by an amount that isn't even constant: it grows with each
+string's own ascenders/descenders. Measured before this fix, "Received" (no
+descender) landed the box-centre rule ~0.4px off the glyphs' true optical
+centre; "Scheduled for payment" (has one, in "payment") landed it ~2px off —
+eleven dots, each wrong by a different amount, visible in the browser as dots
+sitting unevenly high.)*
+
+Cap-height doesn't have that problem: unlike ink extent (which is what made the
+box-centre rule inconsistent), cap-height doesn't move with descenders or
+ascenders — it's a property of the font and size, not of which specific letters
+appear in a given stage string. Aligning to it lands every one of the eleven
+dots the same way, regardless of content.
+
+Compute both the cap-height and the baseline position from the actual rendered
+font at runtime — the cap-height once (it's identical for all eleven stage
+lines, since they share one font/size), the baseline per item (read live, so a
+future stage line that wraps to a second line still resolves correctly). Do not
+hardcode a pixel value for either. Do not derive from the rail column's own
+height.
 
 **Rail line extent.** From the **centre of the first dot** to the **centre of the
 last dot**. Not above the first, not below the last. It paints **behind** the
@@ -804,9 +828,13 @@ there is no reason to take on SVG transform-origin behaviour.
 
 #### Content column
 
-Column, **`gap: 28px` between every child** — items and duration lines alike. No
-exception: two consecutive upcoming items with no duration between them are
-still 28px apart.
+Column, **`gap: 28px` between every child** — items and duration lines alike —
+**with one exception**: the gap between the duration line `Ready to pay • 3d 2h`
+(after entry 9) and entry 10, `Scheduled for payment`, is **42px**. Implemented
+as a modifier on that single item (`.bp-activity-item--wide-gap`, `margin-top:
+14px`, stacking with the container's own 28px gap), not a change to the
+container's gap value. Every other gap is the plain 28px, including the two
+consecutive upcoming items (entries 10–11, no duration between them).
 
 **These four styles have no existing class. Build new**, using the mock's real
 weights:
@@ -846,6 +874,13 @@ than invented.
 content, `pointer-events: none`, spanning the full inner width. No bottom fade.
 No scroll-affordance button.
 
+**Timeline clearance.** Without an offset, the first item starts flush at the
+scroll region's own top (y=0), directly underneath this fade's 0–24px span,
+clipping the first stage line. `.bp-activity__timeline` carries `margin-top:
+27px` so the first stage line's top edge clears the fade's bottom edge by 3px.
+Does not change this fade's own height or gradient, and does not touch the
+28px item gap (§18.7).
+
 ### 18.9 Timeline content
 
 Identical for every bill. Fixed placeholder copy — **do not bind any of it to
@@ -858,11 +893,11 @@ row's own amount differs.
 | 2 | Complete | Coded | GL 6100 Contract labor • Engineering | Marcus Webb, AP clerk • Aug 26, 2025 | 21h 5m |
 | 3 | Complete | Matched | PO 4418 • receipt GRN-2207 • within tolerance | Matching engine (system) • Aug 27, 2025 | 4h 20m |
 | 4 | Complete | Sent for approval | Two approvers required • bills over $25,000 | Marcus Webb, AP clerk • Aug 27, 2025 | 1d 2h |
-| 5 | **Warning** | Returned for correction | Cost center should be Platform, not Engineering | Dana Kim, controller • Aug 28, 2025 | 19h 44m |
+| 5 | **Warning** | Returned for correction | Cost center should be Platform, not Engineering | Dana Kim, Finance Director • Aug 28, 2025 | 19h 44m |
 | 6 | Complete | Recoded | GL 6100 Contract labor • Platform | Marcus Webb, AP clerk • Aug 29, 2025 | 42m |
 | 7 | Complete | Sent for approval | Second attempt | Marcus Webb, AP clerk • Aug 29, 2025 | 3d 4h |
 | 8 | Complete | Approved • 1 of 2 | Reviewed amount $47,300.00 | Priya Raman, department head • Sep 1, 2025 | 2d 22h |
-| 9 | Complete | Approved • 2 of 2 | Reviewed amount $47,300.00 | Dana Kim, controller • Sep 4, 2025 | Ready to pay • 3d 2h |
+| 9 | Complete | Approved • 2 of 2 | Reviewed amount $47,300.00 | Dana Kim, Finance Director • Sep 4, 2025 | Ready to pay • 3d 2h |
 | 10 | Upcoming | Scheduled for payment | — | — | — |
 | 11 | Upcoming | Paid | — | — | — |
 

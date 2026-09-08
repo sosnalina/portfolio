@@ -113,6 +113,15 @@
         --bp-text-field-label: 400 14px/20px var(--bp-font-body);
         --bp-text-field-value: 400 16px/24px var(--bp-font-body);
         --bp-text-field-helper: 400 14px/20px var(--bp-font-body);
+        /* §18.7 — Bill Activity drawer timeline. No existing class covers
+           these four; built new, per spec. */
+        --bp-text-timeline-stage: 600 15px/20px var(--bp-font-body);
+        --bp-text-timeline-detail: 400 15px/20px var(--bp-font-body);
+        --bp-text-timeline-actor: 400 14px/14px var(--bp-font-body);
+        --bp-text-timeline-duration: 400 12px/14px var(--bp-font-body);
+        /* Rail line + upcoming-dot stroke (Figma node 3162:19071) — no
+           existing token matches this exact grey. */
+        --bp-color-timeline-line: #dbd9d2;
 
         /* Custom payment delivery calendar type scale — Figma "Medium"/"Light"/
            "Book"/"Roman" all substitute to 400 (no matching self-hosted weight,
@@ -1485,6 +1494,119 @@
         transition: transform 225ms var(--bp-ease-drawer-open);
       }
 
+      /* ---- §18.7 Timeline — rail column (36px) + content column. The
+         rail's dots/line are positioned in JS (positionActivityRail() in
+         schedule-payment.js), not in CSS: each dot's vertical centre must
+         sit on its own item's own measured first-line centre, computed
+         from live layout — never hardcoded, never derived from the rail
+         column's own height (spec's own explicit acceptance criterion).
+         Figma's rail coordinates are 1px off on two items and are not used
+         as a source here. ---- */
+      /* margin-top clears the 24px top fade: without it the first item's
+         stage line starts flush at the scroll region's own top (y=0),
+         fully underneath the fade's 0-24px span. 27px lands the stage
+         line's top edge 3px below the fade's bottom edge — inside this
+         fix's own 2-3px target, not at either boundary. Doesn't touch the
+         fade's own height/gradient or the 28px item gap. */
+      .bp-activity__timeline {
+        position: relative;
+        margin-top: 27px;
+      }
+      .bp-activity__rail {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 36px;
+        height: 100%;
+        pointer-events: none;
+      }
+      /* left: 8.5px centers this 1px line on x=9, matching the dots below. */
+      .bp-activity__rail-line {
+        position: absolute;
+        left: 8.5px;
+        width: 1px;
+        background: var(--bp-color-timeline-line);
+      }
+      .bp-activity__dot {
+        position: absolute;
+        left: 3px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+      }
+      .bp-activity__dot--complete {
+        background: var(--bp-color-action-green);
+      }
+      /* Same hex as --bp-color-calendar-due (§18.1: reuse an existing
+         token rather than retype the literal) — coincidental match with an
+         unrelated calendar concept, not a semantic link between the two. */
+      .bp-activity__dot--warning {
+        background: var(--bp-color-calendar-due);
+      }
+      .bp-activity__dot--upcoming {
+        background: var(--primitive-white);
+        border: 2px solid var(--bp-color-timeline-line);
+      }
+      /* Content column starts flush at x=36 (21px gap from the dot's own
+         right edge at x=15) — no added padding, per spec. */
+      .bp-activity__timeline-content {
+        margin-left: 36px;
+        display: flex;
+        flex-direction: column;
+        gap: 28px;
+      }
+      .bp-activity-item {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .bp-activity-item--upcoming {
+        opacity: 0.5;
+      }
+      /* The one 42px gap (duration "Ready to pay • 3d 2h" -> "Scheduled
+         for payment"): a modifier on this single item, not a change to
+         .bp-activity__timeline-content's own 28px gap. 14px margin-top
+         stacks with that 28px gap (flex gap and a flex item's own margin
+         are additive, not exclusive) for a 42px total. Every other gap,
+         10->11 included, is untouched. */
+      .bp-activity-item--wide-gap {
+        margin-top: 14px;
+      }
+      .bp-activity-item__headline {
+        display: flex;
+        flex-direction: column;
+      }
+      .bp-activity-item__stage {
+        margin: 0;
+        font: var(--bp-text-timeline-stage);
+        color: var(--primitive-black);
+      }
+      .bp-activity-item__detail {
+        margin: 0;
+        font: var(--bp-text-timeline-detail);
+        color: var(--primitive-black);
+      }
+      .bp-activity-item__actor {
+        margin: 0;
+        font: var(--bp-text-timeline-actor);
+        color: var(--primitive-grey-dark);
+      }
+      /* Always #393A3D per spec, even though it reads grey in one
+         reference render — confirmed by Hadar, not this build's guess. */
+      .bp-activity-duration {
+        margin: 0;
+        font: var(--bp-text-timeline-duration);
+        color: var(--primitive-black);
+      }
+      /* Nudges the bullet glyph off the baseline toward its optical
+         centre — Avenir Next's "•" otherwise sits low against these lines'
+         cap-height. Relative/em-based so it holds across the three sizes
+         (14/15px) this appears at. */
+      .bp-activity-bullet {
+        position: relative;
+        top: -0.05em;
+      }
+
       .bp-radio-item {
         display: flex;
         align-items: flex-start;
@@ -2269,6 +2391,10 @@
           </div>
           <div class="bp-activity__scroll">
             <div class="bp-activity__fade"></div>
+            <div class="bp-activity__timeline">
+              <div class="bp-activity__rail" id="bp-activity-rail"></div>
+              <div class="bp-activity__timeline-content" id="bp-activity-timeline-content"></div>
+            </div>
             <div style="height: 32px"></div>
           </div>
         </aside>

@@ -61,6 +61,31 @@
     { id: 13, vendor: "Bluebird Office Supplies", method: "check", last4: "", bill: "1790", due: "09/27/25", withdraw: "09/23", arrives: "09/26", fee: 1.0, amount: 290.0, action: "Manage" }
   ];
 
+  /* §18.9 — Bill Activity drawer timeline, fixed placeholder content,
+     identical for every bill. Never bound to ROWS — including the
+     $47,300.00 figures, which stay literal even when the clicked row's own
+     amount differs. `dot` drives both the rail dot's state (§18.7) and,
+     for "upcoming", the whole item's 0.5 opacity / headline-only layout.
+     `duration` is the line rendered AFTER this item, before the next one;
+     null means none (entries 10/11 — the 28px gap between them still
+     applies, since content-column spacing is per-child, not per-pair).
+     `wideGapBefore` singles out the one 42px gap (this item's own extra
+     margin-top, see .bp-activity-item--wide-gap) — every other gap in the
+     column, including 10→11, stays the container's plain 28px. */
+  var ACTIVITY_TIMELINE = [
+    { dot: "complete", stage: "Received", detail: "Email from vendor", actor: "Invoice capture (system) • Aug 26, 2025", duration: "3h 12m" },
+    { dot: "complete", stage: "Coded", detail: "GL 6100 Contract labor • Engineering", actor: "Marcus Webb, AP clerk • Aug 26, 2025", duration: "21h 5m" },
+    { dot: "complete", stage: "Matched", detail: "PO 4418 • receipt GRN-2207 • within tolerance", actor: "Matching engine (system) • Aug 27, 2025", duration: "4h 20m" },
+    { dot: "complete", stage: "Sent for approval", detail: "Two approvers required • bills over $25,000", actor: "Marcus Webb, AP clerk • Aug 27, 2025", duration: "1d 2h" },
+    { dot: "warning", stage: "Returned for correction", detail: "Cost center should be Platform, not Engineering", actor: "Dana Kim, Finance Director • Aug 28, 2025", duration: "19h 44m" },
+    { dot: "complete", stage: "Recoded", detail: "GL 6100 Contract labor • Platform", actor: "Marcus Webb, AP clerk • Aug 29, 2025", duration: "42m" },
+    { dot: "complete", stage: "Sent for approval", detail: "Second attempt", actor: "Marcus Webb, AP clerk • Aug 29, 2025", duration: "3d 4h" },
+    { dot: "complete", stage: "Approved • 1 of 2", detail: "Reviewed amount $47,300.00", actor: "Priya Raman, department head • Sep 1, 2025", duration: "2d 22h" },
+    { dot: "complete", stage: "Approved • 2 of 2", detail: "Reviewed amount $47,300.00", actor: "Dana Kim, Finance Director • Sep 4, 2025", duration: "Ready to pay • 3d 2h" },
+    { dot: "upcoming", stage: "Scheduled for payment", detail: null, actor: null, duration: null, wideGapBefore: true },
+    { dot: "upcoming", stage: "Paid", detail: null, actor: null, duration: null }
+  ];
+
   /* titleStrong (Avenir Heavy/800) + titleMedium (Avenir Medium, no matching
      self-hosted weight — substituted 400/Regular) reproduce Figma's real
      two-weight title run ("Standard" Heavy + " | 3-5 business days" Medium),
@@ -768,12 +793,116 @@
     els.drawer.addEventListener("transitionend", onEnd);
   }
 
+  /* Every separator in this drawer is the bullet U+2022, never U+00B7 —
+     wraps just the glyph so its optical-centring nudge (.bp-activity-bullet)
+     doesn't touch the surrounding spaces' word-wrap behaviour. */
+  function withBullets(s) {
+    return s.split(" • ").join(' <span class="bp-activity-bullet">•</span> ');
+  }
+
+  /* §18.9 — fixed placeholder content, rendered once (it never varies by
+     row, so there's nothing for openActivityDrawer() to re-render here).
+     §18.7's dot/rail geometry is NOT set here — see positionActivityRail()
+     below, which needs live layout this markup alone can't provide. */
+  function renderActivityTimeline() {
+    var dotsHtml = "";
+    var contentHtml = "";
+    ACTIVITY_TIMELINE.forEach(function (entry) {
+      dotsHtml += '<div class="bp-activity__dot bp-activity__dot--' + entry.dot + '"></div>';
+      var itemClass = "bp-activity-item" + (entry.dot === "upcoming" ? " bp-activity-item--upcoming" : "") + (entry.wideGapBefore ? " bp-activity-item--wide-gap" : "");
+      if (entry.dot === "upcoming") {
+        // §18.7: upcoming items are headline-only — no detail, no actor line.
+        contentHtml += '<div class="' + itemClass + '">' + '<p class="bp-activity-item__stage">' + entry.stage + "</p>" + "</div>";
+      } else {
+        contentHtml +=
+          '<div class="' + itemClass + '">' +
+          '<div class="bp-activity-item__headline">' +
+          '<p class="bp-activity-item__stage">' + withBullets(entry.stage) + "</p>" +
+          '<p class="bp-activity-item__detail">' + withBullets(entry.detail) + "</p>" +
+          "</div>" +
+          '<p class="bp-activity-item__actor">' + withBullets(entry.actor) + "</p>" +
+          "</div>";
+      }
+      if (entry.duration) {
+        contentHtml += '<p class="bp-activity-duration">' + withBullets(entry.duration) + "</p>";
+      }
+    });
+    els.activityRail.innerHTML = '<div class="bp-activity__rail-line" id="bp-activity-rail-line"></div>' + dotsHtml;
+    els.activityTimelineContent.innerHTML = contentHtml;
+    els.activityRailLine = q("#bp-activity-rail-line");
+  }
+
+  /* §18.7's acceptance criterion (revised): each dot's vertical centre
+     sits on the MIDPOINT OF THE STAGE STRING'S CAP-HEIGHT — not the line
+     box's own geometric centre. The box-centre rule (this function's
+     original version) was wrong: this webfont's fontBoundingBoxAscent +
+     fontBoundingBoxDescent (22px) exceeds its own authored 20px
+     line-height, so the baseline sits low in the box and the box's
+     geometric centre lands measurably below the glyphs' actual visual
+     weight — by an amount that isn't even constant, since it grows with
+     each string's own ascenders/descenders ("Received", no descender,
+     measured ~0.4px off; "Scheduled for payment", has one, measured ~2px
+     off). Cap-height doesn't have that problem: unlike ink extent, it
+     doesn't move with descenders/ascenders, so every dot lands the same
+     way regardless of which letters happen to be in that stage's text.
+
+     Cap-height is a font/size-level constant, not a per-string one — every
+     stage line shares --bp-text-timeline-stage, so ONE reference
+     measurement (a flat-top capital with no accent/overshoot ambiguity),
+     read from the actual resolved font via Canvas's actualBoundingBoxAscent
+     (not assumed from a table, not hardcoded), covers all eleven. Baseline
+     position is still read per element via a live DOM probe (a zero-height
+     vertical-align:baseline span, whose top/bottom coincide exactly with
+     that line's baseline) rather than cached from one element and reused,
+     so this stays correct even if a future entry's stage text ever wraps
+     to a second line — nothing here assumes single-line height. Divides by
+     the current scale factor exactly like updateSelectedRowCard() does,
+     since this reads real (scaled) viewport pixels but writes native ones.
+     Re-run on every open, and from applyScale() while open, since the
+     scale factor itself can change between opens (window resize). */
+  function positionActivityRail() {
+    var scale = document.documentElement.clientWidth / 1440;
+    var railRect = els.activityRail.getBoundingClientRect();
+    var stages = els.activityTimelineContent.querySelectorAll(".bp-activity-item__stage");
+    var dots = els.activityRail.querySelectorAll(".bp-activity__dot");
+    if (!stages.length || stages.length !== dots.length) return;
+
+    var canvas = document.createElement("canvas");
+    var ctx = canvas.getContext("2d");
+    ctx.font = getComputedStyle(stages[0]).font;
+    ctx.textBaseline = "alphabetic";
+    var capHeight = ctx.measureText("H").actualBoundingBoxAscent;
+
+    var centers = [];
+    for (var i = 0; i < dots.length; i++) {
+      var stageEl = stages[i];
+      var stageRect = stageEl.getBoundingClientRect();
+
+      var probe = document.createElement("span");
+      probe.style.display = "inline-block";
+      probe.style.width = "0";
+      probe.style.height = "0";
+      probe.style.verticalAlign = "baseline";
+      stageEl.appendChild(probe);
+      var baselineFromBoxTop = probe.getBoundingClientRect().top - stageRect.top;
+      stageEl.removeChild(probe);
+
+      var capMidFromBoxTop = baselineFromBoxTop - capHeight / 2;
+      var centerY = (stageRect.top + capMidFromBoxTop - railRect.top) / scale;
+      dots[i].style.top = centerY - 6 + "px"; // 6 = half the 12px dot
+      centers.push(centerY);
+    }
+    // Rail line: first dot's centre to last dot's centre, no further either way.
+    els.activityRailLine.style.top = centers[0] + "px";
+    els.activityRailLine.style.height = centers[centers.length - 1] - centers[0] + "px";
+  }
+
   /* ---- §18: Bill Activity drawer — second, independent side drawer.
      Mirrors openDrawer()/closeDrawer() (§7.3's motion, the row-lift via
      updateSelectedRowCard()/revealSelectedRow(), the narrow column
      collapse) but against its own state.activityDrawer slot, with no
      bank-details/radios/footer machinery — this drawer has none of that
-     (§18.5's "no footer", §18.14's "Phase 2" gate on the timeline). */
+     (§18.5's "no footer"). */
   function openActivityDrawer(row) {
     // §18.4 — mutually exclusive with the payment drawer.
     if (state.drawer.open) {
@@ -792,6 +921,7 @@
     els.screen.classList.add("bp-screen--narrow");
     renderRows();
     updateSelectedRowCard();
+    positionActivityRail();
     requestAnimationFrame(function () {
       els.screen.classList.add("bp-screen--activity-open");
     });
@@ -1445,6 +1575,11 @@
     // The scale factor itself changed - the selected-row card's native-px
     // position depends on it directly (see updateSelectedRowCard()).
     updateSelectedRowCard();
+    // Same reasoning for the timeline rail (§18.7) - only while it's
+    // actually visible, since its content is otherwise unlaid-out (0-rects).
+    if (state.activityDrawer.open) {
+      positionActivityRail();
+    }
   }
 
   function init() {
@@ -1471,6 +1606,9 @@
     els.activityBillNumber = q("#bp-activity-bill-number");
     els.activityBalance = q("#bp-activity-balance");
     els.activityDue = q("#bp-activity-due");
+    els.activityRail = q("#bp-activity-rail");
+    els.activityTimelineContent = q("#bp-activity-timeline-content");
+    renderActivityTimeline();
 
     els.toggle.addEventListener("click", function () {
       setMode(state.mode === "batch" ? "bulk" : "batch");
