@@ -287,7 +287,7 @@
   function q(sel) { return document.querySelector(sel); }
 
   function rowCellsCommon(narrowAttr) {
-    return narrowAttr ? " data-narrow-hide" : "";
+    return narrowAttr ? ' data-narrow-hide="payment"' : "";
   }
 
   function renderActionCell(action, isSub) {
@@ -318,9 +318,9 @@
             "</div>" +
           "</div>" +
         "</div>" +
-        '<div class="bp-cell bp-cell--bill"><span>' + row.bill + "</span></div>" +
-        '<div class="bp-cell bp-cell--status bp-cell--status--clickable"><span class="bp-status__check">' + GLYPH.statusCheck + '</span><span class="bp-status-text bp-hover-underline">Approved</span></div>' +
-        '<div class="bp-cell bp-cell--due"><span>' + row.due + "</span></div>" +
+        '<div class="bp-cell bp-cell--bill" data-narrow-hide="activity"><span>' + row.bill + "</span></div>" +
+        '<div class="bp-cell bp-cell--status bp-cell--status--clickable" data-narrow-hide="activity"><span class="bp-status__check">' + GLYPH.statusCheck + '</span><span class="bp-status-text bp-hover-underline">Approved</span></div>' +
+        '<div class="bp-cell bp-cell--due" data-narrow-hide="activity"><span>' + row.due + "</span></div>" +
         '<div class="bp-cell bp-cell--speed"' + narrowHideSpeed + ">" +
           '<div class="bp-speed__top"><p class="bp-speed__label">Standard</p><span class="bp-badge"><span>On time</span></span></div>' +
           '<div class="bp-speed__meta"><span>Withdraw ' + fmtMD(dates.withdraw) + "</span><span style=\"display:inline-flex\">" + GLYPH.arrow + "</span><span>Arrives " + fmtMD(dates.arrival) + "</span></div>" +
@@ -352,8 +352,8 @@
         '<div class="bp-cell bp-cell--bill"><span>' + row.bill + "</span></div>" +
         '<div class="bp-cell bp-cell--status"><span class="bp-status__check">' + GLYPH.statusCheck + '</span><span class="bp-status-text">Approved</span></div>' +
         '<div class="bp-cell bp-cell--due"><span>' + row.due + "</span></div>" +
-        '<div class="bp-cell bp-cell--speed" data-narrow-hide style="opacity:0"></div>' +
-        '<div class="bp-cell bp-cell--fee" data-narrow-hide style="opacity:0"></div>' +
+        '<div class="bp-cell bp-cell--speed" data-narrow-hide="payment" style="opacity:0"></div>' +
+        '<div class="bp-cell bp-cell--fee" data-narrow-hide="payment" style="opacity:0"></div>' +
         '<div class="bp-cell bp-cell--balance"><span>' + money(row.amount) + "</span></div>" +
         '<div class="bp-cell bp-cell--amount"><div class="bp-amount-field"><span>' + money(row.amount) + "</span></div></div>" +
         '<div class="bp-cell bp-cell--action"><img class="bp-action-icon" src="' + ICONS + 'narrow-action.svg" alt="" /></div>' +
@@ -727,6 +727,7 @@
     els.drawerFooter.style.display = "none";
 
     els.screen.classList.add("bp-screen--narrow");
+    els.screen.setAttribute("data-narrow-mode", "payment"); // §18.12 — which drawer's column set is hidden
     renderDrawer();
     requestAnimationFrame(function () {
       els.screen.classList.add("bp-screen--drawer-open");
@@ -784,6 +785,7 @@
       // switch — see its own state.narrow = true, set before this fires).
       if (!state.activityDrawer.open) {
         els.screen.classList.remove("bp-screen--narrow");
+        els.screen.removeAttribute("data-narrow-mode");
         state.narrow = false;
       }
       els.drawer.removeEventListener("transitionend", onEnd);
@@ -919,6 +921,7 @@
     els.activityDue.textContent = fmtLong(parseMMDDYY(row.due));
 
     els.screen.classList.add("bp-screen--narrow");
+    els.screen.setAttribute("data-narrow-mode", "activity"); // §18.12 — which drawer's column set is hidden
     renderRows();
     updateSelectedRowCard();
     positionActivityRail();
@@ -949,6 +952,7 @@
       state.activityDrawer.open = false;
       if (!state.drawer.open) {
         els.screen.classList.remove("bp-screen--narrow");
+        els.screen.removeAttribute("data-narrow-mode");
         state.narrow = false;
       }
       els.activityDrawer.removeEventListener("transitionend", onEnd);

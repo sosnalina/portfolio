@@ -453,13 +453,22 @@
           width 195ms var(--bp-ease-drawer-close),
           padding 195ms var(--bp-ease-drawer-close);
       }
-      /* narrowable columns collapse to 0 */
-      .bp-screen--narrow .bp-header-row__cell[data-narrow-hide] {
+      /* narrowable columns collapse to 0 - §18.12: which drawer hides which
+         column is named via data-narrow-hide's value, matched against
+         #bp-screen's own data-narrow-mode (set by openDrawer()/
+         openActivityDrawer(), cleared on close). Two rules, same
+         declarations, one per mode - copied verbatim from the single rule
+         this replaces, not retuned. A third drawer is one new attribute
+         value and one new selector line here; nothing existing is edited
+         again. */
+      [data-narrow-mode="payment"] .bp-header-row__cell[data-narrow-hide~="payment"],
+      [data-narrow-mode="activity"] .bp-header-row__cell[data-narrow-hide~="activity"] {
         width: 0 !important;
         padding-left: 0;
         padding-right: 0;
       }
-      .bp-screen--narrow .bp-header-row__cell[data-narrow-hide] span {
+      [data-narrow-mode="payment"] .bp-header-row__cell[data-narrow-hide~="payment"] span,
+      [data-narrow-mode="activity"] .bp-header-row__cell[data-narrow-hide~="activity"] span {
         opacity: 0;
       }
       /* Confirmed via Figma screenshot of batch-narrow (2967:603443): the
@@ -715,12 +724,16 @@
       .bp-cell > * {
         transition: opacity 150ms linear;
       }
-      .bp-screen--narrow .bp-cell[data-narrow-hide] {
+      /* §18.12 - see the matching header-cell comment above; same
+         mechanism, same verbatim declarations, body cells this time. */
+      [data-narrow-mode="payment"] .bp-cell[data-narrow-hide~="payment"],
+      [data-narrow-mode="activity"] .bp-cell[data-narrow-hide~="activity"] {
         width: 0 !important;
         padding-left: 0;
         padding-right: 0;
       }
-      .bp-screen--narrow .bp-cell[data-narrow-hide] > * {
+      [data-narrow-mode="payment"] .bp-cell[data-narrow-hide~="payment"] > *,
+      [data-narrow-mode="activity"] .bp-cell[data-narrow-hide~="activity"] > * {
         opacity: 0;
       }
 
@@ -2288,11 +2301,11 @@
           <div class="bp-table-body">
             <div class="bp-header-row" id="bp-header-row">
               <div class="bp-header-row__cell" style="width: 230px"><span>Vendor</span></div>
-              <div class="bp-header-row__cell" style="width: 76px"><span>Bill</span></div>
-              <div class="bp-header-row__cell" style="width: 106px"><span>Status</span></div>
-              <div class="bp-header-row__cell" style="width: 84px"><span>Due date</span></div>
-              <div class="bp-header-row__cell" data-narrow-hide style="width: 203px"><span>Payment speed</span></div>
-              <div class="bp-header-row__cell" data-narrow-hide style="width: 122px"><span>Processing fee</span></div>
+              <div class="bp-header-row__cell" data-narrow-hide="activity" style="width: 76px"><span>Bill</span></div>
+              <div class="bp-header-row__cell" data-narrow-hide="activity" style="width: 106px"><span>Status</span></div>
+              <div class="bp-header-row__cell" data-narrow-hide="activity" style="width: 84px"><span>Due date</span></div>
+              <div class="bp-header-row__cell" data-narrow-hide="payment" style="width: 203px"><span>Payment speed</span></div>
+              <div class="bp-header-row__cell" data-narrow-hide="payment" style="width: 122px"><span>Processing fee</span></div>
               <div class="bp-header-row__cell" style="width: 115px"><span>Open balance</span></div>
               <div class="bp-header-row__cell" style="width: 120px"><span>Amount</span></div>
               <div class="bp-header-row__cell" data-action-label style="width: 106px"><span>Action</span></div>
