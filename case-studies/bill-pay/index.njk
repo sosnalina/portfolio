@@ -13,7 +13,7 @@ stylesheets:
   - ../../css/components/principles.css
   - ../../css/components/ap-manager-orbit.css
   - ../../css/widgets/bill-pay/scene-gallery-accordion/scene-gallery-accordion.css
-  - ../../css/widgets/bill-pay/scene-gallery-2/scene-gallery-2.css
+  - ../../css/widgets/bill-pay/scene-gallery-accountability/scene-gallery-accountability.css
   - ../../css/widgets/bill-pay/scene-accordion/scene-accordion.css
   - ../../css/widgets/bill-pay/walkthrough-gallery/gallery.css
   - ../../css/widgets/bill-pay/walkthrough-gallery/visual.css
@@ -29,7 +29,7 @@ scripts:
   - ../../js/bill-pay/walkthrough-gallery.js
   - ../../js/bill-pay/cockpit-widget.js
   - ../../js/bill-pay/scene-gallery-accordion.js
-  - ../../js/bill-pay/scene-gallery-2.js
+  - ../../js/bill-pay/scene-gallery-accountability.js
   - ../../js/bill-pay/scene-accordion.js
   - ../../js/bill-pay/ap-manager-orbit.js
 ---
@@ -42,7 +42,7 @@ scripts:
 {% from "two-block-header.njk" import twoBlockHeader %}
 {% from "gallery-navigation.njk" import galleryNavigation %}
 {% from "scene-gallery-accordion.njk" import sceneGalleryAccordion %}
-{% from "scene-gallery-2.njk" import sceneGallery2 %}
+{% from "scene-gallery-accountability.njk" import sceneGalleryAccountability %}
 {% from "scene-accordion.njk" import sceneAccordion %}
 
 {% block body %}
@@ -302,10 +302,14 @@ scripts:
   {{ sceneAccordion() }}
   {% endcall %}
 
-  {# 8. Gallery 2 — own white section, not a continuation of section 7.
-     No section header (undecided per build spec) — just the gallery. #}
-  {% call section() %}
-  {{ sceneGallery2() }}
+  {# 9. Process_accountability gallery — third principle. Same accordion
+     structure as the Volume_Productivity gallery, duplicated (not shared),
+     on a grey section. The scene document does not exist yet; the mock slot
+     holds a placeholder box at the exact dimensions the real document will
+     occupy. #}
+  {% call section("section--grey-light") %}
+  {{ sceneGalleryAccountability() }}
   {% endcall %}
+
 </main>
 {% endblock %}
