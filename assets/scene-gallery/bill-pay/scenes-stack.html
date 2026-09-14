@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Scene Stack — Scenes</title>
+<link rel="stylesheet" href="../../../css/tokens.css">
+<link rel="stylesheet" href="../../../css/components/principles.css">
+<style>
+  /* ---- Scene Stack — the scene-accordion mechanism (Quality_of_decisions
+     gallery, assets/scene-gallery/bill-pay/scenes-accordion.html's own
+     #ag-row) rotated from side-by-side to stacked, for the
+     Process_accountability gallery shell (build prompt, 14 Sep). Panel
+     mechanism/class structure duplicated from that file's #ag-row subtree
+     and .ag-* rules; class names renamed ag- → sst- and the geometry/axis
+     deltas in the build prompt's own §3 applied (flex-direction row → column,
+     animated dimension width → height, tag/caption slide axis X → Y). No
+     scene content in this round — panel interiors hold only the caption
+     (headline + description); the scenes that land later go inside
+     .sst-panel__content alongside it. ---- */
+
+  :root {
+    --sst-panel-width: 800px;
+    --sst-panel-active-height: 461px;
+    --sst-panel-collapsed-height: 141px;
+    --sst-duration: 480ms;
+    --sst-ease: cubic-bezier(0.215, 0.61, 0.355, 1);
+    --sst-caption-collapse-duration: 288ms;
+    --sst-caption-stagger: 60ms; /* reference: 0.06s stagger between headline and description, enter only — not in the build prompt's own token list, but §3 says "everything else about the mechanism carries over unchanged," and this is the one remaining unlisted reference value that does */
+    --sst-content-fade: 200ms; /* defined per the build prompt's own §4 token list; not yet applied to any rule — see the comment on .sst-panel__content below for why */
+    --sst-content-reveal-delay: 350ms; /* same as --sst-content-fade above */
+    --sst-inset-y: 48px;
+    --sst-tag-height: 22px;
+    --sst-caption-band-height: 120px;
+    --sst-overhang: 20px;
+  }
+
+  /* Fixed column height — build prompt §4: calc(active + spacing-32 +
+     collapsed) = 634px. The section must not reflow when panels swap, so
+     this drives html/body/.sst-column height identically regardless of
+     which panel is active. */
+  :root {
+    --sst-column-height: calc(var(--sst-panel-active-height) + var(--spacing-32) + var(--sst-panel-collapsed-height));
+  }
+
+  /* overflow-x: hidden directly here, unconditionally — build prompt §4:
+     "The reference does this via an ag-narrow class added by its own
+     script; put it directly in CSS here." No conditional/measured reason
+     found to replicate the reference's own runtime threshold logic: this
+     composition is a fixed 800px column plus body's own reserved
+     --sst-overhang left padding below, which is exactly what the padding
+     reserves room for — the tag never actually reaches a negative
+     document coordinate, so an unconditional hidden here doesn't clip it. */
+  html, body {
+    margin: 0;
+    width: 100%;
+    height: var(--sst-column-height);
+    overflow-x: hidden;
+  }
+
+  body {
+    padding-left: var(--sst-overhang);
+  }
+
+  /* Fixed 800px (not 100%) — body's own extra left padding above
+     (reserved for the tag's overhang) must not stretch this column. */
+  .sst-column {
+    position: relative; /* containing block for .sst-tag's absolute travel */
+    display: flex;
+    flex-direction: column;
+    width: var(--sst-panel-width);
+    height: var(--sst-column-height);
+    gap: var(--spacing-32);
+  }
+
+  /* Height is the one thing that animates — both panels transition
+     simultaneously (same duration/ease, no stagger), mirroring the
+     reference's own width transition exactly, just on the other axis. */
+  .sst-panel {
+    position: relative;
+    z-index: 0;
+    flex-shrink: 0;
+    width: var(--sst-panel-width);
+    height: var(--sst-panel-collapsed-height);
+    border-radius: var(--spacing-24);
+    overflow: hidden;
+    cursor: pointer;
+    transition: height var(--sst-duration) var(--sst-ease);
+  }
+  .sst-panel.is-active {
+    height: var(--sst-panel-active-height);
+    overflow: visible;
+  }
+
+  .sst-panel--green { background: var(--primitive-green-light); }
+  .sst-panel--white { background: var(--primitive-white); }
+
+  /* Purely structural — pointer-events:none because the panel itself
+     (not its content) is the click target (see the click handler below).
+     No collapsed-state opacity fade lives on this wrapper: with only the
+     caption inside it this round, and the caption owning its own
+     dedicated enter/exit animation (see .sst-caption__headline/
+     __description below), adding a second opacity transition on this
+     wrapper would compound against the caption's own opacity and delay
+     it past the 480ms/no-delay the build prompt's own motion table
+     specifies for it. --sst-content-fade/--sst-content-reveal-delay
+     (defined above per §4) are left unattached for the same reason —
+     there's no non-caption content in this shell round for them to
+     apply to. Flagged in the build report; revisit once real scene
+     content lands inside here alongside the caption. */
+  .sst-panel__content {
+    pointer-events: none;
+  }
+
+  /* The gallery's single tag — a row-level sibling of both panels, not
+     nested inside either one (see markup — it's .sst-column's third
+     child, after both .sst-panel elements), so it's never subject to a
+     panel's own overflow:hidden while collapsed and can freely slide
+     across both. pointer-events:none for the same reason
+     .sst-panel__content has it above — the panel underneath is the
+     actual click target. display:flex sizes this box to exactly its
+     .principles-tag child (22px) rather than picking up an
+     inherited-font strut. */
+  .sst-tag {
+    position: absolute;
+    top: var(--sst-inset-y);
+    left: calc(-1 * var(--sst-overhang));
+    display: flex;
+    pointer-events: none;
+    transform: translateY(0);
+    transition: transform var(--sst-duration) var(--sst-ease);
+  }
+
+  /* Panel colours are swapped from the reference (there: panel 0 grey,
+     panel 1 green, tag keyed off the green panel i.e. panel 1; here:
+     panel 0 green, panel 1 white) — build prompt §3: key the translate
+     off the panel's INDEX, never its colour, so this selector targets
+     #sst-panel-1 directly rather than a --green-keyed class. Distance is
+     collapsed height + gap (141 + 32 = 173px), derived via calc() from
+     the same tokens the panel geometry itself uses rather than the build
+     prompt's own literal `translateY(173px)` snippet — CLAUDE.md forbids
+     a hardcoded pixel value in any CSS rule; this calc() resolves to the
+     identical 173px with no hardcoded number, matching how the reference
+     itself derives its own tag-travel distance from panel tokens. Same
+     computed result either way — flagged in the build report as a
+     resolved conflict between the build prompt's snippet and CLAUDE.md's
+     own absolute rule, not a layout/geometry disagreement. */
+  #sst-panel-1.is-active ~ .sst-tag {
+    transform: translateY(calc(var(--sst-panel-collapsed-height) + var(--spacing-32)));
+  }
+
+  /* Same offsets, same band as the reference's own caption — 64px from
+     the panel's own left edge (var(--spacing-64), a real token),
+     vertically centered in the gap between tag and the band's own
+     bottom. */
+  .sst-caption {
+    position: absolute;
+    left: var(--spacing-64);
+    top: calc(var(--sst-inset-y) + var(--sst-tag-height));
+    height: var(--sst-caption-band-height);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 7px;
+  }
+
+  /* Caption entrance/exit — ported from the reference's own text
+     animation, axis swapped per §3 (translateX → translateY). Collapse
+     is un-staggered and uses --sst-caption-collapse-duration (0.6 × the
+     enter duration, same ratio the reference uses); expand uses the full
+     --sst-duration and staggers description --sst-caption-stagger behind
+     headline. Base rule below is the collapsed/hidden state; .is-active
+     overrides it per element so the stagger can differ between the two. */
+  .sst-caption__headline,
+  .sst-caption__description {
+    margin: 0;
+    color: var(--primitive-black);
+    opacity: 0;
+    transform: translateY(-14px);
+    transition: opacity var(--sst-caption-collapse-duration) var(--sst-ease),
+                transform var(--sst-caption-collapse-duration) var(--sst-ease);
+  }
+  .sst-caption__headline {
+    font: var(--text-widget-legend);
+    white-space: nowrap;
+  }
+  .sst-caption__description {
+    font: var(--text-caption);
+    max-width: 200px;
+  }
+  .sst-panel.is-active .sst-caption__headline {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity var(--sst-duration) var(--sst-ease),
+                transform var(--sst-duration) var(--sst-ease);
+  }
+  .sst-panel.is-active .sst-caption__description {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity var(--sst-duration) var(--sst-ease) var(--sst-caption-stagger),
+                transform var(--sst-duration) var(--sst-ease) var(--sst-caption-stagger);
+  }
+
+  /* Reduced motion — build prompt §6: panel height and tag translateY
+     change instantly (transition: none, not the reference's 1ms trick —
+     this prompt's own wording is explicit: "change instantly, no
+     transition"); captions crossfade only, 150ms, no translate. The
+     autoplay clock is unaffected by this media query — it's driven
+     entirely by the script below, which doesn't read
+     prefers-reduced-motion at all. */
+  @media (prefers-reduced-motion: reduce) {
+    .sst-panel {
+      transition: none;
+    }
+    .sst-tag {
+      transition: none;
+    }
+    .sst-caption__headline,
+    .sst-caption__description {
+      transform: none;
+      transition: opacity 150ms ease;
+    }
+    .sst-panel.is-active .sst-caption__headline,
+    .sst-panel.is-active .sst-caption__description {
+      transform: none;
+      transition: opacity 150ms ease;
+    }
+  }
+</style>
+</head>
+<body>
+  <div class="sst-column" id="sst-column">
+    <div class="sst-panel sst-panel--green is-active" id="sst-panel-0" data-index="0">
+      <div class="sst-panel__content">
+        <div class="sst-caption">
+          <p class="sst-caption__headline">Inline audit trail</p>
+          <p class="sst-caption__description">Every decision behind a bill, who made it and why, proving the process held before money moves</p>
+        </div>
+      </div>
+    </div>
+    <div class="sst-panel sst-panel--white" id="sst-panel-1" data-index="1">
+      <div class="sst-panel__content">
+        <div class="sst-caption">
+          <p class="sst-caption__headline">Review before release</p>
+          <p class="sst-caption__description">Where bills become payments. The last checkpoint before funds move.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- The gallery's single tag — a row-level sibling of both panels,
+         not nested inside either one. It must come after both panels in
+         DOM order for the `#sst-panel-1.is-active ~ .sst-tag` CSS rule
+         above to reach it. -->
+    <div class="sst-tag" id="sst-tag">
+      <div class="principles-tag"><p class="principles-tag__label"># Process_accountability</p></div>
+    </div>
+  </div>
+
+  <script>
+  (function () {
+    // Hold durations, one per panel, index-matched to panels[] below.
+    // Placeholders for this round (build prompt §6) — the scenes that
+    // land in the panels later replace these with their own lengths.
+    // Kept as one editable array, not inlined at call sites.
+    var HOLD_DURATIONS = [4000, 4000];
+
+    var panels = [document.getElementById("sst-panel-0"), document.getElementById("sst-panel-1")];
+    var column = document.getElementById("sst-column");
+
+    var state = {
+      index: 0,
+      elapsed: 0,        // ms held in the current panel, as of the last tick that actually advanced it
+      lastFrameTime: null, // performance.now() at that last advancing tick; null while paused
+      running: false      // true only while .sst-column is in the viewport
+    };
+
+    // Mirrors the reference's own applyScene() exactly (build prompt
+    // §6) — one class swap drives both directions: the panel gaining
+    // is-active grows, the one losing it shrinks, same frame, same
+    // curve. No separate reverse code path.
+    function applyScene(index) {
+      panels[0].classList.toggle("is-active", index === 0);
+      panels[1].classList.toggle("is-active", index === 1);
+    }
+
+    // Every activation path — autoplay hand-off or a click — funnels
+    // through here, and always resets elapsed to zero (build prompt §6:
+    // "no resume, no memory of prior position").
+    function activate(index) {
+      state.index = index;
+      state.elapsed = 0;
+      applyScene(index);
+    }
+
+    function tick(now) {
+      if (state.running) {
+        if (state.lastFrameTime !== null) {
+          state.elapsed += now - state.lastFrameTime;
+          if (state.elapsed >= HOLD_DURATIONS[state.index]) {
+            activate((state.index + 1) % panels.length);
+          }
+        }
+        state.lastFrameTime = now;
+      } else {
+        // Leaving the viewport: drop the reference frame so the next
+        // resumed tick doesn't count the offscreen gap as elapsed time
+        // (pause, not slow-motion). state.elapsed itself is untouched,
+        // so resuming continues from where it stopped, not from zero.
+        state.lastFrameTime = null;
+      }
+      requestAnimationFrame(tick);
+    }
+
+    // Viewport gating (build prompt §6) — IntersectionObserver on the
+    // column, not hand-rolled scroll-offset maths. Any visible pixel
+    // counts as "in the viewport" (threshold 0); the build prompt names
+    // no specific percentage.
+    var visibilityObserver = new IntersectionObserver(
+      function (entries) {
+        for (var i = 0; i < entries.length; i++) {
+          state.running = entries[i].isIntersecting;
+        }
+      },
+      { threshold: 0 }
+    );
+
+    document.addEventListener("DOMContentLoaded", function () {
+      // Clicking a collapsed panel activates it and plays it from its
+      // own start; clicking the already-active panel is a no-op (build
+      // prompt §6). No check for an in-progress height transition — a
+      // click takes effect immediately either way.
+      panels.forEach(function (panel, index) {
+        panel.addEventListener("click", function () {
+          if (index !== state.index) {
+            activate(index);
+          }
+        });
+      });
+
+      visibilityObserver.observe(column);
+      applyScene(state.index);
+      requestAnimationFrame(tick);
+    });
+  })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+/* Bill Pay — Scene Stack widget (parent page). The scene-accordion
+   mechanism (Quality_of_decisions gallery) rotated from side-by-side to
+   stacked, for the Process_accountability gallery shell (build prompt,
+   14 Sep). The composition itself (panels, tag, caption, clock, motion)
+   lives entirely inside assets/scene-gallery/bill-pay/scenes-stack.html
+   — this file only sizes the iframe stage to the page's own 800px
+   content column (no viewport bleed, matching scene-accordion.css: this
+   component never needs to reach past it). No progress row and no
+   navigation — this gallery has no counter or arrow controls, so there's
+   nothing here corresponding to scene-accordion.css's own
+   .scene-accordion__navigation. Class names prefixed scene-stack-/
+   scene-stack__ so they can never collide with any other gallery's own
+   classes, all of which load on this page at once. */
+
+.scene-stack {
+  /* Composition coordinates specific to this widget — measured values
+     with no matching token step, kept as widget-scoped custom
+     properties per CLAUDE.md rather than raw values in the rules
+     below. */
+  --sst-stage-height: 634px; /* matches the panel column's own height built inside the iframe */
+  --sst-overhang: 20px; /* must stay in sync with scenes-stack.html's own --sst-overhang */
+  --sst-shadow-bleed: 0px; /* no mock in this widget, so no shadow to bleed — kept as a named term rather than dropped, mirroring scene-accordion.css's own pattern, so a future scene carrying its own shadow can extend it the same way */
+
+  display: flex;
+  width: 100%;
+}
+
+.scene-stack__stage {
+  width: 100%;
+}
+
+/* No viewport-bleed trick here — matching scene-accordion.css, this
+   composition never reaches past the page's own content column, so the
+   iframe's base width is just 100% of whatever .section__slot already
+   provides (exactly 800px at the widths this component was built for —
+   the section shell's own max-width:1056px + padding:128px math already
+   nets an 800px content box, the same 800px this component's own panel
+   column is fixed to; nothing here hardcodes that number a second
+   time). It's then widened by --sst-overhang + --sst-shadow-bleed and
+   pulled left by the same total amount — an iframe hard-clips to its
+   own box regardless of any overflow:visible set inside it, so without
+   this the tag's -20px overhang would be clipped at the iframe's own
+   left edge even though nothing inside the document is clipping it. */
+.scene-stack__visual {
+  display: block;
+  width: calc(100% + var(--sst-overhang) + var(--sst-shadow-bleed));
+  margin-left: calc(-1 * (var(--sst-overhang) + var(--sst-shadow-bleed)));
+  height: var(--sst-stage-height);
+  border: none;
+}

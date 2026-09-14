@@ -13,8 +13,8 @@ stylesheets:
   - ../../css/components/principles.css
   - ../../css/components/ap-manager-orbit.css
   - ../../css/widgets/bill-pay/scene-gallery-accordion/scene-gallery-accordion.css
-  - ../../css/widgets/bill-pay/scene-gallery-accountability/scene-gallery-accountability.css
   - ../../css/widgets/bill-pay/scene-accordion/scene-accordion.css
+  - ../../css/widgets/bill-pay/scene-stack/scene-stack.css
   - ../../css/widgets/bill-pay/walkthrough-gallery/gallery.css
   - ../../css/widgets/bill-pay/walkthrough-gallery/visual.css
   - ../../css/widgets/bill-pay/walkthrough-gallery/caption.css
@@ -29,8 +29,8 @@ scripts:
   - ../../js/bill-pay/walkthrough-gallery.js
   - ../../js/bill-pay/cockpit-widget.js
   - ../../js/bill-pay/scene-gallery-accordion.js
-  - ../../js/bill-pay/scene-gallery-accountability.js
   - ../../js/bill-pay/scene-accordion.js
+  - ../../js/bill-pay/scene-stack.js
   - ../../js/bill-pay/ap-manager-orbit.js
 ---
 {% extends "base.njk" %}
@@ -42,8 +42,8 @@ scripts:
 {% from "two-block-header.njk" import twoBlockHeader %}
 {% from "gallery-navigation.njk" import galleryNavigation %}
 {% from "scene-gallery-accordion.njk" import sceneGalleryAccordion %}
-{% from "scene-gallery-accountability.njk" import sceneGalleryAccountability %}
 {% from "scene-accordion.njk" import sceneAccordion %}
+{% from "scene-stack.njk" import sceneStack %}
 
 {% block body %}
 <main>
@@ -302,13 +302,15 @@ scripts:
   {{ sceneAccordion() }}
   {% endcall %}
 
-  {# 9. Process_accountability gallery — third principle. Same accordion
-     structure as the Volume_Productivity gallery, duplicated (not shared),
-     on a grey section. The scene document does not exist yet; the mock slot
-     holds a placeholder box at the exact dimensions the real document will
-     occupy. #}
+  {# Scene stack — Process_accountability gallery shell. The
+     scene-accordion mechanism (Quality_of_decisions gallery) rotated from
+     side-by-side to stacked: two full-width panels, one above the other,
+     swapping height instead of width. Own grey section, directly above the
+     Process_accountability placeholder gallery below. No scene content in
+     this round — panel interiors hold only the caption; both galleries
+     render on the page at once for now (build prompt, 14 Sep). #}
   {% call section("section--grey-light") %}
-  {{ sceneGalleryAccountability() }}
+  {{ sceneStack() }}
   {% endcall %}
 
 </main>
