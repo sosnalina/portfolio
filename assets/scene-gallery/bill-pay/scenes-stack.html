@@ -91,6 +91,20 @@
     overflow: visible;
   }
 
+  /* Deliberate exception to the shared .sst-panel.is-active overflow:visible
+     above — build prompt ("Panel clipping"): the parked drawer takeover
+     ends 738px tall in a 461px panel and must be clipped by it. Same
+     pattern scenes-accordion.html already carries for its own active panel
+     (.ag-panel--green.is-active { overflow: hidden }) — copied, not
+     reinvented. Same specificity as the shared rule above (two classes
+     each), wins on source order. Panel 1 (white) never gets this override —
+     it has no oversized content to clip. The tag is unaffected: it's a
+     sibling of both panels (.sst-tag, below), not a child, so this clip
+     never touches it — verified in the browser after adding this rule. */
+  .sst-panel--green.is-active {
+    overflow: hidden;
+  }
+
   .sst-panel--green { background: var(--primitive-green-light); }
   .sst-panel--white { background: var(--primitive-white); }
 
@@ -267,6 +281,15 @@
     overflow: visible;
     opacity: 0;
     pointer-events: none;
+    /* Required for the takeover's own translate+scale math (build prompt)
+       to land where derived: the default 50%/50% transform-origin scales
+       from the box's own CENTER, which would shift the rendered top-left
+       corner by half the size delta in each direction -- the entrance
+       beat's own scale (0.95→1, already on this element) never made that
+       visible (too small a delta, ~2.5% of a ~305px box), but the
+       takeover's much larger delta (0.305→0.738) does. top left matches
+       .p0s1-mock-scaler's own convention just below. */
+    transform-origin: top left;
   }
   .p0s1-mock-scaler {
     width: 1440px;
@@ -3586,7 +3609,28 @@
       ["fall", LIFT_FALL],
       ["drawerOpen", 225],
       ["revealHold", 180],
-      ["endHold", 2000]
+      // Retime (fix round, Hadar's own report, watching the built scene):
+      // 2000ms → 500ms → 1000ms (500ms judged too fast). "The cursor sits
+      // on the status cell far too long after the drawer has opened."
+      // Only this beat's own duration changes -- revealHold above (180ms,
+      // the selected-row-card reveal that settles just after the drawer's
+      // own slide-open transition) is untouched, so "the drawer finishing
+      // opening" for this hold's own purpose is revealHoldEnd, not the raw
+      // drawerOpen transition's own end mark -- the gap FROM THERE to the
+      // takeover's own start is exactly this beat's duration, 1000ms.
+      ["endHold", 1000],
+      // ---- Drawer takeover (build prompt, "the drawer takeover") ----
+      // Two beats, retimed (fix round, Hadar's own report, watching the
+      // built scene): total 440ms, fixed -- was 780ms. takeoverNudge
+      // 540ms → 200ms ("reads as sluggish against the grow's 240ms");
+      // takeoverGrow stays 240ms, untouched. The table fade (prompt's own
+      // beat 1) is NOT a separate BEATS entry: it starts on the same frame
+      // as takeoverNudge and finishes partway through it (see
+      // TAKEOVER_FADE_DURATION below, also retimed this round), so it's
+      // computed from M.takeoverNudgeStart directly rather than getting its
+      // own mark.
+      ["takeoverNudge", 200],
+      ["takeoverGrow", 240]
     ];
     var MARKS = (function () {
       var m = {}, acc = 0;
@@ -3600,6 +3644,48 @@
     })();
 
     var reduceMotion = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+
+    // ---- Drawer takeover keyframes (build prompt) — one continuous
+    // translate+scale transform on .p0s1-mock-wrap, never a separate
+    // transform on the drawer (it stays part of the mock throughout, so a
+    // later round can reverse this by replaying the same transform
+    // backward instead of re-syncing two things). x/y are panel-relative
+    // px (the mock wrapper's own coordinate space — same numbers its
+    // static CSS left/top already use); scale is the ABSOLUTE
+    // --p0s1-mock-scale-equivalent, not a multiplier.
+    //
+    // Keyframe A is the mock's own CSS rest position, computed from the
+    // SAME calc() the stylesheet uses (800 - 46 - 1440*scale) rather than
+    // a rounded literal, so it's exact — matches that rule's own comment
+    // ("315" is the spec's rounding of 314.8, not a different number).
+    var TAKEOVER_A = { x: 800 - 46 - 1440 * MOCK_SCALE, y: 78, scale: MOCK_SCALE };
+    // Keyframe B: drawer's right edge (== the mock's own right edge, since
+    // the drawer is flush to the SCREEN's right edge at native x 1440)
+    // meets the panel's right edge (800) — build prompt's own derivation:
+    // x + 439 (mock width at 0.305) = 800, x = 361.
+    var TAKEOVER_B = { x: 361, y: 78, scale: MOCK_SCALE };
+    // Keyframe C: parked. Build prompt's own derivation — drawer native
+    // left 1005 (screen width 1440 − drawer width 435), at scale 0.738
+    // that's 741.7px from the mock's own left edge; drawer width 321 at
+    // that scale; x + 741.7 + 321 = 800 (panel's right edge) => x = −263.
+    // Drawer native top 0 => y = 0 puts it flush with the panel's own top.
+    var TAKEOVER_C = { x: -263, y: 0, scale: 0.738 };
+    // cubic-bezier(0.645, 0.045, 0.355, 1) — Hadar's own choice off a
+    // playable comparison, not derived, both takeover moves, not to be
+    // substituted for the file's other easeInOutCubic (a different curve,
+    // ported from scenes.html for cursor gestures — this one is its own).
+    var easeTakeover = makeEaseOut(0.645, 0.045, 0.355, 1);
+    // Beat 1 (mock-surface fade) — not its own BEATS entry (see that
+    // array's own comment): starts with takeoverNudge, complete by this
+    // many ms into it, linear. Retimed (fix round, Hadar's own report,
+    // consequence of takeoverNudge dropping to 200ms): 335ms → 120ms, so
+    // the fade still finishes well inside the (now shorter) nudge --
+    // 335ms would still be running 135ms into the 240ms grow, sweeping the
+    // still-visible mock across the caption. 120/200 = 60% of the nudge,
+    // close to the original 335/540 ≈ 62% ratio, though this round's own
+    // build prompt gives 120 as the exact figure, not a ratio to
+    // preserve.
+    var TAKEOVER_FADE_DURATION = 120;
 
     // The rest of the instance (totals, cursor targets, the lift clone,
     // drawer content) is still built lazily, the first time panel 0
@@ -3800,6 +3886,9 @@
         rowsScrollEl: rowsScrollEl,
         heroRowEl: heroRowEl,
         mockWrapEl: document.getElementById("p0s1-mock-wrap"),
+        headerEl: screenEl.querySelector(".bp-header"),
+        tableWrapEl: screenEl.querySelector(".bp-table-wrap"),
+        footerEl: screenEl.querySelector(".bp-footer"),
         cursorEl: document.getElementById("p0s1-cursor"),
         rippleEl: document.getElementById("p0s1-ripple"),
         rippleDiscEl: document.querySelector("#p0s1-ripple .p0s1-ripple__disc"),
@@ -3839,6 +3928,12 @@
       instance.rowsScrollEl.scrollTop = 0;
       if (instance.statusHoverEl) instance.statusHoverEl.classList.remove("is-hover");
       drawSparkBurst(-1, 0, 0);
+      instance.headerEl.style.opacity = "";
+      instance.tableWrapEl.style.opacity = "";
+      instance.footerEl.style.opacity = "";
+      instance.screenEl.style.background = "";
+      instance.screenEl.style.boxShadow = "";
+      instance.cursorEl.style.transform = "";
     }
 
     // Row-lift rise/fall — same shape as scenes.html's own
@@ -3898,6 +3993,12 @@
         ins.rowCardEl.removeAttribute("data-visible");
         if (ins.statusHoverEl) ins.statusHoverEl.classList.remove("is-hover");
         drawSparkBurst(-1, 0, 0); // clears the canvas; kt < 0 is always out of range
+        ins.headerEl.style.opacity = "";
+        ins.tableWrapEl.style.opacity = "";
+        ins.footerEl.style.opacity = "";
+        ins.screenEl.style.background = "";
+        ins.screenEl.style.boxShadow = "";
+        ins.cursorEl.style.transform = "";
         return;
       }
 
@@ -3915,8 +4016,95 @@
           mockOpacity = opE;
         }
       }
+      // ---- Drawer takeover (build prompt) — one continuous transform on
+      // the SAME wrapper the entrance beat above already animates, merged
+      // with it rather than layered separately (the two never overlap in
+      // time — by takeoverNudgeStart, mockScale/mockTranslateY have long
+      // settled to their post-entrance defaults of 1/0). Expressed as an
+      // offset from keyframe A (the mock's own CSS rest position) so it
+      // composes with the entrance's own terms: translateX/Y are additive,
+      // scale is multiplicative against the CSS's own base --p0s1-mock-scale. ----
+      var takeoverOffsetX = 0, takeoverOffsetY = 0, takeoverScaleMul = 1;
+      var contentOpacity = 1; // the page header + table, "the table" in the build prompt's own beat 1 — see below for why both fade together
+      if (t >= M.takeoverNudgeStart) {
+        var fromKF, toKF, localT, dur;
+        if (reduceMotion) {
+          // "no travel, no scale animation: cut straight to keyframe C"
+          fromKF = toKF = TAKEOVER_C;
+          localT = 0; dur = 1;
+        } else if (t < M.takeoverNudgeEnd) {
+          fromKF = TAKEOVER_A; toKF = TAKEOVER_B;
+          localT = t - M.takeoverNudgeStart;
+          dur = M.takeoverNudgeEnd - M.takeoverNudgeStart;
+        } else if (t < M.takeoverGrowEnd) {
+          fromKF = TAKEOVER_B; toKF = TAKEOVER_C;
+          localT = t - M.takeoverGrowStart;
+          dur = M.takeoverGrowEnd - M.takeoverGrowStart;
+        } else {
+          fromKF = toKF = TAKEOVER_C;
+          localT = 0; dur = 1;
+        }
+        var te = easeTakeover(clamp01(localT / dur));
+        var tx = fromKF.x + (toKF.x - fromKF.x) * te;
+        var ty = fromKF.y + (toKF.y - fromKF.y) * te;
+        var tscale = fromKF.scale + (toKF.scale - fromKF.scale) * te;
+        takeoverOffsetX = tx - TAKEOVER_A.x;
+        takeoverOffsetY = ty - TAKEOVER_A.y;
+        takeoverScaleMul = tscale / MOCK_SCALE;
+
+        // Beat 1 (mock-surface fade), build prompt: "complete by
+        // TAKEOVER_FADE_DURATION ms from the start of beat 2... linear."
+        // (retimed this round to 120ms — see that constant's own comment
+        // for why). reduceMotion: "table: hidden, no fade" — instant, not
+        // animated.
+        //
+        // Fade round 2 (fix, Hadar's own report — "the mock's own surface
+        // is still visible"): the intended end state is the drawer and
+        // NOTHING else from the mock, not just "nothing that happens to
+        // collide with the caption." Fade round 1 only covered .bp-header
+        // and .bp-table-wrap (the two elements that visibly swept over the
+        // caption during the grow beat); .bp-footer and .bp-screen's own
+        // background/shadow were left out because neither one collides
+        // with the caption -- footer's own y-range never overlaps the
+        // caption band, confirmed via the same math the build prompt gives
+        // for the table -- but that was solving the wrong problem. At
+        // keyframe A/B (still scale 0.305) .bp-footer's own panel-space
+        // y-range is 352.5–383, well inside the panel's 0–461 -- fully
+        // visible, an opaque black bar, for the whole nudge beat and the
+        // early part of grow, unrelated to the caption. And .bp-screen's
+        // own white background/shadow (not an element, a CSS fill behind
+        // everything, including the drawer) was never touched at all,
+        // which is defect 1's real cause. Both now fade on the exact same
+        // contentOpacity curve as header/table.
+        if (reduceMotion) {
+          contentOpacity = 0;
+        } else {
+          var fadeLocal = t - M.takeoverNudgeStart;
+          contentOpacity = 1 - clamp01(fadeLocal / TAKEOVER_FADE_DURATION);
+        }
+      }
+      ins.headerEl.style.opacity = String(contentOpacity);
+      ins.tableWrapEl.style.opacity = String(contentOpacity);
+      ins.footerEl.style.opacity = String(contentOpacity);
+      // .bp-screen is the DRAWER'S OWN ANCESTOR (the drawer is one of its
+      // four direct children, a sibling of header/table-wrap/footer) --
+      // opacity can't be used here the way it is on its siblings, since
+      // opacity on an ancestor fades every descendant including the
+      // drawer. Only the two visual properties that make it read as an
+      // opaque surface are faded instead, leaving the element's own
+      // opacity (and thus the drawer's) untouched: background-color via
+      // color-mix against the same --primitive-white token the CSS rule
+      // below uses, and box-shadow reconstructed from --shadow-soft's own
+      // definition (tokens.css) with its fixed 10% swapped for
+      // contentOpacity*10% -- same shadow, same color token
+      // (--primitive-black), just scaled down alongside everything else
+      // instead of cut instantly.
+      ins.screenEl.style.background = "color-mix(in srgb, var(--primitive-white) " + (contentOpacity * 100) + "%, transparent)";
+      ins.screenEl.style.boxShadow = "0px 0px 30px color-mix(in srgb, var(--primitive-black) " + (contentOpacity * 10) + "%, transparent)";
+
       ins.mockWrapEl.style.opacity = String(mockOpacity);
-      ins.mockWrapEl.style.transform = "translateY(" + mockTranslateY + "px) scale(" + mockScale + ")";
+      ins.mockWrapEl.style.transform =
+        "translate(" + takeoverOffsetX + "px, " + (mockTranslateY + takeoverOffsetY) + "px) scale(" + (mockScale * takeoverScaleMul) + ")";
 
       // ---- Review scroll (beat 5) ----
       var scrollTopNative;
@@ -3996,6 +4184,23 @@
       ins.cursorEl.style.left = cursorPos.x + "px";
       ins.cursorEl.style.top = cursorPos.y + "px";
       ins.cursorEl.style.opacity = String(cursorOpacity);
+      // Counter-scale (fix, defect 3, Hadar's own report) — the cursor
+      // lives inside .p0s1-mock-scaler/.p0s1-mock-wrap, the same wrapper
+      // chain the takeover's own scale grows (0.305 -> 0.738, ~2.4x), so
+      // without this it grows right along with the mock and reads as a
+      // graphic, not a cursor. takeoverScaleMul is exactly the extra
+      // factor the takeover adds on top of the fixed 0.305 (1 outside the
+      // takeover window, growing to ~2.42 at the parked state) -- its
+      // reciprocal cancels that growth every frame, so the cursor's
+      // on-screen size stays pinned to its original (0.305-only)
+      // rendered size throughout, not just at the two endpoints. Composed
+      // with the class's own translate(-4px, -3px) anchor offset (not
+      // replacing it -- an inline transform overrides the CSS rule's
+      // wholesale, so both parts have to be written here together) rather
+      // than moved out of the wrapper, per the build prompt's own
+      // preference -- moving it out would mean re-deriving its position
+      // against the mock independently instead of inheriting it for free.
+      ins.cursorEl.style.transform = "translate(-4px, -3px) scale(" + (1 / takeoverScaleMul) + ")";
       ins.rippleEl.style.left = cursorPos.x + "px";
       ins.rippleEl.style.top = cursorPos.y + "px";
       ins.rippleDiscEl.style.opacity = String(rippleOpacity);
