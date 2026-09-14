@@ -2663,6 +2663,21 @@
     transform: translate(-50%, -50%) scale(0.02);
   }
 
+  /* Click spark burst — ported from scenes.html's own .scene2-spark-canvas
+     (fix round, Hadar's own report: absent entirely). Same native 1440×1000
+     coordinate space as .p0s1-cursor/.p0s1-ripple (sibling inside
+     .p0s1-mock-scaler, so it scales down with everything else for free).
+     Above the cursor/ripple (z-index 10/9) so the burst reads on top of the
+     click it's reacting to -- matches the source's own z-index 11. */
+  .p0s1-spark-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 11;
+  }
+
   /* ---- Reduced motion (build spec §9) — the lift and the drawer both
      communicate state, so both still change, instantly rather than not
      at all. The mock's own entrance overshoot and the amount bumps are
@@ -2866,6 +2881,7 @@
             <div class="p0s1-ripple" id="p0s1-ripple">
               <div class="p0s1-ripple__disc"></div>
             </div>
+            <canvas class="p0s1-spark-canvas" id="p0s1-spark-canvas" width="1440" height="1000"></canvas>
           </div>
         </div>
       </div>
@@ -3338,8 +3354,20 @@
       var baselineFromBoxTop = probe.getBoundingClientRect().top - stageRect.top;
       stageEl.removeChild(probe);
 
-      var capMidFromBoxTop = baselineFromBoxTop - capHeight / 2;
-      var centerY = (stageRect.top + capMidFromBoxTop - railRect.top) / scale;
+      // DELIBERATE DIVERGENCE from schedule-payment.js's positionActivityRail() --
+      // do not "correct" this back to match the source. The source mixes scaled-
+      // viewport-space terms (stageRect/railRect/baselineFromBoxTop, all read via
+      // getBoundingClientRect(), affected by the ancestor CSS transform) with
+      // native-space capHeight (read via getComputedStyle(), unaffected by ancestor
+      // transforms), then divides the whole sum by scale once -- which divides the
+      // already-native capHeight a second, unwanted time. Harmless at the mock's own
+      // usage (scale is near 1 there); at this scene's fixed 0.305 stage scale it
+      // inflates that term ~3.3x. Fixed here by converting the scaled terms to native
+      // space before combining with capHeight, instead of mixing first and dividing
+      // once at the end. The source itself is intentionally left unfixed -- Hadar's
+      // decision, this divergence lives in this scene only.
+      var capMidFromBoxTop = baselineFromBoxTop / scale - capHeight / 2;
+      var centerY = (stageRect.top - railRect.top) / scale + capMidFromBoxTop;
       dots[i].style.top = centerY - 6 + "px"; // 6 = half the 12px dot
       centers.push(centerY);
     }
@@ -3421,6 +3449,55 @@
     function computeClickRipple(localT, duration) {
       var e = easeRipple(clamp01(localT / duration));
       return { scale: lerpStops(RIPPLE_SCALE_STOPS, e), opacity: lerpStops(RIPPLE_OPACITY_STOPS, e) };
+    }
+
+    // Click spark burst — ported from scenes.html's own .scene2-spark-
+    // canvas / triggerSparkBurst / drawSparks (fix round, Hadar's own
+    // report: absent entirely from this file before this fix). Particle
+    // parameters carried across UNCHANGED from the source: SPARK_COUNT 8,
+    // SPARK_SIZE 28, SPARK_RADIUS 45, SPARK_DURATION 500ms,
+    // SPARK_LINE_WIDTH 3, sparkEaseOut(x) = x*(2-x). No Math.random in
+    // either version — each spark's angle is a fixed fraction of a full
+    // turn (2*PI*i/SPARK_COUNT), not randomized.
+    //
+    // DELIBERATE DIVERGENCE from the source's own mechanism, not a copy
+    // error: scenes.html's own comment on this code says it runs "on its
+    // own real-time requestAnimationFrame loop (performance.now()-based),
+    // independent of the scene timeline's own t-driven, seekable render"
+    // — sparks accumulate in a array keyed to wall-clock startTime. This
+    // build's spec requires every value to be a pure function of t (no
+    // accumulated state, reproducible on a seek in either direction), so
+    // the burst is instead recomputed every frame from local elapsed time
+    // (kt = t − clickStart) — same math, same constants, just driven by
+    // t instead of a wall-clock timer. The source is not being changed.
+    var SPARK_COUNT = 8;
+    var SPARK_SIZE = 28;
+    var SPARK_RADIUS = 45;
+    var SPARK_DURATION = 500; // ms
+    var SPARK_LINE_WIDTH = 3;
+    function sparkEaseOut(x) { return x * (2 - x); }
+    var SPARK_COLOR = getComputedStyle(document.documentElement).getPropertyValue("--primitive-grey-dark").trim();
+    var sparkCanvasEl = document.getElementById("p0s1-spark-canvas");
+    var sparkCtx = sparkCanvasEl.getContext("2d");
+    function drawSparkBurst(kt, x, y) {
+      sparkCtx.clearRect(0, 0, sparkCanvasEl.width, sparkCanvasEl.height);
+      if (reduceMotion || kt < 0 || kt >= SPARK_DURATION) return;
+      var eased = sparkEaseOut(kt / SPARK_DURATION);
+      var distance = eased * SPARK_RADIUS;
+      var lineLength = SPARK_SIZE * (1 - eased);
+      sparkCtx.strokeStyle = SPARK_COLOR;
+      sparkCtx.lineWidth = SPARK_LINE_WIDTH;
+      for (var i = 0; i < SPARK_COUNT; i++) {
+        var angle = (2 * Math.PI * i) / SPARK_COUNT;
+        var x1 = x + distance * Math.cos(angle);
+        var y1 = y + distance * Math.sin(angle);
+        var x2 = x + (distance + lineLength) * Math.cos(angle);
+        var y2 = y + (distance + lineLength) * Math.sin(angle);
+        sparkCtx.beginPath();
+        sparkCtx.moveTo(x1, y1);
+        sparkCtx.lineTo(x2, y2);
+        sparkCtx.stroke();
+      }
     }
 
     // Native-px rect of el, relative to refRect's top-left — ported
@@ -3728,6 +3805,7 @@
         rippleDiscEl: document.querySelector("#p0s1-ripple .p0s1-ripple__disc"),
         dimOverlayEl: document.getElementById("p0s1-dim-overlay"),
         cloneEl: clone,
+        statusHoverEl: clone.querySelector(".bp-cell--status--clickable .bp-hover-underline"),
         activityDrawerEl: document.getElementById("p0s1-activity-drawer"),
         rowCardEl: document.getElementById("p0s1-row-selected-card"),
         rowCardLayerEl: document.getElementById("p0s1-row-card-layer"),
@@ -3759,6 +3837,8 @@
       instance.screenEl.classList.remove("bp-screen--narrow", "bp-screen--activity-open");
       instance.screenEl.removeAttribute("data-narrow-mode");
       instance.rowsScrollEl.scrollTop = 0;
+      if (instance.statusHoverEl) instance.statusHoverEl.classList.remove("is-hover");
+      drawSparkBurst(-1, 0, 0);
     }
 
     // Row-lift rise/fall — same shape as scenes.html's own
@@ -3816,6 +3896,8 @@
         ins.heroRowEl.style.opacity = "1";
         ins.heroRowEl.removeAttribute("data-selected");
         ins.rowCardEl.removeAttribute("data-visible");
+        if (ins.statusHoverEl) ins.statusHoverEl.classList.remove("is-hover");
+        drawSparkBurst(-1, 0, 0); // clears the canvas; kt < 0 is always out of range
         return;
       }
 
@@ -3918,6 +4000,24 @@
       ins.rippleEl.style.top = cursorPos.y + "px";
       ins.rippleDiscEl.style.opacity = String(rippleOpacity);
       ins.rippleDiscEl.style.transform = "translate(-50%, -50%) scale(" + rippleScale + ")";
+      // Hover hold (fix round, §2b/§2c) — is-hover on the status cell's own
+      // bp-hover-underline from the moment the cursor arrives (moveToStatusEnd)
+      // until the click fires (clickStart), removed the same frame the ripple/
+      // spark fire. Applied unconditionally every frame, straight off t (not
+      // nested inside the branch above), so scrubbing backward into an earlier
+      // branch still clears it correctly instead of leaving a stale class from
+      // whatever frame rendered last. Pattern ported from scenes.html's own S3
+      // vendorsAlertTextEl toggle (classList.toggle driven off t — there is no
+      // real pointer here for mouseenter/mouseleave to key off).
+      if (ins.statusHoverEl) {
+        ins.statusHoverEl.classList.toggle("is-hover", t >= M.moveToStatusEnd && t < M.clickStart);
+      }
+      // Click spark burst (fix round, §2a) — see drawSparkBurst's own comment
+      // for why this is recomputed from local elapsed time every frame instead
+      // of the source's real-time accumulation. Called unconditionally, same
+      // reasoning as the hover toggle above: a pure function of t clears itself
+      // correctly on a backward seek.
+      drawSparkBurst(t - M.clickStart, cursorPos.x, cursorPos.y);
 
       // ---- Row lift (beats 8–13) ----
       var lift = computeLift(t);
