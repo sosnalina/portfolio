@@ -215,6 +215,108 @@
   }
 
   /* ================================================================
+     Accountability wave (panel 0) — build prompt, Hadar, 14 Sep,
+     "Build: the accountability wave". Picks up after the drawer
+     takeover parks; none of the mock/takeover CSS above is touched.
+     Lives in PANEL space (0-800 x, 0-461 y), positioned directly
+     against #sst-panel-0 (position:relative, same ancestor
+     .sst-caption already resolves against) — NOT the mock's native
+     1440x1000/0.305-scaled space the .p0s1-* rules above use.
+     Stacking order (spec §1.3, back to front: wave line, particles,
+     avatar nodes, caption/tag, drawer) is satisfied purely by DOM
+     order — this whole layer is .sst-panel__content's FIRST child
+     (see markup below), so .sst-caption and .p0s1-mock-wrap (which
+     contains the drawer), both already later siblings, paint after
+     it with no z-index needed anywhere in this block. ---- */
+  .p0-wave-layer {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 800px;
+    height: 461px;
+    pointer-events: none;
+  }
+  .p0-wave-canvas {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 800px;
+    height: 461px;
+  }
+  /* One shared particle burst, not one per node — spec §5/§9: "only
+     the selected node ever has particles... never more than one of
+     either on screen." Repositioned via transform to whichever node
+     currently owns it. Sized to the largest persona (8, department/
+     manager); unused slots are hidden per-frame, not removed. */
+  .p0-wave-particle {
+    position: absolute;
+    left: 0;
+    top: 0;
+    transform-origin: center center;
+    opacity: 0;
+    will-change: transform, opacity;
+  }
+  .p0-wave-particle img { display: block; width: 100%; height: 100%; }
+  .p0-wave-node {
+    position: absolute;
+    left: 0;
+    top: 0;
+  }
+  /* "Outlined in primitive grey" (build prompt §3) — tokens.css has no
+     literal --primitive-grey token, only -dark/-medium/-light.
+     -medium/-light both read as near-invisible against the green
+     panel; -dark (#6b6c72) is the only one that renders as a visible
+     grey ring. Judgment call, flagged in the build report. */
+  .p0-wave-node__ring {
+    position: absolute;
+    left: 0;
+    top: 0;
+    border-radius: 50%;
+    border: 2px solid var(--primitive-grey-dark);
+    box-sizing: border-box;
+    transform: translate(-50%, -50%);
+  }
+  /* Fixed -0.5/+0.5px nudge (spec §3, "Unselected") applied
+     unconditionally — sub-pixel at any of this element's sizes (35 or
+     interpolating toward 82), so leaving it on throughout is harmless
+     and avoids a second size-keyed branch. */
+  .p0-wave-node__circle {
+    position: absolute;
+    left: 0;
+    top: 0;
+    background: var(--primitive-white);
+    border-radius: 50%;
+    transform: translate(calc(-50% - 0.5px), calc(-50% + 0.5px));
+  }
+  .p0-wave-node__png {
+    position: absolute;
+    left: 0;
+    top: 0;
+    border-radius: 50%;
+    background-size: cover;
+    background-position: center;
+    transform: translate(-50%, -50%);
+  }
+
+  /* Reduced motion (build prompt §13) — selection must still change
+     (the wave communicates who handled each step), so node sizing/
+     ring/opacity still update; only the texture (draw-on, pop
+     overshoot, travel tween, burst/float/retract) is removed. Handled
+     almost entirely in the script (renderWave() below branches on
+     reduceMotion directly, same pattern renderScene0 already uses) —
+     this block only covers the couple of properties that are plain
+     CSS transitions elsewhere in this stylesheet and would otherwise
+     animate on top of the script's own instant values. */
+  @media (prefers-reduced-motion: reduce) {
+    .p0-wave-node__ring,
+    .p0-wave-node__circle,
+    .p0-wave-node__png,
+    .p0-wave-particle {
+      transition: none;
+    }
+  }
+
+  /* ================================================================
      Scene 1 — "Inline audit trail" (panel 0). Build spec: Hadar, 14
      Sep, "Scene 1 — Inline audit trail (panel 0, Process_accountability)".
      Mock markup/CSS duplicated from assets/mock-screen/bill-pay/
@@ -2624,6 +2726,34 @@
     box-shadow: var(--shadow-soft);
   }
 
+  /* ---- Bill Activity drawer — deliberate divergence (accountability-
+     wave build prompt §6, "The drawer scrolls as one"): in the mock
+     (and in the verbatim rules above), .bp-activity__head is fixed
+     (flex:0 0 auto) and only .bp-activity__scroll scrolls beneath it.
+     This scene scrolls the ENTIRE drawer body — head included — as one
+     block instead, so by the later steps only timeline entries remain
+     on screen with nothing pinned. Do not "fix" this back to match the
+     mock; it is intentional, not a regression. Implemented by wrapping
+     both .bp-activity__head and .bp-activity__scroll in one new
+     .p0s1-activity-track (markup below) and translating THAT — never
+     .bp-activity__scroll directly, per the prompt's own instruction —
+     with #p0s1-activity-drawer itself supplying the clip. Scoped by ID
+     so the verbatim .bp-activity__scroll rule above (flex:1;
+     overflow-y:auto) stays intact for reference/diffing; only this
+     drawer instance's copy is overridden. ---- */
+  #p0s1-activity-drawer {
+    overflow: hidden;
+  }
+  #p0s1-activity-drawer .bp-activity__scroll {
+    flex: 0 0 auto;
+    overflow: visible;
+  }
+  .p0s1-activity-track {
+    display: flex;
+    flex-direction: column;
+    will-change: transform;
+  }
+
   /* ---- Row lift (build spec §6) — duplicated from scenes.html's own
      .bp-dim-overlay/.bp-lift-layer/.bp-row--lift-clone verbatim, this
      panel's own p0s1- prefix. Single lift-hold-fall on one row, not a
@@ -2747,6 +2877,18 @@
   <div class="sst-column" id="sst-column">
     <div class="sst-panel sst-panel--green is-active" id="sst-panel-0" data-index="0">
       <div class="sst-panel__content">
+        <!-- Accountability wave — build prompt, Hadar, 14 Sep. Must be
+             the FIRST child of .sst-panel__content (see this file's
+             own CSS comment on .p0-wave-layer for why: stacking order
+             is pure DOM order, and .sst-caption/.p0s1-mock-wrap both
+             need to paint above this). Node/particle markup is built
+             once by the script (buildScene0Instance) — only the wave
+             canvas is authored here. -->
+        <div class="p0-wave-layer" id="p0-wave-layer">
+          <canvas class="p0-wave-canvas" id="p0-wave-canvas" width="800" height="461"></canvas>
+          <div class="p0-wave-particles" id="p0-wave-particles"></div>
+          <div class="p0-wave-nodes" id="p0-wave-nodes"></div>
+        </div>
         <div class="sst-caption">
           <p class="sst-caption__headline">Inline audit trail</p>
           <p class="sst-caption__description">Every decision behind a bill, who made it and why, proving the process held before money moves</p>
@@ -2844,6 +2986,12 @@
               </footer>
 
               <aside class="bp-drawer bp-drawer--activity" id="p0s1-activity-drawer">
+                <!-- .p0s1-activity-track wraps head+scroll as one unit —
+                     deliberate divergence, see this file's own CSS
+                     comment on #p0s1-activity-drawer/.p0s1-activity-track
+                     above ("The drawer scrolls as one"). Do not restore
+                     the mock's fixed-head/scrolling-body split here. -->
+                <div class="p0s1-activity-track" id="p0s1-activity-track">
                 <div class="bp-activity__head">
                   <div class="bp-activity__head-inner">
                     <button class="bp-drawer__close" type="button" tabindex="-1" aria-label="Close">
@@ -2881,6 +3029,7 @@
                     <div class="bp-activity__timeline-content" id="p0s1-activity-timeline-content"></div>
                   </div>
                   <div style="height: 32px"></div>
+                </div>
                 </div>
               </aside>
             </div>
@@ -3687,6 +3836,519 @@
     // preserve.
     var TAKEOVER_FADE_DURATION = 120;
 
+    // ================================================================
+    // Accountability wave — build prompt, Hadar, 14 Sep, "Build: the
+    // accountability wave". Picks up the instant the drawer takeover
+    // above parks and owns everything through the scene's own ending.
+    // Every value below is a pure function of scene-local t (build
+    // prompt §12: seekable both directions, no Math.random, no value
+    // that depends on a previous frame). Nothing above this comment
+    // (mock entrance through the 440ms takeover and its keyframes) is
+    // modified — this section only reads TAKEOVER_A/B/C, easeTakeover,
+    // MOCK_SCALE, reduceMotion, clamp01 and makeEaseOut from it.
+    // ================================================================
+
+    function lerp(a, b, u) { return a + (b - a) * u; }
+    function easeInOutQuint(x) {
+      return x < 0.5 ? 16 * x * x * x * x * x : 1 - Math.pow(-2 * x + 2, 5) / 2;
+    }
+    // Burst-out / retract-in (build prompt §9 names only "ease-out"/
+    // "ease-in", no bezier numbers). Reused, not invented:
+    // easeLiftRise/easeLiftFall above are this file's own existing
+    // ease-out-ends-at-zero-velocity / ease-in-starts-slow curves —
+    // flagged in the build report as a deliberate reuse.
+    var easeBurstOut = easeLiftRise;
+    var easeRetractIn = makeEaseOut(0.4, 0, 1, 1); // same numbers as --bp-ease-collapse
+    var easeDrawerClose = makeEaseOut(0.4, 0, 0.6, 1); // same numbers as --bp-ease-drawer-close
+    // "Anticipation" curve, build prompt §11's own bezier, verbatim.
+    var easeAnticipate = makeEaseOut(0.6, -0.28, 0.735, 0.045);
+    // Avatar pop overshoot (build prompt §10: "overshoot 0.22, start
+    // from scale 0.9"). No bezier is given — a classic parameterized
+    // "back" ease (Penner's easeOutBack), with 0.22 read as that
+    // formula's own overshoot constant. Flagged in the build report as
+    // an interpretation, not a value taken from the prompt verbatim.
+    function easePopOvershoot(x) {
+      var c1 = 0.22, c3 = c1 + 1, xm1 = x - 1;
+      return 1 + c3 * xm1 * xm1 * xm1 + c1 * xm1 * xm1;
+    }
+
+    // ---- Geometry (build prompt §1, locked — not re-derived) ----
+    var WAVE_CENTER_Y = 289, WAVE_WAVELENGTH = 600, WAVE_AMPLITUDE = 40;
+    var WAVE_NODE_SPACING = 206, WAVE_SELECTED_X = 349, WAVE_PANEL_WIDTH = 800;
+    function curveY(x) {
+      return WAVE_CENTER_Y - WAVE_AMPLITUDE * Math.sin((x / WAVE_WAVELENGTH) * 2 * Math.PI);
+    }
+
+    // ---- Cast (build prompt §2) — index is each node's own FIXED
+    // slot number; only the wave's SELECTED slot (s(t) below) moves.
+    // Slot 5 is Marcus duplicated (same persona as slot 1), per §2's
+    // own "this applies to Marcus only" note. ----
+    var NODES = [
+      { persona: "system", label: "System" },
+      { persona: "clerk", label: "Marcus Webb, AP clerk" },
+      { persona: "director", label: "Dana Kim, Finance Director" },
+      { persona: "department", label: "Priya Raman, department head" },
+      { persona: "manager", label: "AP manager" },
+      { persona: "clerk", label: "Marcus Webb" }
+    ];
+    var AVATAR_DIR = "avatars/";
+
+    // ---- Steps (build prompt §4) — slot + signed travel delta from
+    // the previous step; row index is this array's own index (0-9),
+    // matching ACTIVITY_TIMELINE 1:1 (row 10, "Paid", is excluded —
+    // never the active step). Read off the build prompt's own table. ----
+    var STEPS = [
+      { slot: 0, delta: null },
+      { slot: 1, delta: 1 },
+      { slot: 0, delta: -1 },
+      { slot: 1, delta: 1 },
+      { slot: 2, delta: 1 },
+      { slot: 1, delta: -1 },
+      { slot: 5, delta: 4 },
+      { slot: 3, delta: -2 },
+      { slot: 2, delta: -1 },
+      { slot: 4, delta: 2 }
+    ];
+
+    // ---- Particles (build prompt §5) — hand-placed per persona, off
+    // each persona's own 140x140 artboard (centre 70,70); offsetX/Y are
+    // derived (x + w/2 - 70, y + h/2 - 70) at render time, not baked
+    // in, so this stays a literal transcription of the prompt's own
+    // x/y/w/h/rotation columns. Slot 5 (Marcus duplicate) reuses
+    // "clerk" — same arrangement as slot 1, per §5's own instruction. ----
+    var PARTICLE_DIR = "../../illustrations/bill-pay/ap-manager-orbit/";
+    var PARTICLE_SETS = {
+      clerk: [
+        { asset: "hashtag", x: 105, y: 100, w: 22.5, h: 31.5, rot: 0 },
+        { asset: "coin", x: 17, y: 11, w: 14, h: 15, rot: -31.5 },
+        { asset: "star", x: 105, y: 11, w: 22.9, h: 19.8, rot: 174.3 },
+        { asset: "star", x: 81, y: 7, w: 13, h: 11.2, rot: -21.5 },
+        { asset: "star", x: 121.5, y: 76.1, w: 13, h: 11.2, rot: -137.7 },
+        { asset: "banknote-small", x: 15, y: 109, w: 24.3, h: 19.1, rot: -69 },
+        { asset: "banknote-small", x: 6, y: 90, w: 20.4, h: 16, rot: 8 }
+      ],
+      director: [
+        { asset: "trend-arrow", x: 92.5, y: 101.6, w: 35, h: 23, rot: 8.3 },
+        { asset: "star", x: 115.5, y: 79.5, w: 13, h: 11.2, rot: -21.5 },
+        { asset: "star", x: 5, y: 43, w: 13, h: 11.2, rot: -21.5 },
+        { asset: "star", x: 13.2, y: 6.8, w: 20.4, h: 17.6, rot: 68 },
+        { asset: "banknote-small", x: 5, y: 99, w: 34, h: 26, rot: -69 },
+        { asset: "banknote-big", x: 103, y: 7, w: 26, h: 29, rot: 0 },
+        { asset: "coin", x: 44, y: 120, w: 9.7, h: 10.5, rot: 26 }
+      ],
+      system: [
+        { asset: "hashtag", x: 105, y: 13, w: 22.5, h: 31.5, rot: 0 },
+        { asset: "star", x: 15, y: 111, w: 19, h: 16, rot: 0 },
+        { asset: "star", x: 85, y: 7, w: 13, h: 11.2, rot: 174.3 },
+        { asset: "star", x: 8.4, y: 87.1, w: 13, h: 11.2, rot: 68 },
+        { asset: "coin", x: 12.1, y: 23.5, w: 14, h: 15, rot: -31.5 },
+        { asset: "coin", x: 32, y: 7, w: 9.7, h: 10.5, rot: 26 },
+        { asset: "banknote-small", x: 98, y: 105, w: 36, h: 28, rot: 0 }
+      ],
+      department: [
+        { asset: "star", x: 15, y: 24, w: 19, h: 16, rot: 0 },
+        { asset: "star", x: 48.8, y: 4, w: 13, h: 11.2, rot: -85.9 },
+        { asset: "star", x: 110, y: 111.7, w: 13, h: 11.2, rot: 174.3 },
+        { asset: "coin", x: 114.6, y: 89.4, w: 11, h: 11.9, rot: -34.3 },
+        { asset: "coin", x: 12.4, y: 1.9, w: 11, h: 11.9, rot: -41.9 },
+        { asset: "coin", x: 24, y: 114, w: 11, h: 11.9, rot: 22.1 },
+        { asset: "coin", x: 7.9, y: 94.5, w: 12.7, h: 13.8, rot: -26 },
+        { asset: "banknote-small", x: 94, y: 26, w: 36, h: 28, rot: -23.6 }
+      ],
+      manager: [
+        { asset: "star", x: 13, y: 98, w: 20.4, h: 17.6, rot: 68 },
+        { asset: "star", x: 43, y: 7.4, w: 13, h: 11.2, rot: -1 },
+        { asset: "star", x: 40, y: 116, w: 13, h: 11.2, rot: 68 },
+        { asset: "star", x: 116, y: 119, w: 13, h: 11.2, rot: -85.9 },
+        { asset: "coin", x: 123, y: 54, w: 11, h: 11.9, rot: -38.7 },
+        { asset: "coin", x: 113, y: 93.3, w: 14.6, h: 15.8, rot: 33.1 },
+        { asset: "hashtag", x: 13, y: 9, w: 20, h: 29, rot: 0 },
+        { asset: "banknote-small", x: 98, y: 0, w: 34, h: 26, rot: -69 }
+      ]
+    };
+    var MAX_PARTICLES = 8; // department/manager both carry 8
+
+    // ---- Timing model (build prompt §6/§9/§10/§11) ----
+    var WAVE_DRAW_DELAY = 360, WAVE_DRAW_DURATION = 580, AVATAR_POP_DURATION = 410;
+    var HOLD_BEFORE_STEP1 = 1000, TRAVEL_BASE = 440, STEP_PAUSE = 1300;
+    var RING_DURATION = 160, BURST_DURATION = 360, RETRACT_DURATION = 300;
+    var ROW_BUMP_DURATION = 220, ROW_BUMP_SCALE = 1.12;
+    var ENDING_HOLD_1 = 1000, ENDING_HOLD_2 = 500;
+    var DRAWER_CLOSE_DURATION = 195, MOCK_EXIT_DURATION = 420;
+    function travelDuration(slots) { return TRAVEL_BASE * (0.55 + 0.45 * Math.abs(slots)); }
+
+    var waveEntranceStart = MARKS.takeoverNudgeStart + WAVE_DRAW_DELAY;
+    var waveEntranceEnd = waveEntranceStart + WAVE_DRAW_DURATION;
+
+    // Reveal time for the (up to 3) avatars whose entrance-x already
+    // sits inside the 800px draw — solved directly from the linear
+    // draw-on ramp. Nodes 3-5 (entrance x > 800) are found by the scan
+    // further below instead.
+    var ENTRANCE_X = NODES.map(function (n, i) { return WAVE_SELECTED_X + i * WAVE_NODE_SPACING; });
+    var entranceRevealTime = ENTRANCE_X.map(function (x) {
+      return x <= WAVE_PANEL_WIDTH ? waveEntranceStart + (x / WAVE_PANEL_WIDTH) * WAVE_DRAW_DURATION : null;
+    });
+    var lastEntrancePopEnd = 0;
+    entranceRevealTime.forEach(function (rt) {
+      if (rt !== null) lastEntrancePopEnd = Math.max(lastEntrancePopEnd, rt + AVATAR_POP_DURATION);
+    });
+    var step1Start = lastEntrancePopEnd + HOLD_BEFORE_STEP1;
+
+    // ---- Step marks — strictly sequential from step1Start onward
+    // (build prompt §6: "the pause begins when the travel completes and
+    // ends when the next travel begins"). stepMarks[0] is step 1 itself
+    // (no travel — already in place from the entrance); stepMarks[1..9]
+    // are steps 2-10, each carrying the travel that ARRIVES at it. ----
+    var stepMarks = [{ slot: STEPS[0].slot, fromSlot: STEPS[0].slot, toSlot: STEPS[0].slot, travelStart: step1Start, travelEnd: step1Start, travelDur: 0, arriveAt: step1Start }];
+    (function () {
+      var t = step1Start;
+      for (var k = 1; k < STEPS.length; k++) {
+        var travelStart = t + STEP_PAUSE;
+        var dur = travelDuration(STEPS[k].delta);
+        var travelEnd = travelStart + dur;
+        stepMarks[k] = { slot: STEPS[k].slot, fromSlot: STEPS[k - 1].slot, toSlot: STEPS[k].slot, travelStart: travelStart, travelEnd: travelEnd, travelDur: dur, arriveAt: travelEnd };
+        t = travelEnd;
+      }
+    })();
+    var step10ArriveAt = stepMarks[9].arriveAt;
+    // "The moment step 10's bump settles" (build prompt §11) — read as
+    // the row bump's own 220ms duration elapsing after arrival. Flagged
+    // in the build report as an interpretation of "settles".
+    var endingHoldStart = step10ArriveAt + ROW_BUMP_DURATION;
+    var endingHoldEnd = endingHoldStart + ENDING_HOLD_1;
+    // Wave exit mirrors the entrance (build prompt §11); no new numbers
+    // are given for it, so the entrance's own delay+draw span (360+580)
+    // is reused in reverse. Flagged in the build report.
+    var WAVE_EXIT_DURATION = WAVE_DRAW_DELAY + WAVE_DRAW_DURATION;
+    var waveExitStart = endingHoldEnd;
+    var waveExitEnd = waveExitStart + WAVE_EXIT_DURATION;
+    var TAKEOVER_REVERSE_DURATION = 440;
+    var takeoverReverseStart = waveExitEnd;
+    var takeoverReverseEnd = takeoverReverseStart + TAKEOVER_REVERSE_DURATION;
+    var holdAllBackEnd = takeoverReverseEnd + ENDING_HOLD_2;
+    var drawerCloseStart = holdAllBackEnd;
+    var drawerCloseEnd = drawerCloseStart + DRAWER_CLOSE_DURATION;
+    var mockExitStart = drawerCloseEnd;
+    var mockExitEnd = mockExitStart + MOCK_EXIT_DURATION;
+    var SCENE0_TOTAL_DURATION = mockExitEnd;
+
+    // ---- s(t): the wave's animated slot position — one clock, shared
+    // by the wave's own travel AND the drawer's row scroll (build
+    // prompt §6: "not two animations started on the same frame — one
+    // value"). {fromIdx, toIdx, eased} is the single source both the
+    // node-position formula and the row-translate formula key off. ----
+    function stepTransition(t) {
+      if (t < step1Start) return { fromIdx: 0, toIdx: 0, eased: 0 };
+      for (var k = 1; k < STEPS.length; k++) {
+        var sm = stepMarks[k];
+        if (t < sm.travelStart) return { fromIdx: k - 1, toIdx: k - 1, eased: 0 };
+        if (t < sm.travelEnd) return { fromIdx: k - 1, toIdx: k, eased: easeInOutQuint(clamp01((t - sm.travelStart) / sm.travelDur)) };
+      }
+      return { fromIdx: STEPS.length - 1, toIdx: STEPS.length - 1, eased: 0 };
+    }
+    function slotAtTime(t) {
+      var tr = stepTransition(t);
+      return lerp(STEPS[tr.fromIdx].slot, STEPS[tr.toIdx].slot, tr.eased);
+    }
+    // Step 0/System's own ring+burst key off when ITS OWN entrance pop
+    // completed (build prompt §10: "unringed... ring then snaps out")
+    // — a different moment than step1Start (the row-bump/hold-end mark).
+    function arrivalRefFor(k) { return k === 0 ? entranceRevealTime[0] + AVATAR_POP_DURATION : stepMarks[k].arriveAt; }
+    // Which step's node currently owns the ring/particles (used by
+    // renderWaveSelection only — NOT the same thing as a row's own
+    // "reached" state, which stays keyed to step1Start; see
+    // rowReachedAt below). System (k=0) owns them from its own
+    // entrance-pop completion onward — before step1Start's row-bump/
+    // hold-end mark, which is a separate, later moment (build prompt
+    // §10: "Its ring then snaps out per §9... then the 1000ms hold").
+    function reachedIndex(t) {
+      if (t < arrivalRefFor(0)) return -1;
+      if (t < step1Start) return 0;
+      var idx = 0;
+      for (var k = 1; k < STEPS.length; k++) { if (t >= stepMarks[k].arriveAt) idx = k; }
+      return idx;
+    }
+
+    // Node x/y at time t (build prompt §1): x = selected-x + (own slot
+    // - s(t)) * spacing; y = curveY(x), evaluated fresh every frame —
+    // never stored, never interpolated independently of x.
+    function nodeX(i, t) { return WAVE_SELECTED_X + (i - slotAtTime(t)) * WAVE_NODE_SPACING; }
+
+    // ---- Wave draw extent (build prompt §10 in, §11 out) ----
+    function waveExtentIn(t) {
+      if (t < waveEntranceStart) return 0;
+      if (t < waveEntranceEnd) return WAVE_PANEL_WIDTH * (t - waveEntranceStart) / WAVE_DRAW_DURATION;
+      return WAVE_PANEL_WIDTH;
+    }
+    function waveExtentOut(t) {
+      if (t < waveExitStart) return WAVE_PANEL_WIDTH;
+      if (t < waveExitEnd) return WAVE_PANEL_WIDTH * (1 - (t - waveExitStart) / WAVE_EXIT_DURATION);
+      return 0;
+    }
+    function currentWaveExtent(t) { return t < waveExitStart ? waveExtentIn(t) : waveExtentOut(t); }
+    function waveExtentForRender(t) {
+      if (!reduceMotion) return currentWaveExtent(t);
+      if (t < MARKS.takeoverGrowEnd) return 0;
+      return t < endingHoldEnd ? WAVE_PANEL_WIDTH : 0; // §13: "appears complete... reverses instantly"
+    }
+
+    // ---- Avatar reveal (entrance) / retreat (exit) times — build
+    // prompt §10: "an avatar never appears before the line has been
+    // drawn underneath it." Nodes 0-2 are solved directly above; nodes
+    // 3-5 (entrance x > 800) are only reached once travel first brings
+    // them under 800 — found by a one-time fine-grained scan over the
+    // whole step phase (run once at parse time, not per frame) rather
+    // than inverting the eased travel curve analytically. Retreat times
+    // (exit) are found the same way, against the exit's own mirrored,
+    // shrinking extent. ----
+    var revealTime = entranceRevealTime.slice();
+    (function () {
+      var stepPx = 4;
+      for (var i = 0; i < NODES.length; i++) {
+        if (revealTime[i] !== null) continue;
+        revealTime[i] = step10ArriveAt; // safety net, should never be hit
+        for (var t = waveEntranceStart; t <= step10ArriveAt; t += stepPx) {
+          if (currentWaveExtent(t) >= nodeX(i, t)) { revealTime[i] = t; break; }
+        }
+      }
+    })();
+    var retreatTime = [];
+    (function () {
+      var stepPx = 4;
+      for (var i = 0; i < NODES.length; i++) {
+        retreatTime[i] = waveExitEnd; // safety net
+        for (var t = waveExitStart; t <= waveExitEnd; t += stepPx) {
+          if (currentWaveExtent(t) < nodeX(i, t)) { retreatTime[i] = t; break; }
+        }
+      }
+    })();
+
+    // ---- Row translate (build prompt §6: "the drawer scrolls as
+    // one") — measured, never assumed (this file's own established
+    // convention, see SCROLL_DISTANCE_NATIVE/ROW_PITCH_NATIVE above).
+    // Populated once, the first frame the activity drawer is actually
+    // laid out (same gate as positionActivityRail/railPositioned).
+    // rowOffsetNative[r] is row r's own top edge, native px, relative
+    // to .p0s1-activity-track at rest; the fixed landing y is row 0's
+    // own natural position, so step 1 needs zero translate. Measured
+    // real offsets (not the build prompt's own illustrative
+    // "-(rowIndex x rowHeight)" formula) because row 10 carries an
+    // extra 42px gap (.bp-activity-item--wide-gap above) that a
+    // uniform rowHeight multiply would get wrong — this satisfies the
+    // "identical y for every step" check exactly, not approximately. ----
+    function measureActivityRows(ins) {
+      var trackRect = ins.activityTrackEl.getBoundingClientRect();
+      var offsets = [];
+      for (var i = 0; i < ins.activityItemEls.length; i++) {
+        offsets.push((ins.activityItemEls[i].getBoundingClientRect().top - trackRect.top) / MOCK_SCALE);
+      }
+      ins.activityRowOffsetNative = offsets;
+    }
+    function rowTranslateNative(ins, t) {
+      var offsets = ins.activityRowOffsetNative;
+      if (!offsets || t < step1Start) return 0;
+      var tr = stepTransition(t);
+      return offsets[0] - lerp(offsets[tr.fromIdx], offsets[tr.toIdx], tr.eased);
+    }
+
+    // ---- Row opacity + bump (build prompt §7) ----
+    function rowReachedAt(r) { return r === 0 ? step1Start : stepMarks[r].arriveAt; }
+    function rowOpacity(t, r) {
+      if (t < MARKS.takeoverGrowEnd) return 1; // still at mock scale / mid-takeover
+      if (r >= STEPS.length) return 0.38;      // row 10, "Paid" — never stepped through
+      return t >= rowReachedAt(r) ? 1 : 0.38;
+    }
+    function rowBumpScale(t, r) {
+      if (r >= STEPS.length) return 1;
+      var bLocal = t - rowReachedAt(r);
+      if (reduceMotion || bLocal < 0 || bLocal >= ROW_BUMP_DURATION) return 1;
+      var half = ROW_BUMP_DURATION * 0.4;
+      var p = bLocal < half ? clamp01(bLocal / half) : 1 - clamp01((bLocal - half) / (ROW_BUMP_DURATION - half));
+      return 1 + (ROW_BUMP_SCALE - 1) * p;
+    }
+
+    // ---- Wave line (build prompt §1.3) — dotted 2px dash/6px gap,
+    // round caps, 2px stroke, rgba(57,58,61,.55), sampled every 3px.
+    // Canvas, not an SVG path, since the draw-on reveal is just "how
+    // far along x this loop runs" -- no separate clip mechanism needed. ----
+    function drawWaveCurve(ctx, extent) {
+      ctx.clearRect(0, 0, WAVE_PANEL_WIDTH, 461);
+      if (extent <= 0) return;
+      ctx.save();
+      ctx.strokeStyle = "rgba(57, 58, 61, 0.55)";
+      ctx.lineWidth = 2;
+      ctx.lineCap = "round";
+      ctx.setLineDash([2, 6]);
+      ctx.beginPath();
+      var started = false;
+      for (var x = 0; x <= extent; x += 3) {
+        var y = curveY(x);
+        if (!started) { ctx.moveTo(x, y); started = true; } else { ctx.lineTo(x, y); }
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // ---- Per-node render: position, pop/retreat, and the selected-
+    // vs-unselected circle/PNG crossfade (build prompt §3). Ring and
+    // particles are handled separately by renderWaveSelection below,
+    // since only ONE node ever owns them. ----
+    function renderWaveNode(ins, i, t) {
+      var el = ins.nodeEls[i];
+      var visible = reduceMotion
+        ? (t >= MARKS.takeoverGrowEnd && t < endingHoldEnd)
+        : (t >= revealTime[i] && (t < waveExitStart || t < retreatTime[i]));
+      if (!visible) { el.style.opacity = "0"; return; }
+
+      var x = nodeX(i, t), y = curveY(x);
+      var popScale = 1, popOpacity = 1;
+      if (!reduceMotion) {
+        var popT = t - revealTime[i];
+        if (popT >= 0 && popT < AVATAR_POP_DURATION) {
+          var pp = clamp01(popT / AVATAR_POP_DURATION);
+          popScale = 0.9 + 0.1 * easePopOvershoot(pp);
+          popOpacity = pp;
+        }
+        if (t >= waveExitStart) {
+          var retT = t - retreatTime[i];
+          if (retT >= 0 && retT < AVATAR_POP_DURATION) {
+            var rp = clamp01(retT / AVATAR_POP_DURATION);
+            popScale = 0.9 + 0.1 * (1 - rp);
+            popOpacity = 1 - rp;
+          }
+        }
+      }
+
+      var tr = stepTransition(t);
+      var circleSize = 35, pngSize = 46;
+      if (i === STEPS[tr.fromIdx].slot) {
+        circleSize = lerp(82, 35, tr.eased);
+        pngSize = lerp(92, 46, tr.eased);
+      } else if (i === STEPS[tr.toIdx].slot) {
+        circleSize = lerp(35, 82, tr.eased);
+        pngSize = lerp(46, 92, tr.eased);
+      }
+      // Step 10's own node has no following travel to crossfade it back
+      // down (stepTransition permanently returns fromIdx=toIdx=9 after
+      // it), so without this it would stay rendered at "selected" size
+      // forever through the ending, orphaned once its ring/particles
+      // retract at waveExitStart. Shrinks it back to baseline over the
+      // same 300ms/curve as that retract, so the AP manager's avatar
+      // returns to its resting look in step with the rest of the exit
+      // instead of just sitting there ring-less at full size.
+      if (!reduceMotion && i === STEPS[STEPS.length - 1].slot) {
+        var sinceExit = t - waveExitStart;
+        if (sinceExit >= 0) {
+          var shrink = easeRetractIn(clamp01(sinceExit / RETRACT_DURATION));
+          circleSize = lerp(circleSize, 35, shrink);
+          pngSize = lerp(pngSize, 46, shrink);
+        }
+      }
+
+      el.style.opacity = String(popOpacity);
+      el.style.transform = "translate(" + x + "px," + y + "px) scale(" + popScale + ")";
+      var parts = ins.nodeParts[i];
+      parts.circle.style.width = parts.circle.style.height = circleSize + "px";
+      parts.png.style.width = parts.png.style.height = pngSize + "px";
+    }
+
+    // ---- Ring + particles for whichever single node currently owns
+    // them (build prompt §9: "only the selected node ever has a
+    // ring... never more than one of either on screen"). ----
+    function hideWaveSelection(ins) {
+      for (var i = 0; i < NODES.length; i++) ins.nodeParts[i].ring.style.opacity = "0";
+      for (var j = 0; j < MAX_PARTICLES; j++) ins.particleEls[j].style.opacity = "0";
+    }
+    function renderWaveSelection(ins, t) {
+      hideWaveSelection(ins);
+      if (t < MARKS.takeoverGrowEnd || t >= mockExitStart) return;
+      var k = reachedIndex(t);
+      if (k < 0) return;
+      var nodeIndex = STEPS[k].slot;
+      var arrivalRef = arrivalRefFor(k);
+      var since = t - arrivalRef;
+      if (since < 0) return;
+
+      var departRef = k < STEPS.length - 1 ? stepMarks[k + 1].travelStart : Infinity;
+      if (k === STEPS.length - 1) departRef = Math.min(departRef, waveExitStart);
+      var sinceDepart = t - departRef;
+
+      var ringScale, ringOn, particleProgress, phase;
+      if (reduceMotion) {
+        ringScale = sinceDepart >= 0 ? 0 : 1;
+        ringOn = sinceDepart < 0;
+        particleProgress = ringOn ? 1 : 0;
+        phase = "float";
+      } else if (sinceDepart >= 0 && sinceDepart < RETRACT_DURATION) {
+        var rp = 1 - easeRetractIn(clamp01(sinceDepart / RETRACT_DURATION));
+        ringScale = rp; ringOn = rp > 0.001; particleProgress = rp; phase = "retract";
+      } else if (sinceDepart >= RETRACT_DURATION) {
+        return; // fully retracted
+      } else if (since < RING_DURATION) {
+        ringScale = easeBurstOut(clamp01(since / RING_DURATION)); ringOn = true; particleProgress = 0; phase = "pre-burst";
+      } else if (since < RING_DURATION + BURST_DURATION) {
+        ringScale = 1; ringOn = true;
+        particleProgress = easeBurstOut(clamp01((since - RING_DURATION) / BURST_DURATION));
+        phase = "burst";
+      } else {
+        ringScale = 1; ringOn = true; particleProgress = 1; phase = "float";
+      }
+
+      var x = nodeX(nodeIndex, t), y = curveY(x);
+      // The ring is a CHILD of .p0-wave-node (see markup below) — its
+      // parent wrapper already carries translate(x,y) from
+      // renderWaveNode() above, so the ring only self-centers here.
+      // (Fixed after Playwright verification caught it compounding
+      // with the parent's own translate, landing the ring far off-
+      // panel — see the build report.)
+      var ringEl = ins.nodeParts[nodeIndex].ring;
+      if (ringOn) {
+        var size = 92 * ringScale;
+        ringEl.style.width = ringEl.style.height = size + "px";
+        ringEl.style.transform = "translate(-50%,-50%)";
+        ringEl.style.opacity = "1";
+      }
+
+      if (particleProgress <= 0) return;
+      var restTime = arrivalRef + RING_DURATION + BURST_DURATION;
+      var set = PARTICLE_SETS[NODES[nodeIndex].persona];
+      for (var j = 0; j < MAX_PARTICLES; j++) {
+        if (j >= set.length) continue;
+        var pd = set[j];
+        var offsetX = pd.x + pd.w / 2 - 70;
+        var offsetY = pd.y + pd.h / 2 - 70;
+        var floatY = 0;
+        if ((phase === "float" || phase === "retract") && !reduceMotion) {
+          // §9 float formulas — deterministic, no Math.random. i is the
+          // node's own slot (not persona identity), j the particle's
+          // own index, exactly as specified.
+          var travelPx = 6 + ((nodeIndex * 3 + j * 5) % 5);
+          var periodMs = 2900 + ((nodeIndex * 7 + j * 13) % 5) * 100;
+          var u = t - restTime;
+          if (u >= 0) floatY = -travelPx * (1 - Math.cos((2 * Math.PI * u) / periodMs)) / 2;
+        }
+        var pEl = ins.particleEls[j];
+        pEl.style.width = pd.w + "px";
+        pEl.style.height = pd.h + "px";
+        pEl.style.opacity = String(particleProgress);
+        var curX = x + offsetX * particleProgress;
+        var curY = y + (offsetY + floatY) * particleProgress;
+        pEl.style.transform = "translate(" + curX + "px," + curY + "px) translate(-50%,-50%) rotate(" + pd.rot + "deg)";
+        var img = pEl.firstChild;
+        var wantSrc = PARTICLE_DIR + pd.asset + ".png";
+        if (img.getAttribute("data-src") !== wantSrc) {
+          img.src = wantSrc;
+          img.setAttribute("data-src", wantSrc);
+        }
+      }
+    }
+
+    function renderWave(t, ins) {
+      drawWaveCurve(ins.waveCtx, waveExtentForRender(t));
+      for (var i = 0; i < NODES.length; i++) renderWaveNode(ins, i, t);
+      renderWaveSelection(ins, t);
+    }
+
     // The rest of the instance (totals, cursor targets, the lift clone,
     // drawer content) is still built lazily, the first time panel 0
     // needs to render — a viewer who never scrolls to this gallery
@@ -3860,6 +4522,50 @@
       document.getElementById("p0s1-activity-balance").textContent = money(heroPayload.amount);
       document.getElementById("p0s1-activity-due").textContent = fmtLong(parseMMDDYY(heroPayload.due));
       renderActivityTimeline();
+
+      // ---- Accountability wave — node/particle DOM built once here
+      // (canvas is already authored in markup); activity-row refs are
+      // grabbed now that renderActivityTimeline() above has populated
+      // them, though their real offsets aren't measured until the
+      // drawer is actually laid out (measureActivityRows(), gated the
+      // same way positionActivityRail() is below). ----
+      var waveCanvasEl = document.getElementById("p0-wave-canvas");
+      var waveCtx = waveCanvasEl.getContext("2d");
+      var nodesContainerEl = document.getElementById("p0-wave-nodes");
+      var nodeEls = [], nodeParts = [];
+      NODES.forEach(function (n, i) {
+        var wrap = document.createElement("div");
+        wrap.className = "p0-wave-node";
+        wrap.style.opacity = "0";
+        var ring = document.createElement("div");
+        ring.className = "p0-wave-node__ring";
+        var circle = document.createElement("div");
+        circle.className = "p0-wave-node__circle";
+        var png = document.createElement("div");
+        png.className = "p0-wave-node__png";
+        png.style.backgroundImage = "url(" + AVATAR_DIR + n.persona + ".png)";
+        wrap.appendChild(ring);
+        wrap.appendChild(circle);
+        wrap.appendChild(png);
+        nodesContainerEl.appendChild(wrap);
+        nodeEls.push(wrap);
+        nodeParts.push({ ring: ring, circle: circle, png: png });
+      });
+      var particlesContainerEl = document.getElementById("p0-wave-particles");
+      var particleEls = [];
+      for (var pj = 0; pj < MAX_PARTICLES; pj++) {
+        var pEl = document.createElement("div");
+        pEl.className = "p0-wave-particle";
+        var pImg = document.createElement("img");
+        pImg.alt = "";
+        pEl.appendChild(pImg);
+        particlesContainerEl.appendChild(pEl);
+        particleEls.push(pEl);
+      }
+      var activityTrackEl = document.getElementById("p0s1-activity-track");
+      var activityItemEls = Array.prototype.slice.call(
+        document.querySelectorAll("#p0s1-activity-timeline-content .bp-activity-item")
+      );
       // positionActivityRail() is NOT called here (fix round, Hadar's
       // own report). The source's own positionActivityRail (schedule-
       // payment.js) is documented "re-run on every open... since the
@@ -3903,7 +4609,15 @@
         circle: circle,
         bumpTriggers: bumpTriggers,
         lastStatusPos: parkPos,
-        railPositioned: false
+        railPositioned: false,
+        waveCtx: waveCtx,
+        nodeEls: nodeEls,
+        nodeParts: nodeParts,
+        particleEls: particleEls,
+        activityTrackEl: activityTrackEl,
+        activityItemEls: activityItemEls,
+        rowOffsetsComputed: false,
+        activityRowOffsetNative: null
       };
     }
 
@@ -3934,6 +4648,8 @@
       instance.screenEl.style.background = "";
       instance.screenEl.style.boxShadow = "";
       instance.cursorEl.style.transform = "";
+      instance.activityTrackEl.style.transform = "";
+      renderWave(-1, instance); // -1 is always out of range — clears the canvas and hides every node/particle
     }
 
     // Row-lift rise/fall — same shape as scenes.html's own
@@ -3999,6 +4715,8 @@
         ins.screenEl.style.background = "";
         ins.screenEl.style.boxShadow = "";
         ins.cursorEl.style.transform = "";
+        ins.activityTrackEl.style.transform = "";
+        renderWave(-1, ins);
         return;
       }
 
@@ -4282,12 +5000,86 @@
         ins.heroRowEl.removeAttribute("data-selected");
         ins.rowCardEl.removeAttribute("data-visible");
       }
+
+      // ---- Accountability wave — drawer body scroll + row opacity/
+      // bump (build prompt §6/§7). Row offsets can only be measured
+      // once the activity drawer is actually laid out — same one-shot
+      // gate as positionActivityRail()/railPositioned just above. ----
+      if (ins.railPositioned) {
+        if (!ins.rowOffsetsComputed) {
+          measureActivityRows(ins);
+          ins.rowOffsetsComputed = true;
+        }
+        ins.activityTrackEl.style.transform = "translateY(" + rowTranslateNative(ins, t) + "px)";
+        for (var ri = 0; ri < ins.activityItemEls.length; ri++) {
+          var itemEl = ins.activityItemEls[ri];
+          itemEl.style.opacity = String(rowOpacity(t, ri));
+          itemEl.style.transformOrigin = "left center";
+          itemEl.style.transform = "scale(" + rowBumpScale(t, ri) + ")";
+        }
+      }
+
+      renderWave(t, ins);
+
+      // ---- Ending (build prompt §11) — overrides the takeover/drawer
+      // properties set above, for t past the wave's own step phase.
+      // Reuses TAKEOVER_A/B/C and easeTakeover (read only, never
+      // reassigned — the forward takeover code above this point is
+      // untouched) so the reverse truly replays the same transform
+      // backward instead of authoring a second path ("do not author a
+      // separate return path"). ----
+      if (t >= takeoverReverseStart) {
+        var revProgress = reduceMotion ? 1 : clamp01((t - takeoverReverseStart) / TAKEOVER_REVERSE_DURATION);
+        var virtualT = TAKEOVER_REVERSE_DURATION * (1 - revProgress);
+        var kf;
+        if (virtualT < 200) {
+          var te1 = easeTakeover(clamp01(virtualT / 200));
+          kf = { x: lerp(TAKEOVER_A.x, TAKEOVER_B.x, te1), y: lerp(TAKEOVER_A.y, TAKEOVER_B.y, te1), scale: lerp(TAKEOVER_A.scale, TAKEOVER_B.scale, te1) };
+        } else {
+          var te2 = easeTakeover(clamp01((virtualT - 200) / 240));
+          kf = { x: lerp(TAKEOVER_B.x, TAKEOVER_C.x, te2), y: lerp(TAKEOVER_B.y, TAKEOVER_C.y, te2), scale: lerp(TAKEOVER_B.scale, TAKEOVER_C.scale, te2) };
+        }
+        var revOffsetX = kf.x - TAKEOVER_A.x;
+        var revOffsetY = kf.y - TAKEOVER_A.y;
+        var revScaleMul = kf.scale / MOCK_SCALE;
+        var revContentOpacity = reduceMotion ? (t >= mockExitStart ? 0 : 1) : 1 - clamp01(virtualT / TAKEOVER_FADE_DURATION);
+
+        var exitTranslateY = 0;
+        if (t >= mockExitStart) {
+          var ep = reduceMotion ? 1 : clamp01((t - mockExitStart) / MOCK_EXIT_DURATION);
+          exitTranslateY = ENTRANCE_START_OFFSET * easeAnticipate(ep);
+        }
+
+        ins.mockWrapEl.style.opacity = "1";
+        ins.mockWrapEl.style.transform = "translate(" + revOffsetX + "px, " + (revOffsetY + exitTranslateY) + "px) scale(" + (MOCK_SCALE * revScaleMul) + ")";
+        ins.headerEl.style.opacity = String(revContentOpacity);
+        ins.tableWrapEl.style.opacity = String(revContentOpacity);
+        ins.footerEl.style.opacity = String(revContentOpacity);
+        ins.screenEl.style.background = "color-mix(in srgb, var(--primitive-white) " + (revContentOpacity * 100) + "%, transparent)";
+        ins.screenEl.style.boxShadow = "0px 0px 30px color-mix(in srgb, var(--primitive-black) " + (revContentOpacity * 10) + "%, transparent)";
+
+        // Drawer close (195ms, the mock's own close curve) — begins
+        // only once the takeover reverse has fully landed on keyframe A.
+        var closeOpenness = 1;
+        if (t >= drawerCloseStart) {
+          var cp = reduceMotion ? 1 : clamp01((t - drawerCloseStart) / DRAWER_CLOSE_DURATION);
+          closeOpenness = 1 - easeDrawerClose(cp);
+        }
+        ins.activityDrawerEl.style.transform = "translate3d(" + (100 * (1 - closeOpenness)) + "%, 0, 0)";
+        ins.screenEl.classList.toggle("bp-screen--activity-open", closeOpenness > 0.001);
+        if (closeOpenness <= 0.001) {
+          ins.screenEl.classList.remove("bp-screen--narrow");
+          ins.screenEl.removeAttribute("data-narrow-mode");
+        }
+      }
     }
 
     // Hold durations, one per panel, index-matched to panels[] below.
     // Panel 0's placeholder 4000ms is replaced by this scene's own
-    // derived total (build spec §8); panel 1 has no scene yet.
-    var HOLD_DURATIONS = [MARKS.total, 4000];
+    // derived total — now the accountability wave's own ending
+    // (SCENE0_TOTAL_DURATION), not just the takeover's own end
+    // (MARKS.total); panel 1 has no scene yet.
+    var HOLD_DURATIONS = [SCENE0_TOTAL_DURATION, 4000];
 
     var panels = [document.getElementById("sst-panel-0"), document.getElementById("sst-panel-1")];
     var column = document.getElementById("sst-column");
