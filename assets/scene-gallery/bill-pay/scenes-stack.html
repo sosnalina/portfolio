@@ -3834,6 +3834,9 @@
     // Replaces the old 300ms hoverHold entirely ("not added to it").
     var STATUS_BUMP_DURATION = 320;
     var STATUS_BUMP_SCALE = 1.21; // do not reuse ROW_BUMP_SCALE (1.12) — a different element, different size
+    // Cursor -> drawer (this round) — the move fits inside endHold's own
+    // 1000ms (270ms move, 730ms rest); endHold itself is unchanged.
+    var CURSOR_DRAWER_MOVE_DURATION = 270;
 
     var BEATS = [
       ["rest", 500],
@@ -4166,11 +4169,67 @@
     // in the build report as an interpretation of "settles".
     var endingHoldStart = step10ArriveAt + ROW_BUMP_DURATION;
     var endingHoldEnd = endingHoldStart + ENDING_HOLD_1;
+
+    // ---- Manager -> check (this round) — T0 is where the particle
+    // retract fires, unchanged from before this round. Everything that
+    // USED to start at T0 (step 10's own node shrink, the wave-line
+    // erase, the per-node retreat, and from there the whole closing
+    // beat) now starts CLOSING_BEAT_OFFSET later instead, so the
+    // manager-out/check-in crossfade and its hold have room to play
+    // first. Only the retract itself stays anchored to T0 (see
+    // RETRACT_START's own use in renderWaveSelection, not waveExitStart).
+    var RETRACT_START = endingHoldEnd; // T0
+    // Approved reference (Hadar, playable comparison) — ported verbatim
+    // below (bez/prog/D/CHECK_OFFSET), except PRE -> RETRACT_START and
+    // manager/check -> the real image elements. D is the crossfade's own
+    // 300ms leg (manager-out, then check-in); the 1200ms hold is this
+    // round's own new beat, not part of the ported code. Their sum is
+    // the single 1800ms offset the brief asks for.
+    var D = 300;
+    var CHECK_OFFSET = 300;
+    var MANAGER_CHECK_HOLD = 1200;
+    var CLOSING_BEAT_OFFSET = D + CHECK_OFFSET + MANAGER_CHECK_HOLD; // 1800
+    function bez(x) {
+      var p1x = 0.23, p1y = 1, p2x = 0.32, p2y = 1;
+      var t = x;
+      for (var i = 0; i < 8; i++) {
+        var cx = 3 * (1 - t) * (1 - t) * t * p1x + 3 * (1 - t) * t * t * p2x + t * t * t - x;
+        var dx = 3 * (1 - t) * (1 - t) * p1x + 6 * (1 - t) * t * (p2x - p1x) + 3 * t * t * (1 - p2x);
+        if (Math.abs(dx) < 1e-6) break;
+        t -= cx / dx;
+        t = Math.min(1, Math.max(0, t));
+      }
+      return 3 * (1 - t) * (1 - t) * t * p1y + 3 * (1 - t) * t * t * p2y + t * t * t;
+    }
+    function prog(t, s) { return bez(Math.min(1, Math.max(0, (t - s) / D))); }
+
     // Wave exit mirrors the entrance (build prompt §11); no new numbers
     // are given for it, so the entrance's own delay+draw span (360+580)
-    // is reused in reverse. Flagged in the build report.
+    // is reused in reverse. Flagged in the build report. Shifted this
+    // round by CLOSING_BEAT_OFFSET (see above) — the line itself, and
+    // everything chained off it below (the per-node retreat scan, the
+    // closing beat), is otherwise untouched.
     var WAVE_EXIT_DURATION = WAVE_DRAW_DELAY + WAVE_DRAW_DURATION;
-    var waveExitStart = endingHoldEnd;
+    // Change 2 (manager/check round) — every visible node shrinks to
+    // zero at nodeShrinkStart, BEFORE the wave-line erase starts.
+    // nodeShrinkStart is where waveExitStart used to sit; the erase
+    // itself, and everything chained off it below (the takeover, the
+    // drawer close, the mock exit, the scene total, and their ...Real
+    // counterparts), starts NODE_SHRINK_DURATION later — a single
+    // offset, per that round's own "single offset" framing.
+    //
+    // NODE_SHRINK_DURATION (this round, curve/duration pass) — 200ms,
+    // down from 300. Deliberately its OWN constant, not RETRACT_DURATION
+    // (which stays 300ms and drives the particle retract, unchanged) —
+    // the two used to share a number by coincidence, not by relationship,
+    // and this pass is explicit that only the node shrink gets faster.
+    // Curve is bez() (cubic-bezier(0.23,1,0.32,1), already defined above
+    // for the manager/check crossfade) in place of easeRetractIn, which
+    // read as too slow a start for this beat — easeRetractIn itself is
+    // untouched, still driving the particle retract below.
+    var NODE_SHRINK_DURATION = 200;
+    var nodeShrinkStart = RETRACT_START + CLOSING_BEAT_OFFSET;
+    var waveExitStart = nodeShrinkStart + NODE_SHRINK_DURATION;
     var waveExitEnd = waveExitStart + WAVE_EXIT_DURATION;
     var TAKEOVER_REVERSE_DURATION = 440;
     var takeoverReverseStart = waveExitEnd;
@@ -4253,7 +4312,14 @@
     function waveExtentForRender(t) {
       if (!reduceMotion) return currentWaveExtent(t);
       if (t < MARKS.takeoverGrowEnd) return 0;
-      return t < endingHoldEnd ? WAVE_PANEL_WIDTH : 0; // §13: "appears complete... reverses instantly"
+      // §13: "appears complete... reverses instantly" — the wave-line
+      // erase itself moved from T0 to waveExitStart (now nodeShrinkStart
+      // + NODE_SHRINK_DURATION, i.e. T0 + CLOSING_BEAT_OFFSET + 200, the
+      // node-shrink offset — see nodeShrinkStart's own comment above),
+      // so its reduced-motion equivalent (an instant disappearance, no
+      // real erase) has to move with it, or the line would vanish long
+      // before the check even finishes coming in.
+      return t < waveExitStart ? WAVE_PANEL_WIDTH : 0;
     }
 
     // ---- Avatar reveal (entrance) / retreat (exit) times — build
@@ -4462,10 +4528,37 @@
     // since only ONE node ever owns them. ----
     function renderWaveNode(ins, i, t) {
       var el = ins.nodeEls[i];
+      // Reduced-motion's own upper bound was endingHoldEnd (T0) before
+      // the manager/check round; moved to waveExitStart, which is
+      // nodeShrinkStart + NODE_SHRINK_DURATION — the moment the uniform
+      // close-shrink/fade finishes, not the moment the wave-line erase
+      // starts. Keeps the manager/check node visible for the
+      // crossfade+hold AND the closing fade, same timing/order
+      // as normal motion (just without the scale, per §13).
       var visible = reduceMotion
-        ? (t >= MARKS.takeoverGrowEnd && t < endingHoldEnd)
+        ? (t >= MARKS.takeoverGrowEnd && t < waveExitStart)
         : (t >= revealTime[i] && (t < waveExitStart || t < retreatTime[i]));
-      if (!visible) { el.style.opacity = "0"; return; }
+      if (!visible) {
+        el.style.opacity = "0";
+        // Manager -> check (this round) — reset to the pre-crossfade
+        // defaults whenever this node isn't visible (before its own
+        // reveal, same as every other property here; or after its own
+        // retreat, same as circleSize/pngSize above never getting
+        // touched again once hidden). Masked either way by the wrapper's
+        // own opacity: 0, but explicit, not left stale, so the scene's
+        // own first frame (and the next loop's) reads correctly rather
+        // than silently keeping whatever the crossfade last left behind
+        // — the same reasoning the file's own pre-render reset branch
+        // gives for resetting properties its own hidden state already masks.
+        if (i === STEPS[STEPS.length - 1].slot) {
+          var resetParts = ins.nodeParts[i];
+          resetParts.png.style.opacity = "1";
+          resetParts.png.style.transform = "translate(-50%,-50%) scale(1)";
+          resetParts.check.style.opacity = "0";
+          resetParts.check.style.transform = "translate(-50%,-50%) scale(0.9)";
+        }
+        return;
+      }
 
       var x = nodeX(i, t), y = curveY(x);
       var popScale = 1, popOpacity = 1;
@@ -4485,6 +4578,32 @@
           }
         }
       }
+      // Change 2 (manager/check round) — at nodeShrinkStart, every
+      // currently-visible node (this one included, whatever its current
+      // scale) shrinks to 0 and fades out together, BEFORE the wave-line
+      // erase starts (see nodeShrinkStart's own comment above). Composed
+      // onto popScale/popOpacity rather than a separate style write, so
+      // it stacks correctly with the entrance-pop/per-node-retreat
+      // branch above and applies to every node via this one shared
+      // function, not just the selected one. Replaces the old step-10-
+      // only "shrink to baseline" override that used to live here (it
+      // ran at the same moment this now does, but only shrank the
+      // manager's own node down to 35/46px, not to 0, and only for that
+      // one node) -- do not run both. Under reduced motion, only
+      // popOpacity is touched (§13: fade, no scale).
+      //
+      // Curve/duration (this round) — NODE_SHRINK_DURATION (200ms) and
+      // bez() (cubic-bezier(0.23,1,0.32,1)), for both scale and opacity,
+      // in normal AND reduced motion -- was RETRACT_DURATION (300ms)/
+      // easeRetractIn, which read as too slow a start. easeRetractIn
+      // itself is untouched (still the particle retract's own curve,
+      // below).
+      var sinceClose = t - nodeShrinkStart;
+      if (sinceClose >= 0) {
+        var closeP = bez(clamp01(sinceClose / NODE_SHRINK_DURATION));
+        popOpacity *= (1 - closeP);
+        if (!reduceMotion) popScale *= (1 - closeP);
+      }
 
       var tr = stepTransition(t);
       var circleSize = 35, pngSize = 46;
@@ -4495,28 +4614,50 @@
         circleSize = lerp(35, 82, tr.eased);
         pngSize = lerp(46, 92, tr.eased);
       }
-      // Step 10's own node has no following travel to crossfade it back
-      // down (stepTransition permanently returns fromIdx=toIdx=9 after
-      // it), so without this it would stay rendered at "selected" size
-      // forever through the ending, orphaned once its ring/particles
-      // retract at waveExitStart. Shrinks it back to baseline over the
-      // same 300ms/curve as that retract, so the AP manager's avatar
-      // returns to its resting look in step with the rest of the exit
-      // instead of just sitting there ring-less at full size.
-      if (!reduceMotion && i === STEPS[STEPS.length - 1].slot) {
-        var sinceExit = t - waveExitStart;
-        if (sinceExit >= 0) {
-          var shrink = easeRetractIn(clamp01(sinceExit / RETRACT_DURATION));
-          circleSize = lerp(circleSize, 35, shrink);
-          pngSize = lerp(pngSize, 46, shrink);
-        }
-      }
 
       el.style.opacity = String(popOpacity);
       el.style.transform = "translate(" + x + "px," + y + "px) scale(" + popScale + ")";
       var parts = ins.nodeParts[i];
       parts.circle.style.width = parts.circle.style.height = circleSize + "px";
       parts.png.style.width = parts.png.style.height = pngSize + "px";
+
+      // ---- Manager -> check (this round). Ported from the approved
+      // reference verbatim (bez/prog/D/CHECK_OFFSET above), except
+      // PRE -> RETRACT_START and manager/check -> the real elements.
+      // Self-clamping (prog() clamps its own fraction to [0,1]), so it
+      // needs no extra "before T0" guard: for any t < RETRACT_START both
+      // pm and pc are already 0, which already IS "manager opacity
+      // 1/scale 1, check opacity 0" -- the scene's own first-frame
+      // state, for free.
+      //
+      // Combining with the node shrink above (Change 2, this round):
+      // pngSize stays a constant 92px for this node -- it no longer
+      // shrinks on its own (that was the old step-10-only override,
+      // removed above). The node's own selected size is held all the
+      // way to nodeShrinkStart, then the whole wrapper (including both
+      // images, via popScale) scales to 0 together with every other
+      // visible node -- so this pngSize is the SAME width/height both
+      // images share throughout the crossfade+hold AND the shrink. The
+      // crossfade's own transform is a separate, small scale (0.9<->1.0)
+      // layered on top of that same width/height -- composed with
+      // translate(-50%,-50%) the same way the cursor's own counter-scale
+      // composes with its class's translate (-4px,-3px) elsewhere in
+      // this file (an inline transform replaces the CSS class's own
+      // translate wholesale, so it has to be re-included here too).
+      // Once pm/pc saturate at 1 (well before nodeShrinkStart), that
+      // scale is a constant 0.9 (manager, already invisible) / 1.0
+      // (check) multiplier on top of the wrapper's own shrink.
+      if (i === STEPS[STEPS.length - 1].slot) {
+        var pm = prog(t, RETRACT_START);
+        var pc = prog(t, RETRACT_START + CHECK_OFFSET);
+        var managerScale = reduceMotion ? 1 : (1 - 0.1 * pm);
+        var checkScale = reduceMotion ? 1 : (0.9 + 0.1 * pc);
+        parts.png.style.opacity = String(1 - pm);
+        parts.png.style.transform = "translate(-50%,-50%) scale(" + managerScale + ")";
+        parts.check.style.width = parts.check.style.height = pngSize + "px";
+        parts.check.style.opacity = String(pc);
+        parts.check.style.transform = "translate(-50%,-50%) scale(" + checkScale + ")";
+      }
     }
 
     // ---- Ring + particles for whichever single node currently owns
@@ -4537,20 +4678,33 @@
       if (since < 0) return;
 
       var departRef = k < STEPS.length - 1 ? stepMarks[k + 1].travelStart : Infinity;
-      if (k === STEPS.length - 1) departRef = Math.min(departRef, waveExitStart);
+      var isLastStep = k === STEPS.length - 1;
+      if (isLastStep) departRef = Math.min(departRef, RETRACT_START);
       var sinceDepart = t - departRef;
 
+      // Change 1 (this round) — only the particles retract at
+      // RETRACT_START (T0); the manager's own ring stays at full size
+      // through T0 + CLOSING_BEAT_OFFSET (nodeShrinkStart), where it
+      // then disappears together with the rest of the node via the
+      // wrapper's own opacity/scale (renderWaveNode's closing-shrink),
+      // not via ringScale here. So for the last step only, ringScale/
+      // ringOn are held at their "on" values through and past the
+      // particle retract — particleProgress is the only thing that
+      // still follows sinceDepart's own retract curve.
       var ringScale, ringOn, particleProgress, phase;
       if (reduceMotion) {
-        ringScale = sinceDepart >= 0 ? 0 : 1;
-        ringOn = sinceDepart < 0;
-        particleProgress = ringOn ? 1 : 0;
+        ringOn = isLastStep || sinceDepart < 0;
+        ringScale = ringOn ? 1 : 0;
+        particleProgress = sinceDepart < 0 ? 1 : 0;
         phase = "float";
       } else if (sinceDepart >= 0 && sinceDepart < RETRACT_DURATION) {
         var rp = 1 - easeRetractIn(clamp01(sinceDepart / RETRACT_DURATION));
-        ringScale = rp; ringOn = rp > 0.001; particleProgress = rp; phase = "retract";
+        particleProgress = rp; phase = "retract";
+        if (isLastStep) { ringScale = 1; ringOn = true; }
+        else { ringScale = rp; ringOn = rp > 0.001; }
       } else if (sinceDepart >= RETRACT_DURATION) {
-        return; // fully retracted
+        if (!isLastStep) return; // fully retracted
+        ringScale = 1; ringOn = true; particleProgress = 0; phase = "post-retract";
       } else if (since < RING_DURATION) {
         ringScale = easeBurstOut(clamp01(since / RING_DURATION)); ringOn = true; particleProgress = 0; phase = "pre-burst";
       } else if (since < RING_DURATION + BURST_DURATION) {
@@ -4821,12 +4975,25 @@
         var png = document.createElement("div");
         png.className = "p0-wave-node__png";
         png.style.backgroundImage = "url(" + AVATAR_DIR + n.persona + ".png)";
+        // Check (this round) — a sibling image, same class as the avatar
+        // (identical position/size/border-radius/background rules, per
+        // the brief's own "referenced the same way the other avatars
+        // are"), on every node the same way ring/circle/png are, per the
+        // file's own "unused slots are hidden per-frame, not removed"
+        // convention (line ~250). Only step 10's own node (the AP
+        // manager) ever turns its opacity above 0, in renderWaveNode;
+        // every other node's stays at this build-time default forever.
+        var check = document.createElement("div");
+        check.className = "p0-wave-node__png";
+        check.style.backgroundImage = "url(" + AVATAR_DIR + "check.png)";
+        check.style.opacity = "0";
         wrap.appendChild(ring);
         wrap.appendChild(circle);
         wrap.appendChild(png);
+        wrap.appendChild(check);
         nodesContainerEl.appendChild(wrap);
         nodeEls.push(wrap);
-        nodeParts.push({ ring: ring, circle: circle, png: png });
+        nodeParts.push({ ring: ring, circle: circle, png: png, check: check });
       });
       var particlesContainerEl = document.getElementById("p0-wave-particles");
       var particleEls = [];
@@ -4887,6 +5054,7 @@
         circle: circle,
         bumpTriggers: bumpTriggers,
         lastStatusPos: parkPos,
+        drawerLandingPos: parkPos, // real value measured live once endHold starts (see renderScene0)
         railPositioned: false,
         waveCtx: waveCtx,
         nodeEls: nodeEls,
@@ -5192,7 +5360,10 @@
         var mlt = t - M.moveToStatusStart;
         cursorPos = moveTo2(mlt, M.moveToStatusEnd - M.moveToStatusStart, ins.parkPos, statusTarget);
         cursorOpacity = 1;
-      } else {
+      } else if (t < M.endHoldStart) {
+        // Catch-all, now bounded at endHoldStart (this round) — was
+        // unbounded ("everything past moveToStatusEnd"). Unchanged
+        // otherwise: status-cell park, click ripple/spark.
         var statusEl2 = ins.cloneEl.querySelector(".bp-cell--status--clickable");
         if (statusEl2 && t < M.fallStart) {
           var sRect2 = nativeRect(statusEl2, ins.screenRect);
@@ -5206,6 +5377,58 @@
           rippleOpacity = ripple.opacity;
           rippleScale = ripple.scale;
         }
+      } else if (t < M.takeoverNudgeStart) {
+        // ---- Cursor -> drawer (this round). endHold's own two segments
+        // (270ms move, then rest for the remaining 730ms) collapsed into
+        // one branch, since both share "be at (or arriving at) the
+        // drawer landing spot" -- they differ only in whether the move
+        // is still easing. The landing itself is re-measured live every
+        // frame here (matching moveToStatus's own pattern above), which
+        // is safe: nothing scrolls the drawer's rail before step 1
+        // starts, well after this branch ends, so the dot never moves
+        // during this window. Cached into ins.drawerLandingPos (same
+        // idiom as ins.lastStatusPos) so the fade branch below can hold
+        // it without re-measuring while the wrap's own takeover-nudge
+        // transform is live.
+        var firstDot = document.getElementById("p0s1-activity-rail").querySelectorAll(".bp-activity__dot")[0];
+        if (firstDot) {
+          var dotRect = nativeRect(firstDot, ins.screenRect);
+          // Tip lands to the dot's left, clear of it and of the rail's
+          // own line -- 10px gap, a judgment call (the brief gives no
+          // exact distance, only "immediately left... must not touch"),
+          // flagged for Hadar's own eyeball check. Vertically centred on
+          // the dot ("level with that bullet").
+          ins.drawerLandingPos = { x: dotRect.left - 10, y: dotRect.top + dotRect.height / 2 };
+        }
+        if (reduceMotion) {
+          cursorPos = ins.lastStatusPos;
+        } else {
+          var dwlt = t - M.endHoldStart;
+          if (dwlt < CURSOR_DRAWER_MOVE_DURATION) {
+            var moveP = easeTakeover(clamp01(dwlt / CURSOR_DRAWER_MOVE_DURATION));
+            cursorPos = { x: lerp(ins.lastStatusPos.x, ins.drawerLandingPos.x, moveP), y: lerp(ins.lastStatusPos.y, ins.drawerLandingPos.y, moveP) };
+          } else {
+            cursorPos = ins.drawerLandingPos;
+          }
+        }
+        cursorOpacity = 1;
+      } else if (t < M.takeoverGrowStart) {
+        // Fade -- exactly takeoverNudge's own span (200ms). Position is
+        // frozen at wherever the cursor already was (the drawer landing,
+        // or the status cell under reduced motion) -- "stays still while
+        // fading" -- not re-measured, since the wrap's own nudge
+        // transform is live here and would otherwise pick up the
+        // shifted rect (see the branch above's own comment).
+        cursorPos = reduceMotion ? ins.lastStatusPos : ins.drawerLandingPos;
+        var fadeP = easeLiftRise(clamp01((t - M.takeoverNudgeStart) / (M.takeoverNudgeEnd - M.takeoverNudgeStart)));
+        cursorOpacity = 1 - fadeP;
+      } else {
+        // Gone for the rest of the scene (this round) -- replaces the
+        // ending block's own 1 -> 0 fade at takeoverReverseStartReal,
+        // removed below since the cursor is already gone long before
+        // that fires now.
+        cursorPos = reduceMotion ? ins.lastStatusPos : ins.drawerLandingPos;
+        cursorOpacity = 0;
       }
       ins.cursorEl.style.left = cursorPos.x + "px";
       ins.cursorEl.style.top = cursorPos.y + "px";
@@ -5409,18 +5632,23 @@
         // first") found three more states from the pre-wave review
         // that were never given a way back, the same class of defect
         // as Fix B's drawer scroll/opacity: the cursor stayed at
-        // opacity 1 forever (its own render branch is one big
+        // opacity 1 forever (its own render branch was one big
         // catch-all for "everything past moveToStatusEnd" with no
         // upper bound), the hero row's own data-selected/row-card
         // data-visible attributes were set once at M.revealHoldStart
         // with no matching "off" past the wave, and the outer table's
         // own review-scroll position stayed pinned at its full
-        // distance. All three are closed here, on the same revProgress
-        // as everything else in this block — not a separate animation,
-        // not an instant jump once the reverse finishes.
+        // distance. Two of the three are still closed here, on the same
+        // revProgress as everything else in this block — not a separate
+        // animation, not an instant jump once the reverse finishes. The
+        // cursor's own fade moved out of this block this round (cursor
+        // -> drawer): it's gone by takeoverNudgeStart already, long
+        // before takeoverReverseStartReal ever fires, so re-fading it
+        // 1 -> 0 here would be a second fade on top of the first, and
+        // lerp(1, 0, revProgress)'s own start value (1 at revProgress 0)
+        // would have made it reappear the instant the reverse began.
         var restScrollNative = SCROLL_DISTANCE_NATIVE; // where the review scroll rests from M.scrollEnd onward
         ins.rowsScrollEl.scrollTop = lerp(restScrollNative, 0, revProgress);
-        ins.cursorEl.style.opacity = String(lerp(1, 0, revProgress));
         ins.rippleDiscEl.style.opacity = "0";
         ins.heroRowEl.removeAttribute("data-selected");
         ins.rowCardEl.removeAttribute("data-visible");
