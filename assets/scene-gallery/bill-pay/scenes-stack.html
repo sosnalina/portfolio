@@ -4087,38 +4087,79 @@
     });
     var step1Start = lastEntrancePopEnd + HOLD_BEFORE_STEP1;
 
-    // ---- Fix C — the repetitive middle (steps 6-8) moves faster, step
-    // 9 decelerates back, step 10 (the payoff) lands at normal pace.
-    // One factor multiplies BOTH the travel duration and the pause
-    // duration for a step — nothing else (not the curve, not the
-    // distance scaling, not ring/burst/row-bump, all of which stay
-    // fixed constants layered on top of wherever arriveAt now falls).
-    // A travel uses the factor of the step it travels INTO, not the
-    // one it leaves — stepMarks[k]'s own travel+pause both use
-    // STEP_SPEED_FACTOR[k]. Computed from the exact fraction (1/1.3),
-    // not the rounded 0.769 shown in prose, so 795ms/338ms land exactly
-    // as the worked example states rather than a few hundredths off.
-    var STEP_SPEED_FAST = 1 / 1.3; // "0.769" — a 30% speed increase
-    var STEP_SPEED_MID = (STEP_SPEED_FAST + 1) / 2; // "0.885" — midpoint, reads as decelerating
-    var STEP_SPEED_FACTOR = [1, 1, 1, 1, 1, STEP_SPEED_FAST, STEP_SPEED_FAST, STEP_SPEED_FAST, STEP_SPEED_MID, 1];
-
     // ---- Step marks — strictly sequential from step1Start onward
     // (build prompt §6: "the pause begins when the travel completes and
     // ends when the next travel begins"). stepMarks[0] is step 1 itself
     // (no travel — already in place from the entrance); stepMarks[1..9]
-    // are steps 2-10, each carrying the travel that ARRIVES at it. ----
+    // are steps 2-10, each carrying the travel that ARRIVES at it. These
+    // are LOCAL (canonical, un-remapped) marks — every step's travel and
+    // pause is built at its natural, unstretched duration here. The time
+    // remap below is what makes part of this play back faster; nothing
+    // in this loop itself runs fast. ----
     var stepMarks = [{ slot: STEPS[0].slot, fromSlot: STEPS[0].slot, toSlot: STEPS[0].slot, travelStart: step1Start, travelEnd: step1Start, travelDur: 0, arriveAt: step1Start }];
     (function () {
       var t = step1Start;
       for (var k = 1; k < STEPS.length; k++) {
-        var factor = STEP_SPEED_FACTOR[k];
-        var travelStart = t + STEP_PAUSE * factor;
-        var dur = travelDuration(STEPS[k].delta) * factor;
+        var travelStart = t + STEP_PAUSE;
+        var dur = travelDuration(STEPS[k].delta);
         var travelEnd = travelStart + dur;
         stepMarks[k] = { slot: STEPS[k].slot, fromSlot: STEPS[k - 1].slot, toSlot: STEPS[k].slot, travelStart: travelStart, travelEnd: travelEnd, travelDur: dur, arriveAt: travelEnd };
         t = travelEnd;
       }
     })();
+
+    // ---- Time remap (replaces Fix C's per-step duration factors) —
+    // the wave's middle stretch plays 30% faster, as one piece. Every
+    // element downstream that keys off the wave's own step timing
+    // (travel, pause, ring, burst, retract, row-bump, particle float,
+    // drawer scroll) is written entirely in terms of LOCAL time — the
+    // stepMarks above, and everything built from them below, are never
+    // touched by the remap. What changes is the relationship between
+    // that local clock and the real, wall-clock t the render loop
+    // actually advances: localTimeFromReal(t) runs local time faster
+    // than real time inside the stretch, so the exact same local-time
+    // durations (a 160ms ring, a 1300ms pause, whatever) simply consume
+    // less real time while the fast rate is in effect. Piecewise linear,
+    // a pure function of t, so scrubbing backward reproduces the same
+    // frame exactly.
+    //
+    // Boundaries (all in LOCAL time, since that's the space stepMarks
+    // lives in):
+    //   REMAP_A — step 3 "Matched" has fully settled from its bump
+    //             (its arrival + the row-bump's own duration).
+    //   REMAP_B — end of step 8's pause == start of step 9's travel.
+    //   REMAP_C — end of step 9's pause == start of step 10's travel.
+    // Rates: 1.0 below REMAP_A, 1.3 from REMAP_A to REMAP_B, 1/0.885
+    // (step 9's own span) from REMAP_B to REMAP_C, 1.0 from REMAP_C on
+    // — matching the wave's step-into boundaries exactly, so a rate
+    // change only ever lands at a moment the wave is at rest.
+    var REMAP_A = stepMarks[2].arriveAt + ROW_BUMP_DURATION;
+    var REMAP_B = stepMarks[8].travelStart;
+    var REMAP_C = stepMarks[9].travelStart;
+    var REMAP_RATE_STRETCH = 1.3;
+    // Reciprocal of Fix C's old "0.885" midpoint factor ((1/1.3 + 1) /
+    // 2), computed from the exact fraction rather than the rounded
+    // 1.13 shown in prose — same rigor Fix C itself used for 0.769.
+    var REMAP_RATE_STEP9 = 1 / ((1 / 1.3 + 1) / 2);
+    var REMAP_A_REAL = REMAP_A;
+    var REMAP_B_REAL = REMAP_A_REAL + (REMAP_B - REMAP_A) / REMAP_RATE_STRETCH;
+    var REMAP_C_REAL = REMAP_B_REAL + (REMAP_C - REMAP_B) / REMAP_RATE_STEP9;
+    // real (wall-clock) t -> local (stepMarks) time.
+    function localTimeFromReal(t) {
+      if (t < REMAP_A_REAL) return t;
+      if (t < REMAP_B_REAL) return REMAP_A + (t - REMAP_A_REAL) * REMAP_RATE_STRETCH;
+      if (t < REMAP_C_REAL) return REMAP_B + (t - REMAP_B_REAL) * REMAP_RATE_STEP9;
+      return REMAP_C + (t - REMAP_C_REAL);
+    }
+    // Inverse — local (stepMarks) time -> real (wall-clock) t. Used only
+    // for the handful of marks past the stretch that the render loop
+    // still compares against its own real t directly (the ending).
+    function realTimeFromLocal(loc) {
+      if (loc < REMAP_A) return loc;
+      if (loc < REMAP_B) return REMAP_A_REAL + (loc - REMAP_A) / REMAP_RATE_STRETCH;
+      if (loc < REMAP_C) return REMAP_B_REAL + (loc - REMAP_B) / REMAP_RATE_STEP9;
+      return REMAP_C_REAL + (loc - REMAP_C);
+    }
     var step10ArriveAt = stepMarks[9].arriveAt;
     // "The moment step 10's bump settles" (build prompt §11) — read as
     // the row bump's own 220ms duration elapsing after arrival. Flagged
@@ -4140,6 +4181,20 @@
     var mockExitStart = drawerCloseEnd;
     var mockExitEnd = mockExitStart + MOCK_EXIT_DURATION;
     var SCENE0_TOTAL_DURATION = mockExitEnd;
+
+    // All the marks above (endingHoldStart through SCENE0_TOTAL_DURATION)
+    // are LOCAL time, exactly like stepMarks — every one of them sits
+    // past REMAP_C, where the remap's rate is back to 1.0, so real time
+    // and local time from here on differ only by the fixed amount the
+    // stretch saved. The render loop below still drives everything with
+    // its own REAL t, though, so the handful of these marks it compares
+    // against t directly (not by first converting t to local, the way
+    // renderWave/activityTrackTranslate/rowOpacity/rowBumpScale do) need
+    // their real-time equivalents instead.
+    var takeoverReverseStartReal = realTimeFromLocal(takeoverReverseStart);
+    var drawerCloseStartReal = realTimeFromLocal(drawerCloseStart);
+    var mockExitStartReal = realTimeFromLocal(mockExitStart);
+    var SCENE0_TOTAL_DURATION_REAL = realTimeFromLocal(SCENE0_TOTAL_DURATION);
 
     // ---- s(t): the wave's animated slot position — one clock, shared
     // by the wave's own travel AND the drawer's row scroll (build
@@ -4284,12 +4339,16 @@
       ins.activityHoldTarget = holdTarget;
 
       var targetY = offsets[0] + holdTarget; // row 1's own landing position
-      var lastIdx = STEPS.length - 1; // 9 — step 10, "Scheduled for payment"; row 11 ("Paid") is never used here
+      // Step 10 no longer scrolls the drawer (it stays exactly where
+      // step 9 left it — see activityStepTranslate below), so step 9 is
+      // now the last step that ever moves the scroll, and the trailing
+      // pad only needs to cover step 9's own reach, not step 10's.
+      var lastScrollIdx = STEPS.length - 2; // 8 — step 9, "Approved 2 of 2"
 
       // contentHeight measured BEFORE the trailing pad below is added —
       // it is the thing the pad is computed FROM, not a moving target.
       var contentHeightNative = trackRect.height / MOCK_SCALE;
-      var requiredScroll = offsets[lastIdx] - targetY;
+      var requiredScroll = offsets[lastScrollIdx] - targetY;
       var maxScroll = contentHeightNative - PANEL_VISIBLE_HEIGHT_NATIVE;
       var trailingPad = Math.max(0, requiredScroll - maxScroll);
       var padEl = document.getElementById("p0s1-activity-trailing-pad");
@@ -4301,11 +4360,16 @@
         requiredScroll: requiredScroll, trailingPad: trailingPad
       };
 
-      // Every step reaches the SAME target y now — no clamp, no shortfall.
+      // Every step through step 9 reaches the SAME target y — no clamp,
+      // no shortfall. Step 10 gets no entry of its own: it reuses step
+      // 9's translate verbatim, so activityTrackTranslate's lerp between
+      // them (fromIdx=8, toIdx=9) always resolves to that same value —
+      // zero scroll change across step 10's travel.
       var stepTranslate = [];
-      for (var k = 0; k <= lastIdx; k++) {
+      for (var k = 0; k <= lastScrollIdx; k++) {
         stepTranslate[k] = targetY - offsets[k];
       }
+      stepTranslate[STEPS.length - 1] = stepTranslate[lastScrollIdx];
       ins.activityStepTranslate = stepTranslate;
     }
     // Fix 4 render — the entrance hold's own eased scroll-in, then the
@@ -4315,6 +4379,7 @@
     // hold's own target, then to whichever step has actually been
     // reached (reachedIndex), never interpolating mid-travel.
     function activityTrackTranslate(ins, t) {
+      t = localTimeFromReal(t);
       var offsets = ins.activityRowOffsetNative;
       if (!offsets) return 0;
       if (t < lastEntrancePopEnd) return 0;
@@ -4341,6 +4406,7 @@
     // against, the same way every later step does. ----
     function rowReachedAt(r) { return r === 0 ? step1Start : stepMarks[r].arriveAt; }
     function rowOpacity(t, r) {
+      t = localTimeFromReal(t);
       if (t < MARKS.takeoverGrowEnd) return 1; // still at mock scale / mid-takeover
       if (r >= STEPS.length) return 0.38;      // row 10, "Paid" — never active
       if (reduceMotion) {
@@ -4359,6 +4425,7 @@
       return 0.38;
     }
     function rowBumpScale(t, r) {
+      t = localTimeFromReal(t);
       if (r >= STEPS.length) return 1;
       var bLocal = t - rowReachedAt(r);
       if (reduceMotion || bLocal < 0 || bLocal >= ROW_BUMP_DURATION) return 1;
@@ -4544,6 +4611,7 @@
     }
 
     function renderWave(t, ins) {
+      t = localTimeFromReal(t);
       drawWaveCurve(ins.waveCtx, waveExtentForRender(t));
       for (var i = 0; i < NODES.length; i++) renderWaveNode(ins, i, t);
       renderWaveSelection(ins, t);
@@ -5240,8 +5308,8 @@
       // the add exactly once and never again — the removal itself still
       // happens exactly once, only in the ending block below.
       var closingComplete = false;
-      if (t >= takeoverReverseStart && t >= drawerCloseStart) {
-        var closingCheck = reduceMotion ? 1 : clamp01((t - drawerCloseStart) / DRAWER_CLOSE_DURATION);
+      if (t >= takeoverReverseStartReal && t >= drawerCloseStartReal) {
+        var closingCheck = reduceMotion ? 1 : clamp01((t - drawerCloseStartReal) / DRAWER_CLOSE_DURATION);
         closingComplete = (1 - easeDrawerClose(closingCheck)) <= 0.001;
       }
       if (openness > 0) {
@@ -5312,8 +5380,8 @@
       // untouched) so the reverse truly replays the same transform
       // backward instead of authoring a second path ("do not author a
       // separate return path"). ----
-      if (t >= takeoverReverseStart) {
-        var revProgress = reduceMotion ? 1 : clamp01((t - takeoverReverseStart) / TAKEOVER_REVERSE_DURATION);
+      if (t >= takeoverReverseStartReal) {
+        var revProgress = reduceMotion ? 1 : clamp01((t - takeoverReverseStartReal) / TAKEOVER_REVERSE_DURATION);
 
         // Fix B — the drawer resets to exactly how it looked the moment
         // it first opened (scroll 0, every row at opacity 1.0 — the
@@ -5328,10 +5396,10 @@
         // hardcoding "step 10's own values" — self-consistent if the
         // step count or final step ever changes.
         if (ins.activityRowOffsetNative) {
-          var drawerRestTranslate = activityTrackTranslate(ins, takeoverReverseStart);
+          var drawerRestTranslate = activityTrackTranslate(ins, takeoverReverseStartReal);
           ins.activityTrackEl.style.transform = "translateY(" + lerp(drawerRestTranslate, 0, revProgress) + "px)";
           for (var rri = 0; rri < ins.activityItemEls.length; rri++) {
-            var restOpacity = rowOpacity(takeoverReverseStart, rri);
+            var restOpacity = rowOpacity(takeoverReverseStartReal, rri);
             ins.activityItemEls[rri].style.opacity = String(lerp(restOpacity, 1, revProgress));
             ins.activityItemEls[rri].style.transform = "scale(1)";
           }
@@ -5384,11 +5452,11 @@
         // transform, no separate stored "original", just the wrong
         // variable substituted for the right one.
         var revScaleMul = kf.scale / MOCK_SCALE;
-        var revContentOpacity = reduceMotion ? (t >= mockExitStart ? 0 : 1) : 1 - clamp01(virtualT / TAKEOVER_FADE_DURATION);
+        var revContentOpacity = reduceMotion ? (t >= mockExitStartReal ? 0 : 1) : 1 - clamp01(virtualT / TAKEOVER_FADE_DURATION);
 
         var exitTranslateY = 0;
-        if (t >= mockExitStart) {
-          var ep = reduceMotion ? 1 : clamp01((t - mockExitStart) / MOCK_EXIT_DURATION);
+        if (t >= mockExitStartReal) {
+          var ep = reduceMotion ? 1 : clamp01((t - mockExitStartReal) / MOCK_EXIT_DURATION);
           exitTranslateY = ENTRANCE_START_OFFSET * easeAnticipate(ep);
         }
 
@@ -5403,8 +5471,8 @@
         // Drawer close (195ms, the mock's own close curve) — begins
         // only once the takeover reverse has fully landed on keyframe A.
         var closeOpenness = 1;
-        if (t >= drawerCloseStart) {
-          var cp = reduceMotion ? 1 : clamp01((t - drawerCloseStart) / DRAWER_CLOSE_DURATION);
+        if (t >= drawerCloseStartReal) {
+          var cp = reduceMotion ? 1 : clamp01((t - drawerCloseStartReal) / DRAWER_CLOSE_DURATION);
           closeOpenness = 1 - easeDrawerClose(cp);
         }
         ins.activityDrawerEl.style.transform = "translate3d(" + (100 * (1 - closeOpenness)) + "%, 0, 0)";
@@ -5421,7 +5489,7 @@
     // derived total — now the accountability wave's own ending
     // (SCENE0_TOTAL_DURATION), not just the takeover's own end
     // (MARKS.total); panel 1 has no scene yet.
-    var HOLD_DURATIONS = [SCENE0_TOTAL_DURATION, 4000];
+    var HOLD_DURATIONS = [SCENE0_TOTAL_DURATION_REAL, 4000];
 
     var panels = [document.getElementById("sst-panel-0"), document.getElementById("sst-panel-1")];
     var column = document.getElementById("sst-column");
