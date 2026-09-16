@@ -347,6 +347,7 @@
      with a faithful copy. ---- */
   :root {
     --p0s1-mock-scale: 0.305;
+    --p1s2-mock-scale: 0.305;
   }
 
   /* ================================================================
@@ -398,6 +399,28 @@
     height: 1000px;
     transform-origin: top left;
     transform: scale(var(--p0s1-mock-scale));
+  }
+
+  /* ---- Panel 1 mock placement — duplicate of .p0s1-mock-wrap/
+     .p0s1-mock-scaler above, every declaration identical, this panel's
+     own --p1s2-mock-scale token in place of --p0s1-mock-scale (build
+     prompt §2.1). ---- */
+  .p1s2-mock-wrap {
+    position: absolute;
+    top: 78px;
+    left: calc(800px - 46px - 1440px * var(--p1s2-mock-scale));
+    width: calc(1440px * var(--p1s2-mock-scale));
+    height: calc(1000px * var(--p1s2-mock-scale));
+    overflow: visible;
+    opacity: 0;
+    pointer-events: none;
+    transform-origin: top left;
+  }
+  .p1s2-mock-scaler {
+    width: 1440px;
+    height: 1000px;
+    transform-origin: top left;
+    transform: scale(var(--p1s2-mock-scale));
   }
 
   /* ---- Verbatim source mock CSS begins here (through the matching
@@ -588,7 +611,7 @@
       .bp-header {
         width: 1440px;
         height: 400px;
-        background: var(--primitive-grey-light);
+        background: transparent;
         position: relative;
       }
 
@@ -614,6 +637,14 @@
         border: none;
         background: none;
         padding: 0;
+        /* Scheduling loader (§2) — stays above .bp-whiteout/.bp-loader
+           (z-index 2/3) so it's clickable any time the loader/review state
+           is showing. .bp-header has no z-index of its own, so this
+           participates directly in #bp-screen's stacking context, tied
+           at z-index 3 with .bp-loader — resolved by .bp-loader's own
+           pointer-events:none (see that rule), which lets clicks fall
+           through to this button regardless of paint order. */
+        z-index: 3;
       }
       .bp-header__close img {
         width: 16px;
@@ -2662,6 +2693,346 @@
         color: var(--bp-color-action-green);
       }
 
+      /* ---- Continue → review state ---- */
+
+      /* Background moved off .bp-header itself (now transparent, see the
+         rule above) onto this pseudo-element so it can fade independently
+         of the title/close/row, which must stay. No z-index: it paints
+         first inside the header, behind the absolutely-positioned title,
+         close and row — a negative z-index would instead paint it behind
+         #bp-screen's own white background and it would vanish. Opacity is
+         driven per-frame by renderReviewState() via the custom property
+         below, not a CSS transition (the timeline must render correctly
+         for any tMs, including seeking backward). */
+      .bp-header::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: var(--primitive-grey-light);
+        opacity: var(--bp-header-before-opacity, 1);
+      }
+
+      .bp-header__subtitle {
+        position: absolute;
+        left: 78px;
+        top: 98px;
+        margin: 0;
+        font-family: "Avenir Next";
+        font-weight: 400;
+        font-size: 26px;
+        line-height: 26px;
+        color: #393a3d;
+        opacity: 0;
+        visibility: hidden;
+        transform-origin: left center;
+      }
+
+      /* Left/right edges reuse the exact values that position
+         .bp-header__title (left) and .bp-header__close (right, the 24px
+         button box) — never a hardcoded width. <img> is a replaced
+         element: per CSS2.1 §10.3.8, left+right alone do NOT stretch a
+         replaced element the way they would a <div> — width:auto instead
+         resolves to the image's own intrinsic size (3952px), blowing past
+         the screen entirely. width is therefore computed from the exact
+         same 78/44 values via calc() against #bp-screen's own fixed
+         1440px (100%), not a separate hardcoded number — this resolves to
+         1318px, matching this spec's own stated math. Height stays auto so
+         the image's real aspect ratio drives it. */
+      .bp-review-image {
+        position: absolute;
+        top: 201px;
+        left: 78px;
+        right: 44px;
+        width: calc(100% - 78px - 44px);
+        height: auto;
+        opacity: 0;
+        visibility: hidden;
+      }
+
+      /* Tertiary Cancel/Back — a new .bp-btn variant, not .bp-btn--cancel
+         (that class is reserved for the reused Save-for-later button below
+         and must not pick up this positioning/opacity). Copies
+         .bp-btn--cancel's declarations with border-color made transparent.
+
+         Positioned against #bp-screen, NOT footer.bp-footer (round 1 had it
+         footer-relative; moved for round 2 — see the HTML comment above
+         this element's markup). footer.bp-footer is position:absolute +
+         z-index:1, which makes it establish its own stacking context: every
+         descendant paints trapped inside that one z1 layer regardless of
+         its own z-index, so this button could never out-rank .bp-whiteout
+         (z-index 2) while still living inside footer — confirmed
+         unclickable during the loader, breaking spec §0's "repeat with
+         Back instead of X" step. left/top reproduce the exact same
+         rendered position as the footer-relative values it replaces
+         (footer top 900px + the original 32px = 932px; left 81px,
+         unchanged) — nothing about this button's own box or appearance
+         changed, only what it's positioned against. z-index:3 lets it
+         escape into #bp-screen's stacking context the same way
+         .bp-header__close's does (see that rule's own comment) — needed
+         so it stays clickable above .bp-whiteout/.bp-loader through the
+         entire loader window, not just during the review state. */
+      .bp-btn--tertiary {
+        position: absolute;
+        left: 81px;
+        top: 932px;
+        z-index: 3;
+        background: transparent;
+        border-color: transparent;
+        color: var(--primitive-white);
+        opacity: 0;
+        visibility: hidden;
+        transform-origin: center;
+      }
+
+      /* Selector scoping — required (§ spec). .bp-btn--cancel and
+         .bp-btn--continue are also used, unmodified, in #bp-drawer-footer;
+         every rule below is scoped to .bp-footer__buttons so the drawer's
+         instances of these classes are never touched. */
+      .bp-footer__buttons .bp-btn--cancel,
+      .bp-footer__buttons .bp-btn--continue {
+        position: relative;
+        overflow: hidden;
+        flex-shrink: 0;
+      }
+      /* Old/new label crossfade. Deliberately not the reference widget's
+         line-height:36px — these buttons have a 1.818px border, so that
+         value would push the text down; flex centering handles it instead. */
+      .bp-footer__buttons .bp-btn__label {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        white-space: nowrap;
+        font: var(--bp-text-button-label);
+      }
+      .bp-footer__buttons .bp-btn__label--new {
+        opacity: 0;
+      }
+
+      /* ---- Scheduling loader ---- */
+
+      /* Fades in over everything except the X (§2 stacking table). Nothing
+         already on screen gets its opacity rewritten by this — no conflict
+         with renderReviewState(). */
+      .bp-whiteout {
+        position: absolute;
+        inset: 0;
+        background: #fff;
+        z-index: 2;
+        opacity: 0;
+        visibility: hidden;
+      }
+
+      /* pointer-events:none (inherited by every child) is what lets
+         .bp-header__close stay clickable at the same z-index — see that
+         rule's own comment. */
+      .bp-loader {
+        position: absolute;
+        inset: 0;
+        z-index: 3;
+        pointer-events: none;
+        visibility: hidden;
+      }
+
+      .bp-loader__art {
+        position: absolute;
+        left: 600.5px;
+        top: 265px;
+        width: 239px;
+        height: 240px;
+      }
+      .bp-loader__art img {
+        position: absolute;
+        display: block;
+        opacity: 0;
+        visibility: hidden;
+      }
+      .bp-loader__woman {
+        left: 97px;
+        top: 87px;
+        width: 115px;
+        height: 143px;
+      }
+      .bp-loader__clock {
+        left: 170px;
+        top: 46px;
+        width: 32px;
+        height: 31px;
+        transform-origin: center;
+      }
+      .bp-loader__b-circle {
+        left: 14px;
+        top: 70px;
+        width: 91px;
+        height: 91px;
+        transform-origin: center;
+      }
+      .bp-loader__s-circle {
+        left: 83px;
+        top: 9px;
+        width: 73px;
+        height: 73px;
+        transform-origin: center;
+      }
+
+      .bp-loader__text {
+        position: absolute;
+        left: 323px;
+        top: 545px;
+        width: 794px;
+        text-align: center;
+        opacity: 0;
+        visibility: hidden;
+      }
+      .bp-loader__headline {
+        margin: 0;
+        font-family: "Avenir Next";
+        font-weight: 700;
+        font-size: 40px;
+        line-height: 1.3;
+        color: #393a3d;
+      }
+      .bp-loader__subhead {
+        margin: 12px 0 0;
+        font-family: "Avenir Next";
+        font-weight: 400;
+        font-size: 20px;
+        line-height: 28px;
+        color: #393a3d;
+      }
+
+      .bp-loader__progress {
+        position: absolute;
+        left: 520px;
+        top: 705px;
+        width: 400px;
+        height: 48px;
+        opacity: 0;
+        visibility: hidden;
+      }
+      .bp-loader__progress-label {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 0;
+        margin: 0;
+        text-align: center;
+        font-family: "Avenir Next";
+        /* Figma "Medium" — same substitution already established for text
+           tagged that way elsewhere in this file (see the vendor-name rule,
+           .bp-vendor__name / --bp-text-cell-strong: font-weight 600, and
+           this file's own top-of-file @font-face comment "This mock uses
+           the Medium face for the vendor-name weight"). Reported per spec. */
+        font-weight: 600;
+        font-size: 14px;
+        line-height: 1.5;
+        color: #6b6c72;
+      }
+      .bp-loader__progress-track {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 36px;
+        height: 12px;
+        border-radius: 200px;
+        background: #d4d7dc;
+        overflow: hidden;
+      }
+      .bp-loader__progress-fill {
+        height: 100%;
+        width: 0;
+        border-radius: 200px;
+        background: #2ca01c;
+      }
+
+      /* ---- Payments scheduled (success) ---- */
+
+      /* §2a — old/new text swap inside .bp-loader__text (round 2's own
+         entrance/position wrapper — left untouched). -old carries no
+         positioning of its own (plain block flow, so headline/subhead
+         render exactly where they did before this wrap existed); -new is
+         absolutely positioned over that same box so the two occupy
+         identical coordinates while they cross-fade — see spec §2a's
+         545/609 top measurements, reported in the build report. */
+      .bp-loader__text-new {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 794px;
+        opacity: 0;
+        visibility: hidden;
+      }
+
+      /* §2b — success check: CodePen urak/pen/VOENMx's V geometry/
+         keyframes ported exactly; its circle is replaced with a
+         self-drawing ring (Hadar). 1.8409 = 162 / 88 — the reference's
+         80px icon + its own 4px border on each side, scaled to this
+         spec's 162px outer diameter so the visual centre lands at
+         (720, 390) with that outer diameter, per §0. */
+      .bp-success-check {
+        position: absolute;
+        left: 676px;
+        top: 346px;
+        width: 88px;
+        height: 88px;
+        transform: scale(1.8409);
+        transform-origin: center;
+        visibility: hidden;
+      }
+      /* Default = fully hidden (circumference == dasharray == dashoffset,
+         2 * pi * 42); renderLoaderState() overrides both via el.style, and
+         the full-attribute reset (see resetToMainTable()) restores exactly
+         this default since stroke-dasharray/-dashoffset are set as CSS
+         properties here, not SVG attributes. */
+      .bp-success-check__ring {
+        stroke-dasharray: 263.894;
+        stroke-dashoffset: 263.894;
+      }
+      .bp-success-check__lines {
+        position: absolute;
+        left: 4px;
+        top: 4px;
+        width: 80px;
+        height: 80px;
+      }
+      .bp-success-check__tip,
+      .bp-success-check__long {
+        position: absolute;
+        height: 5px;
+        background: #2ca01c;
+        border-radius: 2px;
+        opacity: 0;
+      }
+      .bp-success-check__tip {
+        transform: rotate(45deg);
+      }
+      .bp-success-check__long {
+        transform: rotate(-45deg);
+      }
+
+      /* §2c — success button. Only .bp-btn's shared box (height/padding/
+         border-radius/font, all inherited from the base .bp-btn rule
+         above) plus Continue's own green fill/border/label colour are
+         reused. The round-1 morph rules scoped to
+         ".bp-footer__buttons .bp-btn--continue" (overflow:hidden, label
+         spans, flex-shrink, explicit widths) do not apply here — this
+         button lives outside .bp-footer__buttons and never morphs. */
+      .bp-btn--success {
+        position: absolute;
+        top: 712px;
+        left: 0;
+        right: 0;
+        margin: 0 auto;
+        width: fit-content;
+        min-width: 100px;
+        background: var(--bp-color-action-green);
+        border-color: var(--bp-color-action-green);
+        color: var(--primitive-white);
+        opacity: 0;
+        visibility: hidden;
+      }
+
   /* ---- Verbatim source mock CSS ends here. Everything below is this
      scene's own addition on top of the mock: the 0.305 stage scale,
      row-lift treatment, dim overlay and cursor/ripple system, and two
@@ -2823,6 +3194,44 @@
      Above the cursor/ripple (z-index 10/9) so the burst reads on top of the
      click it's reacting to -- matches the source's own z-index 11. */
   .p0s1-spark-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 11;
+  }
+
+  /* ---- Panel 1 cursor + click ripple + spark — duplicate of the
+     .p0s1-cursor/.p0s1-ripple/.p0s1-ripple__disc/.p0s1-spark-canvas
+     rules above, this panel's own p1s2- prefix, every declaration
+     identical (build prompt §1.4). ---- */
+  .p1s2-cursor {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 48px;
+    height: 48px;
+    transform: translate(-4px, -3px);
+    pointer-events: none;
+    z-index: 10;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.35));
+    opacity: 0;
+  }
+  .p1s2-cursor svg { display: block; width: 100%; height: 100%; }
+  .p1s2-ripple { position: absolute; left: 0; top: 0; width: 0; height: 0; pointer-events: none; z-index: 9; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.35)); }
+  .p1s2-ripple__disc {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.75) 40%, rgba(255, 255, 255, 0.25) 72%, rgba(255, 255, 255, 0) 100%);
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.02);
+  }
+  .p1s2-spark-canvas {
     position: absolute;
     inset: 0;
     width: 100%;
@@ -3063,6 +3472,172 @@
         <div class="sst-caption">
           <p class="sst-caption__headline">Review before release</p>
           <p class="sst-caption__description">Where bills become payments. The last checkpoint before funds move.</p>
+        </div>
+
+        <!-- Scene 2 — "Review before release" (panel 1). Build prompt:
+             Hadar, 16 Sep. Mock markup copied from
+             assets/mock-screen/bill-pay/schedule-payment.html's own
+             .bp-screen, in source order, per that prompt's §1.1 — header,
+             table-wrap, review image, footer (both buttons with both
+             label spans, taken from the source, not panel 0's plain-text
+             copy), tertiary button, whiteout, loader. Every id="bp-…" in
+             the copy becomes id="p1s2-…" (§1.2); classes unchanged. -->
+        <div class="p1s2-mock-wrap" id="p1s2-mock-wrap">
+          <div class="p1s2-mock-scaler" id="p1s2-mock-scaler">
+            <div class="bp-screen" id="p1s2-screen">
+              <header class="bp-header" id="p1s2-header">
+                <h1 class="bp-header__title">Schedule bill payment</h1>
+                <p class="bp-header__subtitle" id="p1s2-header-subtitle">Review and schedule</p>
+                <button class="bp-header__close" type="button" tabindex="-1" aria-label="Close">
+                  <img src="../../icons/bill-pay-mock/close.svg" alt="" />
+                </button>
+
+                <div class="bp-header__row" id="p1s2-header-row-fields">
+                  <div class="bp-pay-from">
+                    <p class="bp-pay-from__label">Pay from</p>
+                    <div class="bp-pay-from__field">
+                      <span>Chase checking (...1234)</span>
+                      <img src="../../icons/bill-pay-mock/dropdown-chevron.svg" alt="" />
+                    </div>
+                  </div>
+
+                  <div class="bp-header__divider"></div>
+
+                  <div class="bp-combine">
+                    <p class="bp-combine__label">Combine multiple bills</p>
+                    <div class="bp-combine__row">
+                      <p class="bp-combine__toggle-label">Make one payment per vendor</p>
+                      <button class="bp-switch" id="p1s2-mode-toggle" type="button" role="switch" aria-checked="false" tabindex="-1" aria-label="Make one payment per vendor">
+                        <span class="bp-switch__thumb"></span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="bp-header__divider"></div>
+
+                  <div class="bp-totals">
+                    <div>
+                      <p class="bp-totals__label">Total payment amount</p>
+                      <p class="bp-totals__amount" id="p1s2-total-amount">$0.00</p>
+                    </div>
+                    <p class="bp-totals__fee" id="p1s2-total-fee">Total processing fees: $0.00</p>
+                  </div>
+                </div>
+              </header>
+
+              <div class="bp-table-wrap" id="p1s2-table-wrap">
+                <div class="bp-table-body">
+                  <div class="bp-header-row" id="p1s2-header-row">
+                    <div class="bp-header-row__cell" style="width: 230px"><span>Vendor</span></div>
+                    <div class="bp-header-row__cell" data-narrow-hide="activity" style="width: 76px"><span>Bill</span></div>
+                    <div class="bp-header-row__cell" data-narrow-hide="activity" style="width: 106px"><span>Status</span></div>
+                    <div class="bp-header-row__cell" data-narrow-hide="activity" style="width: 84px"><span>Due date</span></div>
+                    <div class="bp-header-row__cell" data-narrow-hide="payment" style="width: 203px"><span>Payment speed</span></div>
+                    <div class="bp-header-row__cell" data-narrow-hide="payment" style="width: 122px"><span>Processing fee</span></div>
+                    <div class="bp-header-row__cell" style="width: 115px"><span>Open balance</span></div>
+                    <div class="bp-header-row__cell" style="width: 120px"><span>Amount</span></div>
+                    <div class="bp-header-row__cell" data-action-label style="width: 106px"><span>Action</span></div>
+                  </div>
+                  <div class="bp-rows-top-divider"></div>
+                  <div class="bp-rows-scroll" id="p1s2-rows-scroll"></div>
+                </div>
+                <div class="bp-row-card-layer" id="p1s2-row-card-layer">
+                  <div class="bp-row-selected-card" id="p1s2-row-selected-card"></div>
+                </div>
+              </div>
+
+              <img class="bp-review-image" id="p1s2-review-image" src="/assets/mock-screen/bill-pay/images/review.png" alt="Review and schedule payment summary" />
+
+              <footer class="bp-footer">
+                <div class="bp-footer__stats" id="p1s2-footer-stats">
+                  <div class="bp-stat">
+                    <p class="bp-stat__label">Bills</p>
+                    <p class="bp-stat__num" id="p1s2-stat-bills">0</p>
+                    <div class="bp-stat__sub"><img src="../../icons/bill-pay-mock/footer-check.svg" alt="" /><span>Approved</span></div>
+                  </div>
+                  <div class="bp-stat">
+                    <p class="bp-stat__label">Vendors</p>
+                    <p class="bp-stat__num" id="p1s2-stat-vendors">0</p>
+                    <div class="bp-stat__sub" data-vendor-state="alert">
+                      <img data-state="resolved" src="../../icons/bill-pay-mock/footer-check.svg" alt="" />
+                      <span data-state="resolved">Authorized</span>
+                      <img data-state="alert" src="../../icons/bill-pay-mock/alert-circle.svg" alt="" />
+                      <span data-state="alert" class="bp-hover-underline">1 needs delivery details</span>
+                    </div>
+                  </div>
+                  <div class="bp-stat">
+                    <p class="bp-stat__label">Payments</p>
+                    <p class="bp-stat__num" id="p1s2-stat-payments">0</p>
+                    <div class="bp-stat__sub"><img src="../../icons/bill-pay-mock/footer-check.svg" alt="" /><span>Arrives on time</span></div>
+                  </div>
+                </div>
+                <div class="bp-footer__buttons">
+                  <button class="bp-btn bp-btn--cancel" type="button" tabindex="-1" id="p1s2-btn-secondary">
+                    <span class="bp-btn__label bp-btn__label--old">Cancel</span>
+                    <span class="bp-btn__label bp-btn__label--new">Save for later</span>
+                  </button>
+                  <button class="bp-btn bp-btn--continue" type="button" tabindex="-1" id="p1s2-btn-primary">
+                    <span class="bp-btn__label bp-btn__label--old">Continue</span>
+                    <span class="bp-btn__label bp-btn__label--new">Schedule payments</span>
+                  </button>
+                </div>
+              </footer>
+
+              <button class="bp-btn bp-btn--tertiary" type="button" tabindex="-1" id="p1s2-btn-tertiary">Back</button>
+
+              <div class="bp-whiteout" id="p1s2-whiteout"></div>
+
+              <div class="bp-loader" id="p1s2-loader">
+                <div class="bp-loader__art" id="p1s2-loader-art">
+                  <img class="bp-loader__woman" id="p1s2-loader-woman" src="/assets/mock-screen/bill-pay/images/woman.png" alt="" />
+                  <img class="bp-loader__clock" id="p1s2-loader-clock" src="/assets/mock-screen/bill-pay/images/clock.png" alt="" />
+                  <img class="bp-loader__b-circle" id="p1s2-loader-b-circle" src="/assets/mock-screen/bill-pay/images/b-circle.png" alt="" />
+                  <img class="bp-loader__s-circle" id="p1s2-loader-s-circle" src="/assets/mock-screen/bill-pay/images/s-circle.png" alt="" />
+                </div>
+                <div class="bp-success-check" id="p1s2-success-check">
+                  <svg width="88" height="88" viewBox="0 0 88 88">
+                    <circle id="p1s2-success-ring" class="bp-success-check__ring" cx="44" cy="44" r="42" fill="none" stroke="rgba(44,160,28,.5)" stroke-width="4" transform="rotate(-90 44 44)" />
+                  </svg>
+                  <div class="bp-success-check__lines">
+                    <span class="bp-success-check__tip" id="p1s2-success-check-tip"></span>
+                    <span class="bp-success-check__long" id="p1s2-success-check-long"></span>
+                  </div>
+                </div>
+                <div class="bp-loader__text" id="p1s2-loader-text">
+                  <div class="bp-loader__text-old" id="p1s2-loader-text-old">
+                    <p class="bp-loader__headline">Scheduling your payments</p>
+                    <p class="bp-loader__subhead">This may take a few minutes. Feel free to close the page and keep working.<br />We’ll email you when we’re done.</p>
+                  </div>
+                  <div class="bp-loader__text-new" id="p1s2-loader-text-new">
+                    <p class="bp-loader__headline">5 Payments scheduled successfully</p>
+                    <p class="bp-loader__subhead">You can track your payments and see more info in the<br />payments page.</p>
+                  </div>
+                </div>
+                <div class="bp-loader__progress" id="p1s2-loader-progress">
+                  <p class="bp-loader__progress-label" id="p1s2-loader-progress-label">In progress (0%)</p>
+                  <div class="bp-loader__progress-track">
+                    <div class="bp-loader__progress-fill" id="p1s2-loader-progress-fill"></div>
+                  </div>
+                </div>
+                <button class="bp-btn bp-btn--success" type="button" tabindex="-1" id="p1s2-btn-success">View payments page</button>
+              </div>
+            </div>
+
+            <!-- Cursor/ripple/spark — same native 1440×1000 coordinate
+                 space as .bp-screen, siblings inside .p1s2-mock-scaler,
+                 same structure as panel 0's p0s1- layer (§1.4). No dim
+                 overlay, lift layer or anything wave-related — panel 1
+                 doesn't have them. -->
+            <div class="p1s2-cursor" id="p1s2-cursor">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4 2 L4 20 L8.5 16.5 L11.2 22 L14 20.6 L11.3 15.2 L17 15 Z" fill="white" stroke="black" stroke-width="1.2" stroke-linejoin="round" />
+              </svg>
+            </div>
+            <div class="p1s2-ripple" id="p1s2-ripple">
+              <div class="p1s2-ripple__disc"></div>
+            </div>
+            <canvas class="p1s2-spark-canvas" id="p1s2-spark-canvas" width="1440" height="1000"></canvas>
+          </div>
         </div>
       </div>
     </div>
@@ -3672,6 +4247,32 @@
       }
     }
 
+    // Panel 1's own click spark burst — duplicate of drawSparkBurst
+    // above, bound to #p1s2-spark-canvas, same constants and body
+    // (build prompt §5.4).
+    var sparkCanvasElP1 = document.getElementById("p1s2-spark-canvas");
+    var sparkCtxP1 = sparkCanvasElP1.getContext("2d");
+    function drawSparkBurstP1(kt, x, y) {
+      sparkCtxP1.clearRect(0, 0, sparkCanvasElP1.width, sparkCanvasElP1.height);
+      if (reduceMotion || kt < 0 || kt >= SPARK_DURATION) return;
+      var eased = sparkEaseOut(kt / SPARK_DURATION);
+      var distance = eased * SPARK_RADIUS;
+      var lineLength = SPARK_SIZE * (1 - eased);
+      sparkCtxP1.strokeStyle = SPARK_COLOR;
+      sparkCtxP1.lineWidth = SPARK_LINE_WIDTH;
+      for (var i = 0; i < SPARK_COUNT; i++) {
+        var angle = (2 * Math.PI * i) / SPARK_COUNT;
+        var x1 = x + distance * Math.cos(angle);
+        var y1 = y + distance * Math.sin(angle);
+        var x2 = x + (distance + lineLength) * Math.cos(angle);
+        var y2 = y + (distance + lineLength) * Math.sin(angle);
+        sparkCtxP1.beginPath();
+        sparkCtxP1.moveTo(x1, y1);
+        sparkCtxP1.lineTo(x2, y2);
+        sparkCtxP1.stroke();
+      }
+    }
+
     // Native-px rect of el, relative to refRect's top-left — ported
     // verbatim from scenes.html's own nativeRect().
     var MOCK_SCALE = 0.305;
@@ -3698,6 +4299,13 @@
     // buildScene0Instance's own note on what stayed lazy). ----
     var rowsScrollEl = document.getElementById("p0s1-rows-scroll");
     rowsScrollEl.innerHTML = ROWS.map(renderBatchRow).join("");
+
+    // Panel 1's own rows — same ROWS/renderBatchRow, rendered eagerly the
+    // same way, no second-order scroll measurement needed: panel 1's
+    // table stays in its resting state (batch mode, scrolled to top,
+    // nothing selected) for the whole scene (build prompt §1.3).
+    var rowsScrollElP1 = document.getElementById("p1s2-rows-scroll");
+    rowsScrollElP1.innerHTML = ROWS.map(renderBatchRow).join("");
 
     // Build spec: "Good Heart Catering's own top rule sits fully behind
     // the header's bottom border... The offset is derived, not a fixed
@@ -5712,12 +6320,789 @@
       }
     }
 
+    // ================================================================
+    // Scene 2 — "Review before release" (panel 1). Build prompt: Hadar,
+    // 16 Sep. Continue -> review -> loader -> success animation ported
+    // verbatim from assets/mock-screen/bill-pay/schedule-payment.js
+    // (lines ~1589-2009, the source mock, not panel 0's copy) inside its
+    // own enclosing scope (P1R below) so nothing collides with this
+    // file's own easeInOutCubic (a different, unclamped curve used by
+    // moveTo2/computeCircleFromRight). Screen placement/entrance/exit,
+    // cursor/ripple/circle math and the line-read pattern all reuse this
+    // file's own existing shared functions (moveTo2, computeCircleFromRight,
+    // computeClickRipple, easeEntrance, easeAnticipate, ENTRANCE_START_OFFSET,
+    // clamp01, lerp, reduceMotion) — none of that is redefined here.
+    // ================================================================
+    var P1R = (function () {
+      // ---- Ported verbatim from schedule-payment.js (§4.1) ----
+      function bz(x1, y1, x2, y2) {
+        return function (x) {
+          if (x <= 0) return 0;
+          if (x >= 1) return 1;
+          var lo = 0, hi = 1, t = 0;
+          for (var i = 0; i < 30; i++) {
+            t = (lo + hi) / 2;
+            var u = 1 - t, cx = 3 * u * u * t * x1 + 3 * u * t * t * x2 + t * t * t;
+            if (cx < x) lo = t; else hi = t;
+          }
+          var u2 = 1 - t;
+          return 3 * u2 * u2 * t * y1 + 3 * u2 * t * t * y2 + t * t * t;
+        };
+      }
+      var reviewIo = bz(0.77, 0, 0.175, 1);
+      var easeOutStrong = bz(0.23, 1, 0.32, 1);
+      var reviewPop = bz(0.175, 0.885, 0.32, 1.275);
+
+      function reviewSeg(p, a, b) {
+        return Math.max(0, Math.min(1, (p - a) / (b - a)));
+      }
+      function reviewLerp(a, b, k) {
+        return a + (b - a) * k;
+      }
+      function reviewClamp01(x) {
+        return Math.max(0, Math.min(1, x));
+      }
+
+      var REVIEW_SECONDARY_END = 129; // Figma 3217:200283 — Save for later
+
+      function reviewMorphState(p, P0, S0, P1) {
+        var s = {};
+        var sq = reviewIo(reviewSeg(p, 0, 0.3));
+        s.pw = p < 0.3 ? reviewLerp(P0, P0 * 0.88, sq) : reviewLerp(P0 * 0.88, P1, reviewPop(reviewSeg(p, 0.3, 1)));
+        s.sw = reviewLerp(S0, REVIEW_SECONDARY_END, reviewIo(reviewSeg(p, 0.3, 1)));
+        s.oO = 1 - easeOutStrong(reviewSeg(p, 0, 0.25));
+        s.nO = easeOutStrong(reviewSeg(p, 0.55, 1));
+        var t = easeOutStrong(reviewSeg(p, 0.3, 1));
+        s.tO = t;
+        s.tS = 0.95 + 0.05 * t;
+        return s;
+      }
+
+      function reviewMorphStateReduced(tMs, P1) {
+        var k = reviewClamp01(tMs / 150);
+        return { pw: P1, sw: REVIEW_SECONDARY_END, oO: 1 - k, nO: k, tO: k, tS: 1 };
+      }
+
+      var els = {};
+      function setupEls() {
+        els.header = document.getElementById("p1s2-header");
+        els.headerSubtitle = document.getElementById("p1s2-header-subtitle");
+        els.headerRowFields = document.getElementById("p1s2-header-row-fields");
+        els.tableWrap = document.getElementById("p1s2-table-wrap");
+        els.footerStats = document.getElementById("p1s2-footer-stats");
+        els.reviewImage = document.getElementById("p1s2-review-image");
+        els.btnTertiary = document.getElementById("p1s2-btn-tertiary");
+        els.btnSecondary = document.getElementById("p1s2-btn-secondary");
+        els.btnPrimary = document.getElementById("p1s2-btn-primary");
+        els.btnSecondaryOld = els.btnSecondary.querySelector(".bp-btn__label--old");
+        els.btnSecondaryNew = els.btnSecondary.querySelector(".bp-btn__label--new");
+        els.btnPrimaryOld = els.btnPrimary.querySelector(".bp-btn__label--old");
+        els.btnPrimaryNew = els.btnPrimary.querySelector(".bp-btn__label--new");
+
+        els.whiteout = document.getElementById("p1s2-whiteout");
+        els.loader = document.getElementById("p1s2-loader");
+        els.loaderText = document.getElementById("p1s2-loader-text");
+        els.loaderProgress = document.getElementById("p1s2-loader-progress");
+        els.loaderWoman = document.getElementById("p1s2-loader-woman");
+        els.loaderSCircle = document.getElementById("p1s2-loader-s-circle");
+        els.loaderBCircle = document.getElementById("p1s2-loader-b-circle");
+        els.loaderClock = document.getElementById("p1s2-loader-clock");
+        els.loaderProgressLabel = document.getElementById("p1s2-loader-progress-label");
+        els.loaderProgressFill = document.getElementById("p1s2-loader-progress-fill");
+        els.loaderArt = document.getElementById("p1s2-loader-art");
+        els.loaderTextOld = document.getElementById("p1s2-loader-text-old");
+        els.loaderTextNew = document.getElementById("p1s2-loader-text-new");
+        els.btnSuccess = document.getElementById("p1s2-btn-success");
+        els.successCheck = document.getElementById("p1s2-success-check");
+        els.successRing = document.getElementById("p1s2-success-ring");
+        els.successTip = document.getElementById("p1s2-success-check-tip");
+        els.successLong = document.getElementById("p1s2-success-check-long");
+      }
+
+      // Round 2 spec §1 — P1 = new-label text width + button left/right
+      // padding (16+16) + left/right border widths, minimum 100.
+      function measurePrimaryEndWidth() {
+        var canvas = measurePrimaryEndWidth._canvas || (measurePrimaryEndWidth._canvas = document.createElement("canvas"));
+        var ctx = canvas.getContext("2d");
+        ctx.font = getComputedStyle(els.btnPrimary).font;
+        var textWidth = ctx.measureText(els.btnPrimaryNew.textContent).width;
+        var btnStyle = getComputedStyle(els.btnPrimary);
+        var borderWidth = (parseFloat(btnStyle.borderLeftWidth) || 0) + (parseFloat(btnStyle.borderRightWidth) || 0);
+        return Math.max(100, textWidth + 16 + 16 + borderWidth);
+      }
+
+      var reviewState = { P0: 0, S0: 0, P1: 0 };
+      function measureWidths() {
+        reviewState.P0 = parseFloat(getComputedStyle(els.btnPrimary).width);
+        reviewState.S0 = parseFloat(getComputedStyle(els.btnSecondary).width);
+        reviewState.P1 = measurePrimaryEndWidth();
+      }
+
+      // The one pure function driving the whole transition — every value
+      // below is a function of tMs alone.
+      function renderReviewState(tMs, reduced) {
+        tMs = Math.max(0, Math.min(600, tMs));
+
+        var fadeP = easeOutStrong(reviewClamp01(tMs / 300));
+        var fadeOpacity = 1 - fadeP;
+        var fadeVisibility = fadeOpacity > 0 ? "visible" : "hidden";
+
+        els.tableWrap.style.opacity = fadeOpacity;
+        els.tableWrap.style.transform = reduced ? "none" : "translateY(" + 739 * fadeP + "px)";
+        els.tableWrap.style.visibility = fadeVisibility;
+
+        els.header.style.setProperty("--bp-header-before-opacity", fadeOpacity);
+
+        els.headerRowFields.style.opacity = fadeOpacity;
+        els.headerRowFields.style.visibility = fadeVisibility;
+
+        els.footerStats.style.opacity = fadeOpacity;
+        els.footerStats.style.visibility = fadeVisibility;
+
+        var btnP = reviewClamp01(tMs / 450);
+        var st = reduced ? reviewMorphStateReduced(tMs, reviewState.P1) : reviewMorphState(btnP, reviewState.P0, reviewState.S0, reviewState.P1);
+        els.btnPrimary.style.width = st.pw + "px";
+        els.btnSecondary.style.width = st.sw + "px";
+        els.btnPrimaryOld.style.opacity = st.oO;
+        els.btnPrimaryNew.style.opacity = st.nO;
+        els.btnSecondaryOld.style.opacity = st.oO;
+        els.btnSecondaryNew.style.opacity = st.nO;
+        els.btnTertiary.style.opacity = st.tO;
+        els.btnTertiary.style.transform = "scale(" + st.tS + ")";
+        els.btnTertiary.style.visibility = st.tO > 0 ? "visible" : "hidden";
+
+        var subDuration = reduced ? 300 : 400;
+        var subP = easeOutStrong(reviewClamp01(tMs / subDuration));
+        els.headerSubtitle.style.opacity = subP;
+        els.headerSubtitle.style.transform = reduced ? "none" : "scale(" + (0.95 + 0.05 * subP) + ")";
+        els.headerSubtitle.style.visibility = subP > 0 ? "visible" : "hidden";
+
+        var imgP = easeOutStrong(reviewClamp01((tMs - 300) / 300));
+        els.reviewImage.style.opacity = imgP;
+        els.reviewImage.style.visibility = imgP > 0 ? "visible" : "hidden";
+      }
+
+      // Source's own clamped easeInOutCubic — shadows this file's
+      // unclamped one (used by moveTo2/computeCircleFromRight) only
+      // inside this scope, per build prompt §4.1. This file's own
+      // version is not touched.
+      function easeInOutCubic(x) {
+        x = Math.max(0, Math.min(1, x));
+        return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+      }
+
+      var LOADER_POP = 350;
+      var LOADER_FILL_START = 890;
+      var LOADER_FILL_DURATION = 2000;
+      var LOADER_DONE_AT = LOADER_FILL_START + LOADER_FILL_DURATION;
+      var LOADER_CIRCLES = [
+        ["loaderSCircle", 400, 3200, -8],
+        ["loaderBCircle", 470, 3300, -10],
+        ["loaderClock", 540, 2900, -6]
+      ];
+
+      var SUCCESS_S0 = LOADER_DONE_AT + 1000;
+      var SUCCESS_C0 = SUCCESS_S0 + 550;
+      var SUCCESS_RING_CIRC = 2 * Math.PI * 42;
+      var SUCCESS_PROGRESS_DROP = 300;
+      var cssEase = bz(0.25, 0.1, 0.25, 1);
+
+      function kf(frames, p) {
+        if (p <= frames[0][0]) return frames[0][1];
+        for (var i = 1; i < frames.length; i++) {
+          if (p <= frames[i][0]) {
+            var a = frames[i - 1], b = frames[i];
+            var k = cssEase((p - a[0]) / (b[0] - a[0]));
+            return a[1].map(function (v, j) {
+              return v + (b[1][j] - v) * k;
+            });
+          }
+        }
+        return frames[frames.length - 1][1];
+      }
+      var SUCCESS_TIP = [
+        [0, [0, 1, 19]],
+        [0.54, [0, 1, 19]],
+        [0.70, [50, -8, 37]],
+        [0.84, [17, 21, 48]],
+        [1, [25, 14, 45]]
+      ];
+      var SUCCESS_LONG = [
+        [0, [0, 46, 54]],
+        [0.65, [0, 46, 54]],
+        [0.84, [55, 0, 35]],
+        [1, [47, 8, 38]]
+      ];
+
+      // Pure function of tMs alone — every value below is derived from
+      // tMs (and the reduced-motion flag) with no other state.
+      function renderLoaderState(tMs, reduced) {
+        els.whiteout.style.opacity = easeOutStrong(reviewSeg(tMs, 0, 300));
+
+        var textPop = reviewPop(reviewSeg(tMs, 250, 750));
+        var textOp = easeOutStrong(reviewSeg(tMs, 250, 550));
+        els.loaderText.style.opacity = textOp;
+        els.loaderText.style.transform = reduced ? "none" : "translateY(" + (1 - textPop) * 40 + "px)";
+        els.loaderText.style.visibility = textOp > 0 ? "visible" : "hidden";
+
+        var progPop = reviewPop(reviewSeg(tMs, 310, 810));
+        var progLy = (1 - progPop) * 40;
+        var progOp = easeOutStrong(reviewSeg(tMs, 310, 610));
+        if (tMs >= SUCCESS_S0) {
+          if (reduced) {
+            progOp = 1 - easeOutStrong(reviewSeg(tMs, SUCCESS_S0, SUCCESS_S0 + 300));
+            progLy = 0;
+          } else {
+            var back = Math.max(0, Math.min(500, 500 - (tMs - SUCCESS_S0)));
+            progLy = (1 - reviewPop(reviewSeg(back, 0, 500))) * SUCCESS_PROGRESS_DROP;
+            progOp = 1;
+          }
+        }
+        els.loaderProgress.style.opacity = progOp;
+        els.loaderProgress.style.transform = reduced ? "none" : "translateY(" + progLy + "px)";
+        els.loaderProgress.style.visibility = progOp > 0 && tMs < SUCCESS_S0 + 500 ? "visible" : "hidden";
+
+        var womanOp = easeOutStrong(reviewSeg(tMs, 250, 450));
+        els.loaderWoman.style.opacity = womanOp;
+        els.loaderWoman.style.visibility = womanOp > 0 ? "visible" : "hidden";
+
+        LOADER_CIRCLES.forEach(function (c) {
+          var el = els[c[0]];
+          var start = c[1], period = c[2], travel = c[3];
+          var sc = 0.9 + 0.1 * reviewPop(reviewSeg(tMs, start, start + LOADER_POP));
+          var fy = 0;
+          if (tMs > start + LOADER_POP) {
+            var phase = (tMs - start - LOADER_POP) / period;
+            fy = (travel * (1 - Math.cos(2 * Math.PI * phase))) / 2;
+          }
+          var op = easeOutStrong(reviewSeg(tMs, start, start + 200));
+          el.style.opacity = op;
+          el.style.transform = reduced ? "none" : "translateY(" + fy + "px) scale(" + sc + ")";
+          el.style.visibility = op > 0 ? "visible" : "hidden";
+        });
+
+        var f = easeInOutCubic(reviewSeg(tMs, LOADER_FILL_START, LOADER_FILL_START + LOADER_FILL_DURATION));
+        els.loaderProgressFill.style.width = f * 100 + "%";
+        els.loaderProgressLabel.textContent = tMs >= LOADER_DONE_AT ? "Done" : "In progress (" + Math.floor(f * 100) + "%)";
+
+        var artOp = 1 - easeOutStrong(reviewSeg(tMs, SUCCESS_S0, SUCCESS_S0 + 300));
+        els.loaderArt.style.opacity = artOp;
+        els.loaderArt.style.visibility = artOp > 0 ? "visible" : "hidden";
+
+        var oldTextOp = 1 - easeOutStrong(reviewSeg(tMs, SUCCESS_S0, SUCCESS_S0 + 250));
+        els.loaderTextOld.style.opacity = oldTextOp;
+        els.loaderTextOld.style.visibility = oldTextOp > 0 ? "visible" : "hidden";
+
+        var newTextOp = easeOutStrong(reviewSeg(tMs, SUCCESS_S0 + 250, SUCCESS_S0 + 550));
+        els.loaderTextNew.style.opacity = newTextOp;
+        els.loaderTextNew.style.visibility = newTextOp > 0 ? "visible" : "hidden";
+
+        var btnOp = easeOutStrong(reviewSeg(tMs, SUCCESS_C0, SUCCESS_C0 + 300));
+        els.btnSuccess.style.opacity = btnOp;
+        els.btnSuccess.style.visibility = btnOp > 0 ? "visible" : "hidden";
+
+        var ringDraw = reduced ? (tMs >= SUCCESS_C0 ? 1 : 0) : easeInOutCubic(reviewSeg(tMs, SUCCESS_C0, SUCCESS_C0 + 400));
+        els.successRing.style.strokeDasharray = SUCCESS_RING_CIRC;
+        els.successRing.style.strokeDashoffset = SUCCESS_RING_CIRC * (1 - ringDraw);
+
+        var vp = reduced ? (tMs >= SUCCESS_C0 ? 1 : 0) : reviewSeg(tMs, SUCCESS_C0, SUCCESS_C0 + 750);
+        var tipG = kf(SUCCESS_TIP, vp);
+        els.successTip.style.width = tipG[0] + "px";
+        els.successTip.style.left = tipG[1] + "px";
+        els.successTip.style.top = tipG[2] + "px";
+        els.successTip.style.opacity = tipG[0] > 0 ? 1 : 0;
+        var lngG = kf(SUCCESS_LONG, vp);
+        els.successLong.style.width = lngG[0] + "px";
+        els.successLong.style.right = lngG[1] + "px";
+        els.successLong.style.top = lngG[2] + "px";
+        els.successLong.style.opacity = lngG[0] > 0 ? 1 : 0;
+
+        if (reduced) {
+          els.successCheck.style.opacity = easeOutStrong(reviewSeg(tMs, SUCCESS_C0, SUCCESS_C0 + 300));
+        }
+        els.successCheck.style.visibility = tMs >= SUCCESS_C0 ? "visible" : "hidden";
+      }
+
+      // §5 reset, minus the rAF-cancel/P0-S0-P1-reset parts (§4.2 — those
+      // widths are measured once and kept, driven by t, not a click).
+      var WIPE_ALL = function () {
+        return [
+          els.tableWrap, els.header, els.headerRowFields, els.footerStats,
+          els.btnPrimary, els.btnSecondary, els.btnPrimaryOld, els.btnPrimaryNew,
+          els.btnSecondaryOld, els.btnSecondaryNew, els.btnTertiary,
+          els.headerSubtitle, els.reviewImage,
+          els.whiteout, els.loader, els.loaderText, els.loaderProgress,
+          els.loaderWoman, els.loaderSCircle, els.loaderBCircle, els.loaderClock,
+          els.loaderProgressFill,
+          els.loaderArt, els.loaderTextOld, els.loaderTextNew, els.btnSuccess,
+          els.successCheck, els.successRing, els.successTip, els.successLong
+        ];
+      };
+      var WIPE_LOADER_ONLY = function () {
+        return [
+          els.whiteout, els.loader, els.loaderText, els.loaderProgress,
+          els.loaderWoman, els.loaderSCircle, els.loaderBCircle, els.loaderClock,
+          els.loaderProgressFill,
+          els.loaderArt, els.loaderTextOld, els.loaderTextNew, els.btnSuccess,
+          els.successCheck, els.successRing, els.successTip, els.successLong
+        ];
+      };
+      function wipeAll() {
+        WIPE_ALL().forEach(function (el) { el.removeAttribute("style"); });
+        els.loaderProgressLabel.textContent = "In progress (0%)";
+      }
+      function wipeLoaderOnly() {
+        WIPE_LOADER_ONLY().forEach(function (el) { el.removeAttribute("style"); });
+        els.loaderProgressLabel.textContent = "In progress (0%)";
+      }
+
+      return {
+        els: els,
+        reviewState: reviewState,
+        setupEls: setupEls,
+        measureWidths: measureWidths,
+        renderReviewState: renderReviewState,
+        renderLoaderState: renderLoaderState,
+        wipeAll: wipeAll,
+        wipeLoaderOnly: wipeLoaderOnly,
+        SUCCESS_C0: SUCCESS_C0
+      };
+    })();
+
+    // ---- Line-read pattern — ported from scenes-accordion.html's own
+    // Volume_Productivity reads (computeReadSweep/readEnd/underlineStart,
+    // build prompt §5.2/§5.4). Not already present in this file (unlike
+    // moveTo2/computeCircleFromRight, which scene 1 already defines and
+    // this scope reuses directly), so ported here verbatim; this file's
+    // own easeInOutCubic (unclamped) is the "io" the source itself uses. ----
+    function underlineStart(p) { return { x: p.x1, y: p.y }; }
+    function readEnd(p) { return { x: p.x2, y: p.y }; }
+    function computeReadSweep(localT, duration, p) {
+      var e = easeInOutCubic(clamp01(localT / duration));
+      var x = p.x1 + e * (p.x2 - p.x1);
+      var y = p.y + 1.2 * Math.sin(e * Math.PI * 2 + p.seed);
+      return { x: x, y: y };
+    }
+
+    // ---- Screen placement — this panel's own PANEL1_ENTRANCE_START_OFFSET
+    // (build prompt §5.1): -(78 + 1000*scale) = -383, scene 1's own
+    // ENTRANCE_START_OFFSET (+383) mirrored. Exit reuses scene 1's own
+    // ENTRANCE_START_OFFSET/easeAnticipate directly (§5.1), not redefined. ----
+    var PANEL1_ENTRANCE_START_OFFSET = -(78 + 1000 * MOCK_SCALE);
+
+    // ---- Fixed targets (build prompt §5.2/§5.3) ----
+    var P1_OFFSTAGE = { x: 1440 + 90, y: 500 };
+    var P1_CONTINUE_CIRCLE = { cx: 1290, cy: 950, rx: 64, ry: 28, seedA: 0.4, seedB: 1.1 };
+    var P1_CONTINUE_PARK = { x: P1_CONTINUE_CIRCLE.cx + P1_CONTINUE_CIRCLE.rx, y: P1_CONTINUE_CIRCLE.cy }; // (1354, 950)
+    var P1_TOTAL_CIRCLE = { cx: 1172.5, cy: 249.5, rx: 156.5, ry: 53.5, seedA: 0.4, seedB: 1.1 };
+    var P1_TOTAL_CIRCLE_START = { x: P1_TOTAL_CIRCLE.cx + P1_TOTAL_CIRCLE.rx, y: P1_TOTAL_CIRCLE.cy }; // (1329, 249.5)
+    var P1_AMOUNT_CX = 392;
+    var P1_AMOUNT_RY = [540, 618, 694, 772, 848];
+    // Line-read y offset/seeds — taken from Volume_Productivity's own
+    // underlineParamsFor(rect, seed) in scenes-accordion.html (y: rect.bottom
+    // + 4); applied here directly to the three given vertical centres
+    // (build prompt §5.2: "apply the same offset to the three centres
+    // above"), since there is no DOM rect for text baked into review.png.
+    // Seeds: the first three seeds Volume_Productivity's own reads use, in
+    // order (0.5, 0.9, 1.3) — judgment call, reported in the build report.
+    var P1_LINE_Y_OFFSET = 4;
+    var P1_LINE_CENTRES = [362, 397, 432];
+    var P1_LINE_SEEDS = [0.5, 0.9, 1.3];
+    var P1_LINE_PARAMS = P1_LINE_CENTRES.map(function (c, i) {
+      return { x1: 1030, x2: 1396, y: c + P1_LINE_Y_OFFSET, seed: P1_LINE_SEEDS[i] };
+    });
+    var P1_EXIT_TARGET = { x: 1530, y: 950 };
+
+    var PANEL1_BEATS = [
+      ["rest", 500],
+      ["entrance", 420],
+      ["settle", 1000],
+      ["cursorEnter", 280],
+      ["parkHold", 500],
+      ["circleContinue", CIRCLE_PASS_DURATION * 2],
+      ["holdAfterCircle", 500],
+      ["moveToContinue", 260],
+      ["preClickContinue", 120],
+      ["clickContinue", 600],
+      ["reviewHold", 1000],
+      ["moveToAmount1", 280],
+      ["holdAmount1", 170],
+      ["moveToAmount2", 260],
+      ["holdAmount2", 170],
+      ["moveToAmount3", 260],
+      ["holdAmount3", 170],
+      ["moveToAmount4", 260],
+      ["holdAmount4", 170],
+      ["moveToAmount5", 260],
+      ["holdAmount5", 170],
+      ["moveToTotal", 280],
+      ["circleTotal", 380],
+      ["moveToLine1", 260],
+      ["readLine1", 300],
+      ["holdLine1", 170],
+      ["moveToLine2", 150],
+      ["readLine2", 240],
+      ["holdLine2", 170],
+      ["moveToLine3", 130],
+      ["readLine3", 220],
+      ["holdLine3", 170],
+      ["holdBeforeSchedule", 500],
+      ["moveToSchedule", 280],
+      ["holdOnSchedule", 500],
+      ["preClickSchedule", 120],
+      ["loader", P1R.SUCCESS_C0 + 750],
+      ["successHold", 1000],
+      ["exit", 420]
+    ];
+    var PANEL1_MARKS = (function () {
+      var m = {}, acc = 0;
+      for (var i = 0; i < PANEL1_BEATS.length; i++) {
+        m[PANEL1_BEATS[i][0] + "Start"] = acc;
+        acc += PANEL1_BEATS[i][1];
+        m[PANEL1_BEATS[i][0] + "End"] = acc;
+      }
+      m.total = acc;
+      return m;
+    })();
+
+    function panel1CursorDrift(t) {
+      if (reduceMotion) return { dx: 0, dy: 0 };
+      return { dx: Math.sin(t / 1400 + 1.2) * 0.6, dy: Math.sin(t / 900) * 1.0 };
+    }
+
+    var panel1Instance = null;
+
+    function buildPanel1Instance() {
+      P1R.setupEls();
+      P1R.measureWidths();
+      var P0 = P1R.reviewState.P0, S0 = P1R.reviewState.S0, P1 = P1R.reviewState.P1;
+      if (Math.abs(P0 - 100) > 0.5 || Math.abs(S0 - 100) > 0.5 || Math.abs(P1 - 179.44) > 0.5) {
+        throw new Error(
+          "Panel 1 width mismatch: measured P0=" + P0.toFixed(2) + " S0=" + S0.toFixed(2) + " P1=" + P1.toFixed(2) +
+          " vs expected P0=100 S0=100 P1≈179.44 (build prompt §4.2). Per the build prompt, this must stop rather than proceed."
+        );
+      }
+
+      var wrapEl = document.getElementById("p1s2-mock-wrap");
+      var savedTransform = wrapEl.style.transform;
+      wrapEl.style.transform = "none";
+
+      var screenEl = document.getElementById("p1s2-screen");
+      var screenRect = screenEl.getBoundingClientRect();
+
+      function assertRect(name, r, ex) {
+        if (Math.abs(r.left - ex.x) > 1 || Math.abs(r.top - ex.y) > 1 || Math.abs(r.width - ex.w) > 1 || Math.abs(r.height - ex.h) > 1) {
+          throw new Error(
+            "Panel 1 " + name + " rect mismatch: measured (" + r.left.toFixed(2) + ", " + r.top.toFixed(2) + ", " + r.width.toFixed(2) + "x" + r.height.toFixed(2) +
+            ") vs expected (" + ex.x + ", " + ex.y + ", " + ex.w + "x" + ex.h + ") (build prompt §5.2). Per the build prompt, this must stop rather than proceed."
+          );
+        }
+      }
+
+      var continueRect = nativeRect(P1R.els.btnPrimary, screenRect);
+      assertRect("Continue button", continueRect, { x: 1240, y: 932, w: 100, h: 36 });
+      var continueBtnPos = { x: continueRect.centerX, y: continueRect.centerY };
+
+      P1R.renderReviewState(600, false);
+      var scheduleRect = nativeRect(P1R.els.btnPrimary, screenRect);
+      assertRect("Schedule payments button", scheduleRect, { x: 1160.6, y: 932, w: 179.4, h: 36 });
+      var scheduleBtnPos = { x: scheduleRect.centerX, y: scheduleRect.centerY };
+      P1R.wipeAll();
+
+      wrapEl.style.transform = savedTransform;
+
+      // Header total/fee, footer stats — same computation as
+      // buildScene0Instance's own (build prompt §1.3), targeting this
+      // panel's own p1s2- elements.
+      var totalAmount = ROWS.reduce(function (s, r) { return s + r.amount; }, 0);
+      var totalFee = 1.0 * ROWS.length;
+      document.getElementById("p1s2-total-amount").textContent = money(totalAmount);
+      document.getElementById("p1s2-total-fee").textContent = "Total processing fees: " + money(totalFee);
+      document.getElementById("p1s2-stat-bills").textContent = ROWS.length;
+      var vendorSetP1 = {};
+      ROWS.forEach(function (r) { vendorSetP1[r.vendor] = true; });
+      document.getElementById("p1s2-stat-vendors").textContent = Object.keys(vendorSetP1).length;
+      document.getElementById("p1s2-stat-payments").textContent = ROWS.length;
+
+      return {
+        mockWrapEl: wrapEl,
+        screenEl: screenEl,
+        screenRect: screenRect,
+        rowsScrollEl: document.getElementById("p1s2-rows-scroll"),
+        cursorEl: document.getElementById("p1s2-cursor"),
+        rippleEl: document.getElementById("p1s2-ripple"),
+        rippleDiscEl: document.querySelector("#p1s2-ripple .p1s2-ripple__disc"),
+        continueBtnPos: continueBtnPos,
+        scheduleBtnPos: scheduleBtnPos
+      };
+    }
+
+    // document.fonts.ready — build prompt §4.2: P0/S0/P1 are measured live
+    // once, after fonts are ready, so text metrics (measurePrimaryEndWidth)
+    // aren't taken against a fallback font. Built eagerly, not on first
+    // render (unlike buildScene0Instance) — renderPanel1Scene below no-ops
+    // until this resolves, which in practice is long before panel 1 ever
+    // becomes active (rest+entrance+settle alone is 1920ms).
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(function () {
+        panel1Instance = buildPanel1Instance();
+      });
+    } else {
+      panel1Instance = buildPanel1Instance();
+    }
+
+    function resetPanel1Baseline() {
+      if (!panel1Instance) return;
+      panel1Instance.mockWrapEl.style.opacity = "0";
+      panel1Instance.mockWrapEl.style.transform = "";
+      panel1Instance.cursorEl.style.opacity = "0";
+      panel1Instance.cursorEl.style.left = "";
+      panel1Instance.cursorEl.style.top = "";
+      panel1Instance.cursorEl.style.transform = "";
+      panel1Instance.rippleDiscEl.style.opacity = "0";
+      panel1Instance.rippleDiscEl.style.transform = "";
+      drawSparkBurstP1(-1, 0, 0);
+      P1R.wipeAll();
+      panel1Instance.rowsScrollEl.scrollTop = 0;
+    }
+
+    function renderPanel1Scene(t) {
+      if (!panel1Instance) return;
+      var M = PANEL1_MARKS, ins = panel1Instance;
+
+      if (t < M.restEnd) {
+        resetPanel1Baseline();
+        return;
+      }
+
+      // ---- Screen entrance/hold/exit (§5.1 — scene 1's own entrance/exit
+      // blocks, offset mirrored for entrance; scene 1's own
+      // ENTRANCE_START_OFFSET/easeAnticipate reused unchanged for exit). ----
+      if (t >= M.exitStart) {
+        var ep = reduceMotion ? 1 : clamp01((t - M.exitStart) / (M.exitEnd - M.exitStart));
+        var exitTranslateY = ENTRANCE_START_OFFSET * easeAnticipate(ep);
+        ins.mockWrapEl.style.opacity = "1";
+        ins.mockWrapEl.style.transform = "translateY(" + exitTranslateY + "px)";
+      } else {
+        var mockOpacity = 1, mockScale = 1, mockTranslateY = 0;
+        if (t < M.entranceEnd) {
+          var elt = t - M.entranceStart;
+          if (reduceMotion) {
+            mockOpacity = 1; mockScale = 1; mockTranslateY = 0;
+          } else {
+            var posE = easeEntrance(clamp01(elt / (M.entranceEnd - M.entranceStart)));
+            mockScale = 0.95 + 0.05 * posE;
+            mockTranslateY = PANEL1_ENTRANCE_START_OFFSET * (1 - posE);
+            var opE = easeEntrance(clamp01(elt / ((M.entranceEnd - M.entranceStart) / 3)));
+            mockOpacity = opE;
+          }
+        }
+        ins.mockWrapEl.style.opacity = String(mockOpacity);
+        ins.mockWrapEl.style.transform = "translateY(" + mockTranslateY + "px) scale(" + mockScale + ")";
+      }
+
+      // ---- Mock transitions (§4.3) ----
+      if (t < M.clickContinueStart) {
+        P1R.wipeAll();
+      } else {
+        P1R.renderReviewState(t - M.clickContinueStart, reduceMotion);
+        if (t < M.loaderStart) {
+          P1R.wipeLoaderOnly();
+        } else {
+          P1R.els.whiteout.style.visibility = "visible";
+          P1R.els.loader.style.visibility = "visible";
+          P1R.renderLoaderState(t - M.loaderStart, reduceMotion);
+        }
+      }
+
+      // ---- Cursor + ripple (§5.4) ----
+      var cursorPos = P1_CONTINUE_PARK, cursorOpacity = 0, rippleOpacity = 0, rippleScale = 1;
+
+      if (t < M.cursorEnterStart) {
+        cursorOpacity = 0;
+      } else if (t < M.cursorEnterEnd) {
+        var celt = t - M.cursorEnterStart;
+        cursorPos = moveTo2(celt, M.cursorEnterEnd - M.cursorEnterStart, P1_OFFSTAGE, P1_CONTINUE_PARK);
+        cursorOpacity = clamp01(celt / (M.cursorEnterEnd - M.cursorEnterStart));
+      } else if (t < M.circleContinueStart) {
+        var d1 = panel1CursorDrift(t);
+        cursorPos = { x: P1_CONTINUE_PARK.x + d1.dx, y: P1_CONTINUE_PARK.y + d1.dy };
+        cursorOpacity = 1;
+      } else if (t < M.circleContinueEnd) {
+        var clt = t - M.circleContinueStart;
+        var passLocal = clt < CIRCLE_PASS_DURATION ? clt : clt - CIRCLE_PASS_DURATION;
+        cursorPos = reduceMotion ? P1_CONTINUE_PARK : computeCircleFromRight(passLocal, CIRCLE_PASS_DURATION, P1_CONTINUE_CIRCLE);
+        cursorOpacity = 1;
+      } else if (t < M.moveToContinueStart) {
+        var d2 = panel1CursorDrift(t);
+        cursorPos = { x: P1_CONTINUE_PARK.x + d2.dx, y: P1_CONTINUE_PARK.y + d2.dy };
+        cursorOpacity = 1;
+      } else if (t < M.moveToContinueEnd) {
+        var mct = t - M.moveToContinueStart;
+        cursorPos = moveTo2(mct, M.moveToContinueEnd - M.moveToContinueStart, P1_CONTINUE_PARK, ins.continueBtnPos);
+        cursorOpacity = 1;
+      } else if (t < M.clickContinueStart) {
+        var d3 = panel1CursorDrift(t);
+        cursorPos = { x: ins.continueBtnPos.x + d3.dx, y: ins.continueBtnPos.y + d3.dy };
+        cursorOpacity = 1;
+      } else if (t < M.clickContinueEnd) {
+        var d4 = panel1CursorDrift(t);
+        cursorPos = { x: ins.continueBtnPos.x + d4.dx, y: ins.continueBtnPos.y + d4.dy };
+        cursorOpacity = 1;
+      } else if (t < M.moveToAmount1Start) { // reviewHold
+        var d5 = panel1CursorDrift(t);
+        cursorPos = { x: ins.continueBtnPos.x + d5.dx, y: ins.continueBtnPos.y + d5.dy };
+        cursorOpacity = 1;
+      } else if (t < M.moveToAmount1End) {
+        var ma1 = t - M.moveToAmount1Start;
+        cursorPos = moveTo2(ma1, M.moveToAmount1End - M.moveToAmount1Start, ins.continueBtnPos, { x: P1_AMOUNT_CX, y: P1_AMOUNT_RY[0] });
+        cursorOpacity = 1;
+      } else if (t < M.holdAmount1End) {
+        // §5.3 option B, verbatim: s(170, () => top) — no drift, code wins.
+        cursorPos = { x: P1_AMOUNT_CX, y: P1_AMOUNT_RY[0] };
+        cursorOpacity = 1;
+      } else if (t < M.moveToAmount2End) {
+        var p2 = clamp01((t - M.moveToAmount2Start) / (M.moveToAmount2End - M.moveToAmount2Start));
+        cursorPos = { x: P1_AMOUNT_CX, y: P1_AMOUNT_RY[0] + easeInOutCubic(p2) * (P1_AMOUNT_RY[1] - P1_AMOUNT_RY[0]) };
+        cursorOpacity = 1;
+      } else if (t < M.holdAmount2End) {
+        cursorPos = { x: P1_AMOUNT_CX, y: P1_AMOUNT_RY[1] };
+        cursorOpacity = 1;
+      } else if (t < M.moveToAmount3End) {
+        var p3 = clamp01((t - M.moveToAmount3Start) / (M.moveToAmount3End - M.moveToAmount3Start));
+        cursorPos = { x: P1_AMOUNT_CX, y: P1_AMOUNT_RY[1] + easeInOutCubic(p3) * (P1_AMOUNT_RY[2] - P1_AMOUNT_RY[1]) };
+        cursorOpacity = 1;
+      } else if (t < M.holdAmount3End) {
+        cursorPos = { x: P1_AMOUNT_CX, y: P1_AMOUNT_RY[2] };
+        cursorOpacity = 1;
+      } else if (t < M.moveToAmount4End) {
+        var p4 = clamp01((t - M.moveToAmount4Start) / (M.moveToAmount4End - M.moveToAmount4Start));
+        cursorPos = { x: P1_AMOUNT_CX, y: P1_AMOUNT_RY[2] + easeInOutCubic(p4) * (P1_AMOUNT_RY[3] - P1_AMOUNT_RY[2]) };
+        cursorOpacity = 1;
+      } else if (t < M.holdAmount4End) {
+        cursorPos = { x: P1_AMOUNT_CX, y: P1_AMOUNT_RY[3] };
+        cursorOpacity = 1;
+      } else if (t < M.moveToAmount5End) {
+        var p5 = clamp01((t - M.moveToAmount5Start) / (M.moveToAmount5End - M.moveToAmount5Start));
+        cursorPos = { x: P1_AMOUNT_CX, y: P1_AMOUNT_RY[3] + easeInOutCubic(p5) * (P1_AMOUNT_RY[4] - P1_AMOUNT_RY[3]) };
+        cursorOpacity = 1;
+      } else if (t < M.holdAmount5End) {
+        cursorPos = { x: P1_AMOUNT_CX, y: P1_AMOUNT_RY[4] };
+        cursorOpacity = 1;
+      } else if (t < M.moveToTotalEnd) {
+        var mtt = t - M.moveToTotalStart;
+        cursorPos = moveTo2(mtt, M.moveToTotalEnd - M.moveToTotalStart, { x: P1_AMOUNT_CX, y: P1_AMOUNT_RY[4] }, P1_TOTAL_CIRCLE_START);
+        cursorOpacity = 1;
+      } else if (t < M.circleTotalEnd) {
+        var ctt = t - M.circleTotalStart;
+        cursorPos = reduceMotion ? P1_TOTAL_CIRCLE_START : computeCircleFromRight(ctt, M.circleTotalEnd - M.circleTotalStart, P1_TOTAL_CIRCLE);
+        cursorOpacity = 1;
+      } else if (t < M.moveToLine1End) {
+        var ml1 = t - M.moveToLine1Start;
+        cursorPos = moveTo2(ml1, M.moveToLine1End - M.moveToLine1Start, P1_TOTAL_CIRCLE_START, underlineStart(P1_LINE_PARAMS[0]));
+        cursorOpacity = 1;
+      } else if (t < M.readLine1End) {
+        cursorPos = computeReadSweep(t - M.readLine1Start, M.readLine1End - M.readLine1Start, P1_LINE_PARAMS[0]);
+        cursorOpacity = 1;
+      } else if (t < M.moveToLine2End) {
+        // holdLine1 (drift on the line's own read-end) through the
+        // diagonal move to line 2's own start.
+        if (t < M.holdLine1End) {
+          var d6 = panel1CursorDrift(t);
+          var end1 = readEnd(P1_LINE_PARAMS[0]);
+          cursorPos = { x: end1.x + d6.dx, y: end1.y + d6.dy };
+        } else {
+          var ml2 = t - M.moveToLine2Start;
+          cursorPos = moveTo2(ml2, M.moveToLine2End - M.moveToLine2Start, readEnd(P1_LINE_PARAMS[0]), underlineStart(P1_LINE_PARAMS[1]));
+        }
+        cursorOpacity = 1;
+      } else if (t < M.readLine2End) {
+        cursorPos = computeReadSweep(t - M.readLine2Start, M.readLine2End - M.readLine2Start, P1_LINE_PARAMS[1]);
+        cursorOpacity = 1;
+      } else if (t < M.moveToLine3End) {
+        if (t < M.holdLine2End) {
+          var d7 = panel1CursorDrift(t);
+          var end2 = readEnd(P1_LINE_PARAMS[1]);
+          cursorPos = { x: end2.x + d7.dx, y: end2.y + d7.dy };
+        } else {
+          var ml3 = t - M.moveToLine3Start;
+          cursorPos = moveTo2(ml3, M.moveToLine3End - M.moveToLine3Start, readEnd(P1_LINE_PARAMS[1]), underlineStart(P1_LINE_PARAMS[2]));
+        }
+        cursorOpacity = 1;
+      } else if (t < M.readLine3End) {
+        cursorPos = computeReadSweep(t - M.readLine3Start, M.readLine3End - M.readLine3Start, P1_LINE_PARAMS[2]);
+        cursorOpacity = 1;
+      } else if (t < M.holdBeforeScheduleEnd) {
+        // holdLine3 + holdBeforeSchedule — no move beat between them, both
+        // drift at the third line's own read-end (build prompt §6, rows 32-33).
+        var d8 = panel1CursorDrift(t);
+        var end3 = readEnd(P1_LINE_PARAMS[2]);
+        cursorPos = { x: end3.x + d8.dx, y: end3.y + d8.dy };
+        cursorOpacity = 1;
+      } else if (t < M.moveToScheduleEnd) {
+        var ms = t - M.moveToScheduleStart;
+        cursorPos = moveTo2(ms, M.moveToScheduleEnd - M.moveToScheduleStart, readEnd(P1_LINE_PARAMS[2]), ins.scheduleBtnPos);
+        cursorOpacity = 1;
+      } else if (t < M.preClickScheduleEnd) { // holdOnSchedule + preClickSchedule
+        var d9 = panel1CursorDrift(t);
+        cursorPos = { x: ins.scheduleBtnPos.x + d9.dx, y: ins.scheduleBtnPos.y + d9.dy };
+        cursorOpacity = 1;
+      } else if (t < M.loaderEnd) {
+        var lt = t - M.loaderStart;
+        if (lt < 200) {
+          cursorPos = ins.scheduleBtnPos;
+          cursorOpacity = 1;
+        } else if (lt < 480) {
+          var elt2 = lt - 200;
+          cursorPos = moveTo2(elt2, 280, ins.scheduleBtnPos, P1_EXIT_TARGET);
+          cursorOpacity = 1 - clamp01(elt2 / 280);
+        } else {
+          cursorPos = P1_EXIT_TARGET;
+          cursorOpacity = 0;
+        }
+      } else {
+        cursorPos = P1_EXIT_TARGET;
+        cursorOpacity = 0;
+      }
+
+      // ---- Clicks — ripple + spark, at whichever button is active
+      // this frame (§5.4). Continue: clickContinueStart. Schedule
+      // payments: loaderStart (the loader beat's own click frame). ----
+      var sparkKt = -1, sparkX = 0, sparkY = 0;
+      if (t >= M.clickContinueStart && t < M.clickContinueEnd) {
+        var kt1 = t - M.clickContinueStart;
+        if (kt1 < 200) {
+          var ripple1 = computeClickRipple(kt1, 200);
+          rippleOpacity = ripple1.opacity;
+          rippleScale = ripple1.scale;
+        }
+        sparkKt = kt1; sparkX = ins.continueBtnPos.x; sparkY = ins.continueBtnPos.y;
+      } else if (t >= M.loaderStart && t < M.loaderEnd) {
+        var kt2 = t - M.loaderStart;
+        if (kt2 < 200) {
+          var ripple2 = computeClickRipple(kt2, 200);
+          rippleOpacity = ripple2.opacity;
+          rippleScale = ripple2.scale;
+        }
+        sparkKt = kt2; sparkX = ins.scheduleBtnPos.x; sparkY = ins.scheduleBtnPos.y;
+      }
+      drawSparkBurstP1(sparkKt, sparkX, sparkY);
+
+      ins.cursorEl.style.left = cursorPos.x + "px";
+      ins.cursorEl.style.top = cursorPos.y + "px";
+      ins.cursorEl.style.opacity = String(cursorOpacity);
+      ins.rippleEl.style.left = cursorPos.x + "px";
+      ins.rippleEl.style.top = cursorPos.y + "px";
+      ins.rippleDiscEl.style.opacity = String(rippleOpacity);
+      ins.rippleDiscEl.style.transform = "translate(-50%, -50%) scale(" + rippleScale + ")";
+    }
+
     // Hold durations, one per panel, index-matched to panels[] below.
-    // Panel 0's placeholder 4000ms is replaced by this scene's own
-    // derived total — now the accountability wave's own ending
-    // (SCENE0_TOTAL_DURATION), not just the takeover's own end
-    // (MARKS.total); panel 1 has no scene yet.
-    var HOLD_DURATIONS = [SCENE0_TOTAL_DURATION_REAL, 4000];
+    // Panel 0's own derived total (the accountability wave's own ending,
+    // SCENE0_TOTAL_DURATION, not just the takeover's own end,
+    // MARKS.total); panel 1's placeholder 4000ms is replaced by scene 2's
+    // own derived total, PANEL1_MARKS.total (build prompt §3/§6 — 18590ms).
+    var HOLD_DURATIONS = [SCENE0_TOTAL_DURATION_REAL, PANEL1_MARKS.total];
 
     var panels = [document.getElementById("sst-panel-0"), document.getElementById("sst-panel-1")];
     var column = document.getElementById("sst-column");
@@ -5739,8 +7124,10 @@
       // Panel 0's own scene (see resetScene0Baseline's own comment,
       // above) is snapped to hidden the instant panel 0 loses
       // is-active — every deactivation path (autoplay hand-off, a
-      // click on panel 1) funnels through here.
+      // click on panel 1) funnels through here. Panel 1's own scene
+      // mirrors this (build prompt §3).
       if (index !== 0) resetScene0Baseline();
+      if (index !== 1) resetPanel1Baseline();
     }
 
     // Every activation path — autoplay hand-off or a click — funnels
@@ -5763,8 +7150,10 @@
         state.lastFrameTime = now;
         // Panel 0's own scene is a pure function of its own elapsed
         // time — rendered every tick while it's the active panel,
-        // exactly like the shell's own applyScene/activate.
+        // exactly like the shell's own applyScene/activate. Panel 1's
+        // own scene mirrors this (build prompt §3).
         if (state.index === 0) renderScene0(state.elapsed);
+        if (state.index === 1) renderPanel1Scene(state.elapsed);
       } else {
         // Leaving the viewport: drop the reference frame so the next
         // resumed tick doesn't count the offscreen gap as elapsed time
