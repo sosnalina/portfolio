@@ -1586,6 +1586,150 @@
     }
   }
 
+  // ---- Continue → review state ----
+
+  /* Cubic-bezier solver, ported verbatim from the approved footer-button-
+     morph widget (bp_footer_button_morph_options, option C, 450ms, 16 Sep —
+     spec §5). `reviewOut` is the same (0.23, 1, 0.32, 1) curve the spec's
+     own §6 beats table calls easeOutStrong, so it's reused for the rest of
+     the timeline too, not re-defined. */
+  function bz(x1, y1, x2, y2) {
+    return function (x) {
+      if (x <= 0) return 0;
+      if (x >= 1) return 1;
+      var lo = 0, hi = 1, t = 0;
+      for (var i = 0; i < 30; i++) {
+        t = (lo + hi) / 2;
+        var u = 1 - t, cx = 3 * u * u * t * x1 + 3 * u * t * t * x2 + t * t * t;
+        if (cx < x) lo = t; else hi = t;
+      }
+      var u2 = 1 - t;
+      return 3 * u2 * u2 * t * y1 + 3 * u2 * t * t * y2 + t * t * t;
+    };
+  }
+  var reviewIo = bz(0.77, 0, 0.175, 1);
+  var easeOutStrong = bz(0.23, 1, 0.32, 1);
+  var reviewPop = bz(0.175, 0.885, 0.32, 1.275);
+
+  function reviewSeg(p, a, b) {
+    return Math.max(0, Math.min(1, (p - a) / (b - a)));
+  }
+  function reviewLerp(a, b, k) {
+    return a + (b - a) * k;
+  }
+  function reviewClamp01(x) {
+    return Math.max(0, Math.min(1, x));
+  }
+
+  var REVIEW_PRIMARY_END = 166; // Figma 3217:200283 — Schedule payment
+  var REVIEW_SECONDARY_END = 129; // Figma 3217:200283 — Save for later
+
+  /* Ported from the approved widget's mode==='pop' branch only — the
+     `stretch`/`roll` branches, the `mode` variable, and the oY/nY fields
+     (always 0 in `pop`) are deleted, per §5's port instructions. P0/S0 are
+     read live from the real buttons at click time (startReviewTransition()),
+     never hardcoded; `P0 * 0.88` replaces the widget's literal `88` (88% of
+     its own demo P0=100). */
+  function reviewMorphState(p, P0, S0) {
+    var s = {};
+    var sq = reviewIo(reviewSeg(p, 0, 0.3));
+    s.pw = p < 0.3 ? reviewLerp(P0, P0 * 0.88, sq) : reviewLerp(P0 * 0.88, REVIEW_PRIMARY_END, reviewPop(reviewSeg(p, 0.3, 1)));
+    s.sw = reviewLerp(S0, REVIEW_SECONDARY_END, reviewIo(reviewSeg(p, 0.3, 1)));
+    s.oO = 1 - easeOutStrong(reviewSeg(p, 0, 0.25));
+    s.nO = easeOutStrong(reviewSeg(p, 0.55, 1));
+    var t = easeOutStrong(reviewSeg(p, 0.3, 1));
+    s.tO = t;
+    s.tS = 0.95 + 0.05 * t;
+    return s;
+  }
+
+  /* §7 reduced motion — widths jump straight to their end values (no width
+     animation), old→new label crossfade linear over 0–150ms, tertiary
+     Cancel opacity-only over the same window (no scale). */
+  function reviewMorphStateReduced(tMs) {
+    var k = reviewClamp01(tMs / 150);
+    return { pw: REVIEW_PRIMARY_END, sw: REVIEW_SECONDARY_END, oO: 1 - k, nO: k, tO: k, tS: 1 };
+  }
+
+  var reviewState = { started: false, P0: 0, S0: 0 };
+
+  /* The one pure function driving the whole transition — every value below
+     is a function of tMs alone (§6: "no accumulated state... must render
+     correctly for any tMs, including seeking backward"). */
+  function renderReviewState(tMs, reduced) {
+    tMs = Math.max(0, Math.min(600, tMs));
+
+    /* .bp-table-wrap, .bp-header::before, .bp-header__row, .bp-footer__stats
+       share one 0–300ms easeOutStrong opacity fade (§6 beats table). Reduced
+       motion only drops the table-wrap's own translateY — the fade itself
+       is already opacity-only for all four, so §7 leaves it unchanged. */
+    var fadeP = easeOutStrong(reviewClamp01(tMs / 300));
+    var fadeOpacity = 1 - fadeP;
+    var fadeVisibility = fadeOpacity > 0 ? "visible" : "hidden";
+
+    els.tableWrap.style.opacity = fadeOpacity;
+    els.tableWrap.style.transform = reduced ? "none" : "translateY(" + 739 * fadeP + "px)";
+    els.tableWrap.style.visibility = fadeVisibility;
+
+    els.header.style.setProperty("--bp-header-before-opacity", fadeOpacity);
+
+    els.headerRowFields.style.opacity = fadeOpacity;
+    els.headerRowFields.style.visibility = fadeVisibility;
+
+    els.footerStats.style.opacity = fadeOpacity;
+    els.footerStats.style.visibility = fadeVisibility;
+
+    /* Footer buttons — §5 morph, own 450ms/curves (not easeOutStrong). */
+    var btnP = reviewClamp01(tMs / 450);
+    var st = reduced ? reviewMorphStateReduced(tMs) : reviewMorphState(btnP, reviewState.P0, reviewState.S0);
+    els.btnPrimary.style.width = st.pw + "px";
+    els.btnSecondary.style.width = st.sw + "px";
+    els.btnPrimaryOld.style.opacity = st.oO;
+    els.btnPrimaryNew.style.opacity = st.nO;
+    els.btnSecondaryOld.style.opacity = st.oO;
+    els.btnSecondaryNew.style.opacity = st.nO;
+    els.btnTertiary.style.opacity = st.tO;
+    els.btnTertiary.style.transform = "scale(" + st.tS + ")";
+    els.btnTertiary.style.visibility = st.tO > 0 ? "visible" : "hidden";
+
+    /* Subheader — 400ms normal / 300ms reduced (opacity-only, no scale). */
+    var subDuration = reduced ? 300 : 400;
+    var subP = easeOutStrong(reviewClamp01(tMs / subDuration));
+    els.headerSubtitle.style.opacity = subP;
+    els.headerSubtitle.style.transform = reduced ? "none" : "scale(" + (0.95 + 0.05 * subP) + ")";
+    els.headerSubtitle.style.visibility = subP > 0 ? "visible" : "hidden";
+
+    /* Review image — 300–600ms, opacity only, identical in both modes. */
+    var imgP = easeOutStrong(reviewClamp01((tMs - 300) / 300));
+    els.reviewImage.style.opacity = imgP;
+    els.reviewImage.style.visibility = imgP > 0 ? "visible" : "hidden";
+  }
+
+  function reviewTick(clickTime, reduced) {
+    var tMs = performance.now() - clickTime;
+    renderReviewState(tMs, reduced);
+    if (tMs < 600) {
+      requestAnimationFrame(function () {
+        reviewTick(clickTime, reduced);
+      });
+    }
+  }
+
+  function startReviewTransition() {
+    if (reviewState.started) return;
+    reviewState.started = true;
+    var reduced = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    // Read live, native widths — getComputedStyle().width is unaffected by
+    // .scaler's transform:scale() (transforms don't change computed style,
+    // only paint), so this needs no scale-factor division.
+    reviewState.P0 = parseFloat(getComputedStyle(els.btnPrimary).width);
+    reviewState.S0 = parseFloat(getComputedStyle(els.btnSecondary).width);
+    var clickTime = performance.now();
+    requestAnimationFrame(function () {
+      reviewTick(clickTime, reduced);
+    });
+  }
+
   function init() {
     els.screen = q("#bp-screen");
     els.scaler = q(".scaler");
@@ -1614,6 +1758,20 @@
     els.activityTimelineContent = q("#bp-activity-timeline-content");
     renderActivityTimeline();
 
+    els.header = q("#bp-header");
+    els.headerSubtitle = q("#bp-header-subtitle");
+    els.headerRowFields = q("#bp-header-row-fields");
+    els.tableWrap = q("#bp-table-wrap");
+    els.footerStats = q("#bp-footer-stats");
+    els.reviewImage = q("#bp-review-image");
+    els.btnTertiary = q("#bp-btn-tertiary");
+    els.btnSecondary = q("#bp-btn-secondary");
+    els.btnPrimary = q("#bp-btn-primary");
+    els.btnSecondaryOld = els.btnSecondary.querySelector(".bp-btn__label--old");
+    els.btnSecondaryNew = els.btnSecondary.querySelector(".bp-btn__label--new");
+    els.btnPrimaryOld = els.btnPrimary.querySelector(".bp-btn__label--old");
+    els.btnPrimaryNew = els.btnPrimary.querySelector(".bp-btn__label--new");
+
     els.toggle.addEventListener("click", function () {
       setMode(state.mode === "batch" ? "bulk" : "batch");
     });
@@ -1632,6 +1790,11 @@
       swapDrawerContent("default");
     });
     q("#bp-activity-close").addEventListener("click", closeActivityDrawer);
+
+    /* §6 trigger — a single click, handled once (startReviewTransition()'s
+       own reviewState.started guard makes every click after the first,
+       during or after the transition, a no-op). */
+    q(".bp-footer__buttons .bp-btn--continue").addEventListener("click", startReviewTransition);
 
     /* ---- top-of-scroll fade gradient: only shown once there's content
        scrolled away above the visible area ---- */

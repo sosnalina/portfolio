@@ -180,7 +180,7 @@
       .bp-header {
         width: 1440px;
         height: 400px;
-        background: var(--primitive-grey-light);
+        background: transparent;
         position: relative;
       }
 
@@ -2253,18 +2253,121 @@
         border-color: var(--bp-color-action-green);
         color: var(--bp-color-action-green);
       }
+
+      /* ---- Continue → review state ---- */
+
+      /* Background moved off .bp-header itself (now transparent, see the
+         rule above) onto this pseudo-element so it can fade independently
+         of the title/close/row, which must stay. No z-index: it paints
+         first inside the header, behind the absolutely-positioned title,
+         close and row — a negative z-index would instead paint it behind
+         #bp-screen's own white background and it would vanish. Opacity is
+         driven per-frame by renderReviewState() via the custom property
+         below, not a CSS transition (the timeline must render correctly
+         for any tMs, including seeking backward). */
+      .bp-header::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: var(--primitive-grey-light);
+        opacity: var(--bp-header-before-opacity, 1);
+      }
+
+      .bp-header__subtitle {
+        position: absolute;
+        left: 78px;
+        top: 98px;
+        margin: 0;
+        font-family: "Avenir Next";
+        font-weight: 400;
+        font-size: 26px;
+        line-height: 26px;
+        color: #393a3d;
+        opacity: 0;
+        visibility: hidden;
+        transform-origin: left center;
+      }
+
+      /* Left/right edges reuse the exact values that position
+         .bp-header__title (left) and .bp-header__close (right, the 24px
+         button box) — never a hardcoded width. <img> is a replaced
+         element: per CSS2.1 §10.3.8, left+right alone do NOT stretch a
+         replaced element the way they would a <div> — width:auto instead
+         resolves to the image's own intrinsic size (3952px), blowing past
+         the screen entirely. width is therefore computed from the exact
+         same 78/44 values via calc() against #bp-screen's own fixed
+         1440px (100%), not a separate hardcoded number — this resolves to
+         1318px, matching this spec's own stated math. Height stays auto so
+         the image's real aspect ratio drives it. */
+      .bp-review-image {
+        position: absolute;
+        top: 201px;
+        left: 78px;
+        right: 44px;
+        width: calc(100% - 78px - 44px);
+        height: auto;
+        opacity: 0;
+        visibility: hidden;
+      }
+
+      /* Tertiary Cancel — a new .bp-btn variant, not .bp-btn--cancel (that
+         class is reserved for the reused Save-for-later button below and
+         must not pick up this positioning/opacity). Copies .bp-btn--cancel's
+         declarations with border-color made transparent. Positioned against
+         footer.bp-footer itself (its nearest positioned ancestor) — being
+         position:absolute takes it out of the footer's flex flow entirely,
+         so its DOM position among the footer's flex children doesn't affect
+         their layout. */
+      .bp-btn--tertiary {
+        position: absolute;
+        left: 81px;
+        top: 32px;
+        background: transparent;
+        border-color: transparent;
+        color: var(--primitive-white);
+        opacity: 0;
+        visibility: hidden;
+        transform-origin: center;
+      }
+
+      /* Selector scoping — required (§ spec). .bp-btn--cancel and
+         .bp-btn--continue are also used, unmodified, in #bp-drawer-footer;
+         every rule below is scoped to .bp-footer__buttons so the drawer's
+         instances of these classes are never touched. */
+      .bp-footer__buttons .bp-btn--cancel,
+      .bp-footer__buttons .bp-btn--continue {
+        position: relative;
+        overflow: hidden;
+        flex-shrink: 0;
+      }
+      /* Old/new label crossfade. Deliberately not the reference widget's
+         line-height:36px — these buttons have a 1.818px border, so that
+         value would push the text down; flex centering handles it instead. */
+      .bp-footer__buttons .bp-btn__label {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        white-space: nowrap;
+        font: var(--bp-text-button-label);
+      }
+      .bp-footer__buttons .bp-btn__label--new {
+        opacity: 0;
+      }
     </style>
   </head>
   <body>
     <div class="scaler">
       <div class="bp-screen" id="bp-screen">
-        <header class="bp-header">
+        <header class="bp-header" id="bp-header">
           <h1 class="bp-header__title">Schedule bill payment</h1>
+          <p class="bp-header__subtitle" id="bp-header-subtitle">Review and schedule</p>
           <button class="bp-header__close" type="button" aria-label="Close">
             <img src="../../icons/bill-pay-mock/close.svg" alt="" />
           </button>
 
-          <div class="bp-header__row">
+          <div class="bp-header__row" id="bp-header-row-fields">
             <div class="bp-pay-from">
               <p class="bp-pay-from__label">Pay from</p>
               <div class="bp-pay-from__field">
@@ -2297,7 +2400,7 @@
           </div>
         </header>
 
-        <div class="bp-table-wrap">
+        <div class="bp-table-wrap" id="bp-table-wrap">
           <div class="bp-table-body">
             <div class="bp-header-row" id="bp-header-row">
               <div class="bp-header-row__cell" style="width: 230px"><span>Vendor</span></div>
@@ -2318,8 +2421,10 @@
           </div>
         </div>
 
+        <img class="bp-review-image" id="bp-review-image" src="/assets/mock-screen/bill-pay/images/review.png" alt="Review and schedule payment summary" />
+
         <footer class="bp-footer">
-          <div class="bp-footer__stats">
+          <div class="bp-footer__stats" id="bp-footer-stats">
             <div class="bp-stat">
                 <p class="bp-stat__label">Bills</p>
                 <p class="bp-stat__num" id="bp-stat-bills">0</p>
@@ -2341,9 +2446,16 @@
                 <div class="bp-stat__sub"><img src="../../icons/bill-pay-mock/footer-check.svg" alt="" /><span>Arrives on time</span></div>
               </div>
           </div>
+          <button class="bp-btn bp-btn--tertiary" type="button" id="bp-btn-tertiary">Cancel</button>
           <div class="bp-footer__buttons">
-            <button class="bp-btn bp-btn--cancel" type="button">Cancel</button>
-            <button class="bp-btn bp-btn--continue" type="button">Continue</button>
+            <button class="bp-btn bp-btn--cancel" type="button" id="bp-btn-secondary">
+              <span class="bp-btn__label bp-btn__label--old">Cancel</span>
+              <span class="bp-btn__label bp-btn__label--new">Save for later</span>
+            </button>
+            <button class="bp-btn bp-btn--continue" type="button" id="bp-btn-primary">
+              <span class="bp-btn__label bp-btn__label--old">Continue</span>
+              <span class="bp-btn__label bp-btn__label--new">Schedule payment</span>
+            </button>
           </div>
         </footer>
 
