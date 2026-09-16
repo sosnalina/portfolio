@@ -1775,6 +1775,50 @@
     ["loaderClock", 540, 2900, -6]
   ];
 
+  /* ---- Payments scheduled (success), round 3 — approved reference
+     "bp_schedule_payments_full_flow" (16 Sep, spec §4), ported per its own
+     port instructions there. SUCCESS_S0/SUCCESS_C0 continue straight off
+     LOADER_DONE_AT (2890ms) rather than restating it, so the 1s hold and
+     the 5190ms total stay derived, not hardcoded twice. */
+  var SUCCESS_S0 = LOADER_DONE_AT + 1000; // 3890 — art/text/progress exit starts
+  var SUCCESS_C0 = SUCCESS_S0 + 550; // 4440 — ring + V start
+  var SUCCESS_RING_CIRC = 2 * Math.PI * 42;
+  var SUCCESS_PROGRESS_DROP = 300;
+  var cssEase = bz(0.25, 0.1, 0.25, 1); // the CSS "ease" keyword — used by kf() below
+
+  /* Keyframe interpolator, ported verbatim from the reference's kf(). Each
+     frame is [progress 0-1, [values...]]; interpolation between frames uses
+     cssEase, and progress past the last frame holds that frame's values
+     exactly (spec §4 change 7 — no static-CSS fallback, no 1px jump). */
+  function kf(frames, p) {
+    if (p <= frames[0][0]) return frames[0][1];
+    for (var i = 1; i < frames.length; i++) {
+      if (p <= frames[i][0]) {
+        var a = frames[i - 1], b = frames[i];
+        var k = cssEase((p - a[0]) / (b[0] - a[0]));
+        return a[1].map(function (v, j) {
+          return v + (b[1][j] - v) * k;
+        });
+      }
+    }
+    return frames[frames.length - 1][1];
+  }
+  /* TIP is [width, left, top] per keyframe; LNG is [width, right, top] —
+     ported verbatim from the reference, values unchanged. */
+  var SUCCESS_TIP = [
+    [0, [0, 1, 19]],
+    [0.54, [0, 1, 19]],
+    [0.70, [50, -8, 37]],
+    [0.84, [17, 21, 48]],
+    [1, [25, 14, 45]]
+  ];
+  var SUCCESS_LONG = [
+    [0, [0, 46, 54]],
+    [0.65, [0, 46, 54]],
+    [0.84, [55, 0, 35]],
+    [1, [47, 8, 38]]
+  ];
+
   var loaderState = { active: false, clickTime: 0, reduced: false, rafId: null };
 
   /* Pure function of tMs alone (spec §4 change 4) — every value below is
@@ -1789,10 +1833,27 @@
     els.loaderText.style.visibility = textOp > 0 ? "visible" : "hidden";
 
     var progPop = reviewPop(reviewSeg(tMs, 310, 810));
+    var progLy = (1 - progPop) * 40;
     var progOp = easeOutStrong(reviewSeg(tMs, 310, 610));
+    /* Round 3, spec §4 change 2 — past SUCCESS_S0 the entrance is replaced
+       by the exit: normally a reversed-entrance drop (opacity held at 1,
+       per the reference's own `if(t>=S0){…}` line); reduced motion instead
+       fades opacity to 0 with no translateY (spec §6). */
+    if (tMs >= SUCCESS_S0) {
+      if (reduced) {
+        progOp = 1 - easeOutStrong(reviewSeg(tMs, SUCCESS_S0, SUCCESS_S0 + 300));
+        progLy = 0;
+      } else {
+        var back = Math.max(0, Math.min(500, 500 - (tMs - SUCCESS_S0)));
+        progLy = (1 - reviewPop(reviewSeg(back, 0, 500))) * SUCCESS_PROGRESS_DROP;
+        progOp = 1;
+      }
+    }
     els.loaderProgress.style.opacity = progOp;
-    els.loaderProgress.style.transform = reduced ? "none" : "translateY(" + (1 - progPop) * 40 + "px)";
-    els.loaderProgress.style.visibility = progOp > 0 ? "visible" : "hidden";
+    els.loaderProgress.style.transform = reduced ? "none" : "translateY(" + progLy + "px)";
+    // §4 change 8 — forced hidden from S0+500 regardless of opacity, since
+    // normal motion holds opacity at 1 throughout its own exit.
+    els.loaderProgress.style.visibility = progOp > 0 && tMs < SUCCESS_S0 + 500 ? "visible" : "hidden";
 
     var womanOp = easeOutStrong(reviewSeg(tMs, 250, 450));
     els.loaderWoman.style.opacity = womanOp;
@@ -1818,6 +1879,58 @@
     // Hadar, 16 Sep (spec §4 change 9): floored, never rounds up to "(100%)"
     // before the label switches to "Done" at 2890ms.
     els.loaderProgressLabel.textContent = tMs >= LOADER_DONE_AT ? "Done" : "In progress (" + Math.floor(f * 100) + "%)";
+
+    /* ---- Round 3 — Payments scheduled (success), spec §4 changes 3-8.
+       Art wrapper, old/new text and the button are opacity-only in BOTH
+       motion modes (spec §6 "unchanged"), so none of these four branch on
+       `reduced`. */
+    var artOp = 1 - easeOutStrong(reviewSeg(tMs, SUCCESS_S0, SUCCESS_S0 + 300));
+    els.loaderArt.style.opacity = artOp;
+    els.loaderArt.style.visibility = artOp > 0 ? "visible" : "hidden";
+
+    var oldTextOp = 1 - easeOutStrong(reviewSeg(tMs, SUCCESS_S0, SUCCESS_S0 + 250));
+    els.loaderTextOld.style.opacity = oldTextOp;
+    els.loaderTextOld.style.visibility = oldTextOp > 0 ? "visible" : "hidden";
+
+    var newTextOp = easeOutStrong(reviewSeg(tMs, SUCCESS_S0 + 250, SUCCESS_S0 + 550));
+    els.loaderTextNew.style.opacity = newTextOp;
+    els.loaderTextNew.style.visibility = newTextOp > 0 ? "visible" : "hidden";
+
+    var btnOp = easeOutStrong(reviewSeg(tMs, SUCCESS_C0, SUCCESS_C0 + 300));
+    els.btnSuccess.style.opacity = btnOp;
+    els.btnSuccess.style.visibility = btnOp > 0 ? "visible" : "hidden";
+
+    /* Ring — normal: stroke draws 0-400ms via easeInOutCubic (spec's own
+       curve, matching the fill bar). Reduced: fully drawn the instant C0
+       is reached (spec §6 "fully drawn from C0"), no animated draw. */
+    var ringDraw = reduced ? (tMs >= SUCCESS_C0 ? 1 : 0) : easeInOutCubic(reviewSeg(tMs, SUCCESS_C0, SUCCESS_C0 + 400));
+    els.successRing.style.strokeDasharray = SUCCESS_RING_CIRC;
+    els.successRing.style.strokeDashoffset = SUCCESS_RING_CIRC * (1 - ringDraw);
+
+    /* V lines — normal: kf() interpolation over 750ms (spec §4 change 7,
+       holds the last keyframe with no jump). Reduced: geometry jumps
+       straight to the 100% keyframe values from C0 (spec §6), with no
+       intermediate interpolation. */
+    var vp = reduced ? (tMs >= SUCCESS_C0 ? 1 : 0) : reviewSeg(tMs, SUCCESS_C0, SUCCESS_C0 + 750);
+    var tipG = kf(SUCCESS_TIP, vp);
+    els.successTip.style.width = tipG[0] + "px";
+    els.successTip.style.left = tipG[1] + "px";
+    els.successTip.style.top = tipG[2] + "px";
+    els.successTip.style.opacity = tipG[0] > 0 ? 1 : 0;
+    var lngG = kf(SUCCESS_LONG, vp);
+    els.successLong.style.width = lngG[0] + "px";
+    els.successLong.style.right = lngG[1] + "px";
+    els.successLong.style.top = lngG[2] + "px";
+    els.successLong.style.opacity = lngG[0] > 0 ? 1 : 0;
+
+    // §4 change 8 — hard visibility switch at C0 in normal motion; reduced
+    // motion additionally fades the whole check container (spec §6 — this
+    // is what makes the ring/V's own instant-jump geometry read as a reveal
+    // rather than a pop).
+    if (reduced) {
+      els.successCheck.style.opacity = easeOutStrong(reviewSeg(tMs, SUCCESS_C0, SUCCESS_C0 + 300));
+    }
+    els.successCheck.style.visibility = tMs >= SUCCESS_C0 ? "visible" : "hidden";
   }
 
   function loaderTick() {
@@ -1878,7 +1991,11 @@
       els.headerSubtitle, els.reviewImage,
       els.whiteout, els.loader, els.loaderText, els.loaderProgress,
       els.loaderWoman, els.loaderSCircle, els.loaderBCircle, els.loaderClock,
-      els.loaderProgressFill
+      els.loaderProgressFill,
+      // Round 3 — §5 coverage: every element renderLoaderState() writes to
+      // beyond LOADER_DONE_AT must be listed here too, same wipe mechanism.
+      els.loaderArt, els.loaderTextOld, els.loaderTextNew, els.btnSuccess,
+      els.successCheck, els.successRing, els.successTip, els.successLong
     ].forEach(function (el) {
       el.removeAttribute("style");
     });
@@ -1944,6 +2061,14 @@
     els.loaderClock = q("#bp-loader-clock");
     els.loaderProgressLabel = q("#bp-loader-progress-label");
     els.loaderProgressFill = q("#bp-loader-progress-fill");
+    els.loaderArt = q("#bp-loader-art");
+    els.loaderTextOld = q("#bp-loader-text-old");
+    els.loaderTextNew = q("#bp-loader-text-new");
+    els.btnSuccess = q("#bp-btn-success");
+    els.successCheck = q("#bp-success-check");
+    els.successRing = q("#bp-success-ring");
+    els.successTip = q("#bp-success-check-tip");
+    els.successLong = q("#bp-success-check-long");
 
     els.toggle.addEventListener("click", function () {
       setMode(state.mode === "batch" ? "bulk" : "batch");

@@ -2514,6 +2514,93 @@
         border-radius: 200px;
         background: #2ca01c;
       }
+
+      /* ---- Payments scheduled (success) ---- */
+
+      /* §2a — old/new text swap inside .bp-loader__text (round 2's own
+         entrance/position wrapper — left untouched). -old carries no
+         positioning of its own (plain block flow, so headline/subhead
+         render exactly where they did before this wrap existed); -new is
+         absolutely positioned over that same box so the two occupy
+         identical coordinates while they cross-fade — see spec §2a's
+         545/609 top measurements, reported in the build report. */
+      .bp-loader__text-new {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 794px;
+        opacity: 0;
+        visibility: hidden;
+      }
+
+      /* §2b — success check: CodePen urak/pen/VOENMx's V geometry/
+         keyframes ported exactly; its circle is replaced with a
+         self-drawing ring (Hadar). 1.8409 = 162 / 88 — the reference's
+         80px icon + its own 4px border on each side, scaled to this
+         spec's 162px outer diameter so the visual centre lands at
+         (720, 390) with that outer diameter, per §0. */
+      .bp-success-check {
+        position: absolute;
+        left: 676px;
+        top: 346px;
+        width: 88px;
+        height: 88px;
+        transform: scale(1.8409);
+        transform-origin: center;
+        visibility: hidden;
+      }
+      /* Default = fully hidden (circumference == dasharray == dashoffset,
+         2 * pi * 42); renderLoaderState() overrides both via el.style, and
+         the full-attribute reset (see resetToMainTable()) restores exactly
+         this default since stroke-dasharray/-dashoffset are set as CSS
+         properties here, not SVG attributes. */
+      .bp-success-check__ring {
+        stroke-dasharray: 263.894;
+        stroke-dashoffset: 263.894;
+      }
+      .bp-success-check__lines {
+        position: absolute;
+        left: 4px;
+        top: 4px;
+        width: 80px;
+        height: 80px;
+      }
+      .bp-success-check__tip,
+      .bp-success-check__long {
+        position: absolute;
+        height: 5px;
+        background: #2ca01c;
+        border-radius: 2px;
+        opacity: 0;
+      }
+      .bp-success-check__tip {
+        transform: rotate(45deg);
+      }
+      .bp-success-check__long {
+        transform: rotate(-45deg);
+      }
+
+      /* §2c — success button. Only .bp-btn's shared box (height/padding/
+         border-radius/font, all inherited from the base .bp-btn rule
+         above) plus Continue's own green fill/border/label colour are
+         reused. The round-1 morph rules scoped to
+         ".bp-footer__buttons .bp-btn--continue" (overflow:hidden, label
+         spans, flex-shrink, explicit widths) do not apply here — this
+         button lives outside .bp-footer__buttons and never morphs. */
+      .bp-btn--success {
+        position: absolute;
+        top: 712px;
+        left: 0;
+        right: 0;
+        margin: 0 auto;
+        width: fit-content;
+        min-width: 100px;
+        background: var(--bp-color-action-green);
+        border-color: var(--bp-color-action-green);
+        color: var(--primitive-white);
+        opacity: 0;
+        visibility: hidden;
+      }
     </style>
   </head>
   <body>
@@ -2640,15 +2727,32 @@
         <div class="bp-whiteout" id="bp-whiteout"></div>
 
         <div class="bp-loader" id="bp-loader">
-          <div class="bp-loader__art">
+          <div class="bp-loader__art" id="bp-loader-art">
             <img class="bp-loader__woman" id="bp-loader-woman" src="/assets/mock-screen/bill-pay/images/woman.png" alt="" />
             <img class="bp-loader__clock" id="bp-loader-clock" src="/assets/mock-screen/bill-pay/images/clock.png" alt="" />
             <img class="bp-loader__b-circle" id="bp-loader-b-circle" src="/assets/mock-screen/bill-pay/images/b-circle.png" alt="" />
             <img class="bp-loader__s-circle" id="bp-loader-s-circle" src="/assets/mock-screen/bill-pay/images/s-circle.png" alt="" />
           </div>
+          <!-- Payments scheduled (success) — §2b. CodePen urak/VOENMx's V
+               geometry/keyframes, circle replaced with a self-drawing ring. -->
+          <div class="bp-success-check" id="bp-success-check">
+            <svg width="88" height="88" viewBox="0 0 88 88">
+              <circle id="bp-success-ring" class="bp-success-check__ring" cx="44" cy="44" r="42" fill="none" stroke="rgba(44,160,28,.5)" stroke-width="4" transform="rotate(-90 44 44)" />
+            </svg>
+            <div class="bp-success-check__lines">
+              <span class="bp-success-check__tip" id="bp-success-check-tip"></span>
+              <span class="bp-success-check__long" id="bp-success-check-long"></span>
+            </div>
+          </div>
           <div class="bp-loader__text" id="bp-loader-text">
-            <p class="bp-loader__headline">Scheduling your payments</p>
-            <p class="bp-loader__subhead">This may take a few minutes. Feel free to close the page and keep working.<br />We’ll email you when we’re done.</p>
+            <div class="bp-loader__text-old" id="bp-loader-text-old">
+              <p class="bp-loader__headline">Scheduling your payments</p>
+              <p class="bp-loader__subhead">This may take a few minutes. Feel free to close the page and keep working.<br />We’ll email you when we’re done.</p>
+            </div>
+            <div class="bp-loader__text-new" id="bp-loader-text-new">
+              <p class="bp-loader__headline">5 Payments scheduled successfully</p>
+              <p class="bp-loader__subhead">You can track your payments and see more info in the<br />payments page.</p>
+            </div>
           </div>
           <div class="bp-loader__progress" id="bp-loader-progress">
             <p class="bp-loader__progress-label" id="bp-loader-progress-label">In progress (0%)</p>
@@ -2656,6 +2760,7 @@
               <div class="bp-loader__progress-fill" id="bp-loader-progress-fill"></div>
             </div>
           </div>
+          <button class="bp-btn bp-btn--success" type="button" id="bp-btn-success">View payments page</button>
         </div>
 
         <aside class="bp-drawer" id="bp-drawer">
