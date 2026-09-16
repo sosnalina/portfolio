@@ -206,6 +206,14 @@
         border: none;
         background: none;
         padding: 0;
+        /* Scheduling loader (§2) — stays above .bp-whiteout/.bp-loader
+           (z-index 2/3) so it's clickable any time the loader/review state
+           is showing. .bp-header has no z-index of its own, so this
+           participates directly in #bp-screen's stacking context, tied
+           at z-index 3 with .bp-loader — resolved by .bp-loader's own
+           pointer-events:none (see that rule), which lets clicks fall
+           through to this button regardless of paint order. */
+        z-index: 3;
       }
       .bp-header__close img {
         width: 16px;
@@ -2310,18 +2318,33 @@
         visibility: hidden;
       }
 
-      /* Tertiary Cancel — a new .bp-btn variant, not .bp-btn--cancel (that
-         class is reserved for the reused Save-for-later button below and
-         must not pick up this positioning/opacity). Copies .bp-btn--cancel's
-         declarations with border-color made transparent. Positioned against
-         footer.bp-footer itself (its nearest positioned ancestor) — being
-         position:absolute takes it out of the footer's flex flow entirely,
-         so its DOM position among the footer's flex children doesn't affect
-         their layout. */
+      /* Tertiary Cancel/Back — a new .bp-btn variant, not .bp-btn--cancel
+         (that class is reserved for the reused Save-for-later button below
+         and must not pick up this positioning/opacity). Copies
+         .bp-btn--cancel's declarations with border-color made transparent.
+
+         Positioned against #bp-screen, NOT footer.bp-footer (round 1 had it
+         footer-relative; moved for round 2 — see the HTML comment above
+         this element's markup). footer.bp-footer is position:absolute +
+         z-index:1, which makes it establish its own stacking context: every
+         descendant paints trapped inside that one z1 layer regardless of
+         its own z-index, so this button could never out-rank .bp-whiteout
+         (z-index 2) while still living inside footer — confirmed
+         unclickable during the loader, breaking spec §0's "repeat with
+         Back instead of X" step. left/top reproduce the exact same
+         rendered position as the footer-relative values it replaces
+         (footer top 900px + the original 32px = 932px; left 81px,
+         unchanged) — nothing about this button's own box or appearance
+         changed, only what it's positioned against. z-index:3 lets it
+         escape into #bp-screen's stacking context the same way
+         .bp-header__close's does (see that rule's own comment) — needed
+         so it stays clickable above .bp-whiteout/.bp-loader through the
+         entire loader window, not just during the review state. */
       .bp-btn--tertiary {
         position: absolute;
         left: 81px;
-        top: 32px;
+        top: 932px;
+        z-index: 3;
         background: transparent;
         border-color: transparent;
         color: var(--primitive-white);
@@ -2354,6 +2377,142 @@
       }
       .bp-footer__buttons .bp-btn__label--new {
         opacity: 0;
+      }
+
+      /* ---- Scheduling loader ---- */
+
+      /* Fades in over everything except the X (§2 stacking table). Nothing
+         already on screen gets its opacity rewritten by this — no conflict
+         with renderReviewState(). */
+      .bp-whiteout {
+        position: absolute;
+        inset: 0;
+        background: #fff;
+        z-index: 2;
+        opacity: 0;
+        visibility: hidden;
+      }
+
+      /* pointer-events:none (inherited by every child) is what lets
+         .bp-header__close stay clickable at the same z-index — see that
+         rule's own comment. */
+      .bp-loader {
+        position: absolute;
+        inset: 0;
+        z-index: 3;
+        pointer-events: none;
+        visibility: hidden;
+      }
+
+      .bp-loader__art {
+        position: absolute;
+        left: 600.5px;
+        top: 265px;
+        width: 239px;
+        height: 240px;
+      }
+      .bp-loader__art img {
+        position: absolute;
+        display: block;
+        opacity: 0;
+        visibility: hidden;
+      }
+      .bp-loader__woman {
+        left: 97px;
+        top: 87px;
+        width: 115px;
+        height: 143px;
+      }
+      .bp-loader__clock {
+        left: 170px;
+        top: 46px;
+        width: 32px;
+        height: 31px;
+        transform-origin: center;
+      }
+      .bp-loader__b-circle {
+        left: 14px;
+        top: 70px;
+        width: 91px;
+        height: 91px;
+        transform-origin: center;
+      }
+      .bp-loader__s-circle {
+        left: 83px;
+        top: 9px;
+        width: 73px;
+        height: 73px;
+        transform-origin: center;
+      }
+
+      .bp-loader__text {
+        position: absolute;
+        left: 323px;
+        top: 545px;
+        width: 794px;
+        text-align: center;
+        opacity: 0;
+        visibility: hidden;
+      }
+      .bp-loader__headline {
+        margin: 0;
+        font-family: "Avenir Next";
+        font-weight: 700;
+        font-size: 40px;
+        line-height: 1.3;
+        color: #393a3d;
+      }
+      .bp-loader__subhead {
+        margin: 12px 0 0;
+        font-family: "Avenir Next";
+        font-weight: 400;
+        font-size: 20px;
+        line-height: 28px;
+        color: #393a3d;
+      }
+
+      .bp-loader__progress {
+        position: absolute;
+        left: 520px;
+        top: 705px;
+        width: 400px;
+        height: 48px;
+        opacity: 0;
+        visibility: hidden;
+      }
+      .bp-loader__progress-label {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 0;
+        margin: 0;
+        text-align: center;
+        font-family: "Avenir Next";
+        /* Figma "Medium" — same substitution already established for text
+           tagged that way elsewhere in this file (see the vendor-name rule,
+           .bp-vendor__name / --bp-text-cell-strong: font-weight 600, and
+           this file's own top-of-file @font-face comment "This mock uses
+           the Medium face for the vendor-name weight"). Reported per spec. */
+        font-weight: 600;
+        font-size: 14px;
+        line-height: 1.5;
+        color: #6b6c72;
+      }
+      .bp-loader__progress-track {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 36px;
+        height: 12px;
+        border-radius: 200px;
+        background: #d4d7dc;
+        overflow: hidden;
+      }
+      .bp-loader__progress-fill {
+        height: 100%;
+        width: 0;
+        border-radius: 200px;
+        background: #2ca01c;
       }
     </style>
   </head>
@@ -2446,7 +2605,6 @@
                 <div class="bp-stat__sub"><img src="../../icons/bill-pay-mock/footer-check.svg" alt="" /><span>Arrives on time</span></div>
               </div>
           </div>
-          <button class="bp-btn bp-btn--tertiary" type="button" id="bp-btn-tertiary">Cancel</button>
           <div class="bp-footer__buttons">
             <button class="bp-btn bp-btn--cancel" type="button" id="bp-btn-secondary">
               <span class="bp-btn__label bp-btn__label--old">Cancel</span>
@@ -2454,10 +2612,51 @@
             </button>
             <button class="bp-btn bp-btn--continue" type="button" id="bp-btn-primary">
               <span class="bp-btn__label bp-btn__label--old">Continue</span>
-              <span class="bp-btn__label bp-btn__label--new">Schedule payment</span>
+              <span class="bp-btn__label bp-btn__label--new">Schedule payments</span>
             </button>
           </div>
         </footer>
+
+        <!-- Round 2 build-time finding (not in the spec's own markup): moved
+             here from inside footer.bp-footer, where round 1 placed it.
+             footer.bp-footer is position:absolute + z-index:1, which makes
+             it establish its OWN stacking context — every descendant is
+             trapped painting within that one z1 layer no matter what
+             z-index the descendant itself declares, the same way
+             .bp-header__close would be if .bp-header ever gained a
+             z-index (see that rule's own comment). .bp-whiteout is z-index
+             2, so with this button still inside footer it was provably
+             unclickable (confirmed via elementFromPoint) for the entire
+             loader window — directly breaking spec §0's own "repeat with
+             Back instead of X" acceptance step, since Back must reset from
+             the loader, not just from the pre-loader review state. Moving
+             it to a #bp-screen-relative sibling, positioned at the exact
+             same rendered spot (top: 900px footer top + 32px = 932px;
+             left: 81px, unchanged), lets it carry its own z-index the same
+             way .bp-header__close does. Reported per the spec's own
+             conflict clause instead of silently left broken. -->
+        <button class="bp-btn bp-btn--tertiary" type="button" id="bp-btn-tertiary">Back</button>
+
+        <div class="bp-whiteout" id="bp-whiteout"></div>
+
+        <div class="bp-loader" id="bp-loader">
+          <div class="bp-loader__art">
+            <img class="bp-loader__woman" id="bp-loader-woman" src="/assets/mock-screen/bill-pay/images/woman.png" alt="" />
+            <img class="bp-loader__clock" id="bp-loader-clock" src="/assets/mock-screen/bill-pay/images/clock.png" alt="" />
+            <img class="bp-loader__b-circle" id="bp-loader-b-circle" src="/assets/mock-screen/bill-pay/images/b-circle.png" alt="" />
+            <img class="bp-loader__s-circle" id="bp-loader-s-circle" src="/assets/mock-screen/bill-pay/images/s-circle.png" alt="" />
+          </div>
+          <div class="bp-loader__text" id="bp-loader-text">
+            <p class="bp-loader__headline">Scheduling your payments</p>
+            <p class="bp-loader__subhead">This may take a few minutes. Feel free to close the page and keep working.<br />We’ll email you when we’re done.</p>
+          </div>
+          <div class="bp-loader__progress" id="bp-loader-progress">
+            <p class="bp-loader__progress-label" id="bp-loader-progress-label">In progress (0%)</p>
+            <div class="bp-loader__progress-track">
+              <div class="bp-loader__progress-fill" id="bp-loader-progress-fill"></div>
+            </div>
+          </div>
+        </div>
 
         <aside class="bp-drawer" id="bp-drawer">
           <div class="bp-drawer__scroll">

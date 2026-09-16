@@ -1621,7 +1621,6 @@
     return Math.max(0, Math.min(1, x));
   }
 
-  var REVIEW_PRIMARY_END = 166; // Figma 3217:200283 — Schedule payment
   var REVIEW_SECONDARY_END = 129; // Figma 3217:200283 — Save for later
 
   /* Ported from the approved widget's mode==='pop' branch only — the
@@ -1629,11 +1628,12 @@
      (always 0 in `pop`) are deleted, per §5's port instructions. P0/S0 are
      read live from the real buttons at click time (startReviewTransition()),
      never hardcoded; `P0 * 0.88` replaces the widget's literal `88` (88% of
-     its own demo P0=100). */
-  function reviewMorphState(p, P0, S0) {
+     its own demo P0=100). P1 (round 2, spec §1) is likewise measured live
+     at click time — see measurePrimaryEndWidth() below — never hardcoded. */
+  function reviewMorphState(p, P0, S0, P1) {
     var s = {};
     var sq = reviewIo(reviewSeg(p, 0, 0.3));
-    s.pw = p < 0.3 ? reviewLerp(P0, P0 * 0.88, sq) : reviewLerp(P0 * 0.88, REVIEW_PRIMARY_END, reviewPop(reviewSeg(p, 0.3, 1)));
+    s.pw = p < 0.3 ? reviewLerp(P0, P0 * 0.88, sq) : reviewLerp(P0 * 0.88, P1, reviewPop(reviewSeg(p, 0.3, 1)));
     s.sw = reviewLerp(S0, REVIEW_SECONDARY_END, reviewIo(reviewSeg(p, 0.3, 1)));
     s.oO = 1 - easeOutStrong(reviewSeg(p, 0, 0.25));
     s.nO = easeOutStrong(reviewSeg(p, 0.55, 1));
@@ -1646,12 +1646,26 @@
   /* §7 reduced motion — widths jump straight to their end values (no width
      animation), old→new label crossfade linear over 0–150ms, tertiary
      Cancel opacity-only over the same window (no scale). */
-  function reviewMorphStateReduced(tMs) {
+  function reviewMorphStateReduced(tMs, P1) {
     var k = reviewClamp01(tMs / 150);
-    return { pw: REVIEW_PRIMARY_END, sw: REVIEW_SECONDARY_END, oO: 1 - k, nO: k, tO: k, tS: 1 };
+    return { pw: P1, sw: REVIEW_SECONDARY_END, oO: 1 - k, nO: k, tO: k, tS: 1 };
   }
 
-  var reviewState = { started: false, P0: 0, S0: 0 };
+  /* Round 2 spec §1 — P1 = new-label text width + button left/right padding
+     (16+16) + left/right border widths, minimum 100. Measured in native px
+     (canvas.measureText with the button's own computed font, same technique
+     already used by positionActivityRail() above — not through .scaler). */
+  function measurePrimaryEndWidth() {
+    var canvas = measurePrimaryEndWidth._canvas || (measurePrimaryEndWidth._canvas = document.createElement("canvas"));
+    var ctx = canvas.getContext("2d");
+    ctx.font = getComputedStyle(els.btnPrimary).font;
+    var textWidth = ctx.measureText(els.btnPrimaryNew.textContent).width;
+    var btnStyle = getComputedStyle(els.btnPrimary);
+    var borderWidth = (parseFloat(btnStyle.borderLeftWidth) || 0) + (parseFloat(btnStyle.borderRightWidth) || 0);
+    return Math.max(100, textWidth + 16 + 16 + borderWidth);
+  }
+
+  var reviewState = { started: false, P0: 0, S0: 0, P1: 0, clickTime: 0, rafId: null };
 
   /* The one pure function driving the whole transition — every value below
      is a function of tMs alone (§6: "no accumulated state... must render
@@ -1681,7 +1695,7 @@
 
     /* Footer buttons — §5 morph, own 450ms/curves (not easeOutStrong). */
     var btnP = reviewClamp01(tMs / 450);
-    var st = reduced ? reviewMorphStateReduced(tMs) : reviewMorphState(btnP, reviewState.P0, reviewState.S0);
+    var st = reduced ? reviewMorphStateReduced(tMs, reviewState.P1) : reviewMorphState(btnP, reviewState.P0, reviewState.S0, reviewState.P1);
     els.btnPrimary.style.width = st.pw + "px";
     els.btnSecondary.style.width = st.sw + "px";
     els.btnPrimaryOld.style.opacity = st.oO;
@@ -1709,9 +1723,11 @@
     var tMs = performance.now() - clickTime;
     renderReviewState(tMs, reduced);
     if (tMs < 600) {
-      requestAnimationFrame(function () {
+      reviewState.rafId = requestAnimationFrame(function () {
         reviewTick(clickTime, reduced);
       });
+    } else {
+      reviewState.rafId = null;
     }
   }
 
@@ -1724,10 +1740,155 @@
     // only paint), so this needs no scale-factor division.
     reviewState.P0 = parseFloat(getComputedStyle(els.btnPrimary).width);
     reviewState.S0 = parseFloat(getComputedStyle(els.btnSecondary).width);
+    // Round 2 spec §1 — measured here, same moment as P0/S0, before the
+    // morph starts. The new-label span is opacity:0 but still laid out, so
+    // its text can be measured now even though it won't render until later.
+    reviewState.P1 = measurePrimaryEndWidth();
     var clickTime = performance.now();
+    reviewState.clickTime = clickTime;
     requestAnimationFrame(function () {
       reviewTick(clickTime, reduced);
     });
+  }
+
+  // ---- Scheduling loader and reset ----
+
+  /* Approved reference "bp_scheduling_loader_transition" (16 Sep, spec §4),
+     ported verbatim per the port instructions there. `out`/`ov`/`seg` are
+     not re-defined — they're the file's existing easeOutStrong/reviewPop/
+     reviewSeg (identical curves, see spec §4 change 7). `io` (easeInOutCubic)
+     doesn't already exist in this file, so it's defined new here. */
+  function easeInOutCubic(x) {
+    x = Math.max(0, Math.min(1, x));
+    return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+  }
+
+  var LOADER_POP = 350;
+  var LOADER_FILL_START = 890;
+  var LOADER_FILL_DURATION = 2000; // 890 + 2000 = 2890ms to 100% (spec §0/§4)
+  var LOADER_DONE_AT = LOADER_FILL_START + LOADER_FILL_DURATION;
+  /* [elsKey, start, period, travel] — cS/cB/cC from the reference, renamed
+     to the actual element keys per the port's element-mapping table. */
+  var LOADER_CIRCLES = [
+    ["loaderSCircle", 400, 3200, -8],
+    ["loaderBCircle", 470, 3300, -10],
+    ["loaderClock", 540, 2900, -6]
+  ];
+
+  var loaderState = { active: false, clickTime: 0, reduced: false, rafId: null };
+
+  /* Pure function of tMs alone (spec §4 change 4) — every value below is
+     derived from tMs (and the reduced-motion flag) with no other state. */
+  function renderLoaderState(tMs, reduced) {
+    els.whiteout.style.opacity = easeOutStrong(reviewSeg(tMs, 0, 300));
+
+    var textPop = reviewPop(reviewSeg(tMs, 250, 750));
+    var textOp = easeOutStrong(reviewSeg(tMs, 250, 550));
+    els.loaderText.style.opacity = textOp;
+    els.loaderText.style.transform = reduced ? "none" : "translateY(" + (1 - textPop) * 40 + "px)";
+    els.loaderText.style.visibility = textOp > 0 ? "visible" : "hidden";
+
+    var progPop = reviewPop(reviewSeg(tMs, 310, 810));
+    var progOp = easeOutStrong(reviewSeg(tMs, 310, 610));
+    els.loaderProgress.style.opacity = progOp;
+    els.loaderProgress.style.transform = reduced ? "none" : "translateY(" + (1 - progPop) * 40 + "px)";
+    els.loaderProgress.style.visibility = progOp > 0 ? "visible" : "hidden";
+
+    var womanOp = easeOutStrong(reviewSeg(tMs, 250, 450));
+    els.loaderWoman.style.opacity = womanOp;
+    els.loaderWoman.style.visibility = womanOp > 0 ? "visible" : "hidden";
+
+    LOADER_CIRCLES.forEach(function (c) {
+      var el = els[c[0]];
+      var start = c[1], period = c[2], travel = c[3];
+      var sc = 0.9 + 0.1 * reviewPop(reviewSeg(tMs, start, start + LOADER_POP));
+      var fy = 0;
+      if (tMs > start + LOADER_POP) {
+        var phase = (tMs - start - LOADER_POP) / period;
+        fy = (travel * (1 - Math.cos(2 * Math.PI * phase))) / 2;
+      }
+      var op = easeOutStrong(reviewSeg(tMs, start, start + 200));
+      el.style.opacity = op;
+      el.style.transform = reduced ? "none" : "translateY(" + fy + "px) scale(" + sc + ")";
+      el.style.visibility = op > 0 ? "visible" : "hidden";
+    });
+
+    var f = easeInOutCubic(reviewSeg(tMs, LOADER_FILL_START, LOADER_FILL_START + LOADER_FILL_DURATION));
+    els.loaderProgressFill.style.width = f * 100 + "%";
+    // Hadar, 16 Sep (spec §4 change 9): floored, never rounds up to "(100%)"
+    // before the label switches to "Done" at 2890ms.
+    els.loaderProgressLabel.textContent = tMs >= LOADER_DONE_AT ? "Done" : "In progress (" + Math.floor(f * 100) + "%)";
+  }
+
+  function loaderTick() {
+    if (!loaderState.active) return;
+    var tMs = performance.now() - loaderState.clickTime;
+    renderLoaderState(tMs, loaderState.reduced);
+    // Never stops on its own — the floats loop forever (spec §4 change 5).
+    loaderState.rafId = requestAnimationFrame(loaderTick);
+  }
+
+  function startLoader() {
+    if (loaderState.active) return;
+    loaderState.active = true;
+    loaderState.reduced = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    loaderState.clickTime = performance.now();
+    els.whiteout.style.visibility = "visible";
+    els.loader.style.visibility = "visible";
+    loaderTick();
+  }
+
+  /* §5 routing — extends round 1's single handler on #bp-btn-primary rather
+     than adding a second listener. First click: round 1's review transition
+     (unchanged). Later clicks: start the loader, but only once the review
+     transition has actually finished and the loader isn't already running;
+     otherwise ignored. */
+  function onPrimaryButtonClick() {
+    if (!reviewState.started) {
+      startReviewTransition();
+      return;
+    }
+    var reviewElapsed = performance.now() - reviewState.clickTime;
+    if (reviewElapsed >= 600 && !loaderState.active) {
+      startLoader();
+    }
+  }
+
+  /* §5 reset — instant, no animation. Cancels both animation loops, strips
+     every inline style/custom property either renderer wrote (letting CSS
+     defaults restore the main-table state), restores the progress label,
+     and clears both once-guards so Continue works again. None of these
+     elements carry inline style attributes outside what the two renderers
+     write, so a full style-attribute wipe is equivalent to (and simpler
+     than) removing each property by name. */
+  function resetToMainTable() {
+    if (reviewState.rafId) {
+      cancelAnimationFrame(reviewState.rafId);
+      reviewState.rafId = null;
+    }
+    if (loaderState.rafId) {
+      cancelAnimationFrame(loaderState.rafId);
+      loaderState.rafId = null;
+    }
+
+    [
+      els.tableWrap, els.header, els.headerRowFields, els.footerStats,
+      els.btnPrimary, els.btnSecondary, els.btnPrimaryOld, els.btnPrimaryNew,
+      els.btnSecondaryOld, els.btnSecondaryNew, els.btnTertiary,
+      els.headerSubtitle, els.reviewImage,
+      els.whiteout, els.loader, els.loaderText, els.loaderProgress,
+      els.loaderWoman, els.loaderSCircle, els.loaderBCircle, els.loaderClock,
+      els.loaderProgressFill
+    ].forEach(function (el) {
+      el.removeAttribute("style");
+    });
+    els.loaderProgressLabel.textContent = "In progress (0%)";
+
+    reviewState.started = false;
+    reviewState.P0 = 0;
+    reviewState.S0 = 0;
+    reviewState.P1 = 0;
+    loaderState.active = false;
   }
 
   function init() {
@@ -1771,6 +1932,18 @@
     els.btnSecondaryNew = els.btnSecondary.querySelector(".bp-btn__label--new");
     els.btnPrimaryOld = els.btnPrimary.querySelector(".bp-btn__label--old");
     els.btnPrimaryNew = els.btnPrimary.querySelector(".bp-btn__label--new");
+    els.headerClose = q(".bp-header__close");
+
+    els.whiteout = q("#bp-whiteout");
+    els.loader = q("#bp-loader");
+    els.loaderText = q("#bp-loader-text");
+    els.loaderProgress = q("#bp-loader-progress");
+    els.loaderWoman = q("#bp-loader-woman");
+    els.loaderSCircle = q("#bp-loader-s-circle");
+    els.loaderBCircle = q("#bp-loader-b-circle");
+    els.loaderClock = q("#bp-loader-clock");
+    els.loaderProgressLabel = q("#bp-loader-progress-label");
+    els.loaderProgressFill = q("#bp-loader-progress-fill");
 
     els.toggle.addEventListener("click", function () {
       setMode(state.mode === "batch" ? "bulk" : "batch");
@@ -1791,10 +1964,22 @@
     });
     q("#bp-activity-close").addEventListener("click", closeActivityDrawer);
 
-    /* §6 trigger — a single click, handled once (startReviewTransition()'s
-       own reviewState.started guard makes every click after the first,
-       during or after the transition, a no-op). */
-    q(".bp-footer__buttons .bp-btn--continue").addEventListener("click", startReviewTransition);
+    /* §6 trigger, round 1 — first click starts the review transition.
+       Round 2 (§5) extends this SAME handler (onPrimaryButtonClick) to also
+       route later clicks to the loader, rather than adding a second
+       listener. */
+    q(".bp-footer__buttons .bp-btn--continue").addEventListener("click", onPrimaryButtonClick);
+
+    /* §5 — X and Back both reset, but only once something is actually
+       showing to reset from (review state or loader active); on the main
+       table this is a no-op, per spec's "keep any existing behaviour"
+       (there was none). */
+    els.headerClose.addEventListener("click", function () {
+      if (reviewState.started) resetToMainTable();
+    });
+    els.btnTertiary.addEventListener("click", function () {
+      if (reviewState.started) resetToMainTable();
+    });
 
     /* ---- top-of-scroll fade gradient: only shown once there's content
        scrolled away above the visible area ---- */
