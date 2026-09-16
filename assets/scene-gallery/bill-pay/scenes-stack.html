@@ -3010,7 +3010,7 @@
                     <div class="bp-drawer__divider"></div>
                     <div class="bp-activity__totals">
                       <div class="bp-field">
-                        <p class="bp-drawer__section-title bp-activity__label">Open balance:</p>
+                        <p class="bp-drawer__section-title bp-activity__label" id="p0s1-activity-label-balance">Open balance:</p>
                         <p class="bp-drawer__total-amount bp-activity__value" id="p0s1-activity-balance"></p>
                       </div>
                       <div class="bp-field">
@@ -3028,7 +3028,7 @@
                     <div class="bp-activity__rail" id="p0s1-activity-rail"></div>
                     <div class="bp-activity__timeline-content" id="p0s1-activity-timeline-content"></div>
                   </div>
-                  <div style="height: 32px"></div>
+                  <div style="height: 32px" id="p0s1-activity-trailing-pad"></div>
                 </div>
                 </div>
               </aside>
@@ -3722,9 +3722,85 @@
     var allRowEls = rowsScrollEl.querySelectorAll(".bp-row");
     var ROW_PITCH_NATIVE = (allRowEls[allRowEls.length - 1].offsetTop - allRowEls[0].offsetTop) / (allRowEls.length - 1);
 
-    var SCROLL_SPEED_STAGE = 51; // px/s, stage space (build spec §5)
+    // ---- Review-scroll cadence (fix round, Hadar's own browser QA:
+    // "reads as film credits, not reading"). Speed is modulated by row
+    // pitch — slowest when an amount is centred under the cursor,
+    // fastest between rows — per the fix's own locked formula:
+    //   phase  = (y / rowPitch) mod 1
+    //   factor = 1 - cadence*0.5*(1+cos(2*pi*phase))
+    //   factor = max(floor, factor)
+    //   dy     = avgSpeed * factor * dt
+    // `y` in that formula is self-referential (the phase depends on the
+    // scroll's own current position), so there is no clean closed form
+    // — Seekability's own escape hatch is used instead: a fixed-step
+    // (1ms) deterministic integration, run ONCE at parse time into a
+    // lookup table (not re-run per frame, not accumulated across real
+    // frames). Render-time queries (scrollYAtTime/scrollTimeAtY below)
+    // interpolate that fixed table, so identical t always yields
+    // identical output — pure function of t, exact on a backward seek.
+    var SCROLL_AVG_SPEED_STAGE = 64; // px/s, stage space (was 51)
+    var SCROLL_CADENCE = 0.25;
+    var SCROLL_CADENCE_FLOOR = 0.12;
+    // rowPitch as rendered on stage, measured (not hardcoded 27.15) —
+    // native pitch already measured above (ROW_PITCH_NATIVE) times the
+    // same 0.305 stage scale everything else in this file uses. Using
+    // the native 89px directly here would pulse the cadence at roughly
+    // a third of the correct frequency (build prompt's own warning).
+    var ROW_PITCH_STAGE = ROW_PITCH_NATIVE * MOCK_SCALE;
     var SCROLL_DISTANCE_STAGE = SCROLL_DISTANCE_NATIVE * MOCK_SCALE;
-    var SCROLL_DURATION = (SCROLL_DISTANCE_STAGE / SCROLL_SPEED_STAGE) * 1000; // derived, not hardcoded
+    function scrollCadenceFactor(yStage) {
+      var phase = (yStage / ROW_PITCH_STAGE) % 1;
+      if (phase < 0) phase += 1;
+      var factor = 1 - SCROLL_CADENCE * 0.5 * (1 + Math.cos(2 * Math.PI * phase));
+      return Math.max(SCROLL_CADENCE_FLOOR, factor);
+    }
+    var SCROLL_SIM_DT_MS = 1;
+    // Total distance/arrival point must not change (fix 1a's own
+    // absolute requirement) — the simulation runs until it reaches
+    // SCROLL_DISTANCE_STAGE exactly, and whatever real time that took
+    // becomes SCROLL_DURATION, rather than assuming distance/avgSpeed
+    // (which would under-shoot, since the cadence factor's own mean is
+    // below 1 — see the build report for the arithmetic).
+    var SCROLL_SIM_SAMPLES = (function () {
+      var samples = [{ t: 0, y: 0 }];
+      var y = 0, tms = 0;
+      var dtSec = SCROLL_SIM_DT_MS / 1000;
+      while (y < SCROLL_DISTANCE_STAGE) {
+        y += SCROLL_AVG_SPEED_STAGE * scrollCadenceFactor(y) * dtSec;
+        tms += SCROLL_SIM_DT_MS;
+        samples.push({ t: tms, y: Math.min(y, SCROLL_DISTANCE_STAGE) });
+      }
+      return samples;
+    })();
+    var SCROLL_DURATION = SCROLL_SIM_SAMPLES[SCROLL_SIM_SAMPLES.length - 1].t;
+    // y(t): fixed-table lookup, linear-interpolated between the 1ms
+    // samples above — no per-frame simulation, no accumulation.
+    function scrollYAtTime(tLocal) {
+      if (tLocal <= 0) return 0;
+      if (tLocal >= SCROLL_DURATION) return SCROLL_DISTANCE_STAGE;
+      var idx = Math.floor(tLocal / SCROLL_SIM_DT_MS);
+      if (idx >= SCROLL_SIM_SAMPLES.length - 1) return SCROLL_DISTANCE_STAGE;
+      var a = SCROLL_SIM_SAMPLES[idx], b = SCROLL_SIM_SAMPLES[idx + 1];
+      var frac = (tLocal - a.t) / (b.t - a.t || 1);
+      return a.y + (b.y - a.y) * frac;
+    }
+    // Inverse of the above — the local time at which the scroll first
+    // reaches targetYStage. Used to convert each row's own trigger
+    // position into a trigger TIME now that speed isn't constant (fix
+    // 1c: "computed from its own trigger time"). Binary search over the
+    // same monotonic samples.
+    function scrollTimeAtY(targetYStage) {
+      if (targetYStage <= 0) return 0;
+      if (targetYStage >= SCROLL_DISTANCE_STAGE) return SCROLL_DURATION;
+      var lo = 0, hi = SCROLL_SIM_SAMPLES.length - 1;
+      while (lo < hi - 1) {
+        var mid = (lo + hi) >> 1;
+        if (SCROLL_SIM_SAMPLES[mid].y < targetYStage) lo = mid; else hi = mid;
+      }
+      var a = SCROLL_SIM_SAMPLES[lo], b = SCROLL_SIM_SAMPLES[hi];
+      var frac = (targetYStage - a.y) / (b.y - a.y || 1);
+      return a.t + (b.t - a.t) * frac;
+    }
 
     // Entrance start offset (translateY the mock rises from) — NOT
     // given by the build spec (only "from below the stage" is
@@ -3742,18 +3818,35 @@
     // stale/wrong value.
     var LIFT_PEAK_SCALE = 1;
 
+    // Fix 2 — hold before the circle gesture, and two passes instead of
+    // one (Hadar's own browser QA). Each pass is the existing 380ms
+    // circle duration, run back to back with no pause, so the beat's
+    // own total becomes 760ms. The hold itself (2a) replaces heroHold's
+    // own duration directly, rather than adding a second beat next to
+    // it — heroHold already occupies exactly the "scroll has stopped,
+    // circle hasn't started yet" slot the fix describes, and check
+    // item 6 wants the TOTAL gap between scroll-stop and circle-start
+    // to measure 1000ms, not 1000ms on top of the pre-existing 300ms.
+    var CIRCLE_PASS_DURATION = 380;
+    var CIRCLE_PASSES = 2;
+    var HERO_HOLD_DURATION = 1000; // was 300
+    // Fix 3 — the status cell now bumps instead of just holding.
+    // Replaces the old 300ms hoverHold entirely ("not added to it").
+    var STATUS_BUMP_DURATION = 320;
+    var STATUS_BUMP_SCALE = 1.21; // do not reuse ROW_BUMP_SCALE (1.12) — a different element, different size
+
     var BEATS = [
       ["rest", 500],
       ["entrance", 420],
       ["settle", 400],
       ["cursorEnter", 280],
       ["scroll", SCROLL_DURATION],
-      ["heroHold", 300],
-      ["circle", 380],
+      ["heroHold", HERO_HOLD_DURATION],
+      ["circle", CIRCLE_PASS_DURATION * CIRCLE_PASSES],
       ["lift", LIFT_RISE],
       ["peakHold", 500],
       ["moveToStatus", 260],
-      ["hoverHold", 300],
+      ["statusBump", STATUS_BUMP_DURATION],
       ["click", 200],
       ["fall", LIFT_FALL],
       ["drawerOpen", 225],
@@ -3994,6 +4087,21 @@
     });
     var step1Start = lastEntrancePopEnd + HOLD_BEFORE_STEP1;
 
+    // ---- Fix C — the repetitive middle (steps 6-8) moves faster, step
+    // 9 decelerates back, step 10 (the payoff) lands at normal pace.
+    // One factor multiplies BOTH the travel duration and the pause
+    // duration for a step — nothing else (not the curve, not the
+    // distance scaling, not ring/burst/row-bump, all of which stay
+    // fixed constants layered on top of wherever arriveAt now falls).
+    // A travel uses the factor of the step it travels INTO, not the
+    // one it leaves — stepMarks[k]'s own travel+pause both use
+    // STEP_SPEED_FACTOR[k]. Computed from the exact fraction (1/1.3),
+    // not the rounded 0.769 shown in prose, so 795ms/338ms land exactly
+    // as the worked example states rather than a few hundredths off.
+    var STEP_SPEED_FAST = 1 / 1.3; // "0.769" — a 30% speed increase
+    var STEP_SPEED_MID = (STEP_SPEED_FAST + 1) / 2; // "0.885" — midpoint, reads as decelerating
+    var STEP_SPEED_FACTOR = [1, 1, 1, 1, 1, STEP_SPEED_FAST, STEP_SPEED_FAST, STEP_SPEED_FAST, STEP_SPEED_MID, 1];
+
     // ---- Step marks — strictly sequential from step1Start onward
     // (build prompt §6: "the pause begins when the travel completes and
     // ends when the next travel begins"). stepMarks[0] is step 1 itself
@@ -4003,8 +4111,9 @@
     (function () {
       var t = step1Start;
       for (var k = 1; k < STEPS.length; k++) {
-        var travelStart = t + STEP_PAUSE;
-        var dur = travelDuration(STEPS[k].delta);
+        var factor = STEP_SPEED_FACTOR[k];
+        var travelStart = t + STEP_PAUSE * factor;
+        var dur = travelDuration(STEPS[k].delta) * factor;
         var travelEnd = travelStart + dur;
         stepMarks[k] = { slot: STEPS[k].slot, fromSlot: STEPS[k - 1].slot, toSlot: STEPS[k].slot, travelStart: travelStart, travelEnd: travelEnd, travelDur: dur, arriveAt: travelEnd };
         t = travelEnd;
@@ -4123,19 +4232,39 @@
       }
     })();
 
-    // ---- Row translate (build prompt §6: "the drawer scrolls as
-    // one") — measured, never assumed (this file's own established
-    // convention, see SCROLL_DISTANCE_NATIVE/ROW_PITCH_NATIVE above).
-    // Populated once, the first frame the activity drawer is actually
-    // laid out (same gate as positionActivityRail/railPositioned).
-    // rowOffsetNative[r] is row r's own top edge, native px, relative
-    // to .p0s1-activity-track at rest; the fixed landing y is row 0's
-    // own natural position, so step 1 needs zero translate. Measured
-    // real offsets (not the build prompt's own illustrative
-    // "-(rowIndex x rowHeight)" formula) because row 10 carries an
-    // extra 42px gap (.bp-activity-item--wide-gap above) that a
-    // uniform rowHeight multiply would get wrong — this satisfies the
-    // "identical y for every step" check exactly, not approximately. ----
+    // ---- Row translate (fix 4, target definition; fix A, this round,
+    // replacing fix 4b's shortfall-spreading entirely) — measured,
+    // never assumed. Populated once, the first frame the activity
+    // drawer is actually laid out (same gate as
+    // positionActivityRail/railPositioned).
+    //
+    // Fix 4a (unchanged): during the 1000ms hold that precedes step 1,
+    // the drawer scrolls up so the "Open balance" label is cut roughly
+    // in half by the drawer's own top edge — that scrolled position is
+    // measured (via p0s1-activity-label-balance) and becomes
+    // activityHoldTarget. Row 1's own landing position once that scroll
+    // completes (offsets[0] + activityHoldTarget) is THE target y for
+    // every subsequent active row.
+    //
+    // Fix A (this round, replacing fix 4b): distributing the shortfall
+    // across all ten steps meant every step landed a little lower than
+    // the last — a steady drift, not a fix. There is no shortfall to
+    // distribute if there's enough content to scroll through: add
+    // blank trailing space after row 11 ("Paid" — never active, stays
+    // in place) so even step 10 can reach the exact same target y as
+    // every other step. No clamp, no distribution — scrollFor(i) =
+    // rowTop(i) - targetY for every step, full stop.
+    //
+    // visibleHeight is the PANEL's own 461px — the drawer element
+    // itself is 738px natively, but the panel clips it, so only 461px
+    // is ever actually visible. Using 738 here would under-count the
+    // real shortfall and leave the pad short.
+    //
+    // Offsets themselves are measured per-row (not rowIndex×rowHeight)
+    // because row 10 carries an extra ~42px gap
+    // (.bp-activity-item--wide-gap above) that a uniform multiply would
+    // get wrong. ----
+    var PANEL_VISIBLE_HEIGHT_NATIVE = 461;
     function measureActivityRows(ins) {
       var trackRect = ins.activityTrackEl.getBoundingClientRect();
       var offsets = [];
@@ -4143,20 +4272,91 @@
         offsets.push((ins.activityItemEls[i].getBoundingClientRect().top - trackRect.top) / MOCK_SCALE);
       }
       ins.activityRowOffsetNative = offsets;
+
+      var labelEl = document.getElementById("p0s1-activity-label-balance");
+      var labelRect = labelEl.getBoundingClientRect();
+      var labelMidNative = (labelRect.top - trackRect.top + labelRect.height / 2) / MOCK_SCALE;
+      // Translating the track by -labelMidNative puts that midpoint at
+      // y=0 — the drawer's own top edge, since the track is the
+      // drawer's sole child and shares its top edge at rest (transform
+      // still empty/none at measurement time).
+      var holdTarget = -labelMidNative;
+      ins.activityHoldTarget = holdTarget;
+
+      var targetY = offsets[0] + holdTarget; // row 1's own landing position
+      var lastIdx = STEPS.length - 1; // 9 — step 10, "Scheduled for payment"; row 11 ("Paid") is never used here
+
+      // contentHeight measured BEFORE the trailing pad below is added —
+      // it is the thing the pad is computed FROM, not a moving target.
+      var contentHeightNative = trackRect.height / MOCK_SCALE;
+      var requiredScroll = offsets[lastIdx] - targetY;
+      var maxScroll = contentHeightNative - PANEL_VISIBLE_HEIGHT_NATIVE;
+      var trailingPad = Math.max(0, requiredScroll - maxScroll);
+      var padEl = document.getElementById("p0s1-activity-trailing-pad");
+      padEl.style.height = (32 + trailingPad) + "px"; // native px, same coordinate space as every row
+
+      ins.activityDebug = {
+        targetY: targetY, contentHeightNative: contentHeightNative,
+        visibleHeightNative: PANEL_VISIBLE_HEIGHT_NATIVE, maxScroll: maxScroll,
+        requiredScroll: requiredScroll, trailingPad: trailingPad
+      };
+
+      // Every step reaches the SAME target y now — no clamp, no shortfall.
+      var stepTranslate = [];
+      for (var k = 0; k <= lastIdx; k++) {
+        stepTranslate[k] = targetY - offsets[k];
+      }
+      ins.activityStepTranslate = stepTranslate;
     }
-    function rowTranslateNative(ins, t) {
+    // Fix 4 render — the entrance hold's own eased scroll-in, then the
+    // step-to-step travel, sharing the SAME eased progress (stepTransition)
+    // the wave's own node travel and fix 5's row-opacity crossfade use.
+    // Reduced motion: "instant, no eased move" — snaps straight to the
+    // hold's own target, then to whichever step has actually been
+    // reached (reachedIndex), never interpolating mid-travel.
+    function activityTrackTranslate(ins, t) {
       var offsets = ins.activityRowOffsetNative;
-      if (!offsets || t < step1Start) return 0;
+      if (!offsets) return 0;
+      if (t < lastEntrancePopEnd) return 0;
+      if (reduceMotion) {
+        if (t < step1Start) return ins.activityHoldTarget;
+        return ins.activityStepTranslate[Math.max(0, reachedIndex(t))];
+      }
+      if (t < step1Start) {
+        var hp = easeInOutCubic(clamp01((t - lastEntrancePopEnd) / (step1Start - lastEntrancePopEnd)));
+        return lerp(0, ins.activityHoldTarget, hp);
+      }
       var tr = stepTransition(t);
-      return offsets[0] - lerp(offsets[tr.fromIdx], offsets[tr.toIdx], tr.eased);
+      return lerp(ins.activityStepTranslate[tr.fromIdx], ins.activityStepTranslate[tr.toIdx], tr.eased);
     }
 
-    // ---- Row opacity + bump (build prompt §7) ----
+    // ---- Row opacity + bump (fix 5, replacing the "trail fills in and
+    // stays lit" behaviour entirely — no flag, no branch left behind).
+    // Only the active row is 1.0; every other row, including ones
+    // already stepped through, is 0.38. The hand-off between rows
+    // shares the SAME eased progress as the drawer's own scroll
+    // (stepTransition), so they cross-fade rather than switch abruptly
+    // — extended here to row 1's own initial activation too, since the
+    // entrance hold (fix 4a) gives it a real scroll to cross-fade
+    // against, the same way every later step does. ----
     function rowReachedAt(r) { return r === 0 ? step1Start : stepMarks[r].arriveAt; }
     function rowOpacity(t, r) {
       if (t < MARKS.takeoverGrowEnd) return 1; // still at mock scale / mid-takeover
-      if (r >= STEPS.length) return 0.38;      // row 10, "Paid" — never stepped through
-      return t >= rowReachedAt(r) ? 1 : 0.38;
+      if (r >= STEPS.length) return 0.38;      // row 10, "Paid" — never active
+      if (reduceMotion) {
+        if (t < step1Start) return 0.38;
+        return r === reachedIndex(t) ? 1 : 0.38;
+      }
+      if (t < step1Start) {
+        if (r !== 0) return 0.38;
+        var hp = easeInOutCubic(clamp01((t - lastEntrancePopEnd) / (step1Start - lastEntrancePopEnd)));
+        return lerp(0.38, 1, hp);
+      }
+      var tr = stepTransition(t);
+      if (r === tr.fromIdx && r === tr.toIdx) return 1;
+      if (r === tr.fromIdx) return lerp(1, 0.38, tr.eased);
+      if (r === tr.toIdx) return lerp(0.38, 1, tr.eased);
+      return 0.38;
     }
     function rowBumpScale(t, r) {
       if (r >= STEPS.length) return 1;
@@ -4441,24 +4641,33 @@
       var parkPos = { x: circle.cx + circle.rx, y: circle.cy };
       var offStage = { x: -90, y: parkPos.y };
 
-      // Per-row amount-bump trigger times (build spec §5) — each row's
-      // OWN balance figure measured at rest (scrollTop 0); its current
-      // position at scroll progress s is (restY − s), so the scrollTop
-      // at which it crosses cursorY is restY − cursorY. Converted to a
-      // scene-local time via the scroll's own linear progress. Purely
+      // Per-row amount-bump trigger times (build spec §5, retimed by fix
+      // 1c) — each row's OWN balance figure measured at rest (scrollTop
+      // 0); its current position at scroll distance s is (restY − s),
+      // so the scrollTop at which it crosses cursorY is restY − cursorY.
+      // Converted to a scene-local time via scrollTimeAtY's own cadence-
+      // aware inverse lookup (fix 1a made the scroll non-linear, so the
+      // old progress*SCROLL_DURATION multiply no longer holds). Purely
       // derived from live measurement + cursorY above — no per-row
-      // guessing, and naturally yields "no trigger" (outside the
-      // scroll's own window) for rows that never reach the cursor.
+      // guessing. Targets outside the scroll's own travelled range
+      // (rows that never actually reach the cursor) get an explicit
+      // unreachable time rather than a clamped one, so they don't pick
+      // up a spurious bump at the scroll's start/end — "a figure never
+      // bumps twice" (fix 1c) also means a figure that never crosses
+      // must never bump at all.
       var rowEls = rowsScrollEl.querySelectorAll(".bp-row");
       var bumpTriggers = [];
       for (var i = 0; i < rowEls.length; i++) {
         var balEl = rowEls[i].querySelector(".bp-cell--balance span");
         var restY = nativeRect(balEl, screenRect).centerY;
-        var triggerScrollTop = restY - cursorY;
-        var progress = triggerScrollTop / SCROLL_DISTANCE_NATIVE;
+        var triggerScrollTop = restY - cursorY; // native
+        var triggerYStage = triggerScrollTop * MOCK_SCALE;
+        var timeLocal = (triggerYStage < 0 || triggerYStage > SCROLL_DISTANCE_STAGE)
+          ? -1e9 // never reached — outside the scroll's own [0, distance] range
+          : scrollTimeAtY(triggerYStage);
         bumpTriggers.push({
           el: rowEls[i].querySelector(".bp-cell--balance"),
-          time: MARKS.scrollStart + progress * SCROLL_DURATION
+          time: MARKS.scrollStart + timeLocal
         });
       }
 
@@ -4601,6 +4810,7 @@
         dimOverlayEl: document.getElementById("p0s1-dim-overlay"),
         cloneEl: clone,
         statusHoverEl: clone.querySelector(".bp-cell--status--clickable .bp-hover-underline"),
+        statusCellEl: clone.querySelector(".bp-cell--status--clickable"), // fix 3 — the bump target
         activityDrawerEl: document.getElementById("p0s1-activity-drawer"),
         rowCardEl: document.getElementById("p0s1-row-selected-card"),
         rowCardLayerEl: document.getElementById("p0s1-row-card-layer"),
@@ -4617,7 +4827,9 @@
         activityTrackEl: activityTrackEl,
         activityItemEls: activityItemEls,
         rowOffsetsComputed: false,
-        activityRowOffsetNative: null
+        activityRowOffsetNative: null,
+        activityHoldTarget: null,
+        activityStepTranslate: null
       };
     }
 
@@ -4641,6 +4853,7 @@
       instance.screenEl.removeAttribute("data-narrow-mode");
       instance.rowsScrollEl.scrollTop = 0;
       if (instance.statusHoverEl) instance.statusHoverEl.classList.remove("is-hover");
+      if (instance.statusCellEl) { instance.statusCellEl.style.transform = ""; instance.statusCellEl.style.transformOrigin = ""; }
       drawSparkBurst(-1, 0, 0);
       instance.headerEl.style.opacity = "";
       instance.tableWrapEl.style.opacity = "";
@@ -4708,6 +4921,7 @@
         ins.heroRowEl.removeAttribute("data-selected");
         ins.rowCardEl.removeAttribute("data-visible");
         if (ins.statusHoverEl) ins.statusHoverEl.classList.remove("is-hover");
+        if (ins.statusCellEl) { ins.statusCellEl.style.transform = ""; ins.statusCellEl.style.transformOrigin = ""; }
         drawSparkBurst(-1, 0, 0); // clears the canvas; kt < 0 is always out of range
         ins.headerEl.style.opacity = "";
         ins.tableWrapEl.style.opacity = "";
@@ -4824,28 +5038,39 @@
       ins.mockWrapEl.style.transform =
         "translate(" + takeoverOffsetX + "px, " + (mockTranslateY + takeoverOffsetY) + "px) scale(" + (mockScale * takeoverScaleMul) + ")";
 
-      // ---- Review scroll (beat 5) ----
-      var scrollTopNative;
+      // ---- Review scroll (beat 5) — fix 1a: cadence-modulated, stage
+      // space. Reduced motion: "the scroll jumps to its final offset"
+      // (unchanged from before this fix — already an instant jump). ----
+      var scrollTopStage;
       if (t < M.scrollStart) {
-        scrollTopNative = 0;
-      } else if (t < M.scrollEnd || reduceMotion) {
-        scrollTopNative = reduceMotion && t >= M.scrollStart ? SCROLL_DISTANCE_NATIVE : SCROLL_DISTANCE_NATIVE * clamp01((t - M.scrollStart) / SCROLL_DURATION);
+        scrollTopStage = 0;
+      } else if (reduceMotion) {
+        scrollTopStage = SCROLL_DISTANCE_STAGE;
+      } else if (t < M.scrollEnd) {
+        scrollTopStage = scrollYAtTime(t - M.scrollStart);
       } else {
-        scrollTopNative = SCROLL_DISTANCE_NATIVE;
+        scrollTopStage = SCROLL_DISTANCE_STAGE;
       }
       // scrollTop is the element's own native (unscaled) pixel space —
-      // ancestor transform:scale() never affects it, so no MOCK_SCALE
-      // factor here.
-      ins.rowsScrollEl.scrollTop = scrollTopNative;
+      // ancestor transform:scale() never affects it — so the stage-space
+      // value above converts back to native here, once, at the only
+      // point that needs it.
+      ins.rowsScrollEl.scrollTop = scrollTopStage / MOCK_SCALE;
 
-      // Amount bumps — build spec §5. Dropped entirely under reduced
-      // motion (texture, no state).
+      // Amount bumps — fix 1c: scale 1.16 -> 1.21, everything else
+      // (320ms, 40/60 rise-settle, opacity dip to 0.78, right-center
+      // origin) unchanged. Dropped entirely under reduced motion
+      // (texture, no state). Each trigger already fires exactly once
+      // (one entry per row, built at buildScene0Instance()) — "suppress
+      // compounding" holds by construction; trig.time itself now comes
+      // from scrollTimeAtY's cadence-aware inverse lookup instead of a
+      // linear progress*duration multiply (see buildScene0Instance()).
       for (var b = 0; b < ins.bumpTriggers.length; b++) {
         var trig = ins.bumpTriggers[b];
         var bLocal = t - trig.time;
         if (!reduceMotion && bLocal >= 0 && bLocal < 320) {
           var bp = bLocal < 128 ? clamp01(bLocal / 128) : 1 - clamp01((bLocal - 128) / 192); // 40% rise / 60% settle
-          var bumpScale = 1 + 0.16 * (bLocal < 128 ? bp : bp);
+          var bumpScale = 1 + 0.21 * (bLocal < 128 ? bp : bp);
           trig.el.style.transform = "scale(" + bumpScale + ")";
           trig.el.style.transformOrigin = "right center";
           trig.el.style.opacity = String(1 - 0.22 * (bLocal < 128 ? bp : bp));
@@ -4856,6 +5081,15 @@
       }
 
       // ---- Cursor + ripple ----
+      // Fix 1b: a slow wander while the cursor is genuinely PARKED
+      // (stationary) — not while it's travelling (moveTo2) and not
+      // while it's tracing the circle gesture, which is itself an
+      // active movement, not a park. Pure function of the scene's raw
+      // t, per the fix's own formula — no randomness, no accumulation.
+      function cursorDrift(t) {
+        if (reduceMotion) return { dx: 0, dy: 0 };
+        return { dx: Math.sin(t / 1400 + 1.2) * 0.6, dy: Math.sin(t / 900) * 1.0 };
+      }
       var cursorPos = ins.parkPos, cursorOpacity = 0, rippleOpacity = 0, rippleScale = 1;
       if (t < M.cursorEnterStart) {
         cursorOpacity = 0;
@@ -4864,14 +5098,20 @@
         cursorPos = moveTo2(celt, M.cursorEnterEnd - M.cursorEnterStart, ins.offStage, ins.parkPos);
         cursorOpacity = clamp01(celt / (M.cursorEnterEnd - M.cursorEnterStart));
       } else if (t < M.circleStart) {
-        cursorPos = ins.parkPos;
+        var drift1 = cursorDrift(t);
+        cursorPos = { x: ins.parkPos.x + drift1.dx, y: ins.parkPos.y + drift1.dy };
         cursorOpacity = 1;
       } else if (t < M.circleEnd) {
+        // Fix 2b: two identical 380ms passes back to back (no pause),
+        // not one continuous 760ms ease — each pass reuses the exact
+        // same function/duration/radius as before, just run twice.
         var clt = t - M.circleStart;
-        cursorPos = reduceMotion ? ins.parkPos : computeCircleFromRight(clt, M.circleEnd - M.circleStart, ins.circle);
+        var passLocal = clt < CIRCLE_PASS_DURATION ? clt : clt - CIRCLE_PASS_DURATION;
+        cursorPos = reduceMotion ? ins.parkPos : computeCircleFromRight(passLocal, CIRCLE_PASS_DURATION, ins.circle);
         cursorOpacity = 1;
       } else if (t < M.moveToStatusStart) {
-        cursorPos = ins.parkPos;
+        var drift2 = cursorDrift(t);
+        cursorPos = { x: ins.parkPos.x + drift2.dx, y: ins.parkPos.y + drift2.dy };
         cursorOpacity = 1;
       } else if (t < M.moveToStatusEnd) {
         var statusTarget = ins.lastStatusPos;
@@ -4934,6 +5174,28 @@
       // real pointer here for mouseenter/mouseleave to key off).
       if (ins.statusHoverEl) {
         ins.statusHoverEl.classList.toggle("is-hover", t >= M.moveToStatusEnd && t < M.clickStart);
+      }
+      // Fix 3 — the status cell bumps on hover, replacing the old
+      // 300ms hoverHold beat outright (not layered on top of it: the
+      // statusBump BEATS entry occupies exactly the time hoverHold
+      // used to). Same 40/60 rise-settle shape as the amount bumps
+      // (fix 1c), same 1.21 scale — a different constant from the
+      // timeline row's own 1.12 (fix 3's own explicit instruction not
+      // to reuse it) — but transform-origin is "center", not
+      // "right center", since this cell bumps in place. The bump fully
+      // settles (bLocal >= STATUS_BUMP_DURATION) before M.clickStart
+      // is ever reached, since the beat boundary itself guarantees it.
+      if (ins.statusCellEl) {
+        var sbLocal = t - M.statusBumpStart;
+        if (!reduceMotion && sbLocal >= 0 && sbLocal < STATUS_BUMP_DURATION) {
+          var sbHalf = STATUS_BUMP_DURATION * 0.4;
+          var sbp = sbLocal < sbHalf ? clamp01(sbLocal / sbHalf) : 1 - clamp01((sbLocal - sbHalf) / (STATUS_BUMP_DURATION - sbHalf));
+          ins.statusCellEl.style.transform = "scale(" + (1 + (STATUS_BUMP_SCALE - 1) * sbp) + ")";
+          ins.statusCellEl.style.transformOrigin = "center";
+        } else {
+          ins.statusCellEl.style.transform = "";
+          ins.statusCellEl.style.transformOrigin = "";
+        }
       }
       // Click spark burst (fix round, §2a) — see drawSparkBurst's own comment
       // for why this is recomputed from local elapsed time every frame instead
@@ -5010,7 +5272,7 @@
           measureActivityRows(ins);
           ins.rowOffsetsComputed = true;
         }
-        ins.activityTrackEl.style.transform = "translateY(" + rowTranslateNative(ins, t) + "px)";
+        ins.activityTrackEl.style.transform = "translateY(" + activityTrackTranslate(ins, t) + "px)";
         for (var ri = 0; ri < ins.activityItemEls.length; ri++) {
           var itemEl = ins.activityItemEls[ri];
           itemEl.style.opacity = String(rowOpacity(t, ri));
@@ -5030,6 +5292,49 @@
       // separate return path"). ----
       if (t >= takeoverReverseStart) {
         var revProgress = reduceMotion ? 1 : clamp01((t - takeoverReverseStart) / TAKEOVER_REVERSE_DURATION);
+
+        // Fix B — the drawer resets to exactly how it looked the moment
+        // it first opened (scroll 0, every row at opacity 1.0 — the
+        // mock-scale state, before the takeover ever dropped rows to
+        // 0.38), on this SAME revProgress the takeover's own reverse
+        // uses — not a separate animation, not an instant jump once the
+        // reverse finishes. Under reduced motion revProgress is already
+        // forced to 1 above, so this resolves to the reset instantly
+        // with no extra branch needed. drawerRestTranslate/restOpacity
+        // are read from the SAME functions the step phase itself uses
+        // (evaluated at the instant the reverse begins), rather than
+        // hardcoding "step 10's own values" — self-consistent if the
+        // step count or final step ever changes.
+        if (ins.activityRowOffsetNative) {
+          var drawerRestTranslate = activityTrackTranslate(ins, takeoverReverseStart);
+          ins.activityTrackEl.style.transform = "translateY(" + lerp(drawerRestTranslate, 0, revProgress) + "px)";
+          for (var rri = 0; rri < ins.activityItemEls.length; rri++) {
+            var restOpacity = rowOpacity(takeoverReverseStart, rri);
+            ins.activityItemEls[rri].style.opacity = String(lerp(restOpacity, 1, revProgress));
+            ins.activityItemEls[rri].style.transform = "scale(1)";
+          }
+        }
+
+        // This round's own audit ("the last frame must equal the
+        // first") found three more states from the pre-wave review
+        // that were never given a way back, the same class of defect
+        // as Fix B's drawer scroll/opacity: the cursor stayed at
+        // opacity 1 forever (its own render branch is one big
+        // catch-all for "everything past moveToStatusEnd" with no
+        // upper bound), the hero row's own data-selected/row-card
+        // data-visible attributes were set once at M.revealHoldStart
+        // with no matching "off" past the wave, and the outer table's
+        // own review-scroll position stayed pinned at its full
+        // distance. All three are closed here, on the same revProgress
+        // as everything else in this block — not a separate animation,
+        // not an instant jump once the reverse finishes.
+        var restScrollNative = SCROLL_DISTANCE_NATIVE; // where the review scroll rests from M.scrollEnd onward
+        ins.rowsScrollEl.scrollTop = lerp(restScrollNative, 0, revProgress);
+        ins.cursorEl.style.opacity = String(lerp(1, 0, revProgress));
+        ins.rippleDiscEl.style.opacity = "0";
+        ins.heroRowEl.removeAttribute("data-selected");
+        ins.rowCardEl.removeAttribute("data-visible");
+
         var virtualT = TAKEOVER_REVERSE_DURATION * (1 - revProgress);
         var kf;
         if (virtualT < 200) {
@@ -5041,6 +5346,21 @@
         }
         var revOffsetX = kf.x - TAKEOVER_A.x;
         var revOffsetY = kf.y - TAKEOVER_A.y;
+        // Fix 6 investigation (see build report): this was previously
+        // "MOCK_SCALE * revScaleMul" — MOCK_SCALE (0.305, the fixed
+        // global stage-scale constant) was mistaken for `mockScale`
+        // (the ENTRANCE beat's own local variable, which settles to 1
+        // long before the ending ever runs — see the forward takeover
+        // code above, "scale(mockScale * takeoverScaleMul)"). That
+        // extra, unintended 0.305 multiplier compounded with
+        // .p0s1-mock-scaler's own fixed CSS scale(0.305) a SECOND time,
+        // landing the reverse at an effective 0.305 x 0.305 = 0.093
+        // scale instead of 0.305 — the mock coming back roughly a third
+        // its correct size. revScaleMul alone (which resolves to
+        // exactly 1 at keyframe A, mirroring mockScale's own post-
+        // entrance value of 1) is the correct multiplier — no second
+        // transform, no separate stored "original", just the wrong
+        // variable substituted for the right one.
         var revScaleMul = kf.scale / MOCK_SCALE;
         var revContentOpacity = reduceMotion ? (t >= mockExitStart ? 0 : 1) : 1 - clamp01(virtualT / TAKEOVER_FADE_DURATION);
 
@@ -5051,7 +5371,7 @@
         }
 
         ins.mockWrapEl.style.opacity = "1";
-        ins.mockWrapEl.style.transform = "translate(" + revOffsetX + "px, " + (revOffsetY + exitTranslateY) + "px) scale(" + (MOCK_SCALE * revScaleMul) + ")";
+        ins.mockWrapEl.style.transform = "translate(" + revOffsetX + "px, " + (revOffsetY + exitTranslateY) + "px) scale(" + revScaleMul + ")";
         ins.headerEl.style.opacity = String(revContentOpacity);
         ins.tableWrapEl.style.opacity = String(revContentOpacity);
         ins.footerEl.style.opacity = String(revContentOpacity);
