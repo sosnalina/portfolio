@@ -5224,9 +5224,31 @@
       if (t < M.drawerOpenStart) openness = 0;
       else if (t < M.drawerOpenEnd) openness = reduceMotion ? 1 : easeDrawerOpen(clamp01((t - M.drawerOpenStart) / (M.drawerOpenEnd - M.drawerOpenStart)));
       else openness = 1;
+      // closingComplete mirrors the ending block's own closeOpenness<=0.001
+      // check (below) — openness itself stays pinned at 1 forever once the
+      // drawer has ever opened, so without this, this block would re-add
+      // bp-screen--narrow/data-narrow-mode on every frame for the rest of
+      // the scene, and the ending block's own single removal further down
+      // would have to remove them again in the same call, every frame.
+      // That add-then-remove cycle, with a forced layout (the selected-
+      // row-card getBoundingClientRect() calls just below) landing in
+      // between while the class was momentarily back on, is what stalled
+      // the narrow columns' width transition for ~400ms after the drawer
+      // had actually finished closing (investigation, fix round). Once
+      // closingComplete goes true it stays true for the rest of the scene
+      // (closeOpenness only ever falls, never rises again), so this skips
+      // the add exactly once and never again — the removal itself still
+      // happens exactly once, only in the ending block below.
+      var closingComplete = false;
+      if (t >= takeoverReverseStart && t >= drawerCloseStart) {
+        var closingCheck = reduceMotion ? 1 : clamp01((t - drawerCloseStart) / DRAWER_CLOSE_DURATION);
+        closingComplete = (1 - easeDrawerClose(closingCheck)) <= 0.001;
+      }
       if (openness > 0) {
-        ins.screenEl.classList.add("bp-screen--narrow");
-        ins.screenEl.setAttribute("data-narrow-mode", "activity");
+        if (!closingComplete) {
+          ins.screenEl.classList.add("bp-screen--narrow");
+          ins.screenEl.setAttribute("data-narrow-mode", "activity");
+        }
         // First frame the drawer is actually laid out (display: flex,
         // via .bp-screen--narrow above) — see buildScene0Instance's own
         // comment for why this can't run any earlier. One-shot: this
