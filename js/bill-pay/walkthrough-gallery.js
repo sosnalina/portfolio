@@ -10,16 +10,15 @@
   // handleVisualMessage). Never a value anyone hand-types per step.
   var DEFAULT_DURATION = 4000;
 
-  // Placeholder headline/description copy — swap for real Bill Pay content
-  // later, per spec. `visual` paths are root-absolute, not relative: this
-  // script is shared between walkthrough-gallery.html (repo root) and
-  // case-studies/bill-pay/index.njk (two levels deep) — a relative path
-  // here would only resolve correctly for one of the two host pages.
+  // Step headline/description copy. `visual` paths are root-absolute, not
+  // relative: this script is shared between walkthrough-gallery.html (repo
+  // root) and case-studies/bill-pay/index.njk (two levels deep) — a relative
+  // path here would only resolve correctly for one of the two host pages.
   var STEPS = [
-    { headline: "Entry point — Bills page", description: "Choose a single bill from the unpaid tab", visual: "/assets/walkthrough/bill-pay/step-1.html" },
-    { headline: "Review payment details", description: "Confirm the amount and vendor info", visual: "/assets/walkthrough/bill-pay/step-2.html" },
-    { headline: "Select account & date", description: "Pick where the payment comes from", visual: "/assets/walkthrough/bill-pay/step-3.html" },
-    { headline: "Payment confirmed", description: "Done — the bill is on its way", visual: "/assets/walkthrough/bill-pay/step-4.html" }
+    { headline: "Pick a single bill", description: "Start from the Unpaid tab on the Bills page", visual: "/assets/walkthrough/bill-pay/step-1.html" },
+    { headline: "Set the funding source", description: "Pick the account to withdraw from", visual: "/assets/walkthrough/bill-pay/step-2.html" },
+    { headline: "Set a delivery method", description: "Choose payment type, speed and withdrawal date", visual: "/assets/walkthrough/bill-pay/step-3.html" },
+    { headline: "Review & schedule", description: "Submit and get your confirmation", visual: "/assets/walkthrough/bill-pay/step-4.html" }
   ];
 
   var state = {
@@ -102,6 +101,20 @@
     renderStep(state.stepIndex);
   }
 
+  // Stops playback and resets to step 1 when the gallery leaves the viewport.
+  // Blanking the iframe src (rather than just leaving it, or reassigning the
+  // same src later on re-entry) is required — reassigning an unchanged src to
+  // a live iframe doesn't reliably reload it, so blanking here guarantees the
+  // next renderStep() on re-entry is a real navigation, not a no-op.
+  function stopAndReset() {
+    clearTimeout(autoAdvanceTimer);
+    state.stepIndex = 0;
+    els.visual.src = "";
+    els.progressFill.style.transition = "none";
+    els.progressFill.style.animation = "none";
+    els.progressFill.style.width = "0%";
+  }
+
   function buildArrowIcon(isPrev) {
     var svgNS = "http://www.w3.org/2000/svg";
     var svg = document.createElementNS(svgNS, "svg");
@@ -129,6 +142,7 @@
     els.counter = document.getElementById("gallery-counter");
     els.prevButton = document.getElementById("gallery-prev");
     els.nextButton = document.getElementById("gallery-next");
+    els.gallery = document.querySelector(".gallery");
 
     els.prevButton.appendChild(buildArrowIcon(true));
     els.nextButton.appendChild(buildArrowIcon(false));
@@ -142,6 +156,19 @@
 
     window.addEventListener("message", handleVisualMessage);
 
-    renderStep(state.stepIndex);
+    // Playback is gated entirely by viewport visibility — this observer is
+    // the only thing that ever starts it, including on first page load, so
+    // nothing auto-advances or fills the progress bar while the gallery is
+    // out of view.
+    var galleryObserver = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          renderStep(state.stepIndex);
+        } else {
+          stopAndReset();
+        }
+      });
+    });
+    galleryObserver.observe(els.gallery);
   });
 })();
