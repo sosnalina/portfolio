@@ -52,15 +52,15 @@ scripts:
     "../../assets/illustrations/bill-pay/hero/bill-pay-hero-illustration.png",
     "Lorem ipsum is a dummy placeholder text <br /><br />It lets people view page layouts and fonts without getting ",
     "When simplicity is not the right design strategy",
-    "Lorem ipsum is a dummy placeholder text used in design and publishing. It lets people view page layouts and fonts without being distracted by real words."
+    "The product was built around one idea: make bill payment easy. It worked, until a new growth opportunity came knocking, challenging its core mental model."
   ) }}
 
   {# 2. Section header with subheading, no visual #}
   {% call section() %}
   {{ sectionHeader("Money on the move", "Business background") }}
   {{ sectionBody([
-    "QuickBooks is the backbone of financial operations for millions of US small businesses. <br>While it has always been the industry leader for accounting, for years, the actual money movement happened elsewhere. So when it came down to payments, users would open their bank portals, write checks, or rely on whatever third-party workarounds they could grab.",
-    "This created a fragmented experience; customers struggled with sync-latency and data discrepancies that compromised their financial accuracy. QuickBooks identified an opportunity to close this gap by integrating bill payment capabilities directly into the platform, capturing the entire bill lifecycle within a single, seamless workflow."
+    "QuickBooks is the backbone of financial operations for millions of US small businesses. <br>While it has always been the industry leader for accounting, for years, the actual money movement happened elsewhere. When it came down to payments, users would open their bank portals, write checks, or rely on whatever third-party workarounds they could grab.",
+    "This created a messy experience; customers struggled with sync latency and data discrepancies that damaged their financial accuracy. QuickBooks wanted to close this gap by integrating bill payment capabilities directly into the platform, capturing the entire bill lifecycle within a single, seamless workflow."
   ]) }}
   {% endcall %}
 
@@ -75,8 +75,8 @@ scripts:
   </div>
   {% endcall %}
   {{ sectionBody([
-    "Launched in 2022 as a multi-step wizard, Bill Pay V1 was tailored to serve QuickBooks' core audience of small businesses, managing their own books, and processing up to 30 bills per month.",
-    "The experience was rooted in a cognitive model of simplicity, and the overhead of moving money was wrapped inside a friendly, sequential wizard with a minimalist interface. Paying a bill to a vendor was easy like ordering pizza, so that even non-professional users could navigate their bill payments with confidence."
+    "Bill Pay V1 was tailored to serve QuickBooks' core audience of small businesses, managing their own books, and processing up to 30 bills per month.",
+    "The experience was rooted in a cognitive model of simplicity, wrapping the overhead of moving money inside a friendly, minimalist, sequential wizard experience. Paying a bill to a vendor was easy like ordering pizza, so that even non-professional users could navigate their bill payments with confidence."
   ]) }}
   {% endcall %}
 
@@ -86,15 +86,14 @@ scripts:
      Green block: real team-members image, unchanged. #}
   {% set statBlock %}
   {{ sectionBody([
-    "A year after launch, while Bill Pay was gaining traction with small businesses, data revealed a unique segment that promised to be a massive growth engine.<br>A specific group, representing less than a quarter of the QuickBooks user base, was responsible for over 90% of the total bill processing volume.",
-    "It was a classic \"80/20 rule\" in its most painful version. The potential was obvious, but so was the problem, as this wasn't the customer Bill Pay had been built for."
+    "A year after launch, while Bill Pay was gaining traction with small businesses, data revealed a unique segment that promised huge growth opportunity.<br>A specific group, representing less than a quarter of the QuickBooks user base, was responsible for over 90% of the total bill recording on the platform, but they were not using Bill Pay.<br>It was a classic \"80/20 rule\" in its most painful version. The potential was obvious, but there was a problem, as this wasn't the customer Bill Pay had been built for."
   ]) }}
   <div class="section-image-group">
     <img class="section-image-group__image" src="../../assets/illustrations/bill-pay/bill-pay-stat.png" alt="" />
   </div>
   {% endset %}
   {% call twoBlockHeader(
-    "Tipping Point",
+    "Tipping point",
     "Mission & Scope",
     [],
     [],
@@ -103,27 +102,24 @@ scripts:
     statBlock
   ) %}
   {{ sectionBody([
-    "High-Value Billers were Mid-Market companies processing hundreds and thousands of bills monthly. They used QuickBooks for accounting and recording their bills, but were leaking out to execute payments.",
-    "The team went on an early discovery, trying to map out the gaps.<br>They met with AP teams, talked about their bill-payment workflows, and reviewed the current solution. The interviewees looked at that beautiful, sequential, multi-step wizard and said, \"Guys, we love you, but we're not going to use your payment product.\""
+    "High-Value Billers were Mid-Market companies processing hundreds and thousands of bills monthly. They used QuickBooks for accounting and recording their bills, but were leaking out to execute payments.<br>The team went on an early discovery, trying to map out the gaps.<br>They met with AP teams, talked about their bill-payment workflows, and reviewed the current solution. The interviewees looked at that beautiful, sequential, multi-step wizard and said, \"Guys, we love you, but we're not going to use your payment product.\""
   ]) }}
   <div class="section-image-group">
     <img class="section-image-group__image" src="../../assets/illustrations/bill-pay/team-members.png" alt="" />
   </div>
   {{ sectionBody([
-    "The existing experience couldn't support their scale for two main reasons.<br>First, a linear flow was like asking them to fill an Olympic pool with a spoon, as these people don't need an interface that would hold their scared hand. Second, and most importantly, payment execution at scale meant a multi-seat operation, segregation of duty, and a chain of finance roles managing the process.",
-    "So what would it take to scale a lightweight payment feature into a Mid-Market AP machine? The required capabilities were scattered across legacy domains, guarded by different teams and organizations, and none of them were built to work together. Building this right went far beyond Bill Pay.",
-    "Anyone who's worked on enterprise products knows this is a challenging alignment puzzle, getting multiple teams, each with their own metrics and roadmaps, to move in the same direction at the same time.",
-    "Leadership said go, and at that pivotal moment, I was brought in as Principal Designer.<br>My mission was to partner with design and cross-functional leads across QuickBooks to rethink our core capabilities, while building a new Bill Pay experience that could support payment execution at scale."
+    "The existing experience couldn't support their scale for two main reasons.<br>First, a linear flow was like asking them to fill an Olympic pool with a spoon. These people don't need an interface that would hold their scared hand. But the bigger issue was that payment execution at scale meant a multi-seat operation, segregation of duties, and a chain of finance roles managing the process.",
+    "Building this right went far beyond Bill Pay’s team domain. The required capabilities were guarded by different teams and organizations in QuickBooks, scattered across legacy domains, and none of them were built to work together. It meant getting multiple teams, each with their own metrics and roadmaps, to move in the same direction at the same time. A fun corporate-style alignment puzzle.",
+    "Leadership said go, and at that pivotal moment, I was brought in as Principal Designer.<br>My mission was to partner with design and cross-functional leads across QuickBooks to rethink the needed core capabilities, while building a new Bill Pay experience that could support payment execution at scale."
   ]) }}
-  {{ sectionBody(["role:", "role:", "role:", "role:"]) }}
   {% endcall %}
 
   {# 5. Cockpit Widget section — header, body, widget, then a second trailing body #}
   {% call section() %}
   {{ sectionHeader("Stacked in one room", "Empathy & Ecosystem mapping") }}
   {{ sectionBody([
-    "We started where the problem actually lived, understanding the insides of mid-market AP operations. Forty-plus interviews, operational workflows spread out in front of us, and what came back was a goldmine of pain points and gaps within their current toolsets and also ours.",
-    "Getting cross-functional partners to feel the weight of that required more than a Slack summary. So we flew down to Mountain View, put everyone in the same room, and spent two days synthesizing our research findings, mapping the end-to-end AP lifecycle and the personas involved, and layered them against our existing experience."
+    "We started where the problem actually lived, understanding the insides of mid-market AP operations. Forty-plus interviews, operational workflows spread out in front of us, and what came back was two tons of pain points and a clear insight into where things broke within the existing toolsets.",
+    "Getting cross-functional partners to feel the weight of that required more than a Slack summary. So we flew down to Mountain View, put everyone in the same room, and spent two days unpacking our research findings, mapping the end-to-end AP lifecycle and the personas involved, and layering them against our existing experience."
   ]) }}
   {% call sectionVisual(true) %}
   <div class="cockpit-widget">
@@ -162,8 +158,8 @@ scripts:
   </div>
   {% endcall %}
   {{ sectionBody([
-    "This high-level view was a breakthrough, as until that point, each team held a slice of it. It was the first time the whole flow came together as one linear map, which allowed us to move past siloed thinking and see clearly how a friction is traced back to a missing feature much earlier in the flow.<br>Vendor onboarding, mass bill ingestion, approvals, permissions - all of it was needed work, since QuickBooks had never operated inside that specific flow at this order of magnitude.",
-    "Now that we had our scope and priorities set, our collaborative efforts branched, each with its own tasks. While partner teams focused on upstream challenges like managing roles and permissions, mass bill ingestion, and vendor onboarding, my mission was to reimagine the payment execution core and the cognitive architecture it required."
+    "This was a breakthrough. Until then, each team held a slice of the flow. Seeing this high-level view made it so clear how a friction could be traced back to a missing feature earlier in the journey.<br>Vendor onboarding, mass bill ingestion, approvals, managing roles and permissions - all of it needed work, since QuickBooks had never operated inside that specific flow at this order of magnitude.",
+    "Now that we had our scope and priorities set, our collaborative efforts branched, each with its own tasks. While partner teams focused on upstream challenges, my mission was to reimagine the payment execution core and the cognitive architecture it required."
   ]) }}
   {% endcall %}
 
@@ -227,10 +223,10 @@ scripts:
     <div class="ap-manager-orbit__asset ap-manager-orbit__quote-mark">
       <img src="../../assets/illustrations/bill-pay/ap-manager-orbit/quote-mark.svg" alt="" />
     </div>
-    <p class="ap-manager-orbit__asset ap-manager-orbit__quote-text">I review bills individually, yet execute payments in batches.<br>Deciding when and how to pay means sequencing factors like cashflow and vendor terms for each batch. They don't always align.</p>
+    <p class="ap-manager-orbit__asset ap-manager-orbit__quote-text">I review bills individually, yet execute payments in batches.<br>Deciding when and how to pay means sequencing factors like cash flow and vendor terms for each batch. They don't always align.</p>
   </div>
   {{ sectionBody([
-    "The next thing was to deep dive into our primary user, the one who drives payment execution. On this seat, mindset is built around payment runs, while keeping a delicate balance between compliance, efficiency, and cash flow control.",
+    "The next thing was to deep dive into our primary user, the one who drives payment execution. On this seat, the mindset is built around payment runs, while keeping a delicate balance between compliance, efficiency, and cash flow control.",
     "We also looked at how organizational dynamics define their role, and how their success is ultimately measured. For these AP managers, payment execution isn't a series of independent tasks. It's a high-stakes orchestration, a cohorted move, where every micro-adjustment ripples through the entire run."
   ]) }}
   {% endcall %}
@@ -267,6 +263,7 @@ scripts:
     </div>
   </div>
   {{ sectionBody([
+    "The goal was to allow the AP manager to follow a clear, defensible path from review to submission, and support their decision quality by providing a structured context, weighing every variable without losing momentum.",
     "In practice, instead of trying to simplify the data or hide the complexity, the design we were going for was about getting control over it while moving at speed. We traded our minimalist, empty spaces for a high-density view, surfacing all the context needed on every action right where it happened, visible in one view."
   ]) }}
   {% endset %}
@@ -274,8 +271,7 @@ scripts:
     "Designing a cockpit",
     "Principles & Execution",
     [
-      "The wizard paradigm was wrong not only because of the manual effort of handling one bill at a time, but because it stripped away the cross-parameter context, where every decision an AP manager makes depends on the bills sitting next to it.",
-      "The goal was to allow the AP manager to follow a clear, defensible path from review to submission, to empower decision quality by providing a structured context, and to weigh every variable without losing momentum. The approach was anchored around three core principles:"
+      "The wizard paradigm was wrong not only because of the manual effort of handling one bill at a time, but because it stripped away the cross-parameter context, where every decision an AP manager makes depends on the bills sitting next to it. The approach was anchored around three core principles:"
     ],
     [],
     "section--green-light",
@@ -311,6 +307,25 @@ scripts:
      render on the page at once for now (build prompt, 14 Sep). #}
   {% call section("section--grey-light") %}
   {{ sceneStack() }}
+  {% endcall %}
+
+  {% call section("section--green-light") %}
+  {{ sectionHeader("High hopes, flat Metrics", "Testing and Validation") }}
+  {{ sectionBody([
+    "At this point, we were tackling a bigger question than usability or adoption: what happens to the existing single-bill wizard? Sunsetting it felt risky for SMBs who were comfortable with that cute wizard. Also, bringing two opposite ends of the user spectrum under one cognitive model was an unconventional move. On the other hand, keeping two products would create long-term operational debt.",
+    "Leadership saw it differently, having us look at SMBs' struggle to bridge day-to-day survival and scaling up. Their leap of faith was that putting this tool in their hands could gently nudge them from just paying their bills to thinking big about cash leverage, fees, and risk control.",
+    "We put our solution in front of both mid-market and SMB customers, stress-testing the experience for usability and comprehension. The feedback was encouraging, and a few iterations later, mainly to the microcopy and first-time-user flows, we were ready to test it in production.",
+    "We launched a 3-month phased rollout, benchmarking 150 Mid-Market design partners and 500 SMBs against a control group to track payment volume and TPV.<br>Working closely with Customer Success, the feedback was noisy, clouded by technical bugs and operational friction. It didn't look like a classic UX win.<br>The numbers, however, told a different story. They didn't drop throughout the trial, despite the technical glitches. This \"no-harm\" metric was our ray of light. We fixed the bugs and went at it again. This time, the needle started moving."
+  ]) }}
+  {% endcall %}
+
+  {% call section() %}
+  {{ sectionHeader("Now we're talking", "Impact &amp; Postmortem") }}
+  {{ sectionBody([
+    "If you’ve read this far, you’re clearly hooked, so you deserve a proper ending and some nice metrics. So. Following the successful testing, we phased into full market availability, and six months post-launch, the data took shape. It wasn’t a steady growth curve, it was an explosion.",
+    "Mid-Market results exceeded every financial projection, with payment volume a third above forecast. But the real shocker was SMBs, the very users we were terrified of scaring off.<br>They used the platform at volumes that blew past expectations, with more companies onboarding, running batch transactions, saving fees, and consolidating payments they’d previously run elsewhere into QuickBooks. They were paying bills like pros, and the wizard was happily sunsetted.",
+    "Today, when I approach a design challenge in B2B domains, I don't just solve for ease of use. My job isn’t to hide complexity, and definitely not to fear handing users the wheel. I build them the right cockpit, and watch them fly higher than anyone expected."
+  ]) }}
   {% endcall %}
 
 </main>
