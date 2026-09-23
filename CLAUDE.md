@@ -78,12 +78,13 @@ Before building any new component structure (not small tweaks — actual new lay
 
 ### Viewport gating — anything that plays on scroll
 - Anything that starts playing when scrolled into view (a gallery clock, a scene, an autoplay loop, an entrance) is gated by `js/shared/viewport-gate.js`, via `ViewportGate.observe(el, { onEnter, onExit })`. Never write a new IntersectionObserver or scroll listener for this.
-- The rule lives only in that file: enter at 90% visible (or 90% of the viewport height, for an element taller than the window), exit when no part is visible. Do not change the value per element or add options. If an element seems to need a different rule, STOP and ask.
+- The rule lives only in that file: enter at 90% visible (or 90% of the viewport height, for an element taller than the window), exit when no part is visible. Do not change the 90% value per element. The only option is `enterOffsetBottom`, used by section headers (0.1) so short elements don't trigger at the very bottom edge; galleries use the default. Do not add other options. If an element seems to need a different rule, STOP and ask.
 - Nothing plays before onEnter: not on page load, not off-screen.
 - Always pass both callbacks. The helper calls onExit unconditionally.
 - Galleries reset to their first frame in onExit (established behaviour). For anything else, if the spec doesn't say what happens on exit, STOP and ask. Do not choose "replay" or "play once" yourself.
 - Inside an iframe, load the helper with its own `<script>` tag and observe that document's `document.body`.
 - Known exception: `js/bill-pay/ap-manager-orbit.js` still uses its own observers and is deliberately out of scope. Do not copy it as a pattern, and do not migrate it unless asked.
+- Section headers are only ever built from the section-header partial, which owns their entrance. Never hand-build a section header.
 
 ## Forbidden behaviors — these are absolute
 

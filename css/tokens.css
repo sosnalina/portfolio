@@ -77,6 +77,14 @@
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
   --font-weight-extrabold: 800;
+
+  --ease-section-header-entrance: cubic-bezier(0.23, 1, 0.32, 1);
+  --duration-section-header-rise: 650ms;
+  --duration-section-header-subheading: 450ms;
+  --delay-section-header-badge: 0ms;
+  --delay-section-header-heading: 80ms;
+  --delay-section-header-subheading: 380ms;
+  --distance-section-header-rise: var(--spacing-24);
 }
 
 @media (max-width: 600px) {

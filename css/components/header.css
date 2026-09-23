@@ -41,3 +41,32 @@ main {
   letter-spacing: var(--tracking-section-subheading);
   color: var(--primitive-grey-dark);
 }
+
+html.js-motion .section-header__badge,
+html.js-motion .section-header__heading {
+  opacity: 0;
+  transform: translateY(var(--distance-section-header-rise));
+}
+
+html.js-motion .section-header__subheading {
+  opacity: 0;
+}
+
+.section-header.is-entered .section-header__badge {
+  opacity: 1;
+  transform: none;
+  transition: opacity var(--duration-section-header-rise) var(--ease-section-header-entrance) var(--delay-section-header-badge),
+    transform var(--duration-section-header-rise) var(--ease-section-header-entrance) var(--delay-section-header-badge);
+}
+
+.section-header.is-entered .section-header__heading {
+  opacity: 1;
+  transform: none;
+  transition: opacity var(--duration-section-header-rise) var(--ease-section-header-entrance) var(--delay-section-header-heading),
+    transform var(--duration-section-header-rise) var(--ease-section-header-entrance) var(--delay-section-header-heading);
+}
+
+.section-header.is-entered .section-header__subheading {
+  opacity: 1;
+  transition: opacity var(--duration-section-header-subheading) var(--ease-section-header-entrance) var(--delay-section-header-subheading);
+}

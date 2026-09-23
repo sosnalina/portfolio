@@ -27,6 +27,11 @@
 
   function observe(el, callbacks) {
     var entered = false;
+    // enterOffsetBottom: fraction of the viewport height to shrink the
+    // root by at the bottom edge, so a short element must clear that much
+    // of the bottom before it can count as "entered." Default 0 keeps the
+    // rootMargin and behaviour identical to before this option existed.
+    var enterOffsetBottom = callbacks.enterOffsetBottom || 0;
 
     var observer = new IntersectionObserver(
       function (entries) {
@@ -44,7 +49,7 @@
           }
         });
       },
-      { threshold: THRESHOLDS }
+      { threshold: THRESHOLDS, rootMargin: "0px 0px -" + (enterOffsetBottom * 100) + "% 0px" }
     );
 
     observer.observe(el);
