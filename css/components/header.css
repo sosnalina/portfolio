@@ -20,6 +20,10 @@ main {
   border-radius: var(--spacing-8);
 }
 
+.section--green-light .section-header__badge {
+  background: var(--primitive-white);
+}
+
 .section-header__badge-text {
   font: var(--text-number-section);
   font-weight: var(--font-weight-extrabold);
