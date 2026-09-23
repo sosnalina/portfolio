@@ -86,6 +86,11 @@ Before building any new component structure (not small tweaks — actual new lay
 - Known exception: `js/bill-pay/ap-manager-orbit.js` still uses its own observers and is deliberately out of scope. Do not copy it as a pattern, and do not migrate it unless asked.
 - Section headers are only ever built from the section-header partial, which owns their entrance. Never hand-build a section header.
 
+### Smooth scrolling
+- Smooth scrolling is site-wide, from `js/shared/smooth-scroll.js` (Lenis 1.3.4, vendored, lerp 0.08), loaded by `_includes/base.njk`. Never add a second smooth-scroll library or change its settings unless asked.
+- It forwards wheel input from every same-origin iframe on the page to Lenis, so galleries scroll smoothly. New galleries in iframes are covered automatically. Do not add wheel or scroll handlers inside gallery documents.
+- To scroll the page from code, use `window.siteLenis.scrollTo(...)`, not window.scrollTo or scrollIntoView.
+
 ## Forbidden behaviors — these are absolute
 
 - Never hardcode a color, spacing value, or font size. Use CSS custom properties only.
