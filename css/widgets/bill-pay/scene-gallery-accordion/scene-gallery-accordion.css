@@ -152,8 +152,9 @@
    circular ring with the arrow glyph; scene-gallery-accordion.js extracts
    just the glyph subpath and sets the viewBox to its own tight bounding
    box (4.400390, 5.400118, 9.199209 x 7.199787 — measured via getBBox() on
-   that subpath in isolation), so this renders at 9.199209 x 7.199787px
-   instead of the shared asset's full 18x18 (down from 18px wide before).
+   that subpath in isolation), so this renders at 12px wide, scaled
+   proportionally from the glyph's viewBox, instead of the shared asset's
+   full 18x18 (down from 18px wide before).
    Width/height below match that measured glyph box exactly, at the same
    1-viewBox-unit-to-1px scale the 18x18 version rendered at — not a
    design choice, a direct consequence of the crop.
@@ -172,8 +173,8 @@
   position: absolute;
   top: 0;
   left: calc(-1 * var(--sga-tag-indent));
-  width: 9.199209px;
-  height: 7.199787px;
+  width: 12px;
+  height: 9.392px;
   transition: transform 320ms cubic-bezier(0.23, 1, 0.32, 1);
   will-change: transform;
 }
