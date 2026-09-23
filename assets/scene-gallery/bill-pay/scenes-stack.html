@@ -3657,6 +3657,7 @@
     </div>
   </div>
 
+  <script src="/js/shared/viewport-gate.js"></script>
   <script>
   (function () {
     // ================================================================
@@ -7170,18 +7171,20 @@
       requestAnimationFrame(tick);
     }
 
-    // Viewport gating (build prompt §6) — IntersectionObserver on the
-    // column, not hand-rolled scroll-offset maths. Any visible pixel
-    // counts as "in the viewport" (threshold 0); the build prompt names
-    // no specific percentage.
-    var visibilityObserver = new IntersectionObserver(
-      function (entries) {
-        for (var i = 0; i < entries.length; i++) {
-          state.running = entries[i].isIntersecting;
-        }
-      },
-      { threshold: 0 }
-    );
+    // Viewport gating via ViewportGate (js/shared/viewport-gate.js):
+    // playback starts once 90% visible (or the visible slice covers 90%
+    // of the viewport height) and, on full exit, resets to panel 0 with
+    // elapsed 0 — replacing the old pause/resume-where-it-stopped
+    // behaviour, which any-visible-pixel threshold 0 used to gate.
+    function startPlayback() {
+      state.running = true;
+    }
+
+    function resetToStart() {
+      state.running = false;
+      state.lastFrameTime = null;
+      activate(0);
+    }
 
     document.addEventListener("DOMContentLoaded", function () {
       // Clicking a collapsed panel activates it and plays it from its
@@ -7196,7 +7199,10 @@
         });
       });
 
-      visibilityObserver.observe(column);
+      ViewportGate.observe(column, {
+        onEnter: startPlayback,
+        onExit: resetToStart
+      });
       applyScene(state.index);
       requestAnimationFrame(tick);
     });

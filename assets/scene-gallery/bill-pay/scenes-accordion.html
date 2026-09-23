@@ -2039,6 +2039,7 @@
     </div>
   </div>
 
+  <script src="/js/shared/viewport-gate.js"></script>
   <script>
   (function () {
     // Panel 0's boundary is the scene's own length — a starting point
@@ -5045,29 +5046,32 @@
     var instance = buildMockInstance();
     var instance1 = buildScene1Instance();
 
-    // ---- Trigger — Quality_Of_Decisions Scene 1 plays once, gated on
-    // 60% scroll visibility. Same-origin same-document IntersectionObserver
-    // with root:null correctly reflects this iframe's own visibility
-    // within the parent page's viewport (a well-established technique —
-    // the observer's implicit root is the top-level browsing context's
-    // viewport, which for a nested browsing context is clipped by
-    // whatever the parent page is doing, scroll included). Never
-    // re-fires once triggered.
-    var visibilityObserver = new IntersectionObserver(
-      function (entries) {
-        if (hasTriggered) return;
-        for (var i = 0; i < entries.length; i++) {
-          if (entries[i].intersectionRatio >= 0.6) {
-            hasTriggered = true;
-            epoch = performance.now();
-            visibilityObserver.disconnect();
-            break;
-          }
-        }
-      },
-      { threshold: 0.6 }
-    );
-    visibilityObserver.observe(document.body);
+    // ---- Trigger — gated by ViewportGate (js/shared/viewport-gate.js):
+    // same-origin same-document IntersectionObserver with root:null
+    // correctly reflects this iframe's own visibility within the parent
+    // page's viewport (a well-established technique — the observer's
+    // implicit root is the top-level browsing context's viewport, which
+    // for a nested browsing context is clipped by whatever the parent
+    // page is doing, scroll included). Unlike the old 60% one-shot
+    // trigger, this replays every time the gallery is re-entered — full
+    // exit resets back to the start (see resetToStart below).
+    function triggerPlayback() {
+      hasTriggered = true;
+      epoch = performance.now();
+    }
+
+    // Full reset to panel 0 / ms 0 with the clock stopped — mirrors the
+    // original init sequence at the bottom of this file exactly, so a
+    // reset and first load render identically.
+    function resetToStart() {
+      hasTriggered = false;
+      epoch = null;
+      lastIndex = 0;
+      applyScene(0);
+      announce(0, 0);
+      renderScene0(instance, 0);
+      renderScene1(instance1, 0);
+    }
 
     // ---- Clock — drives the active-panel class + progress
     // announcements; the mock content built above never changes (it's
@@ -5111,7 +5115,6 @@
     // visibility. Idempotent if already triggered.
     function forceTrigger(targetMs) {
       hasTriggered = true;
-      visibilityObserver.disconnect();
       epoch = performance.now() - targetMs;
     }
 
@@ -5194,12 +5197,13 @@
       announce(data.ms, index);
     });
 
-    var initialIndex = sceneIndexForTime(0);
-    lastIndex = initialIndex;
-    applyScene(initialIndex);
-    announce(0, initialIndex);
-    renderScene0(instance, 0);
-    renderScene1(instance1, 0);
+    resetToStart();
+
+    ViewportGate.observe(document.body, {
+      onEnter: triggerPlayback,
+      onExit: resetToStart
+    });
+
     requestAnimationFrame(tick);
   })();
   </script>

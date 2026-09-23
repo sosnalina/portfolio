@@ -156,19 +156,15 @@
 
     window.addEventListener("message", handleVisualMessage);
 
-    // Playback is gated entirely by viewport visibility — this observer is
-    // the only thing that ever starts it, including on first page load, so
+    // Playback is gated by ViewportGate (js/shared/viewport-gate.js) — the
+    // only thing that ever starts it, including on first page load, so
     // nothing auto-advances or fills the progress bar while the gallery is
     // out of view.
-    var galleryObserver = new IntersectionObserver(function (entries) {
-      entries.forEach(function (entry) {
-        if (entry.isIntersecting) {
-          renderStep(state.stepIndex);
-        } else {
-          stopAndReset();
-        }
-      });
+    ViewportGate.observe(els.gallery, {
+      onEnter: function () {
+        renderStep(state.stepIndex);
+      },
+      onExit: stopAndReset
     });
-    galleryObserver.observe(els.gallery);
   });
 })();

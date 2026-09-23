@@ -1166,6 +1166,7 @@
     </div>
   </div>
 
+<script src="/js/shared/viewport-gate.js"></script>
 <script>
   (function () {
     // One continuous timeline for all 3 scenes, loaded once by the parent
@@ -1181,7 +1182,9 @@
     var TOTAL_DURATION = 29631;
 
     var body = document.body;
-    var epoch = performance.now();
+    // null until ViewportGate's onEnter starts playback (see the bottom
+    // of this file) — the clock no longer starts ticking at page load.
+    var epoch = null;
     var lastIndex = -1;
 
     function sceneIndexForTime(ms) {
@@ -3608,11 +3611,15 @@
       );
     }
 
-    // Plays continuously; only announces to the parent when the scene
+    // Plays while entered; only announces to the parent when the scene
     // index actually changes (boundary crossed, including the wrap back
     // to 0 at the end of the timeline via the modulo below) — the parent
     // drives the progress line's visible fill itself via CSS, so a
-    // per-frame announcement isn't needed for that.
+    // per-frame announcement isn't needed for that. rafId is non-null
+    // only while the loop is actually running, gated by ViewportGate
+    // (js/shared/viewport-gate.js) below.
+    var rafId = null;
+
     function tick() {
       var elapsed = (performance.now() - epoch) % TOTAL_DURATION;
       var index = renderAtTime(elapsed);
@@ -3621,7 +3628,27 @@
         announce(elapsed, index);
       }
       drawSparks();
-      requestAnimationFrame(tick);
+      rafId = requestAnimationFrame(tick);
+    }
+
+    function startPlayback() {
+      if (rafId !== null) return;
+      epoch = performance.now();
+      rafId = requestAnimationFrame(tick);
+    }
+
+    // Full reset to scene start with the clock stopped — used on full
+    // exit, and to seed the very first frame before the gallery has ever
+    // entered.
+    function resetToStart() {
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+      epoch = null;
+      var index = renderAtTime(0);
+      lastIndex = index;
+      announce(0, index);
     }
 
     window.addEventListener("message", function (event) {
@@ -3631,17 +3658,24 @@
       if (!data || data.type !== "scene-gallery-seek" || typeof data.ms !== "number") return;
 
       // Re-anchor the clock so playback continues forward from the seeked
-      // point — no reload, no replaying what came before.
+      // point — no reload, no replaying what came before. A seek counts
+      // as playback starting, same convention scenes-accordion.html's own
+      // forceTrigger already uses, so a rail click still renders
+      // immediately and keeps advancing even before the gallery has
+      // crossed the 90% enter line.
       epoch = performance.now() - data.ms;
+      if (rafId === null) rafId = requestAnimationFrame(tick);
       var index = renderAtTime(data.ms);
       lastIndex = index;
       announce(data.ms, index);
     });
 
-    var initialIndex = renderAtTime(0);
-    lastIndex = initialIndex;
-    announce(0, initialIndex);
-    requestAnimationFrame(tick);
+    resetToStart();
+
+    ViewportGate.observe(body, {
+      onEnter: startPlayback,
+      onExit: resetToStart
+    });
   })();
 </script>
 </body>
