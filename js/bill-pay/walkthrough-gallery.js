@@ -28,6 +28,17 @@
   var els = {};
   var autoAdvanceTimer = null;
 
+  // Step 1 preload (see loadHeldStep1) — step-1.html is the only step
+  // whose first frame is heavy enough (a ~320KB base64 screenshot) to
+  // show a visible white box while it loads/decodes, so it's the only
+  // step kept preloaded off-screen in "hold" mode, ready before the
+  // gallery is ever entered, instead of loaded fresh on entry like
+  // steps 2-4.
+  var holdLoadCount = 0;
+  var step1Ready = false;
+  var step1ReadyMs = null;
+  var entryPending = false;
+
   // Toggle-off/reflow/toggle-on — the one retrigger pattern used for every
   // per-step animation (bloom on screen+caption, counter fade-slide). A class
   // added once and left in place would only ever play on its first attach.
@@ -82,7 +93,25 @@
     if (event.source !== els.visual.contentWindow) return;
 
     var data = event.data;
-    if (!data || data.type !== "walkthrough-duration" || typeof data.ms !== "number") return;
+    if (!data) return;
+
+    // The held step 1 iframe (see loadHeldStep1) reports readiness once
+    // its own dry-run measurement completes, instead of the usual
+    // walkthrough-duration + auto-play. Just record it here — playback
+    // only starts once the gallery has actually entered (see enterStep1
+    // and onEnter below), which may be later than this message, earlier
+    // (in which case entryPending is already waiting on it), or never.
+    if (data.type === "walkthrough-ready" && typeof data.ms === "number") {
+      step1Ready = true;
+      step1ReadyMs = data.ms;
+      if (entryPending) {
+        entryPending = false;
+        enterStep1();
+      }
+      return;
+    }
+
+    if (data.type !== "walkthrough-duration" || typeof data.ms !== "number") return;
 
     retriggerProgressBar(data.ms);
     scheduleAutoAdvance(data.ms);
@@ -102,17 +131,56 @@
   }
 
   // Stops playback and resets to step 1 when the gallery leaves the viewport.
-  // Blanking the iframe src (rather than just leaving it, or reassigning the
-  // same src later on re-entry) is required — reassigning an unchanged src to
-  // a live iframe doesn't reliably reload it, so blanking here guarantees the
-  // next renderStep() on re-entry is a real navigation, not a no-op.
+  // Reloads step 1 in hold mode (see loadHeldStep1) rather than blanking the
+  // iframe src, so it's already loaded and showing its first frame again by
+  // the time the gallery is re-entered instead of going white while step
+  // 1's ~320KB screenshot loads and decodes.
   function stopAndReset() {
     clearTimeout(autoAdvanceTimer);
     state.stepIndex = 0;
-    els.visual.src = "";
+    entryPending = false;
+    renderStep1Static();
+    loadHeldStep1();
     els.progressFill.style.transition = "none";
     els.progressFill.style.animation = "none";
     els.progressFill.style.width = "0%";
+  }
+
+  // Preloads step 1 off-screen, paused on its first frame, so it's ready
+  // before the gallery is entered. A fresh query param on every call
+  // (rather than reassigning the same unchanged src) is required for the
+  // same reason stated below on step 2-4 loads — reassigning an unchanged
+  // src to a live iframe doesn't reliably reload it.
+  function loadHeldStep1() {
+    step1Ready = false;
+    step1ReadyMs = null;
+    holdLoadCount++;
+    els.visual.src = STEPS[0].visual + "?hold=" + holdLoadCount;
+  }
+
+  // Step 1's headline/description/counter, shown statically while it's
+  // held — no caption bloom, no counter animation, since nothing is
+  // playing yet.
+  function renderStep1Static() {
+    var step = STEPS[0];
+    els.headline.textContent = step.headline;
+    els.description.textContent = step.description;
+    els.counter.textContent = "1 / " + STEPS.length;
+  }
+
+  // Starts the held step 1 iframe playing in place — no src reassignment,
+  // since it's already loaded and sitting on its first frame. Mirrors
+  // renderStep's own caption/counter/progress-bar/auto-advance retrigger,
+  // using step 1's real reported duration (step1ReadyMs) instead of
+  // DEFAULT_DURATION, since it's already known by the time this runs.
+  function enterStep1() {
+    els.visual.contentWindow.postMessage({ type: "walkthrough-play" }, window.location.origin);
+
+    retriggerAnimation(els.caption, "gallery__caption--blooming");
+    retriggerAnimation(els.counter, "gallery__counter--animating");
+
+    retriggerProgressBar(step1ReadyMs);
+    scheduleAutoAdvance(step1ReadyMs);
   }
 
   function buildArrowIcon(isPrev) {
@@ -156,13 +224,29 @@
 
     window.addEventListener("message", handleVisualMessage);
 
+    // Step 1 starts preloaded off-screen (see loadHeldStep1) so it's
+    // already loaded and showing its first frame however soon the gallery
+    // is entered, rather than going white while it loads on entry.
+    renderStep1Static();
+    loadHeldStep1();
+
     // Playback is gated by ViewportGate (js/shared/viewport-gate.js) — the
     // only thing that ever starts it, including on first page load, so
     // nothing auto-advances or fills the progress bar while the gallery is
     // out of view.
     ViewportGate.observe(els.gallery, {
       onEnter: function () {
-        renderStep(state.stepIndex);
+        // state.stepIndex is always 0 here: stopAndReset() (onExit) always
+        // resets it, and it starts at 0 by default, so entry always means
+        // starting the held step 1, never a fresh renderStep() load.
+        if (step1Ready) {
+          enterStep1();
+        } else {
+          // A fast scroll before step 1's own load/dry-run finished —
+          // handleVisualMessage's walkthrough-ready branch calls
+          // enterStep1() itself the moment it arrives.
+          entryPending = true;
+        }
       },
       onExit: stopAndReset
     });

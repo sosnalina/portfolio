@@ -7178,6 +7178,14 @@
     // behaviour, which any-visible-pixel threshold 0 used to gate.
     function startPlayback() {
       state.running = true;
+      // Entry only: skip past the rest beat's empty window so playback
+      // doesn't visibly pause the instant the gallery scrolls into view.
+      // state.index is always 0 here (onExit always resets to panel 0
+      // via activate(0), and page load defaults to it too), so this
+      // always lands on panel 0's own clock. Looping panel 1 -> panel 0
+      // and clicking a panel still go through activate(), which is
+      // untouched and still starts elapsed at 0.
+      state.elapsed = realTimeFromLocal(MARKS.restEnd);
     }
 
     function resetToStart() {

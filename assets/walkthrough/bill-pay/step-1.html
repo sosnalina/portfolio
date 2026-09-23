@@ -360,6 +360,23 @@
     totalMs = 0;
     await playWalkthrough();
     dryRun = false;
+
+    // Hold mode (js/bill-pay/walkthrough-gallery.js): preloaded off-screen
+    // via ?hold=<n>, so the real run doesn't start on its own — the page
+    // just sits on its first frame, exactly as it would during the normal
+    // 500ms pre-play wait below, until the parent confirms the gallery
+    // has entered the viewport.
+    if (new URLSearchParams(window.location.search).has('hold')) {
+      window.parent.postMessage({ type: 'walkthrough-ready', ms: totalMs }, window.location.origin);
+      window.addEventListener('message', (event) => {
+        if (event.origin !== window.location.origin) return;
+        if (event.source !== window.parent) return;
+        if (!event.data || event.data.type !== 'walkthrough-play') return;
+        playWalkthrough();
+      });
+      return;
+    }
+
     window.parent.postMessage({ type: 'walkthrough-duration', ms: totalMs }, window.location.origin);
     setTimeout(playWalkthrough, 500);
   });
