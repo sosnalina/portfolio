@@ -64,6 +64,9 @@
   --text-widget-legend: 500 13px/1.27 "Literata", Georgia, serif;
   --text-widget-counter: 800 12px/1 "Manrope", Arial, sans-serif;
 
+  /* Code-only token. No Figma text style exists; this token is the source of truth. */
+  --text-scroll-cue-label: italic var(--font-weight-medium) 16px/27px "Literata", Georgia, serif;
+
   --tracking-widget-tight: -0.022em;
   --tracking-section-subheading: 1px;
 
@@ -71,6 +74,7 @@
 
   --font-weight-light: 300;
   --font-weight-regular: 400;
+  --font-weight-medium: 500;
   --font-weight-semibold: 600;
   --font-weight-extrabold: 800;
 }

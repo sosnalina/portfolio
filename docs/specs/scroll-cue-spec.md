@@ -13,7 +13,7 @@
 | Vertical text alignment | Cap-centred via `text-box: trim-both cap alphabetic; line-height: 1` on the text (Hadar, 23 Sep, picked visually) |
 | Circle | 18×18, fill #FFFFFF, 1px stroke primitive/black, r = 8.5 (Figma node I1401:45238;784:37314) |
 | Arrow | The EXISTING arrow SVG already in the repo. Copy its paths; do not redraw. Points down. Stroke 1.2px, round caps and joins, primitive/black. |
-| Position | Last child of the "Designing a Cockpit" section on the Bill Pay case study page. Absolutely positioned, centred horizontally on the page, bottom edge 30px above the section's bottom edge. Deliberately ignores the section's own bottom spacing structure (Hadar, 23 Sep). |
+| Position | Last child of the "Designing a Cockpit" section on the Bill Pay case study page, in normal flow, the last child of `.section__slot`. 64px above (the slot's own row-gap) and 64px below (the section's `.section__content` bottom padding, overridden for this instance) — equal spacing above and below the pill (Hadar, 23 Sep, post-QA; replaces "30px above the section's bottom edge"). |
 | Interactivity | None. Not a link, not a button. Plain text. |
 
 Build new: no existing component to duplicate.
@@ -31,7 +31,7 @@ Trigger: an IntersectionObserver on the NEXT section (the green one), with `root
 Already past it on page load: show the final state, with no animation.
 
 Sequence:
-1. Rise: a damped spring, duration 0.5s, bounce 0.25, run for 1000ms and sampled into linear WAAPI keyframes. translateY goes 65px → 0 (30px gap + 35px pill), and scale goes 0.95 → 1.
+1. Rise: a damped spring, duration 0.5s, bounce 0.25, run for 1000ms and sampled into linear WAAPI keyframes. translateY goes 99px → 0 (64px gap + 35px pill; derived from the position change, 23 Sep — was 65px/30px gap), and scale goes 0.95 → 1.
 2. Pill opacity 0 → 1: 200ms, `cubic-bezier(0.23,1,0.32,1)`.
 3. Arrow drop-in: translateY −14px → 0, 350ms, delay 300ms, `cubic-bezier(.175,.885,.32,1.275)`.
 4. Hold for 4000ms after the rise ends.
@@ -51,7 +51,7 @@ Change ONLY: the selectors, tokenised colours, and the integration into the proj
     const DUR=0.5,B=0.25;
     const spring=t=>{const z=1-B,w0=2*Math.PI/DUR,wd=w0*Math.sqrt(1-z*z);return 1-Math.exp(-z*w0*t)*(Math.cos(wd*t)+(z*w0/wd)*Math.sin(wd*t))};
     const T=DUR*2,N=80,f=[];
-    for(let i=0;i<=N;i++){const x=spring(T*i/N);f.push({transform:`translateY(${(65*(1-x)).toFixed(2)}px) scale(${(0.95+0.05*Math.min(x,1)).toFixed(4)})`,offset:i/N})}
+    for(let i=0;i<=N;i++){const x=spring(T*i/N);f.push({transform:`translateY(${(99*(1-x)).toFixed(2)}px) scale(${(0.95+0.05*Math.min(x,1)).toFixed(4)})`,offset:i/N})}
     f[N].transform='translateY(0px) scale(1)';
     function play(){
       pill.animate(f,{duration:T*1000,easing:'linear',fill:'both'});

@@ -1,0 +1,52 @@
+/* Bill Pay — scroll-cue. Figma 3XG9JnADI2psNR3B7TwQdx, node 1401:45235
+   (docs/specs/scroll-cue-spec.md). Phase 1: static final-resting-state only,
+   no motion, no JS. Phase 2 (rise/reveal on scroll) is spec'd but not built. */
+
+/* Position (Hadar, 23 Sep, post-QA): normal flow, last child of
+   .section__slot — the slot's own 64px row-gap (section.css) is the
+   spacing above. Spacing below is this section instance's own override,
+   just below. Replaces the earlier absolute/30px-from-bottom build. */
+.section__content:has(.scroll-cue-clip) {
+  padding-bottom: var(--spacing-64);
+}
+
+.scroll-cue-clip {
+  overflow: hidden;
+  /* Extends the clip down to the section's bottom edge so Phase 2's rise
+     starts hidden. Must not change the layout: the 64px below stays 64px —
+     padding-bottom reaches down to the edge, margin-bottom cancels it back
+     out of flow so nothing else shifts. */
+  padding-bottom: var(--spacing-64);
+  margin-bottom: calc(-1 * var(--spacing-64));
+  pointer-events: none;
+}
+
+.scroll-cue {
+  display: flex;
+  /* Centred without transform: Phase 2 animates transform, so centring must not use it. */
+  margin-inline: auto;
+  width: fit-content;
+  align-items: center;
+  justify-content: center;
+  gap: 10px; /* Figma component dimension — node 1401:45235 auto-layout gap */
+  height: 35px; /* Figma component dimension — node 1401:45235 frame height */
+  padding: 0 var(--spacing-12); /* Hadar, 23 Sep — overrides Figma's spacing/16 side padding */
+  background: var(--primitive-grey-medium);
+  border-radius: var(--spacing-24);
+  pointer-events: none; /* not a link or button — plain text, per spec */
+}
+
+.scroll-cue__icon {
+  width: 18px; /* Figma component dimension — node 1401:45238 */
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.scroll-cue__label {
+  font: var(--text-scroll-cue-label);
+  color: var(--primitive-black);
+  white-space: nowrap;
+  /* Cap-centred, overriding the token's own 27px leading (Hadar, 23 Sep, picked visually). */
+  line-height: 1;
+  text-box: trim-both cap alphabetic;
+}

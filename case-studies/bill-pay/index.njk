@@ -25,6 +25,7 @@ stylesheets:
   - ../../css/widgets/bill-pay/cockpit/toggle.css
   - ../../css/widgets/bill-pay/cockpit/tag.css
   - ../../css/widgets/bill-pay/cockpit/center-stage.css
+  - ../../css/widgets/bill-pay/scroll-cue/scroll-cue.css
 scripts:
   - /js/shared/viewport-gate.js
   - ../../js/bill-pay/walkthrough-gallery.js
@@ -267,6 +268,52 @@ scripts:
     "The goal was to allow the AP manager to follow a clear, defensible path from review to submission, and support their decision quality by providing a structured context, weighing every variable without losing momentum.",
     "In practice, instead of trying to simplify the data or hide the complexity, the design we were going for was about getting control over it while moving at speed. We traded our minimalist, empty spaces for a high-density view, surfacing all the context needed on every action right where it happened, visible in one view."
   ]) }}
+  {# scroll-cue — docs/specs/scroll-cue-spec.md. Last child of this section;
+     absolutely positioned against .section itself (see css/components/section.css),
+     deliberately ignoring the section's own bottom padding. Phase 1 (static
+     final-resting-state) only — no motion, no JS. #}
+  <div class="scroll-cue-clip">
+    <div class="scroll-cue">
+      <svg class="scroll-cue__icon" viewBox="0 0 18 18" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <clipPath id="scroll-cue-icon-clip">
+            <circle cx="9" cy="9" r="8.5" />
+          </clipPath>
+        </defs>
+        <circle cx="9" cy="9" r="8.5" fill="var(--primitive-white)" stroke="var(--primitive-black)" />
+        <g clip-path="url(#scroll-cue-icon-clip)">
+          {#
+            Arrow paths copied verbatim from the circle+arrow icon in
+            _includes/accordion-gallery.njk (Figma node 784:37315, confirmed
+            via Figma MCP to be the same node the scroll-cue spec points at).
+            That version mirrors/scales the glyph to point right; here the
+            same raw path/line is instead rotated -90deg about its own
+            center (4.6,3.6) then moved to the circle's center (9,9), so the
+            arrowhead points down instead. Paths are unedited.
+          #}
+          <g transform="translate(9,9) rotate(-90) translate(-4.6,-3.6)">
+            <path
+              d="M4.2 6.60002L0.6 3.60002L4.2 0.600015"
+              stroke="var(--primitive-black)"
+              stroke-width="1.2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <line
+              x1="1.2"
+              y1="3.60002"
+              x2="8.6"
+              y2="3.60002"
+              stroke="var(--primitive-black)"
+              stroke-width="1.2"
+              stroke-linecap="round"
+            />
+          </g>
+        </g>
+      </svg>
+      <p class="scroll-cue__label">Watch them come into play</p>
+    </div>
+  </div>
   {% endset %}
   {{ twoBlockHeader(
     "Designing a cockpit",
