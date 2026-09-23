@@ -32,6 +32,7 @@
     --sst-tag-height: 22px;
     --sst-caption-band-height: 120px;
     --sst-overhang: 20px;
+    --sst-panel-shadow-bleed: var(--spacing-32); /* must stay in sync with scene-stack.css */
   }
 
   /* Fixed column height — build prompt §4: calc(active + spacing-32 +
@@ -53,12 +54,14 @@
   html, body {
     margin: 0;
     width: 100%;
-    height: var(--sst-column-height);
+    height: calc(var(--sst-column-height) + 2 * var(--sst-panel-shadow-bleed));
     overflow-x: hidden;
   }
 
   body {
-    padding-left: var(--sst-overhang);
+    padding-left: calc(var(--sst-overhang) + var(--sst-panel-shadow-bleed));
+    padding-top: var(--sst-panel-shadow-bleed);
+    padding-bottom: var(--sst-panel-shadow-bleed);
   }
 
   /* Fixed 800px (not 100%) — body's own extra left padding above
@@ -85,6 +88,7 @@
     overflow: hidden;
     cursor: pointer;
     transition: height var(--sst-duration) var(--sst-ease);
+    box-shadow: var(--shadow-soft);
   }
   .sst-panel.is-active {
     height: var(--sst-panel-active-height);
@@ -3071,7 +3075,9 @@
     background: transparent;
   }
   body {
-    padding-left: var(--sst-overhang);
+    padding-left: calc(var(--sst-overhang) + var(--sst-panel-shadow-bleed));
+    padding-top: var(--sst-panel-shadow-bleed);
+    padding-bottom: var(--sst-panel-shadow-bleed);
   }
 
   /* ---- .bp-screen polish — NOT part of the verbatim source. Checked

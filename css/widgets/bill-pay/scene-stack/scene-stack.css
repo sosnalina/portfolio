@@ -20,6 +20,7 @@
   --sst-stage-height: 634px; /* matches the panel column's own height built inside the iframe */
   --sst-overhang: 20px; /* must stay in sync with scenes-stack.html's own --sst-overhang */
   --sst-shadow-bleed: 0px; /* no mock in this widget, so no shadow to bleed — kept as a named term rather than dropped, mirroring scene-accordion.css's own pattern, so a future scene carrying its own shadow can extend it the same way */
+  --sst-panel-shadow-bleed: var(--spacing-32); /* must stay in sync with scenes-stack.html's own --sst-panel-shadow-bleed — reserves canvas on all four sides for the panels' --shadow-soft (30px blur) */
 
   display: flex;
   width: 100%;
@@ -40,11 +41,17 @@
    pulled left by the same total amount — an iframe hard-clips to its
    own box regardless of any overflow:visible set inside it, so without
    this the tag's -20px overhang would be clipped at the iframe's own
-   left edge even though nothing inside the document is clipping it. */
+   left edge even though nothing inside the document is clipping it.
+   --sst-panel-shadow-bleed extends this same reservation to all four
+   sides, so the panels' own --shadow-soft has canvas to bleed into on
+   top/bottom/right as well, not just the left edge the overhang
+   reservation already covered. */
 .scene-stack__visual {
   display: block;
-  width: calc(100% + var(--sst-overhang) + var(--sst-shadow-bleed));
-  margin-left: calc(-1 * (var(--sst-overhang) + var(--sst-shadow-bleed)));
-  height: var(--sst-stage-height);
+  width: calc(100% + var(--sst-overhang) + var(--sst-shadow-bleed) + 2 * var(--sst-panel-shadow-bleed));
+  margin-top: calc(-1 * var(--sst-panel-shadow-bleed));
+  margin-bottom: calc(-1 * var(--sst-panel-shadow-bleed));
+  margin-left: calc(-1 * (var(--sst-overhang) + var(--sst-shadow-bleed) + var(--sst-panel-shadow-bleed)));
+  height: calc(var(--sst-stage-height) + 2 * var(--sst-panel-shadow-bleed));
   border: none;
 }

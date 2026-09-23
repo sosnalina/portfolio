@@ -141,6 +141,7 @@
     --ag-mock-scale: 0.223; /* 223 / 1000 native height — identical to Gallery 2, mock is not resized */
     --ag-overhang: 20px;
     --ag-shadow-bleed: calc(30px * var(--ag-mock-scale)); /* the mock's own box already sits flush with the document's true left edge (see --ag-overhang's own use in .ag-mock-wrap below) — meaning there's zero canvas left for its box-shadow to bleed into. Ink overflow (box-shadow, unlike layout) can't render at negative document coordinates at all — confirmed empirically (a diagnostic solid-color shadow rendered fully invisible past this edge, not just faint) — so --overflow-x alone was never going to fix it; genuine reserved canvas is needed, same technique as --ag-overhang itself already uses, just for a second, smaller amount. 30px matches --shadow-soft's own blur radius (tokens.css) — CSS can't extract that number out of the shorthand programmatically, so it's mirrored here as a literal, same as --ag-radio-diameter/--ag-radio-content-gap already mirror other existing values elsewhere in this file. Scaled by --ag-mock-scale because the shadow paints on .bp-screen *inside* .ag-mock-scaler's own transform:scale() — the transform shrinks the visual blur radius right along with the box itself. Used below (body's own padding-left) and in scene-accordion.css (the iframe's own width/shift) — not in .ag-mock-wrap's own position, which is untouched; see the shadow's own comment on .bp-screen below for the full mechanism. */
+    --ag-panel-shadow-bleed: var(--spacing-32); /* must stay in sync with scene-accordion.css */
     --ag-shadow-soft-tight: 0px 1px 4px color-mix(in srgb, var(--primitive-black) 16%, transparent); /* --shadow-soft's own 30px blur/0 offset (tokens.css) is proportioned for the mock and cards 1-3 (32-60px+) — at the pill's/calendar row's own 11-14px size it spreads too thin to read as a shadow at all. Blur cut down in the same spirit --ag-shadow-bleed above already scales a shadow by size; a small 1px vertical offset added (the original has none) so it reads as a lift, not just a soft halo, at this size; opacity nudged from 10% to 16% since a tighter blur covers less area. Used only by .ag-float-pill and .ag-cal-row below — cards 1-3 and the mock keep --shadow-soft verbatim, unchanged. Widget-scoped per CLAUDE.md, not added to tokens.css — this fixes two elements in one widget, not a new site-wide token. */
 
     /* Task 4 — float animation's two "lifted" shadow states, one per
@@ -502,7 +503,7 @@
   html, body {
     margin: 0;
     width: 100%;
-    height: var(--ag-panel-height);
+    height: calc(var(--ag-panel-height) + 2 * var(--ag-panel-shadow-bleed));
     overflow-x: visible;
     overflow-y: visible;
   }
@@ -531,7 +532,9 @@
   body {
     font-family: var(--bp-font-body);
     position: relative;
-    padding-left: calc(var(--ag-overhang) + var(--ag-shadow-bleed)); /* was just --ag-overhang; the extra --ag-shadow-bleed reserves the mock's shadow its own canvas (see --ag-shadow-bleed's own comment above). .ag-row itself needs no compensating margin for this: the matching increase to the iframe's own width/left-shift in scene-accordion.css keeps the row's visible position on the parent page exactly where it was — only .ag-mock-wrap's own position-within-this-document shifts right by the same amount (still landing exactly where the iframe's own right edge minus 800px puts it), which is invisible from outside this document and is what actually gives the shadow room. */
+    padding-left: calc(var(--ag-overhang) + var(--ag-shadow-bleed) + var(--ag-panel-shadow-bleed)); /* was just --ag-overhang; the extra --ag-shadow-bleed reserves the mock's shadow its own canvas (see --ag-shadow-bleed's own comment above). .ag-row itself needs no compensating margin for this: the matching increase to the iframe's own width/left-shift in scene-accordion.css keeps the row's visible position on the parent page exactly where it was — only .ag-mock-wrap's own position-within-this-document shifts right by the same amount (still landing exactly where the iframe's own right edge minus 800px puts it), which is invisible from outside this document and is what actually gives the shadow room. */
+    padding-top: var(--ag-panel-shadow-bleed);
+    padding-bottom: var(--ag-panel-shadow-bleed);
   }
 
   /* Fixed 800px (627 + spacing-32 + 141), not 100% — body's own extra
@@ -569,6 +572,7 @@
     overflow: hidden;
     cursor: pointer;
     transition: width var(--ag-duration) var(--ag-ease);
+    box-shadow: var(--shadow-soft);
   }
   .ag-panel.is-active {
     width: var(--ag-panel-active-width);

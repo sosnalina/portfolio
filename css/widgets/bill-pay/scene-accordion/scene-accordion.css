@@ -23,6 +23,7 @@
   --ag-nav-width: 800px; /* matches the panel row's total width (627 + 32 gap + 141) */
   --ag-overhang: 20px; /* must stay in sync with scenes-accordion.html's own --ag-overhang — see below */
   --ag-shadow-bleed: 6.69px; /* must stay in sync with scenes-accordion.html's own --ag-shadow-bleed (30px shadow-blur-radius × 0.223 mock-scale) — see below */
+  --ag-panel-shadow-bleed: var(--spacing-32); /* must stay in sync with scenes-accordion.html's own --ag-panel-shadow-bleed — reserves canvas on all four sides for the panels' --shadow-soft (30px blur) */
 
   display: flex;
   flex-direction: column;
@@ -55,12 +56,18 @@
    full mechanism). The inner document mirrors this with matching left
    padding on its own body, so the row's own visible position on the
    page doesn't move — only the invisible margin for the overhang (and
-   now the shadow beyond it) to bleed into does. */
+   now the shadow beyond it) to bleed into does. --ag-panel-shadow-bleed
+   extends this same reservation to all four sides, so the panels' own
+   --shadow-soft has canvas to bleed into on top/bottom/right as well,
+   not just the left edge the overhang/mock-shadow reservation already
+   covered. */
 .scene-accordion__visual {
   display: block;
-  width: calc(100% + var(--ag-overhang) + var(--ag-shadow-bleed));
-  margin-left: calc(-1 * (var(--ag-overhang) + var(--ag-shadow-bleed)));
-  height: var(--ag-stage-height);
+  width: calc(100% + var(--ag-overhang) + var(--ag-shadow-bleed) + 2 * var(--ag-panel-shadow-bleed));
+  margin-top: calc(-1 * var(--ag-panel-shadow-bleed));
+  margin-bottom: calc(-1 * var(--ag-panel-shadow-bleed));
+  margin-left: calc(-1 * (var(--ag-overhang) + var(--ag-shadow-bleed) + var(--ag-panel-shadow-bleed)));
+  height: calc(var(--ag-stage-height) + 2 * var(--ag-panel-shadow-bleed));
   border: none;
 }
 
