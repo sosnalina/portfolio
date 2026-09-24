@@ -1,0 +1,20 @@
+{#
+  Bill Pay mock frame — placeholder for a future iframe of the Bill Pay
+  mock. Sits in the hero's own content column, 170px below the hero
+  subheader, and bleeds from the green hero section down into the white
+  section below it (same overflow:visible bleed technique CLAUDE.md
+  documents for hero illustrations: a zero-size layout container so the
+  visible element inside can render past its own box without moving
+  anything else). Static layout only for now — no src, no script, no
+  motion; a later phase adds the src.
+
+  Placed via hero.njk's optional caller() slot:
+    {% call hero(...) %}{{ mockFrame() }}{% endcall %}
+  which renders this directly after div.section-hero, inside the hero
+  section's own section__slot.
+#}
+{% macro mockFrame() %}
+<div class="mock-frame">
+  <iframe class="mock-frame__iframe"></iframe>
+</div>
+{% endmacro %}

@@ -12,6 +12,7 @@ stylesheets:
   - ../../css/components/image-group.css
   - ../../css/components/principles.css
   - ../../css/components/ap-manager-orbit.css
+  - ../../css/widgets/bill-pay/mock-frame/mock-frame.css
   - ../../css/widgets/bill-pay/scene-gallery-accordion/scene-gallery-accordion.css
   - ../../css/widgets/bill-pay/scene-accordion/scene-accordion.css
   - ../../css/widgets/bill-pay/scene-stack/scene-stack.css
@@ -37,6 +38,7 @@ scripts:
 ---
 {% extends "base.njk" %}
 {% from "hero.njk" import hero %}
+{% from "mock-frame.njk" import mockFrame %}
 {% from "section.njk" import section %}
 {% from "section-header.njk" import sectionHeader %}
 {% from "section-body.njk" import sectionBody %}
@@ -50,15 +52,19 @@ scripts:
 {% block body %}
 <main>
   {# 1. Hero #}
-  {{ hero(
+  {% call hero(
     "../../assets/illustrations/bill-pay/hero/bill-pay-hero-illustration.png",
     "Lorem ipsum is a dummy placeholder text <br /><br />It lets people view page layouts and fonts without getting ",
     "When simplicity is not the right design strategy",
     "The product was built around one idea: make bill payment easy. It worked, until a new growth opportunity came knocking, challenging its core mental model."
-  ) }}
+  ) %}
+  {{ mockFrame() }}
+  {% endcall %}
 
-  {# 2. Section header with subheading, no visual #}
-  {% call section() %}
+  {# 2. Section header with subheading, no visual. section--bp-mock-overhang
+     (css/components/section.css) clears the mock frame bleeding down from
+     the hero above. #}
+  {% call section("section--bp-mock-overhang") %}
   {{ sectionHeader("Money on the move", "Business Background") }}
   {{ sectionBody([
     "QuickBooks is the backbone of financial operations for millions of US small businesses. <br>While it has always been the industry leader for accounting, for years, the actual money movement happened elsewhere. When it came down to payments, users would open their bank portals, write checks, or rely on whatever third-party workarounds they could grab.",

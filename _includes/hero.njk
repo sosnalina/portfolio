@@ -10,6 +10,12 @@
     headline         — raw HTML string for the h1 (may contain accent spans)
     subHeadline      — raw HTML string for the sub-headline paragraph
     id               — optional id attribute on the outer <section>
+
+  Optional {% call %} block: content passed this way renders immediately
+  after div.section-hero, still inside the hero's own section__slot. Plain
+  expression calls (`{{ hero(...) }}`) are unaffected — `caller` is only
+  truthy when invoked as `{% call hero(...) %}...{% endcall %}` (same guard
+  pattern as two-block-header.njk).
 #}
 {% from "section.njk" import section %}
 {% macro hero(illustrationSrc, note, headline, subHeadline, id="") %}
@@ -24,5 +30,8 @@
     <p class="section-hero__sub-headline">{{ subHeadline | safe }}</p>
   </div>
 </div>
+{% if caller %}
+{{ caller() }}
+{% endif %}
 {% endcall %}
 {% endmacro %}

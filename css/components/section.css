@@ -32,6 +32,28 @@
   height: 1000px;
 }
 
+.section--bp-mock-overhang {
+  /* Bill Pay only: this is the section directly under the hero, and the
+     hero's mock-frame (_includes/mock-frame.njk) bleeds 427.1px down into
+     it. Derivation, current hero copy:
+       frame bottom = 701.5 (hero subheader's bottom edge)
+                     + 170   (mock-frame's --mock-frame-gap)
+                     + 555.6 (frame height: 800px column / (1440/1000) aspect-ratio)
+                     = 1427.1
+       overhang into this section = 1427.1 - 1000 (fixed hero height) = 1427.1 - 1000 = 427.1
+     Depends on: the hero copy's rendered height (moves the subheader's
+     bottom edge), the hero's fixed 1000px height, the mock-frame's 170px
+     gap, and the 800px content column (drives the frame's height via its
+     aspect-ratio). Recompute this value if any of those change — this
+     modifier only, not the shared .section__content rule below, and no
+     other section is affected. */
+  --mock-frame-section-overhang: 427.1px;
+}
+
+.section--bp-mock-overhang .section__content {
+  padding-top: calc(var(--spacing-128) + var(--mock-frame-section-overhang));
+}
+
 @media (max-width: 600px) {
   .section__content {
     padding: var(--spacing-64) var(--spacing-32);

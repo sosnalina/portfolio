@@ -1,0 +1,43 @@
+.mock-frame {
+  /* Zero-height flex item. This is the hero's section__slot's 2nd child
+     (after div.section-hero), so section.css's `.section__slot { gap:
+     var(--spacing-64); }` inserts a 64px gap before it — margin-top cancels
+     that gap so this wrapper adds no height to the hero's flex column, and
+     the hero's centered content (div.section-hero) never shifts. Height
+     stays exactly 0 regardless of the iframe's own size/offset below: a
+     flex item is its own block-formatting context, so the iframe's
+     margin-top cannot collapse through this wrapper the way it would on a
+     plain block. overflow: visible lets the iframe bleed past this
+     0-height box (same technique as the hero illustration bleed, CLAUDE.md
+     "Illustration bleed (hero images)"). */
+  height: 0;
+  margin-top: calc(-1 * var(--spacing-64));
+  overflow: visible;
+}
+
+.mock-frame__iframe {
+  /* Gap from the hero subheader's bottom edge to this frame's top edge.
+     Checked tokens.css for a matching spacing token — none exists at
+     170px; Figma-measured value with no token to trace to. */
+  --mock-frame-gap: 170px;
+
+  display: block;
+  width: 100%;
+  aspect-ratio: 1440 / 1000;
+  margin-top: var(--mock-frame-gap);
+  border: none;
+  border-radius: var(--spacing-8);
+  overflow: hidden;
+  background: var(--primitive-white);
+  box-shadow: var(--shadow-soft);
+
+  /* This frame overhangs into the white section below (later in the DOM).
+     A positioned descendant's paint layer sits above any non-positioned
+     in-flow content within the same stacking context regardless of DOM
+     order (CSS2.1 Appendix E) — position: relative on its own would
+     already paint this above that section. z-index: 1 is the lowest
+     explicit value that states this deliberately rather than relying on
+     the implicit z-index: auto behavior. */
+  position: relative;
+  z-index: 1;
+}
