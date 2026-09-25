@@ -26,7 +26,11 @@
   aspect-ratio: 1440 / 1000;
   margin-top: var(--mock-frame-gap);
   border: none;
-  border-radius: var(--spacing-8);
+  /* Matches the hero mock's own screen corner so there is one rounded edge: hero-mock.html's .bp-screen
+     radius (35.4461538462px, native 1440) scaled to this frame's 800px width. No token at this value —
+     derived, not picked (Hadar, 25 Sep: keep the mock's ~20px corner). */
+  --mock-frame-radius: calc(35.4461538462px * 800 / 1440);
+  border-radius: var(--mock-frame-radius);
   overflow: hidden;
   background: var(--primitive-white);
   box-shadow: var(--shadow-soft);
