@@ -1,0 +1,160 @@
+/*
+  Crystal ball — Bill Pay, "High hopes, flat Metrics" section.
+  Figma: illustration node 1458:20811 (156 × 156). Placement: section node 1436:28144.
+  Approved against Claude's playable mock, 28 Sep 2026. Motion lives in js/bill-pay/crystal-ball.js.
+
+  Geometry below is raw px from the Figma node (absoluteRenderBounds relative to the
+  156 × 156 frame), not spacing-scale values — same convention as ap-manager-orbit.css.
+  Vectors are Figma's own SVG export of each brush stroke (inline in _includes/crystal-ball.njk).
+*/
+
+/* ── Placement (Figma 1436:28346 / 1436:28345) ─────────────────────────── */
+
+/* Vertical block: [ball + first paragraph] row, then the remaining paragraphs. */
+.crystal-ball-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-24); /* Figma draws 26; Hadar set --spacing-24, 28 Sep */
+  width: 100%;
+}
+
+/* Horizontal row: ball, then the first paragraph, centred on each other. */
+.crystal-ball-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-32); /* Figma draws 36; Hadar set --spacing-32, 28 Sep */
+  width: 100%;
+}
+
+/* The paragraph takes the rest of the row (Figma's fixed 613px overflowed the 800px column). */
+.crystal-ball-row > .section-body {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── The ball ────────────────────────────────────────────────────────── */
+
+.crystal-ball {
+  /* Widget-scoped values with no token equivalent (glass effect only). */
+  --crystal-ball-size: 156px;                  /* Figma frame 1458:20811 */
+  --crystal-ball-glass-frost: 1px;             /* Figma GLASS "frost" — tuned by eye, Hadar 28 Sep */
+  --crystal-ball-glass-dispersion: 0.35;       /* Figma GLASS "dispersion" — tuned by eye, Hadar 28 Sep */
+  --crystal-ball-glass-fill: color-mix(in srgb, var(--primitive-white) 15%, transparent); /* Figma fill: white 15% */
+  --crystal-ball-glass-rim-a: 255, 60, 140;    /* dispersion rim colours: CSS stand-in for Figma's glass */
+  --crystal-ball-glass-rim-b: 40, 170, 255;    /* dispersion, which has no CSS equivalent. Not tokens; */
+  --crystal-ball-glass-rim-c: 255, 220, 90;    /* widget-scoped by decision (Hadar, 28 Sep).           */
+
+  position: relative;
+  flex: none;
+  width: var(--crystal-ball-size);
+  height: var(--crystal-ball-size);
+  overflow: hidden;        /* Figma frame clipsContent: true */
+  touch-action: none;
+}
+
+.crystal-ball__defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+.crystal-ball__layer {
+  position: absolute;
+  display: block;
+  will-change: transform;
+}
+
+.crystal-ball__layer > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;       /* brush dabs may extend past Figma's rounded export box */
+}
+
+/* Ellipse big, Ellipse small, Ellipse 26 */
+.crystal-ball__disc {
+  border-radius: 50%;
+  background: var(--primitive-white);
+}
+
+/* Figma layer "glass": ellipse, rotated -41.018°, Figma GLASS effect.
+   Rebuilt as fill + backdrop blur (frost) + a split-colour rim (dispersion). */
+.crystal-ball__glass {
+  border-radius: 50%;
+  background: var(--crystal-ball-glass-fill);
+  -webkit-backdrop-filter: blur(var(--crystal-ball-glass-frost));
+  backdrop-filter: blur(var(--crystal-ball-glass-frost));
+  box-shadow:
+    inset 1px 0 0 rgba(var(--crystal-ball-glass-rim-a), calc(var(--crystal-ball-glass-dispersion) * .55)),
+    inset -1px 0 0 rgba(var(--crystal-ball-glass-rim-b), calc(var(--crystal-ball-glass-dispersion) * .55)),
+    inset 0 1px 0 rgba(var(--crystal-ball-glass-rim-c), calc(var(--crystal-ball-glass-dispersion) * .4));
+  transform: rotate(-41.018deg);
+  transform-origin: center;
+}
+
+/* ── Layer geometry (Figma absoluteRenderBounds, px) ─────────────────── */
+
+/* Ellipse big */
+.crystal-ball__layer--ellipse-big { left: 4px; top: 0px; width: 148px; height: 148px; opacity: .5; }
+/* Ellipse small */
+.crystal-ball__layer--ellipse-small { left: 12px; top: 8px; width: 132px; height: 132px; opacity: .8; }
+/* Vector 505 */
+.crystal-ball__layer--vector-505 { left: 38.192px; top: 42.64px; width: 17px; height: 50px; }
+/* Vector 464 */
+.crystal-ball__layer--vector-464 { left: 81.286px; top: 80.292px; width: 9px; height: 8px; }
+/* Ellipse 26 */
+.crystal-ball__layer--ellipse-26 { left: 76.368px; top: 89.363px; width: 21.791px; height: 21.791px; background: var(--primitive-black); }
+/* Vector 456 */
+.crystal-ball__layer--vector-456 { left: 39.298px; top: 91.049px; width: 8px; height: 11px; }
+/* Group 1000002578 */
+.crystal-ball__layer--group-1000002578 { left: 55.571px; top: 103.716px; width: 13px; height: 9px; }
+/* Vector 457 */
+.crystal-ball__layer--vector-457 { left: 111.928px; top: 45.762px; width: 16px; height: 21px; }
+/* Vector 528 */
+.crystal-ball__layer--vector-528 { left: 26.603px; top: 14.108px; width: 39px; height: 64px; }
+/* Vector 525 */
+.crystal-ball__layer--vector-525 { left: 79.151px; top: 41.288px; width: 21px; height: 12px; }
+/* Vector 504 */
+.crystal-ball__layer--vector-504 { left: 76.723px; top: 73.738px; width: 20px; height: 28px; }
+/* Ellipse 28 */
+.crystal-ball__layer--ellipse-28 { left: 95.735px; top: 56.663px; width: 4px; height: 4px; }
+/* Vector 523 */
+.crystal-ball__layer--vector-523 { left: 63.03px; top: 26.947px; width: 18px; height: 20px; }
+/* Vector 521 */
+.crystal-ball__layer--vector-521 { left: 106.153px; top: 43.003px; width: 18px; height: 16px; }
+/* Vector 503 */
+.crystal-ball__layer--vector-503 { left: 116.16px; top: 56.371px; width: 8px; height: 8px; }
+/* Vector 530 */
+.crystal-ball__layer--vector-530 { left: 109.202px; top: 55.495px; width: 5px; height: 5px; }
+/* Vector 575 */
+.crystal-ball__layer--vector-575 { left: 2.313px; top: 14.714px; width: 59px; height: 53px; }
+/* Vector 600 */
+.crystal-ball__layer--vector-600 { left: 92.328px; top: 72.114px; width: 59px; height: 53px; }
+/* arrow */
+.crystal-ball__layer--arrow { left: 70px; top: 87px; width: 35.5px; height: 23.5px; }
+/* abs */
+.crystal-ball__layer--abs { left: 99px; top: 91px; width: 25.5px; height: 24.5px; }
+/* dollar1 */
+.crystal-ball__layer--dollar1 { left: 104px; top: 27px; width: 18.5px; height: 20px; }
+/* splash */
+.crystal-ball__layer--splash { left: 120px; top: 78px; width: 14.5px; height: 18px; }
+/* hash */
+.crystal-ball__layer--hash { left: 39px; top: 91px; width: 17.5px; height: 21px; }
+/* bubble */
+.crystal-ball__layer--bubble { left: 54px; top: 49px; width: 40.5px; height: 28px; }
+/* letter */
+.crystal-ball__layer--letter { left: 18px; top: 59px; width: 40px; height: 44.5px; }
+/* paper */
+.crystal-ball__layer--paper { left: 40px; top: 50px; width: 28.5px; height: 40.5px; }
+/* him */
+.crystal-ball__layer--him { left: 50px; top: 73px; width: 30.5px; height: 32px; }
+/* check-v */
+.crystal-ball__layer--check-v { left: 41px; top: 27px; width: 67.5px; height: 20px; }
+/* dollar2 */
+.crystal-ball__layer--dollar2 { left: 90px; top: 42px; width: 21px; height: 17.5px; }
+/* she */
+.crystal-ball__layer--she { left: 93px; top: 60px; width: 29px; height: 28px; }
+/* base */
+.crystal-ball__layer--base { left: 6px; top: 120px; width: 144px; height: 36px; }
+/* glass */
+.crystal-ball__layer--glass { left: 19.252px; top: 27.98px; width: 50.296px; height: 28.74px; }

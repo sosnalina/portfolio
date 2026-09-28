@@ -27,6 +27,7 @@ stylesheets:
   - ../../css/widgets/bill-pay/cockpit/tag.css
   - ../../css/widgets/bill-pay/cockpit/center-stage.css
   - ../../css/widgets/bill-pay/scroll-cue/scroll-cue.css
+  - ../../css/widgets/bill-pay/crystal-ball/crystal-ball.css
 scripts:
   - ../../js/bill-pay/walkthrough-gallery.js
   - ../../js/bill-pay/cockpit-widget.js
@@ -48,6 +49,7 @@ scripts:
 {% from "scene-gallery-accordion.njk" import sceneGalleryAccordion %}
 {% from "scene-accordion.njk" import sceneAccordion %}
 {% from "scene-stack.njk" import sceneStack %}
+{% from "crystal-ball.njk" import crystalBall %}
 
 {% block body %}
 <main>
@@ -377,12 +379,19 @@ scripts:
 
   {% call section("section--green-light") %}
   {{ sectionHeader("High hopes, flat Metrics", "Testing and Validation") }}
-  {{ sectionBody([
-    "At this point, we were tackling a bigger question than usability or adoption: what happens to the existing single-bill wizard? Sunsetting it felt risky for SMBs who were comfortable with that cute wizard. Also, bringing two opposite ends of the user spectrum under one cognitive model was an unconventional move. On the other hand, keeping two products would create long-term operational debt.",
-    "Leadership saw it differently, having us look at SMBs' struggle to bridge day-to-day survival and scaling up. Their leap of faith was that putting this tool in their hands could gently nudge them from just paying their bills to thinking big about cash leverage, fees, and risk control.",
-    "We put our solution in front of both mid-market and SMB customers, stress-testing the experience for usability and comprehension. The feedback was encouraging, and a few iterations later, mainly to the microcopy and first-time-user flows, we were ready to test it in production.",
-    "We launched a 3-month phased rollout, benchmarking 150 Mid-Market design partners and 500 SMBs against a control group to track payment volume and TPV.<br>Working closely with Customer Success, the feedback was noisy, clouded by technical bugs and operational friction. It didn't look like a classic UX win.<br>The numbers, however, told a different story. They didn't drop throughout the trial, despite the technical glitches. This \"no-harm\" metric was our ray of light. We fixed the bugs and went at it again. This time, the needle started moving."
-  ]) }}
+  <div class="crystal-ball-block">
+    <div class="crystal-ball-row">
+      {{ crystalBall() }}
+      {{ sectionBody([
+        "At this point, we were tackling a bigger question than usability or adoption: what happens to the existing single-bill wizard? Sunsetting it felt risky for SMBs who were comfortable with that cute wizard. Also, bringing two opposite ends of the user spectrum under one cognitive model was an unconventional move. On the other hand, keeping two products would create long-term operational debt."
+      ]) }}
+    </div>
+    {{ sectionBody([
+      "Leadership saw it differently, having us look at SMBs' struggle to bridge day-to-day survival and scaling up. Their leap of faith was that putting this tool in their hands could gently nudge them from just paying their bills to thinking big about cash leverage, fees, and risk control.",
+      "We put our solution in front of both mid-market and SMB customers, stress-testing the experience for usability and comprehension. The feedback was encouraging, and a few iterations later, mainly to the microcopy and first-time-user flows, we were ready to test it in production.",
+      "We launched a 3-month phased rollout, benchmarking 150 Mid-Market design partners and 500 SMBs against a control group to track payment volume and TPV.<br>Working closely with Customer Success, the feedback was noisy, clouded by technical bugs and operational friction. It didn't look like a classic UX win.<br>The numbers, however, told a different story. They didn't drop throughout the trial, despite the technical glitches. This \"no-harm\" metric was our ray of light. We fixed the bugs and went at it again. This time, the needle started moving."
+    ]) }}
+  </div>
   {% endcall %}
 
   {% call section() %}
