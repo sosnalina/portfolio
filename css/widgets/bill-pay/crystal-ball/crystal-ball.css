@@ -8,28 +8,25 @@
   Vectors are Figma's own SVG export of each brush stroke (inline in _includes/crystal-ball.njk).
 */
 
-/* ── Placement (Figma 1436:28346 / 1436:28345) ─────────────────────────── */
+/* ── Placement: text wrap (Hadar, 28 Sep — replaces Figma 1436:28345's side-by-side row) ── */
 
-/* Vertical block: [ball + first paragraph] row, then the remaining paragraphs. */
-.crystal-ball-block {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-24); /* Figma draws 26; Hadar set --spacing-24, 28 Sep */
+/* Block wrapper: the ball floats left and the section's paragraphs wrap around it, then under it. */
+.crystal-ball-flow {
+  --crystal-ball-wrap-drop: 17px; /* optical: ball's top sits this far below the first text line's box — chosen by eye on the wrap mock, Hadar 28 Sep */
   width: 100%;
 }
 
-/* Horizontal row: ball, then the first paragraph, centred on each other. */
-.crystal-ball-row {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-32); /* Figma draws 36; Hadar set --spacing-32, 28 Sep */
-  width: 100%;
+/* .section-body is a flex column, and a flex container won't wrap text around a float.
+   Only inside this wrapper it becomes a plain block so its paragraphs flow around the ball. */
+.crystal-ball-flow > .section-body {
+  display: block;
 }
 
-/* The paragraph takes the rest of the row (Figma's fixed 613px overflowed the 800px column). */
-.crystal-ball-row > .section-body {
-  flex: 1;
-  min-width: 0;
+.crystal-ball-flow > .crystal-ball {
+  float: left;
+  margin-top: var(--crystal-ball-wrap-drop);
+  margin-right: var(--spacing-32);  /* ball → text */
+  margin-bottom: var(--spacing-16); /* ball → the lines that wrap under it */
 }
 
 /* ── The ball ────────────────────────────────────────────────────────── */
