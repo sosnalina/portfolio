@@ -1,18 +1,32 @@
 .section-hero {
   display: flex;
-  align-items: flex-start;
-  gap: 66px;
+  flex-direction: column;
   width: 100%;
 }
 
-.section-hero__text-column {
-  display: flex;
-  flex: 1 0 0;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--spacing-64);
-  min-width: 0;
-  padding-top: var(--spacing-8);
+/* Scene variant (Bill Pay). Values hardcoded by Hadar's decision — see hero-headline widget. */
+.section-hero--scene .section-hero__headline-stage {
+  position: relative;
+  height: 527px; /* 655 (sub-headline top in the 1000px hero) − 128 (section__content padding-top) */
+}
+
+.section-hero--scene .section-hero__headline {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+} /* visually hidden; the scene draws the words */
+
+.section-hero--scene .section-hero__sub-headline {
+  margin: 0;
+  font: 400 17px/1.65 "Literata", Georgia, serif;
+  color: #393a3d;
+  text-align: center;
 }
 
 .section-hero__headline {
@@ -30,31 +44,5 @@
   width: 100%;
   font: var(--text-hero-sub-headline);
   font-weight: var(--font-weight-regular);
-  color: var(--primitive-black);
-}
-
-.section-hero__illustration-column {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: space-between;
-  align-self: stretch;
-  flex-shrink: 0;
-  width: 269px;
-  overflow: visible;
-}
-
-.section-hero__illustration {
-  display: block;
-  align-self: flex-end;
-  width: calc(269px + (2 * var(--spacing-32)));
-  max-width: none;
-  margin-bottom: 10px;
-}
-
-.section-hero__note {
-  width: 215px;
-  font: var(--text-hero-note);
-  font-weight: var(--font-weight-semibold);
   color: var(--primitive-black);
 }

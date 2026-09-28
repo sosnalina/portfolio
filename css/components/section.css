@@ -30,24 +30,39 @@
 
 .section--hero {
   height: 1000px;
+  overflow-x: clip;
+  /* Every other section's height is driven by its own content, so the base
+     .section rule's justify-content: center is a no-op there. The hero is
+     the one section with a FIXED height that can differ from its content's
+     height, so centering is visible here — and the hero-headline scene
+     (css/widgets/bill-pay/hero-headline/) positions its words/objects in
+     Figma frame coordinates that assume the content sits flush at the
+     section's own top edge (Hadar, 28 Sep: confirmed via measurement that
+     centering was pushing the scene ~80px lower than Figma intends).
+     flex-start pins it there; only this section, not the shared rule. */
+  justify-content: flex-start;
 }
 
 .section--bp-mock-overhang {
   /* Bill Pay only: this is the section directly under the hero, and the
-     hero's mock-frame (_includes/mock-frame.njk) bleeds 427.1px down into
-     it. Derivation, current hero copy:
-       frame bottom = 701.5 (hero subheader's bottom edge)
+     hero's mock-frame (_includes/mock-frame.njk) bleeds 436.6px down into
+     it. Derivation, current hero (scene variant, css/widgets/bill-pay/hero-headline/):
+       frame bottom = 711.1 (hero subheader's bottom edge — 655 sub-headline
+                     top, from the headline-stage's 527px height + 128px
+                     section__content padding-top, now that .section--hero
+                     pins content to the top instead of centering it — see
+                     that rule's own comment — + 56.1 sub-headline height)
                      + 170   (mock-frame's --mock-frame-gap)
                      + 555.6 (frame height: 800px column / (1440/1000) aspect-ratio)
-                     = 1427.1
-       overhang into this section = 1427.1 - 1000 (fixed hero height) = 1427.1 - 1000 = 427.1
+                     = 1436.6 (measured: 1436.640625)
+       overhang into this section = 1436.6 - 1000 (fixed hero height) = 436.6
      Depends on: the hero copy's rendered height (moves the subheader's
      bottom edge), the hero's fixed 1000px height, the mock-frame's 170px
      gap, and the 800px content column (drives the frame's height via its
      aspect-ratio). Recompute this value if any of those change — this
      modifier only, not the shared .section__content rule below, and no
      other section is affected. */
-  --mock-frame-section-overhang: 427.1px;
+  --mock-frame-section-overhang: 436.6px;
 }
 
 .section--bp-mock-overhang .section__content {

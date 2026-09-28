@@ -1,0 +1,70 @@
+@import url('https://fonts.googleapis.com/css2?family=Literata:ital,wght@1,200..800&display=swap');
+
+/* Bill Pay hero headline scene. Every value below is hardcoded verbatim from
+   docs/reference/hero-headline-mock.html (Hadar-approved reference — see
+   COMPONENT-MAP.md), not tokenized. Do not create tokens for these values
+   and do not edit css/tokens.css. */
+
+.hero-headline-scene {
+  position: absolute;
+  top: -128px;
+  left: 50%;
+  width: 1440px;
+  height: 1000px;
+  margin-left: -720px;
+  overflow: clip;
+  pointer-events: none;
+}
+/* 1440×1000 layer = the reference's stage, anchored to the hero section's own top-left at a 1440px viewport:
+   top −128 cancels section__content padding; centred on the slot so it stays centred at any width */
+
+.hero-headline-scene__word {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 80px;
+  font-family: "Literata", Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 60px;
+  line-height: 80px;
+  letter-spacing: 0;
+  text-align: center;
+  white-space: pre;
+  color: #393a3d;
+  will-change: transform;
+}
+
+.hero-headline-scene .hero-headline-scene__word {
+  perspective: 400px;
+}
+
+.hero-headline-scene__word--mask {
+  overflow: hidden;
+}
+
+.hero-headline-scene__char {
+  display: inline-block;
+  white-space: pre;
+  will-change: transform, opacity, filter;
+}
+
+.hero-headline-scene__cursor {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 3px;
+  height: 48.6px;
+  background: #393a3d;
+}
+
+svg.hero-headline-scene__obj {
+  position: absolute;
+  overflow: visible;
+  will-change: transform;
+}
+
+.hero-headline-scene__fill-box {
+  transform-box: fill-box;
+  transform-origin: center;
+}

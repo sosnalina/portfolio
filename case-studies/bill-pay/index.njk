@@ -5,6 +5,7 @@ stylesheets:
   - ../../css/reset.css
   - ../../css/components/section.css
   - ../../css/components/hero.css
+  - ../../css/widgets/bill-pay/hero-headline/hero-headline.css
   - ../../css/components/header.css
   - ../../css/components/subheader.css
   - ../../css/components/body.css
@@ -29,6 +30,7 @@ stylesheets:
   - ../../css/widgets/bill-pay/scroll-cue/scroll-cue.css
   - ../../css/widgets/bill-pay/crystal-ball/crystal-ball.css
 scripts:
+  - ../../js/bill-pay/hero-headline.js
   - ../../js/bill-pay/walkthrough-gallery.js
   - ../../js/bill-pay/cockpit-widget.js
   - ../../js/bill-pay/scene-gallery-accordion.js
@@ -56,10 +58,10 @@ scripts:
 <main>
   {# 1. Hero #}
   {% call hero(
-    "../../assets/illustrations/bill-pay/hero/bill-pay-hero-illustration.png",
-    "Lorem ipsum is a dummy placeholder text <br /><br />It lets people view page layouts and fonts without getting ",
     "When simplicity is not the right design strategy",
-    "The product was built around one idea: make bill payment easy. It worked, until a new growth opportunity came knocking, challenging its core mental model."
+    "The product was initially built around one idea: make bill payment easy. It worked.<br />Until a new growth opportunity came knocking, challenging its core mental model.",
+    "",
+    true
   ) %}
   {{ mockFrame() }}
   {% endcall %}
