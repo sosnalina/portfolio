@@ -259,8 +259,41 @@ const SUB = { t: BUILD_END + 0.38, d: 0.45 }; // section-header subheading entra
 const END = SUB.t + SUB.d, SPEED = 1.25;
 let t = 0;
 const scaleNow = () => 1;
+
+let playing = false, last = null, raf = null;
+function loop(now) {
+  if (playing && last !== null) { t += (now - last) / 1000 * SPEED; }
+  last = now;
+  render(t);
+  if (playing) raf = requestAnimationFrame(loop);
+}
+function play() {
+  if (playing) return;
+  playing = true;
+  last = null;
+  raf = requestAnimationFrame(loop);
+}
+function pause() {
+  playing = false;
+  if (raf !== null) { cancelAnimationFrame(raf); raf = null; }
+}
+
+let ready = false, pendingEnter = false;
+function onEnter() {
+  if (!ready) { pendingEnter = true; return; }
+  play();
+}
+function onExit() {
+  pendingEnter = false; // an exit before fonts/build finish cancels the queued first play
+  pause();
+}
+
 document.fonts.load('italic 400 60px Literata').then(() => document.fonts.ready).then(() => {
   build();
-  render(END);
+  render(0);
+  ready = true;
+  if (pendingEnter) { pendingEnter = false; play(); }
 });
+
+window.ViewportGate.observe(stage.closest('.section'), { onEnter, onExit });
 })();

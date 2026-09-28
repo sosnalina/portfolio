@@ -68,3 +68,11 @@ svg.hero-headline-scene__obj {
   transform-box: fill-box;
   transform-origin: center;
 }
+
+/* Before the first onEnter (js/bill-pay/hero-headline.js), the scene's own
+   words/objects are hidden by render(0)'s own inline styles once JS runs,
+   but the sub-headline is real server-rendered markup with no inline style
+   yet — this covers the gap. render() takes over its opacity from there. */
+html.js-motion .section-hero--scene .section-hero__sub-headline {
+  opacity: 0;
+}
