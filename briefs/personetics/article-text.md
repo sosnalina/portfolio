@@ -19,9 +19,9 @@ At the time, I was a young designer at a UX agency, assigned to the Personetics 
 [[VISUAL:phone]]
 
 ## visual: diagram
-DATA · Ingest · Clean · Categorize — Raw data of each customer’s latest activity is fed from the bank’s core systems, then processed and structured.
-LOGIC · Track · Detect · Rank — A learning algorithm follows each customer’s behavior and spots what changed and what’s worth telling.
-INSIGHT · Proactive · Real-time · Approachable — A branded experience inside the bank’s app informs customers of what matters most in their own financial lives.
+Data · Ingest · Clean · Categorize — Raw data of each customer’s latest activity is fed from the bank’s core systems, processed and structured.
+Logic · Track · Detect · Rank — A learning algorithm follows each customer’s behavior to spot what changed and what’s worth telling.
+Insight · Proactive · Real-time · Approachable — A branded experience inside the bank’s app informs customers of what matters most in their own financial lives.
 
 # 02
 header: Growing pains
