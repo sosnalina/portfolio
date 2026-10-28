@@ -147,25 +147,10 @@ Decision (Hadar, 28 Oct): the problem statement's static layout ships inside the
 Phase rule applies to every visual: static first, motion second, gate inside the prompt. Every visual below except the problem statement still lives here; each moves to its own file (spec placement rule, §1) when its drill-down starts.
 
 ### 01 — Cognitive banking diagram
-- **Placement:** between body paragraphs 2 and 3 of section 01.
-- **Tag:** top-left dark pill, white text, placeholder "Headline headline headline". **Duplicate** the Bill Pay design-principles tag (Volume / Productivity / Quality).
-- **Red shape:** stepped isometric block, red and dark-red faces. **Hadar exports as SVG.** Placement from her Figma artboard (Claude Code reads the artboard node via MCP for coordinates/spacing only).
-- **Three B&W photo cut-outs:** lighthouse (top block), compass (right), cable reel/winch (lower-left block). Hadar exports.
-- **Three callouts** — title, short red rule, grey body text, red keyword line with middle-dot separators:
-  - Data (left): Ingest · Clean · Categorize
-  - Insight (top right): Proactive · Real-time · Approachable
-  - Logic (lower right): Track · Detect · Rank
-- **Leader lines:** thin grey lines connecting each callout to its object/mesh.
-- **Meshes:** grey dots joined by thin lines around each object. One component, reused rotated/flipped.
-- **Motion:** mesh dots drift slightly (purpose: delight). Everything else static. Mechanism OPEN (see §3).
+- Full spec (static values and locked motion): **`briefs/personetics/cognitive-banking-diagram.md`**.
 
 ### 02 — Danny figure + speech bubble
-- **Speech bubble:** white organic blob inside section 02, tail pointing down-left to the figure. Quote in italic serif. Quote text comes from the text sync (`[[VISUAL:quote]]` in s2).
-- **Figure:** B&W photo cut-out of a seated man; head replaced by a red asterisk shape; mesh around the head.
-- **Placement:** sits on the boundary between 02 and 03 — torso in 02, legs hang into 03, feet just above the 03 badge. In Figma he's outside the auto-layout artboard (Figma limitation).
-- **Technical (Claude's call):** anchored to the bottom edge of section 02, overflows into 03, static paint order in front of 03. Position measured against 02's bottom edge.
-- **Leg motion:** relaxed swing, like sitting on a fence. NOT anxious. Communicates an informal CTO who sits on tables. Slow, pendular, easing at each end; fast/small/even jiggle reads as anxiety. Perspective matters: swinging forward, the shin foreshortens and the shoe tilts toward the camera (more sole/toe); swinging back, the shin lengthens and the heel shows. Cut at mid-thigh (static thigh in every frame hides the seam); pivot at the knee. Speed and amplitude picked by eye from a playable comparison. Technique OPEN (see §3).
-- **Head mesh:** same component and same motion as the 01 diagram.
+- Full spec (static now, leg motion later): **`briefs/personetics/danny-figure.md`**. Quote text comes from the text sync (`[[VISUAL:quote]]` in s2).
 
 ### 04 — Pain map (interactive)
 - **Placement:** between body paragraphs 1 and 2 of section 04.
@@ -242,7 +227,6 @@ Repo facts checked on 28 Oct (re-check on split day):
 ## 3. Open / to add
 
 ### Blocking specific visuals
-- **Mesh motion** (01 diagram + 02 head): Hadar looks for a reference. If none, Claude builds a playable comparison in a fresh chat. Includes whether leader-line ends follow a drifting dot.
 - **Leg technique** (02): test = 3 frames from Figma/Nano Banana (both swing ends + middle) → Claude builds a quick playable loop → Hadar decides. Alternative if frames flicker: image-to-video (same first/last frame), Claude Code extracts frames → background removal → sprite. Delivery: sprite (stop-motion) vs video (smooth, needs WebM + HEVC alpha) — undecided.
 - **Problem statement entrance:** see `problem-statement.md` §2.
 - **Pain map drill-down:** find the workbench artifact; per-tab content; expanded state from Figma keyframes; per-tab illustrations and motion.
