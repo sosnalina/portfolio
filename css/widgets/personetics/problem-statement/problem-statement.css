@@ -1,0 +1,32 @@
+.problem-statement {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-64);
+}
+
+.problem-statement__brace {
+  display: flex;
+  flex: none;
+  color: var(--primitive-red);
+}
+
+/* Opening brace = the closing brace rotated 180°, matching the Figma node.
+   Rotates the HTML wrapper, so transform-origin is its centre by default. */
+.problem-statement__brace--open {
+  transform: rotate(180deg);
+}
+
+.problem-statement__text {
+  flex: 1 1 auto;
+  min-width: 0;
+  font: var(--text-problem-statement);
+  color: var(--primitive-black);
+}
+
+.problem-statement__text p {
+  margin: 0;
+}
+
+.problem-statement__text strong {
+  font: var(--text-problem-statement-lead);
+}

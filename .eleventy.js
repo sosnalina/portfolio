@@ -7,6 +7,7 @@ module.exports = function (eleventyConfig) {
   eleventyConfig.addPassthroughCopy("case-studies/bill-pay/walkthrough-gallery.html");
   eleventyConfig.addPassthroughCopy("case-studies/bill-pay/accordion-gallery.html");
   eleventyConfig.addPassthroughCopy("figma_thumb.png");
+  eleventyConfig.addWatchTarget("briefs/personetics/article-text.md");
 
   return {
     dir: {

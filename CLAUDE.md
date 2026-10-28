@@ -55,6 +55,15 @@ Reusability across widgets (e.g. whether Tag or the toggle tab styles get shared
 
 ## How to receive a task
 
+### Task types
+
+Every task is one of two types, and the prompt says which.
+
+- **Composition task:** built only from existing partials, classes and tokens, plus supplied content. No Figma frame needed. If anything the task needs isn't covered by what already exists, STOP and ask. Never fill the gap.
+- **New-structure task:** anything new: a component, visual, chart, illustration layout or widget. Needs a Figma node, or an approved reference artifact whose code is in the prompt.
+
+The requirements below (Figma frame, link, mapped CSS file) apply to new-structure tasks.
+
 Each task must specify:
 
 - The exact Figma frame name
@@ -97,7 +106,7 @@ Before building any new component structure (not small tweaks — actual new lay
 - Never create a new CSS file if one already exists for that component.
 - Never create duplicate files or parallel implementations.
 - Never modify files outside the scope of the current task.
-- Never add features, patterns, or styles not present in the specified Figma frame.
+- Never add features, patterns, or styles not present in the specified Figma frame, or, in a composition task, not already present in the existing partials, classes and tokens.
 - Never use a hex value, pixel value, or font name directly in any CSS rule.
 - Never approximate a missing token. If a Figma value has no token mapping, stop immediately, list it as a blocking issue, and ask.
 - Never modify unrelated files or sections, even if you notice issues outside current scope.

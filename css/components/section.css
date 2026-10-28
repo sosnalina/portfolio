@@ -28,6 +28,12 @@
   background: var(--primitive-grey-light);
 }
 
+/* Beige section; its badge switches from the theme's dark red to red. Must stay after .section--hero (the hero carries both classes). */
+.section--beige {
+  background: var(--primitive-beige);
+  --theme-badge-bg: var(--primitive-red);
+}
+
 .section--hero {
   height: 1000px;
   overflow-x: clip;

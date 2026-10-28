@@ -1,0 +1,31 @@
+{#
+  Problem-statement pattern — Personetics section 04 (spec: briefs/personetics/problem-statement.md §1).
+
+  Params:
+    lines — array of HTML-escaped strings, one per <p> (the `persona` lines of
+            briefs/personetics/article-text.md). Each line's lead-in is wrapped in <strong>.
+            A lead-in matches only at the start of a line, as whole words.
+#}
+{% macro problemStatement(lines) %}
+<div class="problem-statement">
+  <span class="problem-statement__brace problem-statement__brace--open">{% include "personetics/problem-statement-brace.svg" %}</span>
+  <div class="problem-statement__text">
+    {% for line in lines %}
+    {% set lead = "" %}
+    {% if line.startsWith("I am a ") %}{% set lead = "I am a" %}
+    {% elif line.startsWith("I’m trying to ") %}{% set lead = "I’m trying to" %}
+    {% elif line.startsWith("But ") %}{% set lead = "But" %}
+    {% elif line.startsWith("Because ") %}{% set lead = "Because" %}
+    {% elif line.startsWith("Which makes me feel ") %}{% set lead = "Which makes me feel" %}
+    {% elif line.startsWith("In an ideal world ") %}{% set lead = "In an ideal world" %}
+    {% endif %}
+    {% if lead %}
+    <p><strong>{{ lead }}</strong>{{ line.slice(lead.length) | safe }}</p>
+    {% else %}
+    <p>{{ line | safe }}</p>
+    {% endif %}
+    {% endfor %}
+  </div>
+  <span class="problem-statement__brace">{% include "personetics/problem-statement-brace.svg" %}</span>
+</div>
+{% endmacro %}

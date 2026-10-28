@@ -2,6 +2,12 @@ main {
   counter-reset: section-header;
 }
 
+/* Personetics page theme: dark-red badge with white number (beige sections override the background in section.css). */
+.theme-red {
+  --theme-badge-bg: var(--primitive-red-dark);
+  --theme-badge-text: var(--primitive-white);
+}
+
 .section-header {
   counter-increment: section-header;
   display: flex;
@@ -15,7 +21,7 @@ main {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: var(--primitive-green-light);
+  background: var(--theme-badge-bg, var(--primitive-green-light));
   padding: var(--spacing-4) var(--spacing-8);
   border-radius: var(--spacing-8);
 }
@@ -27,7 +33,7 @@ main {
 .section-header__badge-text {
   font: var(--text-number-section);
   font-weight: var(--font-weight-extrabold);
-  color: var(--primitive-black);
+  color: var(--theme-badge-text, var(--primitive-black));
 }
 
 .section-header__badge-text::before {

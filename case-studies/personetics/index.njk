@@ -1,0 +1,34 @@
+---
+title: Personetics — Case Study
+stylesheets:
+  - ../../css/tokens.css
+  - ../../css/reset.css
+  - ../../css/components/section.css
+  - ../../css/components/header.css
+  - ../../css/components/body.css
+  - ../../css/widgets/personetics/problem-statement/problem-statement.css
+---
+{% extends "shared/base.njk" %}
+{% from "shared/section.njk" import section %}
+{% from "shared/section-header.njk" import sectionHeader %}
+{% from "shared/section-body.njk" import sectionBody %}
+{% from "personetics/problem-statement.njk" import problemStatement %}
+
+{% block body %}
+<main class="theme-red">
+  {% call section("section--hero section--beige") %}{% endcall %}
+
+  {% for s in personeticsText %}
+  {% call section("section--beige" if loop.index % 2 == 0 else "") %}
+    {{ sectionHeader(s.header, s.title) }}
+    {% for block in s.blocks %}
+    {% if block.type == "text" %}
+    {{ sectionBody(block.paragraphs) }}
+    {% elif block.name == "persona" %}
+    {{ problemStatement(s.visuals.persona) }}
+    {% endif %}
+    {% endfor %}
+  {% endcall %}
+  {% endfor %}
+</main>
+{% endblock %}
