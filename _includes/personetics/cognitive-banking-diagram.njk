@@ -1,0 +1,72 @@
+{#
+  Cognitive banking diagram — Personetics section 01 (spec: briefs/personetics/cognitive-banking-diagram.md §5).
+
+  Params:
+    lines — array of HTML-escaped strings from the `diagram` visual of briefs/personetics/article-text.md.
+            Format: "Title · k1 · k2 · k3 — body". Callouts are matched to their boxes by title;
+            a missing or malformed line fails the build.
+
+  Markup renders every mesh at t = 0 (dots at BASE). js/personetics/cognitive-banking-diagram.js
+  animates it, reading dots and edges from the data-* attributes below.
+#}
+{% macro cognitiveBankingDiagram(lines) %}
+{% set base = [[3,42],[113,3],[133,93],[90,119],[44,122],[68,42]] %}
+{% set edges = [[0,1],[1,2],[2,3],[3,4],[4,0],[4,2],[1,3],[3,0],[4,5],[5,2],[1,5],[5,0]] %}
+{% set meshes = [
+  { name: "data", matrix: "-0.39056 0.92058 -0.92058 -0.39056 322.188 345.820" },
+  { name: "insight", matrix: "-0.99550 0.09479 -0.09479 -0.99550 435.236 222.437" },
+  { name: "logic", matrix: "0.99965 -0.02644 0.02644 0.99965 413.371 220.596" }
+] %}
+{% set leaders = ["380,105 380,50 464,50", "550,310 590,310 590,338", "184,432 26,432 26,361"] %}
+{% set photos = [
+  { name: "lighthouse", x: 282, y: 31, w: 117, h: 154 },
+  { name: "compass", x: 393, y: 220, w: 89, h: 89 },
+  { name: "reel", x: 234, y: 306, w: 92, h: 107 }
+] %}
+{% set callouts = ["Data", "Insight", "Logic"] %}
+{# Fail the build (calling an undefined name throws) unless there is exactly one well-formed line per callout. #}
+{% set joined = "\n" + (lines | join("\n")) %}
+{% for name in callouts %}
+{% if not joined.includes("\n" + name + " · ") %}{{ cognitiveBankingDiagramMissingCallout(name) }}{% endif %}
+{% endfor %}
+{% for line in lines %}
+{% if line.indexOf(" · ") < 1 or line.indexOf(" — ") < line.indexOf(" · ") %}{{ cognitiveBankingDiagramMalformedLine(line) }}{% endif %}
+{% endfor %}
+{% if lines.length != callouts.length %}{{ cognitiveBankingDiagramUnexpectedLineCount(lines.length) }}{% endif %}
+<div class="cbd">
+  <svg class="cbd__lines" width="800" height="514" viewBox="0 0 800 514" aria-hidden="true">
+    {% for m in meshes %}
+    <g class="cbd__mesh" data-mesh="{{ m.name }}" transform="matrix({{ m.matrix }})">
+      {% for e in edges %}
+      <line class="cbd__edge" data-edge="{{ loop.index0 }}" data-a="{{ e[0] }}" data-b="{{ e[1] }}" x1="{{ base[e[0]][0] }}" y1="{{ base[e[0]][1] }}" x2="{{ base[e[1]][0] }}" y2="{{ base[e[1]][1] }}" />
+      {% endfor %}
+      {% for b in base %}
+      <circle class="cbd__dot" data-dot="{{ loop.index0 }}" cx="{{ b[0] }}" cy="{{ b[1] }}" r="3" />
+      {% endfor %}
+    </g>
+    {% endfor %}
+    {% for pts in leaders %}
+    <polyline class="cbd__leader" points="{{ pts }}" />
+    {% endfor %}
+  </svg>
+  <div class="cbd__red-shape">{% include "personetics/cognitive-banking-diagram-red-shape.svg" %}</div>
+  {% for p in photos %}
+  <img class="cbd__photo cbd__photo--{{ p.name }}" src="/assets/personetics/cognitive-banking-diagram/{{ p.name }}.png" alt="" width="{{ p.w }}" height="{{ p.h }}" />
+  {% endfor %}
+  {% for name in callouts %}
+  {% for line in lines %}
+  {% if line.startsWith(name + " · ") %}
+  {% set sep = line.indexOf(" · ") %}
+  {% set dash = line.indexOf(" — ") %}
+  <div class="cbd__callout cbd__callout--{{ name | lower }}">
+    <p class="cbd__callout-title">{{ line.slice(0, sep) | safe }}</p>
+    <span class="cbd__callout-rule"></span>
+    <p class="cbd__callout-body">{{ line.slice(dash + 3) | safe }}</p>
+    <p class="cbd__callout-keywords">{{ line.slice(sep + 3, dash) | safe }}</p>
+  </div>
+  {% endif %}
+  {% endfor %}
+  {% endfor %}
+  <div class="cbd__tag principles-tag"><p class="principles-tag__label">Headline headline headline</p></div>
+</div>
+{% endmacro %}

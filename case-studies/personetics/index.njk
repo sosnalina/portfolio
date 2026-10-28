@@ -6,13 +6,18 @@ stylesheets:
   - ../../css/components/section.css
   - ../../css/components/header.css
   - ../../css/components/body.css
+  - ../../css/components/principles.css
   - ../../css/widgets/personetics/problem-statement/problem-statement.css
+  - ../../css/widgets/personetics/cognitive-banking-diagram/cognitive-banking-diagram.css
+scripts:
+  - ../../js/personetics/cognitive-banking-diagram.js
 ---
 {% extends "shared/base.njk" %}
 {% from "shared/section.njk" import section %}
 {% from "shared/section-header.njk" import sectionHeader %}
 {% from "shared/section-body.njk" import sectionBody %}
 {% from "personetics/problem-statement.njk" import problemStatement %}
+{% from "personetics/cognitive-banking-diagram.njk" import cognitiveBankingDiagram %}
 
 {% block body %}
 <main class="theme-red">
@@ -26,6 +31,8 @@ stylesheets:
     {{ sectionBody(block.paragraphs) }}
     {% elif block.name == "persona" %}
     {{ problemStatement(s.visuals.persona) }}
+    {% elif block.name == "diagram" %}
+    {{ cognitiveBankingDiagram(s.visuals.diagram) }}
     {% endif %}
     {% endfor %}
   {% endcall %}

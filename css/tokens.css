@@ -4,6 +4,7 @@
    by checksum: 300/400/500/600 and italic 300/400 collapsed to 2 shared
    files instead of 6 distinct ones). Isolating each request is the only
    combination confirmed to return genuinely distinct files. */
+@import url('https://fonts.googleapis.com/css2?family=Literata:wght@200&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Literata:wght@300&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Literata:wght@400&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Literata:wght@500&display=swap');
@@ -52,6 +53,9 @@
   --text-quote: italic 400 18px/27px "Literata", Georgia, serif;
   --text-problem-statement: italic 300 16px/37.66px "Literata", Georgia, serif;
   --text-problem-statement-lead: italic 700 16px/37.66px "Literata", Georgia, serif;
+  --text-diagram-callout-title: 500 16px/1.46 "Literata", Georgia, serif;
+  --text-diagram-callout-body: 200 14px/20px "Literata", Georgia, serif;
+  --text-diagram-callout-keywords: 500 14px/1.5 "Literata", Georgia, serif;
 
   --text-hero-display: italic 62px/1.07 "Literata", Georgia, serif;
   --text-hero-sub-headline: 20px/1.65 "Literata", Georgia, serif;

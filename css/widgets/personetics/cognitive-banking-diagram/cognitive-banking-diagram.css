@@ -1,0 +1,100 @@
+/* Coordinates and box sizes below are diagram geometry from Figma (frame 2005:52725,
+   spec briefs/personetics/cognitive-banking-diagram.md §1); colours, type and gaps use tokens. */
+.cbd {
+  position: relative;
+  flex: none;
+  width: 800px;
+  height: 514px;
+  overflow: hidden;
+}
+
+.cbd__lines {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.cbd__edge,
+.cbd__leader {
+  stroke: var(--primitive-grey-dark);
+  stroke-width: 0.3;
+}
+
+.cbd__leader {
+  fill: none;
+}
+
+.cbd__dot {
+  fill: var(--primitive-grey-dark);
+}
+
+.cbd__red-shape {
+  position: absolute;
+  top: 157px;
+  left: 206px;
+  width: 305px;
+  height: 325px;
+}
+
+.red-shape__face--light {
+  fill: var(--primitive-red);
+}
+
+.red-shape__face--dark {
+  fill: var(--primitive-red-dark);
+}
+
+.cbd__red-shape svg {
+  display: block;
+}
+
+.cbd__photo {
+  position: absolute;
+}
+
+.cbd__photo--lighthouse { top: 31px; left: 282px; }
+.cbd__photo--compass { top: 220px; left: 393px; }
+.cbd__photo--reel { top: 306px; left: 234px; }
+
+.cbd__callout {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-12);
+  height: 140px;
+}
+
+.cbd__callout--insight { top: 37px; left: 477px; width: 249px; }
+.cbd__callout--logic { top: 344px; left: 572px; width: 228px; }
+.cbd__callout--data { top: 199px; left: 0; width: 228px; }
+
+.cbd__callout p {
+  margin: 0;
+}
+
+.cbd__callout-title {
+  font: var(--text-diagram-callout-title);
+  color: var(--primitive-black);
+}
+
+.cbd__callout-rule {
+  width: 26px;
+  height: 1px;
+  background: var(--primitive-red);
+}
+
+.cbd__callout-body {
+  font: var(--text-diagram-callout-body);
+  color: var(--primitive-black);
+}
+
+.cbd__callout-keywords {
+  font: var(--text-diagram-callout-keywords);
+  color: var(--primitive-red);
+}
+
+.cbd__tag {
+  position: absolute;
+  top: 69px;
+  left: 0;
+}
