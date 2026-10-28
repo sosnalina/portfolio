@@ -21,7 +21,7 @@
   // Boundaries/captions read directly from Gallery 1's own scene-gallery.js
   // — not re-authored here, per the build spec's "read from Gallery 1, not
   // from any draft." Must keep matching
-  // assets/scene-gallery/bill-pay/scenes.html's own BOUNDARIES/
+  // assets/bill-pay/scene-gallery/scenes.html's own BOUNDARIES/
   // TOTAL_DURATION, same hand-synced, no-shared-module pattern every
   // gallery's parent JS already uses against its iframe. Scene 1's rail
   // label is this widget's own — "Built for bulk runs" rather than Gallery
@@ -198,7 +198,7 @@
     // This replaces Gallery 1's old chrome (scene-gallery.njk no longer
     // called from index.njk), so this is the only iframe pointed at this
     // URL on the page — not a second instance running alongside the old one.
-    els.visual.src = "/assets/scene-gallery/bill-pay/scenes.html";
+    els.visual.src = "/assets/bill-pay/scene-gallery/scenes.html";
 
     // Toggles scene 0's active class immediately — doesn't need font
     // metrics, so no reason to wait for them.

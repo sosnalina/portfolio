@@ -18,7 +18,7 @@
   // bumps, not before — no duration change from that part) — see those
   // beats' own comments in the iframe's script. Must match
   // BOUNDARIES/TOTAL_DURATION inside
-  // assets/scene-gallery/bill-pay/scenes-accordion.html exactly — the
+  // assets/bill-pay/scene-gallery/scenes-accordion.html exactly — the
   // iframe owns the actual clock and is the one hand-synced source of
   // truth for these numbers, same no-shared-module pattern as Gallery
   // 1's and Gallery 2's own boundaries/parent-JS pairs. (Real QA once
@@ -122,7 +122,7 @@
 
     window.addEventListener("message", handleVisualMessage);
 
-    els.visual.src = "/assets/scene-gallery/bill-pay/scenes-accordion.html";
+    els.visual.src = "/assets/bill-pay/scene-gallery/scenes-accordion.html";
 
     renderScene(0);
   });

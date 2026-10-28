@@ -34,7 +34,7 @@ Two widget text tokens added for this build (`--text-widget-legend` already exis
 ```
 css/widgets/bill-pay/walkthrough-gallery/   (gallery.css, visual.css, caption.css, progress-bar.css, legend.css)
 js/bill-pay/walkthrough-gallery.js
-walkthrough-gallery.html
+case-studies/bill-pay/walkthrough-gallery.html
 ```
 
 One CSS file per component-part, per convention — no fused single stylesheet.

@@ -1,7 +1,7 @@
 /* Bill Pay — Scene Gallery Accordion widget (parent page). Replaces
    scene-gallery.css's chrome (caption row, progress bar, 650px mock) around
    the same Gallery 1 mock with a vertical accordion rail. The mock itself —
-   assets/scene-gallery/bill-pay/scenes.html — is reused unchanged (one edit
+   assets/bill-pay/scene-gallery/scenes.html — is reused unchanged (one edit
    only: the scene-1 clone-centering fix, unrelated to this file) and is
    never re-sized at its own document level; this file scales the whole
    iframe element down via CSS transform instead (see .visual below), so no

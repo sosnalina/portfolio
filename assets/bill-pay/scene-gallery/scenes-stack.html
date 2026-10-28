@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="../../../css/components/principles.css">
 <style>
   /* ---- Scene Stack — the scene-accordion mechanism (Quality_of_decisions
-     gallery, assets/scene-gallery/bill-pay/scenes-accordion.html's own
+     gallery, assets/bill-pay/scene-gallery/scenes-accordion.html's own
      #ag-row) rotated from side-by-side to stacked, for the
      Process_accountability gallery shell (build prompt, 14 Sep). Panel
      mechanism/class structure duplicated from that file's #ag-row subtree
@@ -323,7 +323,7 @@
   /* ================================================================
      Scene 1 — "Inline audit trail" (panel 0). Build spec: Hadar, 14
      Sep, "Scene 1 — Inline audit trail (panel 0, Process_accountability)".
-     Mock markup/CSS duplicated from assets/mock-screen/bill-pay/
+     Mock markup/CSS duplicated from assets/bill-pay/mock-screen/
      schedule-payment.html — header+totals, table (batch mode only, no
      bulk/vendor-grouping), both drawers (payment drawer duplicated for
      its shared box/close-transition tokens only, per §18.5 — the
@@ -331,7 +331,7 @@
      bank-details/radios/calendar markup, since "do not bring across
      the manage drawer"). Row-lift treatment (.p0s1-lift-layer/
      .p0s1-dim-overlay/.p0s1-row--lift-clone) and cursor/ripple system
-     duplicated from assets/scene-gallery/bill-pay/scenes.html's own
+     duplicated from assets/bill-pay/scene-gallery/scenes.html's own
      .bp-lift-layer/.bp-dim-overlay/.bp-row--lift-clone and
      .scene2-cursor/.scene2-ripple, prefix renamed ag→none (this
      panel's own prefix is p0s1-, scoped to this scene only — sst- is
@@ -355,7 +355,7 @@
   }
 
   /* ================================================================
-     Verbatim from assets/mock-screen/bill-pay/schedule-payment.html's
+     Verbatim from assets/bill-pay/mock-screen/schedule-payment.html's
      own inline <style> block — the mock has no separate CSS file, this
      IS its stylesheet. Pasted whole, not a curated subset: a rule that
      looks unused in this scene (e.g. .bp-screen--narrow, which this
@@ -428,7 +428,7 @@
   }
 
   /* ---- Verbatim source mock CSS begins here (through the matching
-     end marker below) — assets/mock-screen/bill-pay/schedule-payment.html's
+     end marker below) — assets/bill-pay/mock-screen/schedule-payment.html's
      own inline <style> block, copied whole. Not curated: a rule that
      looks unused in this scene (.bp-screen--narrow, the manage
      drawer's own radios/calendar/custom-tabs/bank-details rules) stays
@@ -3082,7 +3082,7 @@
 
   /* ---- .bp-screen polish — NOT part of the verbatim source. Checked
      directly against schedule-payment.html's own .bp-screen rule
-     (assets/mock-screen/bill-pay/schedule-payment.html:171-176): it is
+     (assets/bill-pay/mock-screen/schedule-payment.html:171-176): it is
      exactly { width; height; position; overflow } — no radius, no
      background, no shadow, in that file. The border-radius/background/
      box-shadow values in this rule come from scenes-accordion.html's
@@ -3319,14 +3319,14 @@
               <header class="bp-header">
                 <h1 class="bp-header__title">Schedule bill payment</h1>
                 <button class="bp-header__close" type="button" tabindex="-1" aria-label="Close">
-                  <img src="../../icons/bill-pay-mock/close.svg" alt="" />
+                  <img src="../icons/close.svg" alt="" />
                 </button>
                 <div class="bp-header__row">
                   <div class="bp-pay-from">
                     <p class="bp-pay-from__label">Pay from</p>
                     <div class="bp-pay-from__field">
                       <span>Chase checking (...1234)</span>
-                      <img src="../../icons/bill-pay-mock/dropdown-chevron.svg" alt="" />
+                      <img src="../icons/dropdown-chevron.svg" alt="" />
                     </div>
                   </div>
                   <div class="bp-header__divider"></div>
@@ -3376,22 +3376,22 @@
                   <div class="bp-stat">
                     <p class="bp-stat__label">Bills</p>
                     <p class="bp-stat__num" id="p0s1-stat-bills">0</p>
-                    <div class="bp-stat__sub"><img src="../../icons/bill-pay-mock/footer-check.svg" alt="" /><span>Approved</span></div>
+                    <div class="bp-stat__sub"><img src="../icons/footer-check.svg" alt="" /><span>Approved</span></div>
                   </div>
                   <div class="bp-stat">
                     <p class="bp-stat__label">Vendors</p>
                     <p class="bp-stat__num" id="p0s1-stat-vendors">0</p>
                     <div class="bp-stat__sub" data-vendor-state="alert">
-                      <img data-state="resolved" src="../../icons/bill-pay-mock/footer-check.svg" alt="" />
+                      <img data-state="resolved" src="../icons/footer-check.svg" alt="" />
                       <span data-state="resolved">Authorized</span>
-                      <img data-state="alert" src="../../icons/bill-pay-mock/alert-circle.svg" alt="" />
+                      <img data-state="alert" src="../icons/alert-circle.svg" alt="" />
                       <span data-state="alert" class="bp-hover-underline">1 needs delivery details</span>
                     </div>
                   </div>
                   <div class="bp-stat">
                     <p class="bp-stat__label">Payments</p>
                     <p class="bp-stat__num" id="p0s1-stat-payments">0</p>
-                    <div class="bp-stat__sub"><img src="../../icons/bill-pay-mock/footer-check.svg" alt="" /><span>Arrives on time</span></div>
+                    <div class="bp-stat__sub"><img src="../icons/footer-check.svg" alt="" /><span>Arrives on time</span></div>
                   </div>
                 </div>
                 <div class="bp-footer__buttons">
@@ -3410,7 +3410,7 @@
                 <div class="bp-activity__head">
                   <div class="bp-activity__head-inner">
                     <button class="bp-drawer__close" type="button" tabindex="-1" aria-label="Close">
-                      <img class="bp-action-icon" src="../../icons/bill-pay-mock/narrow-action.svg" alt="" />
+                      <img class="bp-action-icon" src="../icons/narrow-action.svg" alt="" />
                     </button>
                     <div class="bp-activity__header">
                       <div class="bp-activity__text-group">
@@ -3418,7 +3418,7 @@
                         <p class="bp-drawer__title" id="p0s1-activity-bill-number"></p>
                       </div>
                       <div class="bp-activity__status-row">
-                        <span class="bp-status__check"><img src="../../icons/bill-pay-mock/status-check.svg" alt="" style="display:block;width:100%;height:100%" /></span>
+                        <span class="bp-status__check"><img src="../icons/status-check.svg" alt="" style="display:block;width:100%;height:100%" /></span>
                         <span class="bp-status-text">Approved</span>
                       </div>
                     </div>
@@ -3482,7 +3482,7 @@
 
         <!-- Scene 2 — "Review before release" (panel 1). Build prompt:
              Hadar, 16 Sep. Mock markup copied from
-             assets/mock-screen/bill-pay/schedule-payment.html's own
+             assets/bill-pay/mock-screen/schedule-payment.html's own
              .bp-screen, in source order, per that prompt's §1.1 — header,
              table-wrap, review image, footer (both buttons with both
              label spans, taken from the source, not panel 0's plain-text
@@ -3495,7 +3495,7 @@
                 <h1 class="bp-header__title">Schedule bill payment</h1>
                 <p class="bp-header__subtitle" id="p1s2-header-subtitle">Review and schedule</p>
                 <button class="bp-header__close" type="button" tabindex="-1" aria-label="Close">
-                  <img src="../../icons/bill-pay-mock/close.svg" alt="" />
+                  <img src="../icons/close.svg" alt="" />
                 </button>
 
                 <div class="bp-header__row" id="p1s2-header-row-fields">
@@ -3503,7 +3503,7 @@
                     <p class="bp-pay-from__label">Pay from</p>
                     <div class="bp-pay-from__field">
                       <span>Chase checking (...1234)</span>
-                      <img src="../../icons/bill-pay-mock/dropdown-chevron.svg" alt="" />
+                      <img src="../icons/dropdown-chevron.svg" alt="" />
                     </div>
                   </div>
 
@@ -3552,29 +3552,29 @@
                 </div>
               </div>
 
-              <img class="bp-review-image" id="p1s2-review-image" src="/assets/mock-screen/bill-pay/images/review.png" alt="Review and schedule payment summary" />
+              <img class="bp-review-image" id="p1s2-review-image" src="/assets/bill-pay/mock-screen/images/review.png" alt="Review and schedule payment summary" />
 
               <footer class="bp-footer">
                 <div class="bp-footer__stats" id="p1s2-footer-stats">
                   <div class="bp-stat">
                     <p class="bp-stat__label">Bills</p>
                     <p class="bp-stat__num" id="p1s2-stat-bills">0</p>
-                    <div class="bp-stat__sub"><img src="../../icons/bill-pay-mock/footer-check.svg" alt="" /><span>Approved</span></div>
+                    <div class="bp-stat__sub"><img src="../icons/footer-check.svg" alt="" /><span>Approved</span></div>
                   </div>
                   <div class="bp-stat">
                     <p class="bp-stat__label">Vendors</p>
                     <p class="bp-stat__num" id="p1s2-stat-vendors">0</p>
                     <div class="bp-stat__sub" data-vendor-state="alert">
-                      <img data-state="resolved" src="../../icons/bill-pay-mock/footer-check.svg" alt="" />
+                      <img data-state="resolved" src="../icons/footer-check.svg" alt="" />
                       <span data-state="resolved">Authorized</span>
-                      <img data-state="alert" src="../../icons/bill-pay-mock/alert-circle.svg" alt="" />
+                      <img data-state="alert" src="../icons/alert-circle.svg" alt="" />
                       <span data-state="alert" class="bp-hover-underline">1 needs delivery details</span>
                     </div>
                   </div>
                   <div class="bp-stat">
                     <p class="bp-stat__label">Payments</p>
                     <p class="bp-stat__num" id="p1s2-stat-payments">0</p>
-                    <div class="bp-stat__sub"><img src="../../icons/bill-pay-mock/footer-check.svg" alt="" /><span>Arrives on time</span></div>
+                    <div class="bp-stat__sub"><img src="../icons/footer-check.svg" alt="" /><span>Arrives on time</span></div>
                   </div>
                 </div>
                 <div class="bp-footer__buttons">
@@ -3595,10 +3595,10 @@
 
               <div class="bp-loader" id="p1s2-loader">
                 <div class="bp-loader__art" id="p1s2-loader-art">
-                  <img class="bp-loader__woman" id="p1s2-loader-woman" src="/assets/mock-screen/bill-pay/images/woman.png" alt="" />
-                  <img class="bp-loader__clock" id="p1s2-loader-clock" src="/assets/mock-screen/bill-pay/images/clock.png" alt="" />
-                  <img class="bp-loader__b-circle" id="p1s2-loader-b-circle" src="/assets/mock-screen/bill-pay/images/b-circle.png" alt="" />
-                  <img class="bp-loader__s-circle" id="p1s2-loader-s-circle" src="/assets/mock-screen/bill-pay/images/s-circle.png" alt="" />
+                  <img class="bp-loader__woman" id="p1s2-loader-woman" src="/assets/bill-pay/mock-screen/images/woman.png" alt="" />
+                  <img class="bp-loader__clock" id="p1s2-loader-clock" src="/assets/bill-pay/mock-screen/images/clock.png" alt="" />
+                  <img class="bp-loader__b-circle" id="p1s2-loader-b-circle" src="/assets/bill-pay/mock-screen/images/b-circle.png" alt="" />
+                  <img class="bp-loader__s-circle" id="p1s2-loader-s-circle" src="/assets/bill-pay/mock-screen/images/s-circle.png" alt="" />
                 </div>
                 <div class="bp-success-check" id="p1s2-success-check">
                   <svg width="88" height="88" viewBox="0 0 88 88">
@@ -3662,9 +3662,9 @@
   (function () {
     // ================================================================
     // Scene 1 — "Inline audit trail" (panel 0). Build spec: Hadar, 14
-    // Sep. Data/helpers duplicated from assets/mock-screen/bill-pay/
+    // Sep. Data/helpers duplicated from assets/bill-pay/mock-screen/
     // schedule-payment.js (ROWS, GLYPH, date engine, renderBatchRow) and
-    // assets/scene-gallery/bill-pay/scenes.html (row-lift easing/
+    // assets/bill-pay/scene-gallery/scenes.html (row-lift easing/
     // formulas, cursor/ripple gesture math, nativeRect). Everything
     // below this point through buildScene0Instance/renderScene0 is a
     // pure function of scene-local t — see build spec §8.
@@ -3673,7 +3673,7 @@
     // ================================================================
     // Row generation, activity-drawer content, and every helper they
     // depend on (icons, money formatting, the date engine) — verbatim
-    // from assets/mock-screen/bill-pay/schedule-payment.js, lines 9-334
+    // from assets/bill-pay/mock-screen/schedule-payment.js, lines 9-334
     // (layeredIcon through renderBatchRow) and 801-900 (withBullets
     // through positionActivityRail). Adapted only where the source
     // depends on something this scene doesn't carry across: renderActionCell's
@@ -3682,7 +3682,7 @@
     // scene has no resize handler — uses the fixed MOCK_SCALE instead,
     // defined further down; both adaptations are marked inline).
     // ================================================================
-    var ICONS = "../../icons/bill-pay-mock/";
+    var ICONS = "../icons/";
 
   function layeredIcon(size, layers) {
     var inner = layers
@@ -6330,7 +6330,7 @@
     // ================================================================
     // Scene 2 — "Review before release" (panel 1). Build prompt: Hadar,
     // 16 Sep. Continue -> review -> loader -> success animation ported
-    // verbatim from assets/mock-screen/bill-pay/schedule-payment.js
+    // verbatim from assets/bill-pay/mock-screen/schedule-payment.js
     // (lines ~1589-2009, the source mock, not panel 0's copy) inside its
     // own enclosing scope (P1R below) so nothing collides with this
     // file's own easeInOutCubic (a different, unclamped curve used by

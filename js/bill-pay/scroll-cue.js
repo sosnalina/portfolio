@@ -1,5 +1,5 @@
 (function () {
-  // Phase 2 (motion) — docs/specs/scroll-cue-spec.md, "Approved reference"
+  // Phase 2 (motion) — briefs/bill-pay/scroll-cue-spec.md, "Approved reference"
   // code block. Ported verbatim: only the selectors, this project's JS file
   // structure, and the hidden-starting-state setup below are new. Where
   // this differs from the spec's own prose is where the prose and the

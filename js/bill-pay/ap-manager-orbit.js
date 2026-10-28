@@ -1,5 +1,5 @@
 (function () {
-  // Motion spec v2 (case-studies/bill-pay/ap-manager-orbit-spec.md), which
+  // Motion spec v2 (briefs/bill-pay/ap-manager-orbit-spec.md), which
   // fully replaces the v1 wobble/settle/dynamic-z-index orbit approach.
   // Anchor positions still come from the DOM itself (each item's own
   // static left/top/width/height, set in ap-manager-orbit.css) — the

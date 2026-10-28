@@ -11,14 +11,14 @@
   var DEFAULT_DURATION = 4000;
 
   // Step headline/description copy. `visual` paths are root-absolute, not
-  // relative: this script is shared between walkthrough-gallery.html (repo
-  // root) and case-studies/bill-pay/index.njk (two levels deep) — a relative
+  // relative: this script is shared between walkthrough-gallery.html
+  // (case-studies/bill-pay/) and case-studies/bill-pay/index.njk (two levels deep) — a relative
   // path here would only resolve correctly for one of the two host pages.
   var STEPS = [
-    { headline: "Pick a single bill", description: "Start from the Unpaid tab on the Bills page", visual: "/assets/walkthrough/bill-pay/step-1.html" },
-    { headline: "Set the funding source", description: "Pick the account to withdraw from", visual: "/assets/walkthrough/bill-pay/step-2.html" },
-    { headline: "Set a delivery method", description: "Choose payment type, speed and withdrawal date", visual: "/assets/walkthrough/bill-pay/step-3.html" },
-    { headline: "Review & schedule", description: "Submit and get your confirmation", visual: "/assets/walkthrough/bill-pay/step-4.html" }
+    { headline: "Pick a single bill", description: "Start from the Unpaid tab on the Bills page", visual: "/assets/bill-pay/walkthrough/step-1.html" },
+    { headline: "Set the funding source", description: "Pick the account to withdraw from", visual: "/assets/bill-pay/walkthrough/step-2.html" },
+    { headline: "Set a delivery method", description: "Choose payment type, speed and withdrawal date", visual: "/assets/bill-pay/walkthrough/step-3.html" },
+    { headline: "Review & schedule", description: "Submit and get your confirmation", visual: "/assets/bill-pay/walkthrough/step-4.html" }
   ];
 
   var state = {

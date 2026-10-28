@@ -2,7 +2,7 @@
    for visual comparison against Gallery 2 — same content, a two-panel
    width-swap accordion instead of a slide. The composition itself
    (panels, tag, caption, mock, width transition) lives entirely inside
-   assets/scene-gallery/bill-pay/scenes-accordion.html — this file only
+   assets/bill-pay/scene-gallery/scenes-accordion.html — this file only
    sizes the iframe stage to the page's own 800px content column (no
    viewport bleed, unlike Gallery 2 — this component never needs to
    reach past it) and lays out the shared progress row beneath it.

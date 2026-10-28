@@ -2,7 +2,7 @@
    mechanism (Quality_of_decisions gallery) rotated from side-by-side to
    stacked, for the Process_accountability gallery shell (build prompt,
    14 Sep). The composition itself (panels, tag, caption, clock, motion)
-   lives entirely inside assets/scene-gallery/bill-pay/scenes-stack.html
+   lives entirely inside assets/bill-pay/scene-gallery/scenes-stack.html
    — this file only sizes the iframe stage to the page's own 800px
    content column (no viewport bleed, matching scene-accordion.css: this
    component never needs to reach past it). No progress row and no

@@ -1,5 +1,5 @@
 /* Bill Pay — scroll-cue. Figma 3XG9JnADI2psNR3B7TwQdx, node 1401:45235
-   (docs/specs/scroll-cue-spec.md). Phase 1: static final-resting-state only,
+   (briefs/bill-pay/scroll-cue-spec.md). Phase 1: static final-resting-state only,
    no motion, no JS. Phase 2 (rise/reveal on scroll) is spec'd but not built. */
 
 /* Position (Hadar, 23 Sep, post-QA): normal flow, last child of

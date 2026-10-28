@@ -174,6 +174,8 @@ Base stays type-first (`css/`, `js/`, `assets/`, `_includes/`). Inside each type
 - Method: Claude Code lists every reference that would break first (as in commit `15440e4`), moves, confirms zero 404s; Hadar QAs Bill Pay.
 - WIP checkpoint commit before moving.
 
+Done 28 Oct 2026 (icons flattened to assets/bill-pay/icons/). Follow-up, not done: `_includes/` mixes shared and Bill Pay-only partials; `css/components/ap-manager-orbit.css` is Bill Pay-only inside shared components.
+
 ## 3b. Local machine — iCloud (recommended 22 Oct)
 
 Numbered files in `_site/` are iCloud sync-conflict copies. A git repo inside iCloud Drive (`~/Documents/portfolio`) risks the same inside `.git`. Recommendation: move the repo to e.g. `~/Developer/portfolio`, then delete `_site/` and rebuild.

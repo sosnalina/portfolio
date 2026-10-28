@@ -50,7 +50,7 @@ Everything else — all mock-screen-specific CSS — lives inline in a `<style>`
 
 File placement: follow the existing walkthrough-gallery / accordion-gallery scene convention. Check where those scene HTMLs live in the repo and match. Report the path you chose.
 
-Also create a **standalone demo/test-harness page at the repo root** (mirror `walkthrough-gallery.html` / `accordion-gallery.html` naming), that loads this mock-screen iframe in an unscaled 1440px viewport so Hadar can QA it directly.
+Also create a **standalone demo/test-harness page under `case-studies/bill-pay/`** (mirror `walkthrough-gallery.html` / `accordion-gallery.html` naming), that loads this mock-screen iframe in an unscaled 1440px viewport so Hadar can QA it directly.
 
 ---
 

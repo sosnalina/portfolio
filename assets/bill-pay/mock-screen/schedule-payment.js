@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var ICONS = "../../icons/bill-pay-mock/";
+  var ICONS = "../icons/";
 
   /* Every icon below is assembled from the REAL exported Figma vector layers
      (downloaded, not hand-drawn), positioned with the exact inset percentages

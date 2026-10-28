@@ -1,14 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- Hero mock (Bill Pay case study, hero frame). GENERATED once from scenes.html + scenes-stack.html by
-     build-hero-mock.cjs, per the hero-mock spec. Hand-maintained from here on; not linked to either source. -->
 <meta charset="UTF-8">
-<title>Hero mock — Bill Pay</title>
+<title>Scene Gallery — Scenes</title>
 <link rel="stylesheet" href="../../../css/tokens.css">
 <style>
   /* ---- Avenir Next (self-hosted) — same 4 files/weights (400, 600, 700,
-     800) as assets/mock-screen/bill-pay/schedule-payment.html. Path is one
+     800) as assets/bill-pay/mock-screen/schedule-payment.html. Path is one
      level further up from this file's own location but resolves to the
      same assets/fonts/avenir-next/ target (both files sit two levels under
      assets/). ---- */
@@ -42,7 +40,7 @@
   }
 
   :root {
-    /* ---- BP tokens — the subset of assets/mock-screen/bill-pay's token
+    /* ---- BP tokens — the subset of assets/bill-pay/mock-screen's token
        set actually used by the static batch-full header/table/footer
        rendered here. Same values, same source (Figma qfIgkJTuD0k956262uOUSp) —
        not re-derived. ---- */
@@ -124,7 +122,7 @@
   html, body {
     margin: 0;
     width: 800px;
-    height: 555.5555556px;
+    height: 452px;
     overflow: hidden;
   }
 
@@ -153,12 +151,12 @@
   .mock-scaler {
     position: absolute;
     /* (800 - 650) / 2 — mock centered, 75px clear on each side */
-    left: 0;
+    left: 75px;
     /* (452 - 1000*650/1440) / 2, i.e. vertically centered */
-    top: 0;
+    top: 0.3055555556px;
     width: 1440px;
     transform-origin: top left;
-    transform: scale(0.5555555556);
+    transform: scale(0.4513888889);
   }
 
   .bp-screen {
@@ -211,7 +209,7 @@
   }
 
   /* ---- Scene 2 — cursor + click ripple ----
-     Ported from assets/walkthrough/bill-pay/step-1.html / step-2.html:
+     Ported from assets/bill-pay/walkthrough/step-1.html / step-2.html:
      same 30px-at-real-scale visual (arrow SVG, drop-shadow; ripple disc,
      radial-gradient), same relative proportions, translated to this
      file's native 1440x1000 coordinate space instead of that file's
@@ -1019,680 +1017,6 @@
   }
   .bp-btn--cancel { background: transparent; border-color: var(--primitive-white); color: var(--primitive-white); }
   .bp-btn--continue { background: var(--bp-color-action-green); border-color: var(--bp-color-action-green); color: var(--primitive-white); }
-
-/* ---- Hero mock: Bill Activity drawer CSS, copied from scenes-stack.html ---- */
-:root{--bp-color-timeline-line: #dbd9d2;--bp-color-calendar-due: #ff8d28;--bp-text-timeline-stage: 600 15px/20px var(--bp-font-body);--bp-text-timeline-detail: 400 15px/20px var(--bp-font-body);--bp-text-timeline-actor: 400 14px/14px var(--bp-font-body);--bp-text-timeline-duration: 400 12px/14px var(--bp-font-body);}
-
-
-      /* ---- Bill Activity drawer (§18) — a second, independent side
-         drawer, not a third view inside #bp-drawer (it has its own
-         element, its own state, no footer). Shares .bp-drawer's static
-         box (width/radius/shadow/position/closed-transform/close-
-         transition) via the base class — see class="bp-drawer
-         bp-drawer--activity" on the markup below and the #bp-drawer-ID
-         scoping fix on .bp-screen--drawer-open above.
-
-         Structural divergence from #bp-drawer, recorded per §18.5: there,
-         .bp-drawer__scroll owns overflow-y and scrolls everything, head
-         included. Here the head (.bp-activity__head) is fixed and only
-         .bp-activity__scroll scrolls — also noted in COMPONENT-MAP.md. ---- */
-      .bp-activity__head {
-        flex: 0 0 auto;
-        position: relative;
-        padding: 48px 30px 0;
-      }
-
-      /* Mirrors .bp-drawer__head's own role: an unpadded position:relative
-         wrapper one level inside the padded box, so .bp-drawer__close's
-         absolute top:0/right:0 resolves against THIS box (375px wide,
-         inset by .bp-activity__head's own 48px/30px padding via normal
-         flow) rather than against .bp-activity__head itself (435px wide,
-         padding-agnostic for absolute children) — the fix for the close
-         button landing at x=417/y=18 instead of the payment drawer's
-         x=387/y=66. Declarations copied verbatim from .bp-drawer__head,
-         not re-derived. */
-      .bp-activity__head-inner {
-        position: relative;
-        width: 100%;
-      }
-
-      .bp-activity__header {
-        padding: 9px 0;
-        display: flex;
-        flex-direction: column;
-        gap: 14px;
-      }
-
-      .bp-activity__text-group {
-        padding: 1px 0;
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-      }
-
-      /* Vendor-name line sits in a 24px-tall row, vertically centred (§18.6). */
-      .bp-activity__vendor-row {
-        height: 24px;
-        display: flex;
-        align-items: center;
-      }
-
-      .bp-activity__status-row {
-        display: flex;
-        align-items: center;
-        gap: 9px;
-      }
-
-      .bp-activity__totals {
-        display: flex;
-        flex-direction: column;
-      }
-
-      /* .bp-drawer__section-title / .bp-drawer__total-amount both carry
-         spacing meant for their OTHER usages elsewhere in this drawer (a
-         standalone section heading; a total sitting below a divider) —
-         here they're relabeled as a field pair stacked via .bp-field's own
-         30px/6px rhythm instead, so both need zeroing. Spec (§18.6)
-         explicitly calls out zeroing .bp-drawer__total-amount's
-         margin-top and .bp-drawer__section-title's padding-top; this also
-         zeros .bp-drawer__section-title's own 24px margin-bottom, which
-         the spec's text doesn't mention but which would otherwise stack
-         with .bp-field's 6px gap and produce a 30px label→value gap
-         instead of the 6px the spec states elsewhere in the same section —
-         flagged in the build report as an unresolved-spec-text gap, not a
-         silent guess. Scoped to .bp-drawer--activity; base classes
-         untouched, exactly as instructed. */
-      .bp-drawer--activity .bp-activity__label {
-        padding-top: 0;
-        margin-bottom: 0;
-      }
-
-      .bp-drawer--activity .bp-activity__value {
-        margin-top: 0;
-      }
-
-      .bp-activity__scroll {
-        position: relative;
-        flex: 1;
-        overflow-y: auto;
-        padding: 0 30px;
-        scrollbar-width: none; /* Firefox */
-        -ms-overflow-style: none; /* IE and Edge */
-      }
-
-      .bp-activity__scroll::-webkit-scrollbar {
-        width: 0 !important;
-        height: 0 !important;
-        background: transparent !important;
-      }
-
-      .bp-activity__scroll::-webkit-scrollbar-thumb { background: transparent !important; }
-
-      /* Right-edge white mask, duplicated from .bp-drawer__scroll::after —
-         sits inside the 30px right padding, so no content is covered. */
-      .bp-activity__scroll::after {
-        content: "";
-        position: absolute;
-        top: 0;
-        right: 0;
-        width: 16px;
-        height: 100%;
-        background: var(--primitive-white);
-        pointer-events: none;
-        z-index: 3;
-      }
-
-      /* Top fade (§18.8) — sticky, not absolute: .bp-activity__scroll's
-         own children are plain block flow (not flex), so the negative
-         margin fully cancels the sticky element's layout footprint with
-         no flex-gap side effect (unlike the .bp-rows-scroll::before
-         comment's account of that same trick failing in a flex context).
-         Always visible (no .is-scrolled gate) — spec has no bottom fade
-         and no scroll-affordance button, only this. */
-      .bp-activity__fade {
-        position: sticky;
-        top: 0;
-        height: 24px;
-        margin-bottom: -24px;
-        background: linear-gradient(to bottom, var(--primitive-white) 0%, transparent 100%);
-        pointer-events: none;
-        z-index: 2;
-      }
-
-
-      /* ---- §18.7 Timeline — rail column (36px) + content column. The
-         rail's dots/line are positioned in JS (positionActivityRail() in
-         schedule-payment.js), not in CSS: each dot's vertical centre must
-         sit on its own item's own measured first-line centre, computed
-         from live layout — never hardcoded, never derived from the rail
-         column's own height (spec's own explicit acceptance criterion).
-         Figma's rail coordinates are 1px off on two items and are not used
-         as a source here. ---- */
-      /* margin-top clears the 24px top fade: without it the first item's
-         stage line starts flush at the scroll region's own top (y=0),
-         fully underneath the fade's 0-24px span. 27px lands the stage
-         line's top edge 3px below the fade's bottom edge — inside this
-         fix's own 2-3px target, not at either boundary. Doesn't touch the
-         fade's own height/gradient or the 28px item gap. */
-      .bp-activity__timeline {
-        position: relative;
-        margin-top: 27px;
-      }
-
-      .bp-activity__rail {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 36px;
-        height: 100%;
-        pointer-events: none;
-      }
-
-      /* left: 8.5px centers this 1px line on x=9, matching the dots below. */
-      .bp-activity__rail-line {
-        position: absolute;
-        left: 8.5px;
-        width: 1px;
-        background: var(--bp-color-timeline-line);
-      }
-
-      .bp-activity__dot {
-        position: absolute;
-        left: 3px;
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-      }
-
-      .bp-activity__dot--complete {
-        background: var(--bp-color-action-green);
-      }
-
-      /* Same hex as --bp-color-calendar-due (§18.1: reuse an existing
-         token rather than retype the literal) — coincidental match with an
-         unrelated calendar concept, not a semantic link between the two. */
-      .bp-activity__dot--warning {
-        background: var(--bp-color-calendar-due);
-      }
-
-      .bp-activity__dot--upcoming {
-        background: var(--primitive-white);
-        border: 2px solid var(--bp-color-timeline-line);
-      }
-
-      /* Content column starts flush at x=36 (21px gap from the dot's own
-         right edge at x=15) — no added padding, per spec. */
-      .bp-activity__timeline-content {
-        margin-left: 36px;
-        display: flex;
-        flex-direction: column;
-        gap: 28px;
-      }
-
-      .bp-activity-item {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-      }
-
-      .bp-activity-item--upcoming {
-        opacity: 0.5;
-      }
-
-      /* The one 42px gap (duration "Ready to pay • 3d 2h" -> "Scheduled
-         for payment"): a modifier on this single item, not a change to
-         .bp-activity__timeline-content's own 28px gap. 14px margin-top
-         stacks with that 28px gap (flex gap and a flex item's own margin
-         are additive, not exclusive) for a 42px total. Every other gap,
-         10->11 included, is untouched. */
-      .bp-activity-item--wide-gap {
-        margin-top: 14px;
-      }
-
-      .bp-activity-item__headline {
-        display: flex;
-        flex-direction: column;
-      }
-
-      .bp-activity-item__stage {
-        margin: 0;
-        font: var(--bp-text-timeline-stage);
-        color: var(--primitive-black);
-      }
-
-      .bp-activity-item__detail {
-        margin: 0;
-        font: var(--bp-text-timeline-detail);
-        color: var(--primitive-black);
-      }
-
-      .bp-activity-item__actor {
-        margin: 0;
-        font: var(--bp-text-timeline-actor);
-        color: var(--primitive-grey-dark);
-      }
-
-      /* Always #393A3D per spec, even though it reads grey in one
-         reference render — confirmed by Hadar, not this build's guess. */
-      .bp-activity-duration {
-        margin: 0;
-        font: var(--bp-text-timeline-duration);
-        color: var(--primitive-black);
-      }
-
-      /* Nudges the bullet glyph off the baseline toward its optical
-         centre — Avenir Next's "•" otherwise sits low against these lines'
-         cap-height. Relative/em-based so it holds across the three sizes
-         (14/15px) this appears at. */
-      .bp-activity-bullet {
-        position: relative;
-        top: -0.05em;
-      }
-
-
-  /* ---- Bill Activity drawer — deliberate divergence (accountability-
-     wave build prompt §6, "The drawer scrolls as one"): in the mock
-     (and in the verbatim rules above), .bp-activity__head is fixed
-     (flex:0 0 auto) and only .bp-activity__scroll scrolls beneath it.
-     This scene scrolls the ENTIRE drawer body — head included — as one
-     block instead, so by the later steps only timeline entries remain
-     on screen with nothing pinned. Do not "fix" this back to match the
-     mock; it is intentional, not a regression. Implemented by wrapping
-     both .bp-activity__head and .bp-activity__scroll in one new
-     .p0s1-activity-track (markup below) and translating THAT — never
-     .bp-activity__scroll directly, per the prompt's own instruction —
-     with #p0s1-activity-drawer itself supplying the clip. Scoped by ID
-     so the verbatim .bp-activity__scroll rule above (flex:1;
-     overflow-y:auto) stays intact for reference/diffing; only this
-     drawer instance's copy is overridden. ---- */
-  #p0s1-activity-drawer {
-    overflow: hidden;
-  }
-
-  #p0s1-activity-drawer .bp-activity__scroll {
-    flex: 0 0 auto;
-    overflow: visible;
-  }
-
-  .p0s1-activity-track {
-    display: flex;
-    flex-direction: column;
-    will-change: transform;
-  }
-/* ---- Hero mock: bottom room so the last row clears the footer — the footer overlaps the rows area by 17px, plus the 14px row gap ---- */
-#mock-rows-scroll { padding-bottom: 31px; box-sizing: border-box; }
-/* ---- Hero mock: review / loader / success CSS, copied from scenes-stack.html ---- */
-
-
-      /* ---- Continue → review state ---- */
-
-      /* Background moved off .bp-header itself (now transparent, see the
-         rule above) onto this pseudo-element so it can fade independently
-         of the title/close/row, which must stay. No z-index: it paints
-         first inside the header, behind the absolutely-positioned title,
-         close and row — a negative z-index would instead paint it behind
-         #bp-screen's own white background and it would vanish. Opacity is
-         driven per-frame by renderReviewState() via the custom property
-         below, not a CSS transition (the timeline must render correctly
-         for any tMs, including seeking backward). */
-      .bp-header::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background: var(--primitive-grey-light);
-        opacity: var(--bp-header-before-opacity, 1);
-      }
-
-
-      .bp-header__subtitle {
-        position: absolute;
-        left: 78px;
-        top: 98px;
-        margin: 0;
-        font-family: "Avenir Next";
-        font-weight: 400;
-        font-size: 26px;
-        line-height: 26px;
-        color: #393a3d;
-        opacity: 0;
-        visibility: hidden;
-        transform-origin: left center;
-      }
-
-
-      /* Left/right edges reuse the exact values that position
-         .bp-header__title (left) and .bp-header__close (right, the 24px
-         button box) — never a hardcoded width. <img> is a replaced
-         element: per CSS2.1 §10.3.8, left+right alone do NOT stretch a
-         replaced element the way they would a <div> — width:auto instead
-         resolves to the image's own intrinsic size (3952px), blowing past
-         the screen entirely. width is therefore computed from the exact
-         same 78/44 values via calc() against #bp-screen's own fixed
-         1440px (100%), not a separate hardcoded number — this resolves to
-         1318px, matching this spec's own stated math. Height stays auto so
-         the image's real aspect ratio drives it. */
-      .bp-review-image {
-        position: absolute;
-        top: 201px;
-        left: 78px;
-        right: 44px;
-        width: calc(100% - 78px - 44px);
-        height: auto;
-        opacity: 0;
-        visibility: hidden;
-      }
-
-
-      /* Tertiary Cancel/Back — a new .bp-btn variant, not .bp-btn--cancel
-         (that class is reserved for the reused Save-for-later button below
-         and must not pick up this positioning/opacity). Copies
-         .bp-btn--cancel's declarations with border-color made transparent.
-
-         Positioned against #bp-screen, NOT footer.bp-footer (round 1 had it
-         footer-relative; moved for round 2 — see the HTML comment above
-         this element's markup). footer.bp-footer is position:absolute +
-         z-index:1, which makes it establish its own stacking context: every
-         descendant paints trapped inside that one z1 layer regardless of
-         its own z-index, so this button could never out-rank .bp-whiteout
-         (z-index 2) while still living inside footer — confirmed
-         unclickable during the loader, breaking spec §0's "repeat with
-         Back instead of X" step. left/top reproduce the exact same
-         rendered position as the footer-relative values it replaces
-         (footer top 900px + the original 32px = 932px; left 81px,
-         unchanged) — nothing about this button's own box or appearance
-         changed, only what it's positioned against. z-index:3 lets it
-         escape into #bp-screen's stacking context the same way
-         .bp-header__close's does (see that rule's own comment) — needed
-         so it stays clickable above .bp-whiteout/.bp-loader through the
-         entire loader window, not just during the review state. */
-      .bp-btn--tertiary {
-        position: absolute;
-        left: 81px;
-        top: 932px;
-        z-index: 3;
-        background: transparent;
-        border-color: transparent;
-        color: var(--primitive-white);
-        opacity: 0;
-        visibility: hidden;
-        transform-origin: center;
-      }
-
-
-      /* Selector scoping — required (§ spec). .bp-btn--cancel and
-         .bp-btn--continue are also used, unmodified, in #bp-drawer-footer;
-         every rule below is scoped to .bp-footer__buttons so the drawer's
-         instances of these classes are never touched. */
-      .bp-footer__buttons .bp-btn--cancel,
-      .bp-footer__buttons .bp-btn--continue {
-        position: relative;
-        overflow: hidden;
-        flex-shrink: 0;
-      }
-
-      /* Old/new label crossfade. Deliberately not the reference widget's
-         line-height:36px — these buttons have a 1.818px border, so that
-         value would push the text down; flex centering handles it instead. */
-      .bp-footer__buttons .bp-btn__label {
-        position: absolute;
-        inset: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        white-space: nowrap;
-        font: var(--bp-text-button-label);
-      }
-
-      .bp-footer__buttons .bp-btn__label--new {
-        opacity: 0;
-      }
-
-
-      /* ---- Scheduling loader ---- */
-
-      /* Fades in over everything except the X (§2 stacking table). Nothing
-         already on screen gets its opacity rewritten by this — no conflict
-         with renderReviewState(). */
-      .bp-whiteout {
-        position: absolute;
-        inset: 0;
-        background: #fff;
-        z-index: 2;
-        opacity: 0;
-        visibility: hidden;
-      }
-
-
-      /* pointer-events:none (inherited by every child) is what lets
-         .bp-header__close stay clickable at the same z-index — see that
-         rule's own comment. */
-      .bp-loader {
-        position: absolute;
-        inset: 0;
-        z-index: 3;
-        pointer-events: none;
-        visibility: hidden;
-      }
-
-
-      .bp-loader__art {
-        position: absolute;
-        left: 600.5px;
-        top: 265px;
-        width: 239px;
-        height: 240px;
-      }
-
-      .bp-loader__art img {
-        position: absolute;
-        display: block;
-        opacity: 0;
-        visibility: hidden;
-      }
-
-      .bp-loader__woman {
-        left: 97px;
-        top: 87px;
-        width: 115px;
-        height: 143px;
-      }
-
-      .bp-loader__clock {
-        left: 170px;
-        top: 46px;
-        width: 32px;
-        height: 31px;
-        transform-origin: center;
-      }
-
-      .bp-loader__b-circle {
-        left: 14px;
-        top: 70px;
-        width: 91px;
-        height: 91px;
-        transform-origin: center;
-      }
-
-      .bp-loader__s-circle {
-        left: 83px;
-        top: 9px;
-        width: 73px;
-        height: 73px;
-        transform-origin: center;
-      }
-
-
-      .bp-loader__text {
-        position: absolute;
-        left: 323px;
-        top: 545px;
-        width: 794px;
-        text-align: center;
-        opacity: 0;
-        visibility: hidden;
-      }
-
-      .bp-loader__headline {
-        margin: 0;
-        font-family: "Avenir Next";
-        font-weight: 700;
-        font-size: 40px;
-        line-height: 1.3;
-        color: #393a3d;
-      }
-
-      .bp-loader__subhead {
-        margin: 12px 0 0;
-        font-family: "Avenir Next";
-        font-weight: 400;
-        font-size: 20px;
-        line-height: 28px;
-        color: #393a3d;
-      }
-
-
-      .bp-loader__progress {
-        position: absolute;
-        left: 520px;
-        top: 705px;
-        width: 400px;
-        height: 48px;
-        opacity: 0;
-        visibility: hidden;
-      }
-
-      .bp-loader__progress-label {
-        position: absolute;
-        left: 0;
-        right: 0;
-        top: 0;
-        margin: 0;
-        text-align: center;
-        font-family: "Avenir Next";
-        /* Figma "Medium" — same substitution already established for text
-           tagged that way elsewhere in this file (see the vendor-name rule,
-           .bp-vendor__name / --bp-text-cell-strong: font-weight 600, and
-           this file's own top-of-file @font-face comment "This mock uses
-           the Medium face for the vendor-name weight"). Reported per spec. */
-        font-weight: 600;
-        font-size: 14px;
-        line-height: 1.5;
-        color: #6b6c72;
-      }
-
-      .bp-loader__progress-track {
-        position: absolute;
-        left: 0;
-        right: 0;
-        top: 36px;
-        height: 12px;
-        border-radius: 200px;
-        background: #d4d7dc;
-        overflow: hidden;
-      }
-
-      .bp-loader__progress-fill {
-        height: 100%;
-        width: 0;
-        border-radius: 200px;
-        background: #2ca01c;
-      }
-
-
-      /* ---- Payments scheduled (success) ---- */
-
-      /* §2a — old/new text swap inside .bp-loader__text (round 2's own
-         entrance/position wrapper — left untouched). -old carries no
-         positioning of its own (plain block flow, so headline/subhead
-         render exactly where they did before this wrap existed); -new is
-         absolutely positioned over that same box so the two occupy
-         identical coordinates while they cross-fade — see spec §2a's
-         545/609 top measurements, reported in the build report. */
-      .bp-loader__text-new {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 794px;
-        opacity: 0;
-        visibility: hidden;
-      }
-
-
-      /* §2b — success check: CodePen urak/pen/VOENMx's V geometry/
-         keyframes ported exactly; its circle is replaced with a
-         self-drawing ring (Hadar). 1.8409 = 162 / 88 — the reference's
-         80px icon + its own 4px border on each side, scaled to this
-         spec's 162px outer diameter so the visual centre lands at
-         (720, 390) with that outer diameter, per §0. */
-      .bp-success-check {
-        position: absolute;
-        left: 676px;
-        top: 346px;
-        width: 88px;
-        height: 88px;
-        transform: scale(1.8409);
-        transform-origin: center;
-        visibility: hidden;
-      }
-
-      /* Default = fully hidden (circumference == dasharray == dashoffset,
-         2 * pi * 42); renderLoaderState() overrides both via el.style, and
-         the full-attribute reset (see resetToMainTable()) restores exactly
-         this default since stroke-dasharray/-dashoffset are set as CSS
-         properties here, not SVG attributes. */
-      .bp-success-check__ring {
-        stroke-dasharray: 263.894;
-        stroke-dashoffset: 263.894;
-      }
-
-      .bp-success-check__lines {
-        position: absolute;
-        left: 4px;
-        top: 4px;
-        width: 80px;
-        height: 80px;
-      }
-
-      .bp-success-check__tip,
-      .bp-success-check__long {
-        position: absolute;
-        height: 5px;
-        background: #2ca01c;
-        border-radius: 2px;
-        opacity: 0;
-      }
-
-      .bp-success-check__tip {
-        transform: rotate(45deg);
-      }
-
-      .bp-success-check__long {
-        transform: rotate(-45deg);
-      }
-
-
-      /* §2c — success button. Only .bp-btn's shared box (height/padding/
-         border-radius/font, all inherited from the base .bp-btn rule
-         above) plus Continue's own green fill/border/label colour are
-         reused. The round-1 morph rules scoped to
-         ".bp-footer__buttons .bp-btn--continue" (overflow:hidden, label
-         spans, flex-shrink, explicit widths) do not apply here — this
-         button lives outside .bp-footer__buttons and never morphs. */
-      .bp-btn--success {
-        position: absolute;
-        top: 712px;
-        left: 0;
-        right: 0;
-        margin: 0 auto;
-        width: fit-content;
-        min-width: 100px;
-        background: var(--bp-color-action-green);
-        border-color: var(--bp-color-action-green);
-        color: var(--primitive-white);
-        opacity: 0;
-        visibility: hidden;
-      }
-.bp-header { background: transparent; } /* background moves to .bp-header::before so it can fade (copied behaviour) */
 </style>
 </head>
 <body>
@@ -1708,14 +1032,14 @@
         <header class="bp-header">
           <h1 class="bp-header__title">Schedule bill payment</h1>
           <button class="bp-header__close" type="button" aria-label="Close" tabindex="-1">
-            <img src="../../icons/bill-pay-mock/close.svg" alt="" />
+            <img src="../icons/close.svg" alt="" />
           </button>
           <div class="bp-header__row" id="mock-header-row">
             <div class="bp-pay-from">
               <p class="bp-pay-from__label">Pay from</p>
               <div class="bp-pay-from__field">
                 <span>Chase checking (...1234)</span>
-                <img src="../../icons/bill-pay-mock/dropdown-chevron.svg" alt="" />
+                <img src="../icons/dropdown-chevron.svg" alt="" />
               </div>
             </div>
             <div class="bp-header__divider"></div>
@@ -1765,22 +1089,22 @@
             <div class="bp-stat">
               <p class="bp-stat__label">Bills</p>
               <p class="bp-stat__num" id="mock-stat-bills">0</p>
-              <div class="bp-stat__sub"><img src="../../icons/bill-pay-mock/footer-check.svg" alt="" /><span>Approved</span></div>
+              <div class="bp-stat__sub"><img src="../icons/footer-check.svg" alt="" /><span>Approved</span></div>
             </div>
             <div class="bp-stat">
               <p class="bp-stat__label">Vendors</p>
               <p class="bp-stat__num" id="mock-stat-vendors">0</p>
               <div class="bp-stat__sub" id="mock-vendors-sub" data-vendor-state="alert">
-                <img data-state="resolved" src="../../icons/bill-pay-mock/footer-check.svg" alt="" />
+                <img data-state="resolved" src="../icons/footer-check.svg" alt="" />
                 <span data-state="resolved">Authorized</span>
-                <img data-state="alert" src="../../icons/bill-pay-mock/alert-circle.svg" alt="" />
+                <img data-state="alert" src="../icons/alert-circle.svg" alt="" />
                 <span data-state="alert" class="bp-hover-underline" id="mock-vendors-alert-text">1 needs delivery details</span>
               </div>
             </div>
             <div class="bp-stat">
               <p class="bp-stat__label">Payments</p>
               <p class="bp-stat__num" id="mock-stat-payments">0</p>
-              <div class="bp-stat__sub"><img src="../../icons/bill-pay-mock/footer-check.svg" alt="" /><span>Arrives on time</span></div>
+              <div class="bp-stat__sub"><img src="../icons/footer-check.svg" alt="" /><span>Arrives on time</span></div>
             </div>
           </div>
           <div class="bp-footer__buttons">
@@ -1789,7 +1113,7 @@
           </div>
         </footer>
 
-        <!-- Drawer — ported from assets/mock-screen/bill-pay/schedule-payment.html
+        <!-- Drawer — ported from assets/bill-pay/mock-screen/schedule-payment.html
              (see that file for the fuller structural comments). Scene 3
              only; hidden (display:none, from .bp-drawer's own base rule)
              until renderScene3 opens it. Head (vendor name/subtitle,
@@ -1800,7 +1124,7 @@
             <div class="bp-drawer__head" id="mock-drawer-head">
               <button class="bp-drawer__chevron" type="button" tabindex="-1" aria-label="Back">
                 <span style="display: inline-flex; transform: rotate(90deg)">
-                  <img src="../../icons/bill-pay-mock/dropdown-chevron.svg" alt="" style="display: block; width: 12px; height: 6.86px" />
+                  <img src="../icons/dropdown-chevron.svg" alt="" style="display: block; width: 12px; height: 6.86px" />
                 </span>
               </button>
               <div class="bp-drawer__head-text">
@@ -1808,7 +1132,7 @@
                 <p class="bp-drawer__meta" id="mock-drawer-subtitle"></p>
               </div>
               <button class="bp-drawer__close" type="button" tabindex="-1" aria-label="Close">
-                <img class="bp-action-icon" src="../../icons/bill-pay-mock/narrow-action.svg" alt="" />
+                <img class="bp-action-icon" src="../icons/narrow-action.svg" alt="" />
               </button>
             </div>
             <div class="bp-drawer__inner" id="mock-drawer-inner"></div>
@@ -1855,10 +1179,7 @@
     // — both kept in sync here by hand, same as every other cross-file
     // duration in this project.
     var BOUNDARIES = [0, 6500, 15910];
-    // Hero mock timeline anchors: aEnd = end of Built for bulk runs beat 4 (PAYMENTS pop/circle);
-    // seamStartS2 = end of beat 11 (the 60ms hold after Barnett's bill numbers); endHold before the loop.
-    var PROTO = { aEnd: 4000, seamStartS2: 6750, endHold: 1500, flip: 400, flipPerspective: 4000 };
-    var TOTAL_DURATION = 60000; // replaced by protoTotal() once everything is defined
+    var TOTAL_DURATION = 29631;
 
     var body = document.body;
     // null until ViewportGate's onEnter starts playback (see the bottom
@@ -1966,7 +1287,7 @@
     // played what came before.
     // ============================================================
 
-    var ICONS = "../../icons/bill-pay-mock/";
+    var ICONS = "../icons/";
 
     function layeredIcon(size, layers) {
       var inner = layers
@@ -2012,7 +1333,7 @@
     // fixed 800x452 stage (no resize handler in this file, unlike
     // schedule-payment.js's resizable version), so this is a genuine
     // constant, not a snapshot of something that can change later.
-    var MOCK_SCALE = 0.5555555556;
+    var MOCK_SCALE = 0.4513888889;
 
     // Native-px rect of el, relative to refRect's top-left. Hoisted to
     // module scope (was local to buildMockInstance) because scene 3 needs
@@ -2037,7 +1358,7 @@
     }
 
     // Source of truth is the batch-full Figma template (node 2964:601336) —
-    // identical data to assets/mock-screen/bill-pay/schedule-payment.js's
+    // identical data to assets/bill-pay/mock-screen/schedule-payment.js's
     // ROWS, not re-derived.
     var ROWS = [
       { id: 1, vendor: "Barnett Lawn Care", method: "bank", last4: "3456", bill: "153", due: "08/29/25", withdraw: "08/25", arrives: "08/28", fee: 1.0, amount: 650.0, action: "Manage" },
@@ -2045,7 +1366,7 @@
       { id: 3, vendor: "Barnett Lawn Care", method: "bank", last4: "3456", bill: "154", due: "09/09/25", withdraw: "09/05", arrives: "09/08", fee: 1.0, amount: 725.0, action: "Manage" },
       { id: 4, vendor: "Good Heart Catering", method: "check", last4: "", bill: "9092", due: "09/12/25", withdraw: "09/08", arrives: "09/11", fee: 1.0, amount: 1250.0, action: "Manage" },
       { id: 5, vendor: "Greenfield Solutions", method: "bank", last4: "1278", bill: "7562", due: "09/14/25", withdraw: "09/10", arrives: "09/13", fee: 1.0, amount: 1800.0, action: "Manage" },
-      { id: 6, vendor: "Red Ocean Developer", method: "bank", last4: "7989", bill: "349", due: "09/15/25", withdraw: "09/11", arrives: "09/14", fee: 1.0, amount: 15000.0, action: "Manage" },
+      { id: 6, vendor: "Red Ocean Developer", method: "bank", last4: "7989", bill: "349", due: "09/15/25", withdraw: "09/11", arrives: "09/14", fee: 1.0, amount: 1500.0, action: "Manage" },
       { id: 7, vendor: "Bluebird Office Supplies", method: "check", last4: "", bill: "1789", due: "09/16/25", withdraw: "09/12", arrives: "09/15", fee: 1.0, amount: 520.0, action: "Manage" },
       { id: 8, vendor: "Greenfield Solutions", method: "bank", last4: "1278", bill: "7562", due: "09/19/25", withdraw: "09/15", arrives: "09/18", fee: 1.0, amount: 1950.0, action: "Manage" },
       { id: 9, vendor: "Good Heart Catering", method: "check", last4: "", bill: "9095", due: "09/20/25", withdraw: "09/16", arrives: "09/19", fee: 1.0, amount: 875.0, action: "Manage" },
@@ -2997,7 +2318,7 @@
     // Scene 2 — bulk payment optimization. No lifted card; rows stay
     // flat and a cursor does the pointing. Gesture mechanics (easing,
     // circle/sweep math, click-ripple visual) are ported from
-    // assets/walkthrough/bill-pay/step-1.html's cursor system — that
+    // assets/bill-pay/walkthrough/step-1.html's cursor system — that
     // file drives them with real-time async/rAF chains, which can't be
     // seeked, so every function below is the same math as a pure
     // function of local elapsed ms instead. The one substantive change:
@@ -4267,603 +3588,27 @@
     // to be a separate, simpler placeholder div; it needed the real table,
     // footer, and drawer just like scenes 1/2, so it was folded into the
     // same shared instance instead of staying a parallel implementation.
-    var S4_ASIDE_HTML = "<aside class=\"bp-drawer bp-drawer--activity\" id=\"p0s1-activity-drawer\">\n                \n                <div class=\"p0s1-activity-track\" id=\"p0s1-activity-track\">\n                <div class=\"bp-activity__head\">\n                  <div class=\"bp-activity__head-inner\">\n                    <button class=\"bp-drawer__close\" type=\"button\" tabindex=\"-1\" aria-label=\"Close\">\n                      <img class=\"bp-action-icon\" src=\"../../icons/bill-pay-mock/narrow-action.svg\" alt=\"\" />\n                    </button>\n                    <div class=\"bp-activity__header\">\n                      <div class=\"bp-activity__text-group\">\n                        <div class=\"bp-activity__vendor-row\"><p class=\"bp-drawer__meta\" id=\"p0s1-activity-vendor-name\"></p></div>\n                        <p class=\"bp-drawer__title\" id=\"p0s1-activity-bill-number\"></p>\n                      </div>\n                      <div class=\"bp-activity__status-row\">\n                        <span class=\"bp-status__check\"><img src=\"../../icons/bill-pay-mock/status-check.svg\" alt=\"\" style=\"display:block;width:100%;height:100%\" /></span>\n                        <span class=\"bp-status-text\">Approved</span>\n                      </div>\n                    </div>\n                    <div class=\"bp-drawer__divider\"></div>\n                    <div class=\"bp-activity__totals\">\n                      <div class=\"bp-field\">\n                        <p class=\"bp-drawer__section-title bp-activity__label\" id=\"p0s1-activity-label-balance\">Open balance:</p>\n                        <p class=\"bp-drawer__total-amount bp-activity__value\" id=\"p0s1-activity-balance\"></p>\n                      </div>\n                      <div class=\"bp-field\">\n                        <p class=\"bp-drawer__section-title bp-activity__label\">Due date:</p>\n                        <p class=\"bp-drawer__total-amount bp-activity__value\" id=\"p0s1-activity-due\"></p>\n                      </div>\n                    </div>\n                    <div class=\"bp-drawer__divider\"></div>\n                    <p class=\"bp-drawer__section-title\">Bill activity</p>\n                  </div>\n                </div>\n                <div class=\"bp-activity__scroll\">\n                  <div class=\"bp-activity__fade\"></div>\n                  <div class=\"bp-activity__timeline\">\n                    <div class=\"bp-activity__rail\" id=\"p0s1-activity-rail\"></div>\n                    <div class=\"bp-activity__timeline-content\" id=\"p0s1-activity-timeline-content\"></div>\n                  </div>\n                  <div style=\"height: 32px\" id=\"p0s1-activity-trailing-pad\"></div>\n                </div>\n                </div>\n              </aside>";
-    var S5_OVERLAY_HTML = "<button class=\"bp-btn bp-btn--tertiary\" type=\"button\" tabindex=\"-1\" id=\"p1s2-btn-tertiary\">Back</button>\n\n              <div class=\"bp-whiteout\" id=\"p1s2-whiteout\"></div>\n\n              <div class=\"bp-loader\" id=\"p1s2-loader\">\n                <div class=\"bp-loader__art\" id=\"p1s2-loader-art\">\n                  <img class=\"bp-loader__woman\" id=\"p1s2-loader-woman\" src=\"/assets/mock-screen/bill-pay/images/woman.png\" alt=\"\" />\n                  <img class=\"bp-loader__clock\" id=\"p1s2-loader-clock\" src=\"/assets/mock-screen/bill-pay/images/clock.png\" alt=\"\" />\n                  <img class=\"bp-loader__b-circle\" id=\"p1s2-loader-b-circle\" src=\"/assets/mock-screen/bill-pay/images/b-circle.png\" alt=\"\" />\n                  <img class=\"bp-loader__s-circle\" id=\"p1s2-loader-s-circle\" src=\"/assets/mock-screen/bill-pay/images/s-circle.png\" alt=\"\" />\n                </div>\n                <div class=\"bp-success-check\" id=\"p1s2-success-check\">\n                  <svg width=\"88\" height=\"88\" viewBox=\"0 0 88 88\">\n                    <circle id=\"p1s2-success-ring\" class=\"bp-success-check__ring\" cx=\"44\" cy=\"44\" r=\"42\" fill=\"none\" stroke=\"rgba(44,160,28,.5)\" stroke-width=\"4\" transform=\"rotate(-90 44 44)\" />\n                  </svg>\n                  <div class=\"bp-success-check__lines\">\n                    <span class=\"bp-success-check__tip\" id=\"p1s2-success-check-tip\"></span>\n                    <span class=\"bp-success-check__long\" id=\"p1s2-success-check-long\"></span>\n                  </div>\n                </div>\n                <div class=\"bp-loader__text\" id=\"p1s2-loader-text\">\n                  <div class=\"bp-loader__text-old\" id=\"p1s2-loader-text-old\">\n                    <p class=\"bp-loader__headline\">Scheduling your payments</p>\n                    <p class=\"bp-loader__subhead\">This may take a few minutes. Feel free to close the page and keep working.<br />We’ll email you when we’re done.</p>\n                  </div>\n                  <div class=\"bp-loader__text-new\" id=\"p1s2-loader-text-new\">\n                    <p class=\"bp-loader__headline\">5 Payments scheduled successfully</p>\n                    <p class=\"bp-loader__subhead\">You can track your payments and see more info in the<br />payments page.</p>\n                  </div>\n                </div>\n                <div class=\"bp-loader__progress\" id=\"p1s2-loader-progress\">\n                  <p class=\"bp-loader__progress-label\" id=\"p1s2-loader-progress-label\">In progress (0%)</p>\n                  <div class=\"bp-loader__progress-track\">\n                    <div class=\"bp-loader__progress-fill\" id=\"p1s2-loader-progress-fill\"></div>\n                  </div>\n                </div>\n                <button class=\"bp-btn bp-btn--success\" type=\"button\" tabindex=\"-1\" id=\"p1s2-btn-success\">View payments page</button>\n              </div>\n            ";
-    // ================= PROTO — Inline audit trail (batch mode) =================
-    // Runs between Built for bulk runs beat 4 and beat 5. Base frame = scene 2 at PROTO.aEnd.
-    var S4 = { readFactor: 0.6 };   // Hadar: audit-trail read-down speed = 0.6× the original reading-lines durations
-    var S4_TIMELINE = [
-      { dot: "complete", stage: "Received", detail: "Email from vendor", actor: "Invoice capture (system) • Aug 26, 2025", duration: "3h 12m" },
-      { dot: "complete", stage: "Coded", detail: "GL 6100 Contract labor • Engineering", actor: "Marcus Webb, AP clerk • Aug 26, 2025", duration: "21h 5m" },
-      { dot: "complete", stage: "Matched", detail: "PO 4418 • receipt GRN-2207 • within tolerance", actor: "Matching engine (system) • Aug 27, 2025", duration: "4h 20m" },
-      { dot: "complete", stage: "Sent for approval", detail: "Two approvers required • bills over $10,000", actor: "Marcus Webb, AP clerk • Aug 27, 2025", duration: "1d 2h" },
-      { dot: "warning", stage: "Returned for correction", detail: "Cost center should be Platform, not Engineering", actor: "Dana Kim, Finance Director • Aug 28, 2025", duration: "19h 44m" },
-      { dot: "complete", stage: "Recoded", detail: "GL 6100 Contract labor • Platform", actor: "Marcus Webb, AP clerk • Aug 29, 2025", duration: "42m" },
-      { dot: "complete", stage: "Sent for approval", detail: "Second attempt", actor: "Marcus Webb, AP clerk • Aug 29, 2025", duration: "3d 4h" },
-      { dot: "complete", stage: "Approved • 1 of 2", detail: "Reviewed amount $15,000.00", actor: "Priya Raman, department head • Sep 1, 2025", duration: "2d 22h" },
-      { dot: "complete", stage: "Approved • 2 of 2", detail: "Reviewed amount $15,000.00", actor: "Dana Kim, Finance Director • Sep 4, 2025", duration: "Ready to pay • 3d 2h" },
-      { dot: "upcoming", stage: "Scheduled for payment", detail: null, actor: null, duration: null, wideGapBefore: true },
-      { dot: "upcoming", stage: "Paid", detail: null, actor: null, duration: null }
-    ];
-    var S4_HERO_ID = 6;
-    var S4_READ_IDS = [1, 2, 3, 4, 5, 6];  // batch rows read down the Open balance column, ending on #349
-    var S4_TL_READ = 9;                    // the nine completed timeline entries
-    var S4_RETURNED_HOLD = 500;            // Hadar: hold on "Returned for correction" (entry 4)
-    var S4_VENDOR_INSET = 8;               // Hadar: selected row's vendor inset (original scene: --spacing-12)
-
-    function s4CircleFromRight(localT, duration, p) {
-      var e = easeInOutCubic(clamp01(localT / duration));
-      var angle = e * Math.PI * 2;
-      var rxJ = p.rx * (1 + 0.10 * Math.sin(angle * 2.3 + p.seedA));
-      var ryJ = p.ry * (1 + 0.09 * Math.sin(angle * 1.7 + p.seedB));
-      return { x: p.cx + Math.cos(angle) * rxJ, y: p.cy + Math.sin(angle) * ryJ };
-    }
-    function s4Bullets(s) { return s.split(" • ").join(' <span class="bp-activity-bullet">•</span> '); }
-    function s4FmtLong(d) { var M = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]; return M[d.getMonth()] + " " + d.getDate() + ", " + d.getFullYear(); }
-
-    // Ported from scenes-stack.html positionActivityRail() (its own scale-divergence fix kept).
-    function s4PositionRail(aside) {
-      var railEl = aside.querySelector("#p0s1-activity-rail");
-      var railRect = railEl.getBoundingClientRect();
-      var stages = aside.querySelectorAll(".bp-activity-item__stage");
-      var dots = railEl.querySelectorAll(".bp-activity__dot");
-      if (!stages.length || stages.length !== dots.length) return;
-      var ctx = document.createElement("canvas").getContext("2d");
-      ctx.font = getComputedStyle(stages[0]).font; ctx.textBaseline = "alphabetic";
-      var capHeight = ctx.measureText("H").actualBoundingBoxAscent;
-      var centers = [];
-      for (var i = 0; i < dots.length; i++) {
-        var st = stages[i], sr = st.getBoundingClientRect();
-        var probe = document.createElement("span");
-        probe.style.cssText = "display:inline-block;width:0;height:0;vertical-align:baseline";
-        st.appendChild(probe);
-        var base = probe.getBoundingClientRect().top - sr.top;
-        st.removeChild(probe);
-        var cy = (sr.top - railRect.top) / MOCK_SCALE + (base / MOCK_SCALE - capHeight / 2);
-        dots[i].style.top = cy - 6 + "px";
-        centers.push(cy);
-      }
-      var line = aside.querySelector("#p0s1-activity-rail-line");
-      line.style.top = centers[0] + "px";
-      line.style.height = centers[centers.length - 1] - centers[0] + "px";
-    }
-
-    // Activity narrow mode: Bill / Status / Due date collapse (the original's data-narrow-hide="activity" set),
-    // same geometry as scene 3's own narrow (header inset, rows width, divider, vendor-row Action).
-    function s4ActivityCells(ins) {
-      var hdr = ins.headerRowCellsEl.children;
-      var list = [hdr[1], hdr[2], hdr[3]];
-      var cells = ins.rowsScroll.querySelectorAll(".bp-cell--bill, .bp-cell--status, .bp-cell--due");
-      for (var i = 0; i < cells.length; i++) list.push(cells[i]);
-      return list;
-    }
-    function s4ApplyActivityNarrow(ins, p) {
-      var dw = 435;
-      s3CollapseCells(s4ActivityCells(ins), p);
-      if (p > 0) {
-        ins.headerRowEl.style.right = (119 + p * (dw + 52 - 119)) + "px";
-        if (ins.s3RowsScrollFullWidth == null) ins.s3RowsScrollFullWidth = ins.rowsScroll.getBoundingClientRect().width / MOCK_SCALE;
-        ins.rowsScroll.style.width = (ins.s3RowsScrollFullWidth + p * (882 - ins.s3RowsScrollFullWidth)) + "px";
-        ins.rowsTopDividerEl.style.right = (20 + p * (dw - 50 - 20)) + "px";
-        var als = ins.headerRowCellsEl.querySelector("[data-action-label] span");
-        if (als) als.style.opacity = 1 - p;
-      }
-    }
-
-    function s4Els(ins) {
-      if (ins.s4) return ins.s4;
-      var holder = document.createElement("div");
-      holder.innerHTML = S4_ASIDE_HTML;
-      var aside = holder.firstElementChild;
-      ins.screenEl.appendChild(aside);
-      aside.style.display = "none";
-      var dots = "", content = "";
-      S4_TIMELINE.forEach(function (e) {
-        dots += '<div class="bp-activity__dot bp-activity__dot--' + e.dot + '"></div>';
-        var cls = "bp-activity-item" + (e.dot === "upcoming" ? " bp-activity-item--upcoming" : "") + (e.wideGapBefore ? " bp-activity-item--wide-gap" : "");
-        if (e.dot === "upcoming") content += '<div class="' + cls + '"><p class="bp-activity-item__stage">' + e.stage + "</p></div>";
-        else content += '<div class="' + cls + '"><div class="bp-activity-item__headline"><p class="bp-activity-item__stage">' + s4Bullets(e.stage) + '</p><p class="bp-activity-item__detail">' + s4Bullets(e.detail) + '</p></div><p class="bp-activity-item__actor">' + s4Bullets(e.actor) + "</p></div>";
-        if (e.duration) content += '<p class="bp-activity-duration">' + s4Bullets(e.duration) + "</p>";
-      });
-      aside.querySelector("#p0s1-activity-rail").innerHTML = '<div class="bp-activity__rail-line" id="p0s1-activity-rail-line"></div>' + dots;
-      aside.querySelector("#p0s1-activity-timeline-content").innerHTML = content;
-      var hero = ROWS.filter(function (r) { return r.id === S4_HERO_ID; })[0];
-      aside.querySelector("#p0s1-activity-vendor-name").textContent = hero.vendor;
-      aside.querySelector("#p0s1-activity-bill-number").textContent = "Bill No." + hero.bill;
-      aside.querySelector("#p0s1-activity-balance").textContent = money(hero.amount);
-      aside.querySelector("#p0s1-activity-due").textContent = s4FmtLong(parseMMDDYY(hero.due));
-      // Measure the timeline once, laid out but parked off to the right (native px, track at rest).
-      var prevWrapDisplay = ins.mockWrap.style.display; ins.mockWrap.style.display = "block";
-      aside.style.display = "flex";
-      aside.style.transform = "translate3d(100%, 0, 0)";
-      s4PositionRail(aside);
-      var stages = aside.querySelectorAll(".bp-activity-item__stage");
-      var entries = [];
-      for (var i = 0; i < S4_TL_READ; i++) {
-        var r = stages[i].getBoundingClientRect();
-        entries.push({ x: (r.left - ins.screenRect.left) / MOCK_SCALE - 435 + 24, y: (r.top + r.height / 2 - ins.screenRect.top) / MOCK_SCALE });
-      }
-      var cb = aside.querySelector(".bp-drawer__close").getBoundingClientRect();
-      aside.style.display = "none"; aside.style.transform = "";
-      ins.mockWrap.style.display = prevWrapDisplay;
-      // Reading line (placeholder): the cursor reads down until entry 2's resting height; from there the
-      // drawer content scrolls up under it, one entry per step, so the read keeps going top to bottom.
-      var readY = entries[2].y;
-      var offs = entries.map(function (e) { return Math.max(0, e.y - readY); });
-      ins.s4 = { aside: aside, entries: entries, offs: offs, finalOff: offs[offs.length - 1],
-        closeRest: { x: (cb.left + cb.width / 2 - ins.screenRect.left) / MOCK_SCALE - 435, y: (cb.top + cb.height / 2 - ins.screenRect.top) / MOCK_SCALE },
-        sparkStatus: false, sparkClose: false };
-      return ins.s4;
-    }
-
-    function s4Sequence() {
-      var f = S4.readFactor;
-      var seq = [["moveToRead0", 280], ["hold0", 170 * f]];
-      for (var i = 1; i < S4_READ_IDS.length; i++) seq.push(["move" + i, 260 * f], ["hold" + i, 170 * f]);
-      seq.push(["toPark", 150], ["heroHold", 1000], ["circleBill", 760],
-        ["moveToStatus", 260], ["hoverHold", 300], ["click", 200],
-        ["drawerOpen", 225], ["revealHold", 180], ["moveToEntry0", 270], ["restEntry0", 730]);
-      for (var e = 1; e < S4_TL_READ; e++) seq.push(["tlMove" + e, 260 * f], ["tlHold" + e, e === 4 ? S4_RETURNED_HOLD : 170 * f]);
-      seq.push(["scrollBackTop", 520], ["moveToClose", 260], ["holdPreClose", 300], ["clickClose", 200], ["drawerClose", 195], ["holdAfterClose", 220]);
-      return seq;
-    }
-    function s4Marks() {
-      var key = "f" + S4.readFactor;
-      if (S4._marksKey === key) return S4._marks;
-      var seq = s4Sequence(), m = {}, acc = 0;
-      for (var i = 0; i < seq.length; i++) { m[seq[i][0] + "Start"] = acc; acc += seq[i][1]; m[seq[i][0] + "End"] = acc; }
-      m.total = acc; S4._marks = m; S4._marksKey = key; return m;
-    }
-
-    // Called in every frame outside the audit trail so nothing it did leaks on a seek.
-    function s4Reset(ins) {
-      if (!ins.s4) return;
-      ins.s4.aside.style.display = "none";
-      s3CollapseCells(s4ActivityCells(ins), 0);
-      var hero = ins.rowsScroll.querySelector('[data-row-id="' + S4_HERO_ID + '"]');
-      if (hero) { var v = hero.querySelector(".bp-cell--vendor"); if (v) v.style.paddingLeft = ""; var st = hero.querySelector(".bp-status-text"); if (st) st.style.textDecoration = ""; }
-    }
-
-    function renderScene4(ins, t) {
-      var M = s4Marks(), E = s4Els(ins);
-      renderScene2(ins, PROTO.aEnd - 0.01);
-      ins.cursorEl.style.opacity = 0; ins.rippleDisc.style.opacity = 0;
-      s4Reset(ins);
-      var startCursor = circleTop(circleParamsFor(ins.s2.statsPayments, 4.2, 1.1));
-
-      function rowEl(id) { return ins.rowsScroll.querySelector('[data-row-id="' + id + '"]'); }
-      // #349 sits 15px under the footer at scroll 0 — the table scrolls just enough (row bottom 14px above the
-      // footer) during the last read move, as part of reading down. Placeholder.
-      ins.rowsScroll.scrollTop = 0;
-      if (E.heroScrollNeed == null) {
-        var hr0 = nativeRect(rowEl(S4_HERO_ID), ins.screenRect);
-        var footTop = nativeRect(ins.screenEl.querySelector(".bp-footer"), ins.screenRect).top;
-        E.heroScrollNeed = Math.max(0, hr0.bottom - (footTop - 14));
-      }
-      var lastMv = "move" + (S4_READ_IDS.length - 1);
-      var scp = t < M[lastMv + "Start"] ? 0 : t >= M[lastMv + "End"] ? 1 : easeInOutCubic(clamp01((t - M[lastMv + "Start"]) / (M[lastMv + "End"] - M[lastMv + "Start"])));
-      ins.rowsScroll.scrollTop = E.heroScrollNeed * scp;
-      ins.rowsScroll.classList.toggle("is-scrolled", ins.rowsScroll.scrollTop > 0);
-
-      var readPts = S4_READ_IDS.map(function (id) { var r = nativeRect(rowEl(id).querySelector(".bp-cell--balance span"), ins.screenRect); return { x: r.centerX, y: r.centerY }; });
-      var heroRow = rowEl(S4_HERO_ID);
-      var hb = nativeRect(heroRow.querySelector(".bp-cell--balance span"), ins.screenRect);
-      var circB = { cx: hb.centerX, cy: hb.centerY, rx: hb.width / 2 + 14, ry: hb.height / 2 + 10, seedA: 0.4, seedB: 1.1 };
-      var parkB = { x: circB.cx + circB.rx, y: circB.cy };
-      var statusText = heroRow.querySelector(".bp-status-text");
-      if (t < M.clickStart) { var str = nativeRect(statusText, ins.screenRect); E.statusPos = { x: str.centerX, y: str.centerY }; }
-      var statusPos = E.statusPos || parkB;
-      statusText.style.textDecoration = (t >= M.moveToStatusEnd && t < M.clickStart) ? "underline" : "";
-
-      // ---- Activity drawer + narrow ----
-      var open = 0;
-      if (t >= M.drawerOpenStart) {
-        open = t < M.drawerOpenEnd ? easeDrawerOpen(clamp01((t - M.drawerOpenStart) / 225)) : 1;
-        if (t >= M.drawerCloseStart) open = t >= M.drawerCloseEnd ? 0 : 1 - easeDrawerClose(clamp01((t - M.drawerCloseStart) / 195));
-      }
-      E.aside.style.display = open > 0 ? "flex" : "none";
-      E.aside.style.transform = "translate3d(" + 100 * (1 - open) + "%, 0, 0)";
-      s4ApplyActivityNarrow(ins, open);
-      var reveal = t < M.revealHoldStart ? 0 : t < M.clickCloseStart ? easeToggleS3(clamp01((t - M.revealHoldStart) / 180)) : t < M.clickCloseStart + 180 ? 1 - easeToggleS3(clamp01((t - M.clickCloseStart) / 180)) : 0;
-      if (reveal > 0) {
-        var rr = heroRow.getBoundingClientRect(), lr = ins.rowCardLayerEl.getBoundingClientRect();
-        ins.rowCardEl.style.top = ((rr.top - lr.top) / MOCK_SCALE + 11) + "px";
-        ins.rowCardEl.style.left = ((rr.left - lr.left) / MOCK_SCALE) + "px";
-        ins.rowCardEl.style.width = (rr.width / MOCK_SCALE) + "px";
-      }
-      ins.rowCardEl.style.opacity = reveal;
-      heroRow.querySelector(".bp-cell--vendor").style.paddingLeft = (t >= M.revealHoldStart && t < M.clickCloseStart) ? S4_VENDOR_INSET + "px" : "";
-
-      // ---- Drawer track: scrolls under a steady cursor from entry 2 on; back to top before the X ----
-      var track = E.aside.querySelector("#p0s1-activity-track");
-      // One continuous scroll through the read (placeholder): piecewise-linear through each entry's arrival,
-      // so the drawer never stops between steps — the cursor keeps stepping entry to entry and rides the text.
-      var firstScroll = 1; while (firstScroll < S4_TL_READ && E.offs[firstScroll] <= 0) firstScroll++;
-      var keysT = [M["tlMove" + firstScroll + "Start"]], keysO = [0];
-      for (var kq = firstScroll; kq < S4_TL_READ; kq++) { keysT.push(M["tlMove" + kq + "End"]); keysO.push(E.offs[kq]); }
-      var off = 0;
-      if (t >= keysT[keysT.length - 1]) off = E.finalOff;
-      else if (t > keysT[0]) { var ki = 1; while (t > keysT[ki]) ki++; off = keysO[ki - 1] + (keysO[ki] - keysO[ki - 1]) * ((t - keysT[ki - 1]) / (keysT[ki] - keysT[ki - 1])); }
-      if (t >= M.scrollBackTopStart) off = E.finalOff * (1 - (t >= M.scrollBackTopEnd ? 1 : easeInOut(clamp01((t - M.scrollBackTopStart) / (M.scrollBackTopEnd - M.scrollBackTopStart)))));
-      track.style.transform = "translateY(" + (-off) + "px)";
-      var drawerShift = 435 * (1 - open);
-      function entryAt(i) { var e = E.entries[i]; return { x: e.x, y: e.y - off }; }
-      // Once clicked, the cursor stays where the X was — it does not ride the drawer out.
-      var closePos = t >= M.clickCloseStart ? { x: E.closeRest.x, y: E.closeRest.y } : { x: E.closeRest.x + drawerShift, y: E.closeRest.y - off };
-      E.lastClosePos = { x: E.closeRest.x, y: E.closeRest.y };
-
-      // ---- Cursor ----
-      var pos = startCursor, op = 1, rOp = 0, rSc = 1;
-      function click(a, b) { var r = computeClickRipple(t - a, b - a); rOp = r.opacity; rSc = r.scale; }
-      function inb(a) { return t >= M[a + "Start"] && t < M[a + "End"]; }
-      function lt(a) { return t - M[a + "Start"]; }
-      function du(a) { return M[a + "End"] - M[a + "Start"]; }
-      var nR = S4_READ_IDS.length;
-      if (inb("moveToRead0")) { pos = moveTo2(lt("moveToRead0"), du("moveToRead0"), startCursor, readPts[0]); }
-      else if (t < M.toParkStart) {
-        pos = readPts[0];
-        for (var k = 1; k < nR; k++) {
-          if (inb("move" + k)) { var e = easeInOutCubic(clamp01(lt("move" + k) / du("move" + k))); pos = { x: readPts[k - 1].x + (readPts[k].x - readPts[k - 1].x) * e, y: readPts[k - 1].y + (readPts[k].y - readPts[k - 1].y) * e }; }
-          else if (t >= M["move" + k + "End"]) pos = readPts[k];
-        }
-      }
-      else if (inb("toPark")) { pos = moveTo2(lt("toPark"), du("toPark"), readPts[nR - 1], parkB); }
-      else if (inb("heroHold")) { pos = parkB; }
-      else if (inb("circleBill")) { var c2 = lt("circleBill"); pos = s4CircleFromRight(c2 < 380 ? c2 : c2 - 380, 380, circB); }
-      else if (inb("moveToStatus")) { pos = moveTo2(lt("moveToStatus"), du("moveToStatus"), parkB, statusPos); }
-      else if (t < M.moveToEntry0Start) { pos = statusPos; if (inb("click")) click(M.clickStart, M.clickEnd); }
-      else if (inb("moveToEntry0")) { pos = moveTo2(lt("moveToEntry0"), du("moveToEntry0"), statusPos, entryAt(0)); }
-      else if (t < M.scrollBackTopStart) {
-        pos = entryAt(0);
-        for (var j = 1; j < S4_TL_READ; j++) {
-          if (inb("tlMove" + j)) pos = moveTo2(lt("tlMove" + j), du("tlMove" + j), entryAt(j - 1), entryAt(j));
-          else if (t >= M["tlMove" + j + "End"]) pos = entryAt(j);
-        }
-      }
-      else if (inb("scrollBackTop")) { pos = entryAt(S4_TL_READ - 1); }
-      else if (inb("moveToClose")) { pos = moveTo2(lt("moveToClose"), du("moveToClose"), entryAt(S4_TL_READ - 1), closePos); }
-      else { pos = closePos; if (inb("clickClose")) click(M.clickCloseStart, M.clickCloseEnd); }
-
-      function spark(flag, mark, pt) { if (t >= M[mark]) { if (!E[flag]) { E[flag] = true; triggerSparkBurst(pt.x, pt.y); } } else E[flag] = false; }
-      spark("sparkStatus", "clickStart", statusPos);
-      spark("sparkClose", "clickCloseStart", closePos);
-
-      ins.cursorEl.style.left = pos.x + "px"; ins.cursorEl.style.top = pos.y + "px"; ins.cursorEl.style.opacity = op;
-      ins.rippleEl.style.left = pos.x + "px"; ins.rippleEl.style.top = pos.y + "px";
-      ins.rippleDisc.style.opacity = rOp; ins.rippleDisc.style.transform = "translate(-50%, -50%) scale(" + rSc + ")";
-    }
-
-    // ================= PROTO — Review before release =================
-    // Ported from scenes-stack.html panel 1 (itself ported from schedule-payment.js): review morph, loader,
-    // success. Runs on THIS mock's own DOM, so the table / header / footer that fade out are the ones the
-    // viewer has been watching. Beat sheet = PANEL1_BEATS minus the panel's own entrance/exit.
-    var P5 = (function () {
-      function bz(x1, y1, x2, y2) {
-        return function (x) {
-          if (x <= 0) return 0;
-          if (x >= 1) return 1;
-          var lo = 0, hi = 1, t = 0;
-          for (var i = 0; i < 30; i++) { t = (lo + hi) / 2; var u = 1 - t, cx = 3 * u * u * t * x1 + 3 * u * t * t * x2 + t * t * t; if (cx < x) lo = t; else hi = t; }
-          var u2 = 1 - t;
-          return 3 * u2 * u2 * t * y1 + 3 * u2 * t * t * y2 + t * t * t;
-        };
-      }
-      var reviewIo = bz(0.77, 0, 0.175, 1), easeOutStrong = bz(0.23, 1, 0.32, 1), reviewPop = bz(0.175, 0.885, 0.32, 1.275);
-      function seg(p, a, b) { return Math.max(0, Math.min(1, (p - a) / (b - a))); }
-      function lerp(a, b, k) { return a + (b - a) * k; }
-      function c01(x) { return Math.max(0, Math.min(1, x)); }
-      var REVIEW_SECONDARY_END = 129;
-      function morph(p, P0, S0, P1) {
-        var s = {}, sq = reviewIo(seg(p, 0, 0.3));
-        s.pw = p < 0.3 ? lerp(P0, P0 * 0.88, sq) : lerp(P0 * 0.88, P1, reviewPop(seg(p, 0.3, 1)));
-        s.sw = lerp(S0, REVIEW_SECONDARY_END, reviewIo(seg(p, 0.3, 1)));
-        s.oO = 1 - easeOutStrong(seg(p, 0, 0.25));
-        s.nO = easeOutStrong(seg(p, 0.55, 1));
-        var t = easeOutStrong(seg(p, 0.3, 1));
-        s.tO = t; s.tS = 0.95 + 0.05 * t;
-        return s;
-      }
-      var els = {}, rs = { P0: 0, S0: 0, P1: 0 };
-      function measureWidths() {
-        rs.P0 = parseFloat(getComputedStyle(els.btnPrimary).width);
-        rs.S0 = parseFloat(getComputedStyle(els.btnSecondary).width);
-        var ctx = document.createElement("canvas").getContext("2d");
-        ctx.font = getComputedStyle(els.btnPrimary).font;
-        var tw = ctx.measureText(els.btnPrimaryNew.textContent).width;
-        var bs = getComputedStyle(els.btnPrimary);
-        rs.P1 = Math.max(100, tw + 16 + 16 + (parseFloat(bs.borderLeftWidth) || 0) + (parseFloat(bs.borderRightWidth) || 0));
-      }
-      function renderReviewState(tMs) {
-        tMs = Math.max(0, Math.min(600, tMs));
-        var fadeP = easeOutStrong(c01(tMs / 300)), fo = 1 - fadeP, fv = fo > 0 ? "visible" : "hidden";
-        els.tableWrap.style.opacity = fo; els.tableWrap.style.transform = "translateY(" + 739 * fadeP + "px)"; els.tableWrap.style.visibility = fv;
-        els.header.style.setProperty("--bp-header-before-opacity", fo);
-        els.headerRowFields.style.opacity = fo; els.headerRowFields.style.visibility = fv;
-        els.footerStats.style.opacity = fo; els.footerStats.style.visibility = fv;
-        var st = morph(c01(tMs / 450), rs.P0, rs.S0, rs.P1);
-        els.btnPrimary.style.width = st.pw + "px"; els.btnSecondary.style.width = st.sw + "px";
-        els.btnPrimaryOld.style.opacity = st.oO; els.btnPrimaryNew.style.opacity = st.nO;
-        els.btnSecondaryOld.style.opacity = st.oO; els.btnSecondaryNew.style.opacity = st.nO;
-        els.btnTertiary.style.opacity = st.tO; els.btnTertiary.style.transform = "scale(" + st.tS + ")"; els.btnTertiary.style.visibility = st.tO > 0 ? "visible" : "hidden";
-        var subP = easeOutStrong(c01(tMs / 400));
-        els.headerSubtitle.style.opacity = subP; els.headerSubtitle.style.transform = "scale(" + (0.95 + 0.05 * subP) + ")"; els.headerSubtitle.style.visibility = subP > 0 ? "visible" : "hidden";
-        var imgP = easeOutStrong(c01((tMs - 300) / 300));
-        els.reviewImage.style.opacity = imgP; els.reviewImage.style.visibility = imgP > 0 ? "visible" : "hidden";
-      }
-      function eio(x) { x = Math.max(0, Math.min(1, x)); return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; }
-      var LOADER_POP = 350, LOADER_FILL_START = 890, LOADER_FILL_DURATION = 2000, LOADER_DONE_AT = LOADER_FILL_START + LOADER_FILL_DURATION;
-      var LOADER_CIRCLES = [["loaderSCircle", 400, 3200, -8], ["loaderBCircle", 470, 3300, -10], ["loaderClock", 540, 2900, -6]];
-      var SUCCESS_S0 = LOADER_DONE_AT + 1000, SUCCESS_C0 = SUCCESS_S0 + 550, SUCCESS_RING_CIRC = 2 * Math.PI * 42, SUCCESS_PROGRESS_DROP = 300;
-      var cssEase = bz(0.25, 0.1, 0.25, 1);
-      function kf(frames, p) {
-        if (p <= frames[0][0]) return frames[0][1];
-        for (var i = 1; i < frames.length; i++) if (p <= frames[i][0]) { var a = frames[i - 1], b = frames[i], k = cssEase((p - a[0]) / (b[0] - a[0])); return a[1].map(function (v, j) { return v + (b[1][j] - v) * k; }); }
-        return frames[frames.length - 1][1];
-      }
-      var SUCCESS_TIP = [[0, [0, 1, 19]], [0.54, [0, 1, 19]], [0.70, [50, -8, 37]], [0.84, [17, 21, 48]], [1, [25, 14, 45]]];
-      var SUCCESS_LONG = [[0, [0, 46, 54]], [0.65, [0, 46, 54]], [0.84, [55, 0, 35]], [1, [47, 8, 38]]];
-      function renderLoaderState(tMs) {
-        els.whiteout.style.opacity = easeOutStrong(seg(tMs, 0, 300));
-        var textPop = reviewPop(seg(tMs, 250, 750)), textOp = easeOutStrong(seg(tMs, 250, 550));
-        els.loaderText.style.opacity = textOp; els.loaderText.style.transform = "translateY(" + (1 - textPop) * 40 + "px)"; els.loaderText.style.visibility = textOp > 0 ? "visible" : "hidden";
-        var progPop = reviewPop(seg(tMs, 310, 810)), progLy = (1 - progPop) * 40, progOp = easeOutStrong(seg(tMs, 310, 610));
-        if (tMs >= SUCCESS_S0) { var back = Math.max(0, Math.min(500, 500 - (tMs - SUCCESS_S0))); progLy = (1 - reviewPop(seg(back, 0, 500))) * SUCCESS_PROGRESS_DROP; progOp = 1; }
-        els.loaderProgress.style.opacity = progOp; els.loaderProgress.style.transform = "translateY(" + progLy + "px)"; els.loaderProgress.style.visibility = progOp > 0 && tMs < SUCCESS_S0 + 500 ? "visible" : "hidden";
-        var womanOp = easeOutStrong(seg(tMs, 250, 450));
-        els.loaderWoman.style.opacity = womanOp; els.loaderWoman.style.visibility = womanOp > 0 ? "visible" : "hidden";
-        LOADER_CIRCLES.forEach(function (c) {
-          var el = els[c[0]], start = c[1], period = c[2], travel = c[3];
-          var sc = 0.9 + 0.1 * reviewPop(seg(tMs, start, start + LOADER_POP)), fy = 0;
-          if (tMs > start + LOADER_POP) { var phase = (tMs - start - LOADER_POP) / period; fy = (travel * (1 - Math.cos(2 * Math.PI * phase))) / 2; }
-          var op = easeOutStrong(seg(tMs, start, start + 200));
-          el.style.opacity = op; el.style.transform = "translateY(" + fy + "px) scale(" + sc + ")"; el.style.visibility = op > 0 ? "visible" : "hidden";
-        });
-        var f = eio(seg(tMs, LOADER_FILL_START, LOADER_FILL_START + LOADER_FILL_DURATION));
-        els.loaderProgressFill.style.width = f * 100 + "%";
-        els.loaderProgressLabel.textContent = tMs >= LOADER_DONE_AT ? "Done" : "In progress (" + Math.floor(f * 100) + "%)";
-        var artOp = 1 - easeOutStrong(seg(tMs, SUCCESS_S0, SUCCESS_S0 + 300));
-        els.loaderArt.style.opacity = artOp; els.loaderArt.style.visibility = artOp > 0 ? "visible" : "hidden";
-        var oldTextOp = 1 - easeOutStrong(seg(tMs, SUCCESS_S0, SUCCESS_S0 + 250));
-        els.loaderTextOld.style.opacity = oldTextOp; els.loaderTextOld.style.visibility = oldTextOp > 0 ? "visible" : "hidden";
-        var newTextOp = easeOutStrong(seg(tMs, SUCCESS_S0 + 250, SUCCESS_S0 + 550));
-        els.loaderTextNew.style.opacity = newTextOp; els.loaderTextNew.style.visibility = newTextOp > 0 ? "visible" : "hidden";
-        var btnOp = easeOutStrong(seg(tMs, SUCCESS_C0, SUCCESS_C0 + 300));
-        els.btnSuccess.style.opacity = btnOp; els.btnSuccess.style.visibility = btnOp > 0 ? "visible" : "hidden";
-        var ringDraw = eio(seg(tMs, SUCCESS_C0, SUCCESS_C0 + 400));
-        els.successRing.style.strokeDasharray = SUCCESS_RING_CIRC; els.successRing.style.strokeDashoffset = SUCCESS_RING_CIRC * (1 - ringDraw);
-        var vp = seg(tMs, SUCCESS_C0, SUCCESS_C0 + 750);
-        var tipG = kf(SUCCESS_TIP, vp);
-        els.successTip.style.width = tipG[0] + "px"; els.successTip.style.left = tipG[1] + "px"; els.successTip.style.top = tipG[2] + "px"; els.successTip.style.opacity = tipG[0] > 0 ? 1 : 0;
-        var lngG = kf(SUCCESS_LONG, vp);
-        els.successLong.style.width = lngG[0] + "px"; els.successLong.style.right = lngG[1] + "px"; els.successLong.style.top = lngG[2] + "px"; els.successLong.style.opacity = lngG[0] > 0 ? 1 : 0;
-        els.successCheck.style.visibility = tMs >= SUCCESS_C0 ? "visible" : "hidden";
-      }
-      function all() { return [els.tableWrap, els.header, els.headerRowFields, els.footerStats, els.btnPrimary, els.btnSecondary, els.btnPrimaryOld, els.btnPrimaryNew, els.btnSecondaryOld, els.btnSecondaryNew, els.btnTertiary, els.headerSubtitle, els.reviewImage].concat(loaderOnly()); }
-      function loaderOnly() { return [els.whiteout, els.loader, els.loaderText, els.loaderProgress, els.loaderWoman, els.loaderSCircle, els.loaderBCircle, els.loaderClock, els.loaderProgressFill, els.loaderArt, els.loaderTextOld, els.loaderTextNew, els.btnSuccess, els.successCheck, els.successRing, els.successTip, els.successLong]; }
-      function clear(list) {
-        list.forEach(function (el) {
-          // Our own header row keeps scene 3's narrow inset; only the review-owned properties are cleared.
-          ["opacity", "visibility", "transform", "width", "left", "right", "top", "stroke-dasharray", "stroke-dashoffset", "--bp-header-before-opacity"].forEach(function (p) { el.style.removeProperty(p); });
-        });
-        els.loaderProgressLabel.textContent = "In progress (0%)";
-      }
-      return { els: els, rs: rs, measureWidths: measureWidths, renderReviewState: renderReviewState, renderLoaderState: renderLoaderState,
-        wipeAll: function () { clear(all()); }, wipeLoaderOnly: function () { clear(loaderOnly()); }, SUCCESS_C0: SUCCESS_C0 };
-    })();
-
-    // Review-page targets baked into review.png (image coordinates, native px) — verbatim from scenes-stack.html.
-    var P5_CONTINUE_R = { rx: 64, ry: 28, seedA: 0.4, seedB: 1.1 };
-    var P5_TOTAL_CIRCLE = { cx: 1172.5, cy: 249.5, rx: 156.5, ry: 53.5, seedA: 0.4, seedB: 1.1 };
-    var P5_TOTAL_CIRCLE_START = { x: P5_TOTAL_CIRCLE.cx + P5_TOTAL_CIRCLE.rx, y: P5_TOTAL_CIRCLE.cy };
-    var P5_AMOUNT_CX = 392, P5_AMOUNT_RY = [540, 618, 694, 772, 848];
-    var P5_LINE_PARAMS = [362, 397, 432].map(function (c, i) { return { x1: 1030, x2: 1396, y: c + 4, seed: [0.5, 0.9, 1.3][i] }; });
-    var P5_EXIT_TARGET = { x: 1530, y: 950 };
-    function p5ReadSweep(localT, duration, p) { var e = easeInOutCubic(clamp01(localT / duration)); return { x: p.x1 + e * (p.x2 - p.x1), y: p.y + 1.2 * Math.sin(e * Math.PI * 2 + p.seed) }; }
-    function p5ReadEnd(p) { return { x: p.x2, y: p.y }; }
-    function p5Drift(t) { return { dx: Math.sin(t / 1400 + 1.2) * 0.6, dy: Math.sin(t / 900) * 1.0 }; }
-
-    function s5Els(ins) {
-      if (ins.s5) return ins.s5;
-      var screen = ins.screenEl, header = screen.querySelector(".bp-header");
-      var sub = document.createElement("p"); sub.className = "bp-header__subtitle"; sub.textContent = "Review and schedule";
-      header.querySelector(".bp-header__title").insertAdjacentElement("afterend", sub);
-      var img = document.createElement("img"); img.className = "bp-review-image"; img.src = "/assets/mock-screen/bill-pay/images/review.png"; img.alt = "";
-      screen.querySelector(".bp-table-wrap").insertAdjacentElement("afterend", img);
-      var btnC = screen.querySelector(".bp-footer__buttons .bp-btn--cancel"), btnP = screen.querySelector(".bp-footer__buttons .bp-btn--continue");
-      btnC.innerHTML = '<span class="bp-btn__label bp-btn__label--old">Cancel</span><span class="bp-btn__label bp-btn__label--new">Save for later</span>';
-      btnP.innerHTML = '<span class="bp-btn__label bp-btn__label--old">Continue</span><span class="bp-btn__label bp-btn__label--new">Schedule payments</span>';
-      var holder = document.createElement("div"); holder.innerHTML = S5_OVERLAY_HTML;
-      while (holder.firstElementChild) screen.appendChild(holder.firstElementChild);
-      var E = P5.els;
-      E.header = header; E.headerSubtitle = sub; E.headerRowFields = screen.querySelector(".bp-header__row");
-      E.tableWrap = screen.querySelector(".bp-table-wrap"); E.footerStats = screen.querySelector(".bp-footer__stats"); E.reviewImage = img;
-      E.btnSecondary = btnC; E.btnPrimary = btnP;
-      E.btnSecondaryOld = btnC.querySelector(".bp-btn__label--old"); E.btnSecondaryNew = btnC.querySelector(".bp-btn__label--new");
-      E.btnPrimaryOld = btnP.querySelector(".bp-btn__label--old"); E.btnPrimaryNew = btnP.querySelector(".bp-btn__label--new");
-      function q(id) { return screen.querySelector("#" + id); }
-      E.btnTertiary = q("p1s2-btn-tertiary"); E.whiteout = q("p1s2-whiteout"); E.loader = q("p1s2-loader");
-      E.loaderText = q("p1s2-loader-text"); E.loaderProgress = q("p1s2-loader-progress"); E.loaderWoman = q("p1s2-loader-woman");
-      E.loaderSCircle = q("p1s2-loader-s-circle"); E.loaderBCircle = q("p1s2-loader-b-circle"); E.loaderClock = q("p1s2-loader-clock");
-      E.loaderProgressLabel = q("p1s2-loader-progress-label"); E.loaderProgressFill = q("p1s2-loader-progress-fill"); E.loaderArt = q("p1s2-loader-art");
-      E.loaderTextOld = q("p1s2-loader-text-old"); E.loaderTextNew = q("p1s2-loader-text-new"); E.btnSuccess = q("p1s2-btn-success");
-      E.successCheck = q("p1s2-success-check"); E.successRing = q("p1s2-success-ring"); E.successTip = q("p1s2-success-check-tip"); E.successLong = q("p1s2-success-check-long");
-      var prev = ins.mockWrap.style.display; ins.mockWrap.style.display = "block";
-      P5.measureWidths();
-      ins.mockWrap.style.display = prev;
-      ins.s5 = { sparkContinue: false, sparkSchedule: false };
-      return ins.s5;
-    }
-    function s5Reset(ins) { s5Els(ins); P5.wipeAll(); }
-
-    function s5Sequence() {
-      return [["enterContinue", 280], ["parkHold", 500], ["circleContinue", 760], ["holdAfterCircle", 500],
-        ["moveToContinue", 260], ["preClickContinue", 120], ["clickContinue", 600], ["reviewHold", 1000],
-        ["moveToAmount1", 280], ["holdAmount1", 170], ["moveToAmount2", 260], ["holdAmount2", 170], ["moveToAmount3", 260], ["holdAmount3", 170],
-        ["moveToAmount4", 260], ["holdAmount4", 170], ["moveToAmount5", 260], ["holdAmount5", 170],
-        ["moveToTotal", 280], ["circleTotal", 380],
-        ["moveToLine1", 260], ["readLine1", 300], ["holdLine1", 170], ["moveToLine2", 150], ["readLine2", 240], ["holdLine2", 170],
-        ["moveToLine3", 130], ["readLine3", 220], ["holdLine3", 170], ["holdBeforeSchedule", 500],
-        ["moveToSchedule", 280], ["holdOnSchedule", 500], ["preClickSchedule", 120], ["loader", P5.SUCCESS_C0 + 750], ["successHold", 1000]];
-    }
-    function s5Marks() {
-      if (s5Marks._m) return s5Marks._m;
-      var seq = s5Sequence(), m = {}, acc = 0;
-      for (var i = 0; i < seq.length; i++) { m[seq[i][0] + "Start"] = acc; acc += seq[i][1]; m[seq[i][0] + "End"] = acc; }
-      m.total = acc; s5Marks._m = m; return m;
-    }
-
-    function renderScene5(ins, t) {
-      var M = s5Marks(), S = s5Els(ins), E = P5.els;
-      // Mock transitions
-      if (t >= M.clickContinueStart) {
-        P5.renderReviewState(t - M.clickContinueStart);
-        if (t >= M.loaderStart) { E.whiteout.style.visibility = "visible"; E.loader.style.visibility = "visible"; P5.renderLoaderState(t - M.loaderStart); }
-      }
-      // Targets
-      var cbR = nativeRect(E.btnPrimary, ins.screenRect);
-      var circle = { cx: cbR.centerX, cy: cbR.centerY, rx: P5_CONTINUE_R.rx, ry: P5_CONTINUE_R.ry, seedA: P5_CONTINUE_R.seedA, seedB: P5_CONTINUE_R.seedB };
-      var park = { x: circle.cx + circle.rx, y: circle.cy };
-      if (t < M.clickContinueStart) S.continuePos = { x: cbR.centerX, y: cbR.centerY };
-      var continuePos = S.continuePos || { x: cbR.centerX, y: cbR.centerY };
-      var schedulePos = { x: cbR.centerX, y: cbR.centerY };
-      var startPos = s3CursorState(ins, S3_MARKS.total - 1).pos;
-      function inb(a) { return t >= M[a + "Start"] && t < M[a + "End"]; }
-      function lt(a) { return t - M[a + "Start"]; }
-      function du(a) { return M[a + "End"] - M[a + "Start"]; }
-      function drift(p) { var d = p5Drift(t); return { x: p.x + d.dx, y: p.y + d.dy }; }
-      function amt(i) { return { x: P5_AMOUNT_CX, y: P5_AMOUNT_RY[i] }; }
-      var pos = startPos, op = 1, rOp = 0, rSc = 1;
-      if (inb("enterContinue")) { pos = moveTo2(lt("enterContinue"), du("enterContinue"), startPos, park); op = clamp01(lt("enterContinue") / du("enterContinue")); }
-      else if (inb("parkHold")) pos = drift(park);
-      else if (inb("circleContinue")) { var c1 = lt("circleContinue"); pos = s4CircleFromRight(c1 < 380 ? c1 : c1 - 380, 380, circle); }
-      else if (inb("holdAfterCircle")) pos = drift(park);
-      else if (inb("moveToContinue")) pos = moveTo2(lt("moveToContinue"), du("moveToContinue"), park, continuePos);
-      else if (t < M.moveToAmount1Start) pos = drift(continuePos);
-      else if (inb("moveToAmount1")) pos = moveTo2(lt("moveToAmount1"), du("moveToAmount1"), continuePos, amt(0));
-      else if (t < M.moveToTotalStart) {
-        pos = amt(0);
-        for (var k = 2; k <= 5; k++) {
-          if (inb("moveToAmount" + k)) { var e = easeInOutCubic(clamp01(lt("moveToAmount" + k) / du("moveToAmount" + k))); pos = { x: P5_AMOUNT_CX, y: P5_AMOUNT_RY[k - 2] + e * (P5_AMOUNT_RY[k - 1] - P5_AMOUNT_RY[k - 2]) }; }
-          else if (t >= M["moveToAmount" + k + "End"]) pos = amt(k - 1);
-        }
-      }
-      else if (inb("moveToTotal")) pos = moveTo2(lt("moveToTotal"), du("moveToTotal"), amt(4), P5_TOTAL_CIRCLE_START);
-      else if (inb("circleTotal")) pos = s4CircleFromRight(lt("circleTotal"), du("circleTotal"), P5_TOTAL_CIRCLE);
-      else if (inb("moveToLine1")) pos = moveTo2(lt("moveToLine1"), du("moveToLine1"), P5_TOTAL_CIRCLE_START, { x: P5_LINE_PARAMS[0].x1, y: P5_LINE_PARAMS[0].y });
-      else if (inb("readLine1")) pos = p5ReadSweep(lt("readLine1"), du("readLine1"), P5_LINE_PARAMS[0]);
-      else if (inb("holdLine1")) pos = drift(p5ReadEnd(P5_LINE_PARAMS[0]));
-      else if (inb("moveToLine2")) pos = moveTo2(lt("moveToLine2"), du("moveToLine2"), p5ReadEnd(P5_LINE_PARAMS[0]), { x: P5_LINE_PARAMS[1].x1, y: P5_LINE_PARAMS[1].y });
-      else if (inb("readLine2")) pos = p5ReadSweep(lt("readLine2"), du("readLine2"), P5_LINE_PARAMS[1]);
-      else if (inb("holdLine2")) pos = drift(p5ReadEnd(P5_LINE_PARAMS[1]));
-      else if (inb("moveToLine3")) pos = moveTo2(lt("moveToLine3"), du("moveToLine3"), p5ReadEnd(P5_LINE_PARAMS[1]), { x: P5_LINE_PARAMS[2].x1, y: P5_LINE_PARAMS[2].y });
-      else if (inb("readLine3")) pos = p5ReadSweep(lt("readLine3"), du("readLine3"), P5_LINE_PARAMS[2]);
-      else if (t < M.moveToScheduleStart) pos = drift(p5ReadEnd(P5_LINE_PARAMS[2]));
-      else if (inb("moveToSchedule")) pos = moveTo2(lt("moveToSchedule"), du("moveToSchedule"), p5ReadEnd(P5_LINE_PARAMS[2]), schedulePos);
-      else if (t < M.loaderStart) pos = drift(schedulePos);
-      else if (t < M.loaderEnd) {
-        var lt2 = t - M.loaderStart;
-        if (lt2 < 200) pos = schedulePos;
-        else if (lt2 < 480) { pos = moveTo2(lt2 - 200, 280, schedulePos, P5_EXIT_TARGET); op = 1 - clamp01((lt2 - 200) / 280); }
-        else { pos = P5_EXIT_TARGET; op = 0; }
-      } else { pos = P5_EXIT_TARGET; op = 0; }
-      // Clicks — ripple + spark: Continue at clickContinueStart, Schedule payments at loaderStart
-      if (t >= M.clickContinueStart && t < M.clickContinueStart + 200) { var r1 = computeClickRipple(t - M.clickContinueStart, 200); rOp = r1.opacity; rSc = r1.scale; }
-      if (t >= M.loaderStart && t < M.loaderStart + 200) { var r2 = computeClickRipple(t - M.loaderStart, 200); rOp = r2.opacity; rSc = r2.scale; }
-      if (t >= M.clickContinueStart) { if (!S.sparkContinue) { S.sparkContinue = true; triggerSparkBurst(continuePos.x, continuePos.y); } } else S.sparkContinue = false;
-      if (t >= M.loaderStart) { if (!S.sparkSchedule) { S.sparkSchedule = true; triggerSparkBurst(schedulePos.x, schedulePos.y); } } else S.sparkSchedule = false;
-
-      ins.cursorEl.style.left = pos.x + "px"; ins.cursorEl.style.top = pos.y + "px"; ins.cursorEl.style.opacity = op;
-      ins.rippleEl.style.left = pos.x + "px"; ins.rippleEl.style.top = pos.y + "px";
-      ins.rippleDisc.style.opacity = rOp; ins.rippleDisc.style.transform = "translate(-50%, -50%) scale(" + rSc + ")";
-    }
-
-    // ================= Hero mock timeline =================
-    // Order: Built for bulk runs beats 1–4 (batch) -> Inline audit trail (batch) -> Built for bulk runs
-    // beats 5–11 -> 320ms seam -> In-Flow Continuity (complete) -> Review before release -> end hold.
-    function protoAuditEnd() { return PROTO.aEnd + s4Marks().total; }
-    function protoCEnd() { return protoAuditEnd() + (PROTO.seamStartS2 - PROTO.aEnd); }
-    function protoSeamEnd() { return protoCEnd() + 320; }
-    function protoS3End() { return protoSeamEnd() + (S3_MARKS.total - S3_MARKS.enter153End); }
-    function protoS5End() { return protoS3End() + s5Marks().total; }
-    function protoTotal() { return protoS5End() + PROTO.endHold + PROTO.flip; }
     function renderAtTime(ms) {
+      var index = sceneIndexForTime(ms);
       if (!sharedMock.instance) sharedMock.instance = buildMockInstance();
-      var ins = sharedMock.instance;
-      ins.mockWrap.style.display = "block";
+      sharedMock.instance.mockWrap.style.display = "block";
       body.style.backgroundColor = "";
-      resetSharedMockBaseline(ins);
-      protoSetFlip(0);
-      s4Els(ins);
-      s5Reset(ins);
-      if (ms < PROTO.aEnd) { s4Reset(ins); renderScene2(ins, ms); return 0; }
-      if (ms < protoAuditEnd()) { renderScene4(ins, ms - PROTO.aEnd); return 1; }
-      if (ms < protoCEnd()) {
-        var tc = ms - protoAuditEnd();
-        s4Reset(ins);
-        renderScene2(ins, PROTO.aEnd + tc);
-        // Seam out of the audit trail: Built for bulk runs' own 280ms move to the toggle now starts at the
-        // drawer's X; the table eases back from its read-down scroll over the same move.
-        var E = ins.s4;
-        if (tc < 280) {
-          var tgt = underlineStart(underlineParamsFor(ins.s2.toggleLabel, 1.7));
-          var p = moveTo2(tc, 280, E.closeRest, tgt);
-          ins.cursorEl.style.left = p.x + "px"; ins.cursorEl.style.top = p.y + "px"; ins.cursorEl.style.opacity = 1;
-          ins.rippleEl.style.left = p.x + "px"; ins.rippleEl.style.top = p.y + "px";
-          if (E.heroScrollNeed) ins.rowsScroll.scrollTop = E.heroScrollNeed * (1 - easeInOutCubic(clamp01(tc / 280)));
-        }
-        return 2;
-      }
-      if (ms < protoSeamEnd()) {
-        // Seam into In-Flow Continuity: replaces its enter153 (fade-in from off-stage) with a 320ms move
-        // from Barnett's last bill number (end of Built for bulk runs beat 11) to bill #153's amount field.
-        var ts = ms - protoCEnd();
-        renderScene3(ins, S3_MARKS.enter153End); s4Reset(ins);
-        var sb = ins.s2Bulk;
-        var from = { x: sb.subBillCenterX, y: sb.subBillCenterY[sb.subBillCenterY.length - 1] };
-        var fr = nativeRect(ins.rowsScroll.querySelector('[data-row-id="1"] .bp-amount-field'), ins.screenRect);
-        var q = moveTo2(ts, 320, from, { x: fr.centerX, y: fr.centerY });
-        ins.cursorEl.style.left = q.x + "px"; ins.cursorEl.style.top = q.y + "px";
-        ins.cursorEl.style.opacity = 1; ins.rippleDisc.style.opacity = 0;
-        return 3;
-      }
-      if (ms < protoS3End()) { renderScene3(ins, ms - protoSeamEnd() + S3_MARKS.enter153End); s4Reset(ins); return 4; }
-      // Loop reset — card flip (Hadar, 25 Sep: flip, 400ms). End screen turns to edge-on, then the start
-      // frame (t = 0) turns in from edge-on. easeInOutCubic over the full flip, as in the approved comparison.
-      var tf = ms - protoS5End() - PROTO.endHold;
-      if (tf < 0) {
-        renderScene3(ins, S3_MARKS.total - 1); s4Reset(ins);
-        renderScene5(ins, Math.min(ms - protoS3End(), s5Marks().total));
-        return 5;
-      }
-      var fe = easeInOutCubic(clamp01(tf / PROTO.flip)), ang = 180 * fe;
-      if (ang < 90) {
-        renderScene3(ins, S3_MARKS.total - 1); s4Reset(ins);
-        renderScene5(ins, s5Marks().total);
-        protoSetFlip(-ang);
+      resetSharedMockBaseline(sharedMock.instance);
+      if (index === 0) {
+        renderScene1(sharedMock.instance, ms - BOUNDARIES[0]);
+      } else if (index === 1) {
+        renderScene2(sharedMock.instance, ms - BOUNDARIES[1]);
       } else {
-        s4Reset(ins);
-        renderScene2(ins, 0);
-        protoSetFlip(180 - ang);
+        renderScene3(sharedMock.instance, ms - BOUNDARIES[2]);
       }
-      return 6;
+      return index;
     }
-    // Turns the host iframe itself (same origin) so the frame's radius and shadow flip with it.
-    // Perspective sits on the iframe's parent (.mock-frame, a zero-height wrapper), with its origin
-    // placed at the iframe's centre so the flip turns around the frame, not the wrapper's top edge.
-    function protoSetFlip(deg) {
-      var fr = window.frameElement;
-      if (!fr) return;
-      fr.style.transform = deg ? "rotateY(" + deg + "deg)" : "";
-      var host = fr.parentElement;
-      if (host) {
-        host.style.perspective = PROTO.flipPerspective + "px";
-        host.style.perspectiveOrigin = "50% " + (fr.offsetTop + fr.offsetHeight / 2) + "px";
-      }
-    }
-
 
     function announce(ms, index) {
-      // Hero mock: no parent rail to notify.
+      parent.postMessage(
+        { type: "scene-gallery-state", ms: ms, sceneIndex: index },
+        window.location.origin
+      );
     }
 
     // Plays while entered; only announces to the parent when the scene
@@ -4926,9 +3671,6 @@
     });
 
     resetToStart();
-
-    if (!sharedMock.instance) sharedMock.instance = buildMockInstance();
-    TOTAL_DURATION = protoTotal();
 
     ViewportGate.observe(body, {
       onEnter: startPlayback,
