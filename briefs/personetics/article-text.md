@@ -1,6 +1,7 @@
 <!--
-  Personetics article text, written by the text sync (scope doc §1, contract v1).
+  Personetics article text, written by the text sync (scope doc §1, contract v2).
   Source: Engage Skeleton Workbench, sections 01–05, locked drafts only.
+  Pain map text (section 04): Pain Map Workbench, written by the pain map sync (pain-map.md §2).
   Replaced in full on every sync. Never edit by hand.
 -->
 
@@ -75,6 +76,76 @@ But I can’t think past payday, and I don’t trust my bank.
 Because they’re only good at charging fees, and my headspace is taken up by reaching the end of the month without falling short.
 Which makes me feel anxious, ashamed, and on my own.
 In an ideal world I’d see the hard days coming, stay in control without the guilt, and know my bank is on my side, so saving finally feels possible.
+
+## pain-map
+headline: headline headline
+
+### tab: spend
+number: 47%
+label: Spend as much as they earn, or more
+
+#### row
+number: ≈17%
+title: Can't see the line until they cross it
+quote: “Again and again, it’s never the big stuff. Whatever comes last, say $50 of groceries, and I’m in overdraft.”
+quote: “With contactless you just tap away. The card went through like normal, and I only realised I was overdrawn afterwards.”
+quote: “I don’t keep track as I go. Then the statement came. Oh god, it was so high… six weeks and I’d spent that much. The balance just dropped.”
+
+#### row
+number: 14%
+title: Stretch to the next paycheck
+quote: "My thought process was how close it was to payday… it might have cleared before but it might have cleared after. So I just rolled the dice."
+quote: “You focus on your bills, and by the end of the month there’s no pots of money left.”
+quote: “Payday comes and I finally get the things I've been putting off. By the end of the month it's getting very close, and I just hope it'll be enough.”
+
+#### row
+number: 21%
+title: Spend it while it's there
+quote: “I'm just really impulsive. I think I've got money, spend it. New shoes, new stuff for the week. I could be dead tomorrow.”
+quote: “I'm not good with money. I can have it and spend it on stupid stuff I don't really need while I still haven't paid the electric bill.”
+
+### tab: plan
+number: 40%
+label: Don't plan ahead financially
+
+#### row
+number: 23%
+title: Would rather look away
+quote: “Even thinking or talking about my finances gets my heart racing.”
+quote: “It's all so overwhelming and confusing. I know ignoring it doesn't help, but I just don't want to deal with it.”
+quote: “It feels pointless. Life is stressful, so you just have to take each day as it comes. Juggling bills and paying the mortgage are my top priorities.”
+
+#### row
+number: 52%
+title: Can't stick to a budget
+quote: “Budgeting makes me feel guilty and poor, like I've got less money than I thought, especially when I spend it on unnecessary things.”
+quote: “I kept a spreadsheet, but I got burned out on it. It's just hard to keep up long-term. It used up a fair bit of my time.”
+quote: “Some months we bring home a lot less. You can't plan a budget when you don't know what's coming in.”
+
+### tab: save
+number: 45%
+label: Can't last three months on savings
+
+#### row
+number: 31%
+title: Can't hold on to a buffer
+quote: “We can't afford to save. Whatever comes in goes out, so in the end there's nothing left to put aside.”
+quote: “I try to put money aside, for example before Christmas, but then there's always something we have to pay for.”
+quote: "It's the stuff that you don't see coming that absolutely screws me over every single year."
+
+#### row
+number: 75%
+title: Won't lock their money away
+quote: “The word 'automatically' is a bit scary. It sounds like whoa, whoa,  hang on a minute. How do I manage the months I run short if that fixed amount can't bend?”
+quote: "the fact that you can get your money out when you needed it made it sound a lot more appealing"
+quote: “Those accounts that earn interest aren't really for people like me. They're for people with more money.”
+
+#### row
+number: 62%
+title: Won't save without a goal
+quote: “I'm only saving now because I'm trying to get a car. So if I didn't have to save for that, I wouldn't.”
+quote: "I've never set goals in my life. It's like this is where I am now. What lily pad do I jump to now to keep the boat afloat?"
+quote: “I'm good at saving for a goal. But once I get there, I love spending on stuff, and then it's like, where do I go from here?”
 
 # 05
 header: The yet to come

@@ -9,6 +9,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Literata:wght@400&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Literata:wght@500&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Literata:wght@600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Literata:wght@700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Literata:ital,wght@1,300&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Literata:ital,wght@1,400&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Literata:ital,wght@1,600&display=swap');
@@ -58,6 +59,16 @@
   --text-diagram-callout-keywords: 500 14px/1.5 "Literata", Georgia, serif;
   --text-danny-quote: italic 300 24.8px/39.7px "Literata", Georgia, serif;
 
+  --text-pain-map-headline: 500 18px/1.3 "Literata Optical", "Literata", Georgia, serif;
+  --text-pain-map-tab: 600 12px/1.3 "Literata Optical", "Literata", Georgia, serif;
+  --text-pain-map-number: 700 58px/1.16 "Literata Optical", "Literata", Georgia, serif;
+  --text-pain-map-label: 300 26px/1.22 "Literata Optical", "Literata", Georgia, serif;
+  --text-pain-map-row-number: 700 27px/1 "Literata Optical", "Literata", Georgia, serif;
+  --text-pain-map-row-title: 400 14px/20px "Literata Optical", "Literata", Georgia, serif;
+  --text-pain-map-row-number-open: 700 40px/1 "Literata Optical", "Literata", Georgia, serif;
+  --text-pain-map-row-title-open: 400 16px/1.46 "Literata Optical", "Literata", Georgia, serif;
+  --text-pain-map-quote: italic 300 12px/17.5px "Literata Optical", "Literata", Georgia, serif;
+
   --text-hero-display: italic 62px/1.07 "Literata", Georgia, serif;
   --text-hero-sub-headline: 20px/1.65 "Literata", Georgia, serif;
   --text-hero-note: 12px/1.3 "Literata", Georgia, serif;
@@ -80,6 +91,7 @@
 
   --tracking-widget-tight: -0.022em;
   --tracking-section-subheading: 1px;
+  --tracking-pain-map-number: 0.04em; /* 2.32px at 58px */
 
   --shadow-soft: 0px 0px 30px color-mix(in srgb, var(--primitive-black) 10%, transparent);
 

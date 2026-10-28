@@ -3,7 +3,7 @@
 Section 04 (Mind the gap / Discovery & Problem Definition), between body paragraphs 1 and 2.
 Scope doc: `briefs/personetics/personetics-build-scope.md`. This file holds every value for this visual, static and motion. The scope doc only links here.
 
-Status (28 Oct 2026): phase 1 (static + tab toggle) locked with Hadar, ready to build once this file is committed. Phase 2 (motion) not specced; open items in §3.
+Status (28 Oct 2026): phase 1 built and QA'd by Hadar. Phase 2 (motion) not specced; open items in §3.
 
 > **Conflict rule.** If any number in this spec conflicts with the existing layout or code, the existing source wins. STOP and report. Do not redesign, flatten or substitute your own markup.
 
@@ -33,7 +33,7 @@ Build type: **new structure, with one duplicated part** (the tab toggle, §1.3).
 | Tab toggle | **Duplicate** the Bill Pay cockpit widget toggle (its markup, JS and existing movement). Change only what §1.3 lists. Pre-flight names the exact source file. |
 | Text | Text sync from the Pain Map Workbench (§2). Never typed by hand. Figma copy is placeholder only. |
 | Illustrations | Not in this build. Grey placeholder box (§1.4). |
-| + button | Figma node `2004:52189` (32 × 32), downloaded through the Figma MCP as SVG into `assets/personetics/pain-map/`. |
+| + button | Figma node `2004:52189` (32 × 32), inlined from `_includes/personetics/pain-map-plus.svg`. Circle fill `currentColor`, rendered `--primitive-red-dark` (Hadar, 28 Oct; Figma's #880000 replaced, same as the selected tab). |
 | Behaviour | Hadar, 28 Oct. |
 
 ### Unresolved — do not build
@@ -85,7 +85,7 @@ All rules 1px, `--primitive-grey-dark`.
 - Row width 540 always; a row never changes the column's size.
 
 **Closed row**
-- Text block: horizontal padding 32 (text width 396), then 48px gap, then the + button (32 × 32) flush to the right edge, vertically centred.
+- Text block 460 wide: horizontal padding 32 each side (text width 396). Then 48px gap, then the + button (32 × 32) at x 508, flush to the right edge, vertically centred. (Figma 2003:51642.)
 - Number: Literata Bold 700, 27px, line-height 1 (27px tall), `--primitive-black`.
 - 12px gap.
 - Title: Literata Regular 400, 14px, line-height 20px, `--primitive-black`. **One line only.**
@@ -97,7 +97,7 @@ All rules 1px, `--primitive-grey-dark`.
 - 8px gap.
 - Title: Literata Regular 400, **16px**, line-height 1.46, `--primitive-black`. One line only.
 - 19px gap.
-- Quotes: one paragraph per quote, Literata Light Italic 300, 11px, line-height 16px, `--primitive-black`, 8px between paragraphs. Text exactly as synced.
+- Quotes: one paragraph per quote, Literata Light Italic 300, 12px, line-height 17.5px (Hadar, 28 Oct, for readability; Figma has 11/16), `--primitive-black`, 8px between paragraphs. Text exactly as synced.
 
 ### 1.7 Behaviour
 - Clicking a closed row opens it and closes any other open row. Instant.
@@ -119,6 +119,7 @@ All rules 1px, `--primitive-grey-dark`.
 ### 1.9 Fonts and tokens
 - Literata weights used: 300 roman, 300 italic, 400, 500, 600, 700. Pre-flight checks `tokens.css`; any missing weight gets its own `@import` line, following the file's one-weight-per-import rule.
 - Text tokens for each style above go in `tokens.css` with the other `--text-*` tokens. Colours and spacing only from existing tokens.
+- The pain map uses its own font family, "Literata Optical": self-hosted variable Literata (opsz + wght) in `assets/fonts/literata-optical/`, with `font-optical-sizing: auto` and antialiased smoothing on `.pain-map`. Reason: Figma renders Literata with automatic optical size; the site's static files don't, and looked heavier (Hadar confirmed by side-by-side, 28 Oct). Pain map only; the rest of the article and Bill Pay keep the static files (Hadar, 28 Oct). Headline uses `--text-pain-map-headline`, not the shared `--text-widget-header`. The font files are ~400 KB each: trim before launch.
 - Case study pages are desktop-only (`CLAUDE.md`). No mobile layout.
 
 ### 1.10 Placement

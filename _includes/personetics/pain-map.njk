@@ -1,0 +1,63 @@
+{#
+  Pain-map pattern — Personetics section 04 (spec: briefs/personetics/pain-map.md §1).
+
+  Params:
+    data — the section's `painMap` object from _data/personeticsText.js:
+           { headline, tabs: [{ id, number, label, rows: [{ number, title, quotes }] }] }.
+           All strings are already HTML-escaped. Tab order and row counts are validated by the parser.
+#}
+{% macro painMap(data) %}
+<div class="pain-map" id="pain-map">
+  <h3 class="pain-map__headline">{{ data.headline | safe }}</h3>
+  <div class="pain-map__rule"></div>
+  <div class="pain-map-toggle">
+    <div class="pain-map-toggle__track spend" role="tablist" aria-label="Pain map">
+      <div class="pain-map-toggle__pill"></div>
+      {% for tab in data.tabs %}
+      <button class="pain-map-toggle__tab" type="button" role="tab" id="pain-map-tab-{{ tab.id }}" aria-controls="pain-map-panel-{{ tab.id }}" aria-selected="{{ 'true' if loop.first else 'false' }}" data-tab="{{ tab.id }}">{{ tab.id | capitalize }}</button>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="pain-map__main">
+    <div class="pain-map__left">
+      {% for tab in data.tabs %}
+      <div class="pain-map__left-panel" data-tab="{{ tab.id }}"{% if not loop.first %} hidden{% endif %}>
+        <div class="pain-map__illustration"></div>
+        <div class="pain-map__left-text">
+          <p class="pain-map__number">{{ tab.number | safe }}</p>
+          <p class="pain-map__label">{{ tab.label | safe }}</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="pain-map__right">
+      {% for tab in data.tabs %}
+      <div class="pain-map__rows" role="tabpanel" id="pain-map-panel-{{ tab.id }}" aria-labelledby="pain-map-tab-{{ tab.id }}" data-tab="{{ tab.id }}"{% if not loop.first %} hidden{% endif %}>
+        {% for row in tab.rows %}
+        <div class="pain-map-row">
+          <button class="pain-map-row__closed" type="button" aria-expanded="false" aria-controls="pain-map-open-{{ tab.id }}-{{ loop.index }}">
+            <span class="pain-map-row__text">
+              <span class="pain-map-row__number">{{ row.number | safe }}</span>
+              <span class="pain-map-row__title">{{ row.title | safe }}</span>
+            </span>
+            <span class="pain-map-row__plus">{% include "personetics/pain-map-plus.svg" %}</span>
+          </button>
+          <div class="pain-map-row__open" id="pain-map-open-{{ tab.id }}-{{ loop.index }}" tabindex="-1">
+            <div class="pain-map-row__heading">
+              <p class="pain-map-row__number-open">{{ row.number | safe }}</p>
+              <p class="pain-map-row__title-open">{{ row.title | safe }}</p>
+            </div>
+            <div class="pain-map-row__quotes">
+              {% for quote in row.quotes %}
+              <p class="pain-map-row__quote">{{ quote | safe }}</p>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endmacro %}

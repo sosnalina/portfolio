@@ -10,10 +10,12 @@ stylesheets:
   - ../../css/widgets/personetics/problem-statement/problem-statement.css
   - ../../css/widgets/personetics/cognitive-banking-diagram/cognitive-banking-diagram.css
   - ../../css/widgets/personetics/danny-figure/danny-figure.css
+  - ../../css/widgets/personetics/pain-map/pain-map.css
 scripts:
   - ../../js/personetics/problem-statement.js
   - ../../js/personetics/cognitive-banking-diagram.js
   - ../../js/personetics/danny-figure.js
+  - ../../js/personetics/pain-map.js
 ---
 {% extends "shared/base.njk" %}
 {% from "shared/section.njk" import section %}
@@ -22,6 +24,7 @@ scripts:
 {% from "personetics/problem-statement.njk" import problemStatement %}
 {% from "personetics/cognitive-banking-diagram.njk" import cognitiveBankingDiagram %}
 {% from "personetics/danny-figure.njk" import dannyFigure %}
+{% from "personetics/pain-map.njk" import painMap %}
 
 {% block body %}
 <main class="theme-red">
@@ -41,6 +44,8 @@ scripts:
     {{ cognitiveBankingDiagram(s.visuals.diagram) }}
     {% elif block.name == "quote" %}
     {{ dannyFigure(s.visuals.quote) }}
+    {% elif block.name == "painmap" %}
+    {{ painMap(s.painMap) }}
     {% endif %}
     {% endfor %}
   {% endcall %}

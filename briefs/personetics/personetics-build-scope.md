@@ -305,3 +305,5 @@ Written before the 26 Oct colour change. Colours, badge rules, theme class and s
 
 ## Rework log
 - 28 Oct, problem-statement motion: a copy of the braces stayed at the drawing position during the drift. The approved reference relied on its page's base `[hidden]` rule, and the spec didn't carry it. §17 "Artifact" should have caught it: carry any page-level CSS the reference code depends on.
+- 28 Oct, pain map phase 1: spec closed-row widths summed to 508, not 540. §17 Self-consistency should have caught it: arithmetic not re-added.
+- 28 Oct, pain map phase 1: number→text gaps were 0 (`p { margin: 0 }` overrode them); the build check measured block sizes only. §17 Done is defined: the check list didn't name internal gaps.
