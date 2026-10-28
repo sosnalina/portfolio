@@ -77,7 +77,7 @@ How Personetics text gets from the workbench to the site. This section is the on
 
 **Scope:** sections 01–05. 06 (s6b) and 07 stay out until Hadar says so.
 
-**Target:** `briefs/personetics/article-text.md` in the repo. Portfolio writes it; the page reads its text from it (mechanism confirmed at the foundation build's pre-flight). Replaced in full on every sync.
+**Target:** `briefs/personetics/article-text.md` in the repo. Portfolio writes it; the page reads its text from it (format and mechanism: §2). Replaced in full on every sync.
 
 **Flow:**
 1. Hadar edits and locks text in the workbench.
@@ -129,14 +129,14 @@ with it entirely.
 
 ### Definition of done for the first build (foundation page) — updated 28 Oct
 - **What you'll look at:**
-  - `/case-studies/personetics/` — beige hero plus 6 sections, right background and badge on each.
+  - `/case-studies/personetics/` — beige hero plus 5 sections (01–05), right background and badge on each.
   - `/case-studies/personetics/` — problem statement as the last element of section 04, overlaid against Figma node `2004:52157`.
   - `/case-studies/bill-pay/` — looks exactly as today (safety check for the shared CSS change).
   - `/` — two links that open each article; browser back returns here.
 - **The numbers that matter:**
-  - Badges 01–06: three dark red (01, 03, 05) and three red (02, 04, 06), white numbers on all.
+  - Badges 01–05: three dark red (01, 03, 05) and two red (02, 04), white numbers on all.
   - Problem statement block: 800 × 302px.
-- **Out of scope:** every visual except the problem statement; problem-statement motion; Impact & Postmortem; hero content; landing page design; commit.
+- **Out of scope:** sections 06 and 07 (Hadar, 28 Oct: this build stops after 05); every visual except the problem statement; problem-statement motion; Impact & Postmortem; hero content; landing page design; commit.
 
 Decision (Hadar, 28 Oct): the problem statement's static layout ships inside the foundation build, so it appears as soon as the article exists. It is the only visual in that build.
 
@@ -191,6 +191,38 @@ Phase rule applies to every visual: static first, motion second, gate inside the
 - New `.section--beige` modifier sets the beige background and overrides `--theme-badge-bg` to `var(--primitive-red)` locally. No body-text rule needed (grey-light has none). Placed after `.section--hero` (order matters: hero carries both classes).
 - No pink modifier any more.
 - New page `case-studies/personetics/index.njk` composed from `section()` + `sectionHeader()` + `sectionBody()`, with its text read from `briefs/personetics/article-text.md` (§1 Text sync).
+- Hero: `section("section--hero section--beige")` called directly, with an empty slot. The `hero()` macro isn't used: it hardcodes `section--green-light` and requires a headline.
+- `.theme-red` lives in `header.css`, next to the badge rule (today it only sets badge variables).
+- Section backgrounds follow reading order: odd sections white, even sections beige.
+- The page renders its sections in a loop from `briefs/personetics/article-text.md`, read through the data file `_data/personeticsText.js`. `.eleventy.js` adds the text file as a watch target, so the dev server reloads after a sync.
+- At a `[[VISUAL:name]]` marker the page renders that visual if it is built (today: `persona` only). Otherwise it renders nothing and the body continues in a new block, so the slot gap marks the spot.
+
+#### `article-text.md` format (written by the text sync, read by `_data/personeticsText.js`)
+```
+<!-- header comment -->
+
+# 01
+header: <section heading>
+title: <subheading>
+
+<paragraph>
+
+[[VISUAL:name]]
+
+<paragraph, single line breaks kept>
+
+## visual: name
+<locked line>
+<locked line>
+
+# 02
+...
+```
+- `# NN` starts a section: two digits, reading order. `header:` and `title:` follow on the next two lines.
+- Body: paragraphs separated by one blank line. A single line break inside a paragraph is intentional and renders as `<br>`. `[[VISUAL:name]]` alone as a paragraph marks a visual's position.
+- `## visual: name` starts that visual's LOCKED lines, one per line, up to the next `## visual:` or `# NN`. Present only for visuals that have locked text.
+- Text is copied exactly from the workbench. No typography changes.
+- The data file HTML-escapes `&`, `<` and `>`, turns single line breaks into `<br>`, and fails the build on anything it can't parse. It returns `[{ number, header, title, blocks: [{ type: "text", paragraphs: [...] } | { type: "visual", name }], visuals: { name: [line, ...] } }]`.
 - New `index.njk` at repo root for the landing page.
 - The problem statement (`problem-statement.md` §1) is part of the foundation build, written after the tokens.
 

@@ -9,7 +9,7 @@ Status (28 Oct 2026): static spec complete, ships with the foundation build. Mot
 
 ## 1. Static — ready to build
 
-Build type: **new structure, build new.** No existing component is duplicated. Pattern precedent: the Bill Pay principles block (`{% set %}` markup in the page's `index.njk` + its own CSS file). Unlike `principles.css` (shared, in `css/components/`), the problem statement is Personetics-only, so its files go case-study-first: `_includes/personetics/` and `css/widgets/personetics/`.
+Build type: **new structure, build new.** No existing component is duplicated. Pattern: a macro, `problemStatement(lines)` in `_includes/personetics/problem-statement.njk`, plus its own CSS file. The page renders its sections in a loop from the synced text, so the block takes the persona lines as an argument (28 Oct; replaces a `{% set %}` block in `index.njk`). Unlike `principles.css` (shared, in `css/components/`), the problem statement is Personetics-only, so its files go case-study-first: `_includes/personetics/` and `css/widgets/personetics/problem-statement/` (one subfolder per widget, CLAUDE.md).
 
 ### Sources
 | Element | Source |
@@ -21,7 +21,7 @@ Build type: **new structure, build new.** No existing component is duplicated. P
 | Text styles | Figma styles created 28 Oct: `desktop/articles/problem-statement` (Literata Light Italic 16 / 37.66px) and `desktop/articles/problem-statement-lead` (Literata Bold Italic 16 / 37.66px). |
 | Brace colour | `--primitive-red` (Hadar, 28 Oct). Set in CSS; whatever fill is inside the SVG file is ignored. |
 | Copy | Text sync (scope doc §1): the LOCKED `[[VISUAL:persona]]` lines in workbench section s5. Never typed into this spec or the page by hand. Typographic apostrophes (’) kept. |
-| Placement | Last element of section 04, after body paragraph 3. Gap above = the content column's existing `gap: var(--spacing-64)` (`section.css`), which matches Figma. No extra margin. |
+| Placement | Last element of section 04, at the `[[VISUAL:persona]]` marker (today: after body paragraph 3). Gap above = the content column's existing `gap: var(--spacing-64)` (`section.css`), which matches Figma. No extra margin. |
 | Viewport | Case study pages are desktop-only (`CLAUDE.md`). No mobile layout. |
 
 ### Unresolved — do not build
@@ -42,10 +42,10 @@ Build type: **new structure, build new.** No existing component is duplicated. P
 - Save it as `_includes/personetics/problem-statement-brace.svg`, so a single file is included twice.
 - Edit the file in two ways only: set every `fill` to `currentColor`, and add `aria-hidden="true" focusable="false"` to the root. Keep the root `width`, `height` and `viewBox` exactly as exported (50.4 × 164.96).
 
-### Markup (in `case-studies/personetics/index.njk`, placed after section 04's paragraph 3, the same way `principlesBlock` is placed in the Bill Pay page)
-The six lines below are the 28 Oct synced text, shown only to fix the structure. The page renders the lines from `briefs/personetics/article-text.md`: one `<p>` per line, with each line's lead-in (`I am a`, `I’m trying to`, `But`, `Because`, `Which makes me feel`, `In an ideal world`) in `<strong>`.
+### Markup (rendered by `problemStatement(lines)`, `_includes/personetics/problem-statement.njk`)
+`lines` = the `## visual: persona` lines of `briefs/personetics/article-text.md`. One `<p>` per line, with each line's lead-in (`I am a`, `I’m trying to`, `But`, `Because`, `Which makes me feel`, `In an ideal world`) in `<strong>`. A lead-in matches only at the start of a line, as whole words. The six lines below are the 28 Oct synced text, shown only to fix the output structure.
 ```njk
-{% set problemStatement %}
+{# Rendered output of problemStatement(lines) #}
 <div class="problem-statement">
   <span class="problem-statement__brace problem-statement__brace--open">{% include "personetics/problem-statement-brace.svg" %}</span>
   <div class="problem-statement__text">
@@ -58,10 +58,9 @@ The six lines below are the 28 Oct synced text, shown only to fix the structure.
   </div>
   <span class="problem-statement__brace">{% include "personetics/problem-statement-brace.svg" %}</span>
 </div>
-{% endset %}
 ```
 
-### CSS — new file `css/widgets/personetics/problem-statement.css`, linked from the Personetics page the same way `principles.css` is linked from Bill Pay
+### CSS — new file `css/widgets/personetics/problem-statement/problem-statement.css`, linked from the Personetics page the same way `principles.css` is linked from Bill Pay
 ```css
 .problem-statement {
   display: flex;
