@@ -9,8 +9,10 @@ stylesheets:
   - ../../css/components/principles.css
   - ../../css/widgets/personetics/problem-statement/problem-statement.css
   - ../../css/widgets/personetics/cognitive-banking-diagram/cognitive-banking-diagram.css
+  - ../../css/widgets/personetics/danny-figure/danny-figure.css
 scripts:
   - ../../js/personetics/cognitive-banking-diagram.js
+  - ../../js/personetics/danny-figure.js
 ---
 {% extends "shared/base.njk" %}
 {% from "shared/section.njk" import section %}
@@ -18,13 +20,16 @@ scripts:
 {% from "shared/section-body.njk" import sectionBody %}
 {% from "personetics/problem-statement.njk" import problemStatement %}
 {% from "personetics/cognitive-banking-diagram.njk" import cognitiveBankingDiagram %}
+{% from "personetics/danny-figure.njk" import dannyFigure %}
 
 {% block body %}
 <main class="theme-red">
   {% call section("section--hero section--beige") %}{% endcall %}
 
   {% for s in personeticsText %}
-  {% call section("section--beige" if loop.index % 2 == 0 else "") %}
+  {% set prev = personeticsText[loop.index0 - 1] if loop.index0 > 0 else null %}
+  {% set modifiers = ("section--beige" if loop.index % 2 == 0 else "") + (" section--after-danny" if prev and prev.visuals.quote else "") %}
+  {% call section(modifiers) %}
     {{ sectionHeader(s.header, s.title) }}
     {% for block in s.blocks %}
     {% if block.type == "text" %}
@@ -33,6 +38,8 @@ scripts:
     {{ problemStatement(s.visuals.persona) }}
     {% elif block.name == "diagram" %}
     {{ cognitiveBankingDiagram(s.visuals.diagram) }}
+    {% elif block.name == "quote" %}
+    {{ dannyFigure(s.visuals.quote) }}
     {% endif %}
     {% endfor %}
   {% endcall %}

@@ -1,0 +1,81 @@
+/* Coordinates and box sizes below are Figma geometry (frame I1979:49066;39:123;1979:49131 and the
+   Danny group 1979:49152), spec briefs/personetics/danny-figure.md §1; colours and type use tokens.
+   The frame does not clip: the figure and mesh run past its bottom edge into the next section. */
+.dfg {
+  position: relative;
+  flex: none;
+  width: 800px;
+  height: 350px;
+}
+
+.dfg__bubble {
+  position: absolute;
+  top: 21px;
+  left: 267px;
+  width: 501px;
+  height: 329px;
+  color: var(--primitive-white);
+}
+
+.dfg__bubble svg,
+.dfg__asterisk svg {
+  display: block;
+}
+
+.dfg__quote {
+  position: absolute;
+  top: 89px;
+  left: 361px;
+  width: 361px;
+  margin: 0;
+  font: var(--text-danny-quote);
+  color: var(--primitive-black);
+}
+
+.dfg__figure {
+  position: absolute;
+  z-index: 1;
+  top: 318px;
+  left: 62px;
+}
+
+.dfg__asterisk {
+  position: absolute;
+  z-index: 1;
+  top: 267px;
+  left: 144px;
+  width: 110.76px;
+  height: 110.76px;
+  color: var(--primitive-red);
+}
+
+.dfg__lines {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  overflow: visible;
+}
+
+.dfg__edge {
+  stroke: var(--primitive-black);
+  stroke-width: 0.3;
+  vector-effect: non-scaling-stroke;
+}
+
+.dfg__dot {
+  fill: var(--primitive-black);
+}
+
+.section--after-danny {
+  /* Personetics only: the section after the one holding the Danny figure (set in
+     case-studies/personetics/index.njk from the synced `quote` visual). Danny's legs
+     hang into this section; 58px of extra top padding keeps them clear of its badge row
+     (spec briefs/personetics/danny-figure.md §1, Hadar 28 Oct: Figma moved section 03
+     from y 2835 to y 2893). Danny's own position does not change. */
+  --danny-section-overhang: 58px;
+}
+
+.section--after-danny .section__content {
+  padding-top: calc(var(--spacing-128) + var(--danny-section-overhang));
+}
