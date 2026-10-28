@@ -45,7 +45,8 @@ Converted from Figma absolute positions: frame at (320, 2356).
 
 - Frame is 800 × 350 and **does not clip**: the figure runs 273px below it and the mesh 59px. (Figma's frame clips; that is a Figma artboard setting, not intended.)
 - Check: Danny group top (asterisk top, y 267) = 211px above section 02's bottom edge, because section 02's bottom padding is 128 (`section__content`). Feet = 145px below that edge, inside section 03. If either section's padding changes, these move together.
-- 03 badge: Danny starts at x 62, the badge sits at the column's left edge. No horizontal overlap, so section 03 needs no extra padding (unlike Bill Pay's `.section--bp-mock-overhang`, which is not used here).
+- Section 03 gets **58px extra top padding** (Hadar, 28 Oct: the legs sat too close to the 03 badge). Figma: section 03 moved from y 2835 to y 2893, Danny unchanged. So 03's `section__content` padding-top = `calc(var(--spacing-128) + 58px)`. Bottom padding unchanged. Danny's position does not change: feet stay 145px below 02's bottom edge, now 41px above 03's content top (the badge row).
+  - Mechanism: modifier class `section--after-danny` on the section that follows the one holding the `quote` visual, set in `index.njk` from the synced data (never by hard-coded section number). Rule lives in `danny-figure.css` (Personetics only), with the 58px as a custom property `--danny-section-overhang` and a comment saying where it comes from. Pattern: Bill Pay's `.section--bp-mock-overhang` in `section.css` (read it; do not reuse or edit it).
 
 ### Paint order
 Static (animation-planning-standard §7a): back to front as in the table above, and the whole Danny group (figure, asterisk, mesh) in front of section 03. The figure, asterisk and mesh are positioned elements with `z-index: 1`, so section 03's background paints under them. The order never changes during motion.
@@ -65,6 +66,7 @@ Static (animation-planning-standard §7a): back to front as in the table above, 
 | `1979:49564` (asterisk) | `_includes/personetics/danny-figure-asterisk.svg` |
 
 Edit each file in two ways only: every `fill` → `currentColor`; add `aria-hidden="true" focusable="false"` to the root. Keep root `width`, `height`, `viewBox` as exported. Colour set in CSS.
+Also remove every `id` attribute from both files (they are included inline, and Figma's `id="Union"` duplicates on the page).
 
 ### Head mesh
 **Duplicate** the mesh markup and motion from the committed cognitive banking diagram (`_includes/personetics/cognitive-banking-diagram.njk`, `js/personetics/cognitive-banking-diagram.js`). Same BASE, same EDGES, same `offset` / `dotPositions`. Do not import or refactor the diagram's files; they are the reference and stay untouched.
