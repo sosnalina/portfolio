@@ -2,16 +2,21 @@
 
 Status: scoping, not sent to Claude Code. Next session (fresh token limit) goes deep into each visual with Figma specs, then splits into Claude Code tasks — parallel agents where files don't collide (see §2).
 
-Last updated: 26 Oct 2026
+Last updated: 28 Oct 2026
 
 ---
 
 ## 1. Locked decisions
 
+### Spec placement rule (Hadar, 28 Oct)
+- A visual that stays **static forever** (a PNG, plain text) is specced in this doc.
+- A visual that will **ever have motion or interaction** gets its own spec file in `briefs/personetics/` from the start, holding both its static and motion spec. This doc only links to it. No value for that visual lives in two places.
+- A chat that changes a spec ends with a Claude Code prompt that writes it to the repo. The repo copy is the source of truth; the Claude.ai project copy is a draft. A chat updating this doc changes only its own lines.
+
 ### Colors (26 Oct — replaces the 22 Oct pink decision; no pink anywhere in this article)
 | Token | Hex | Use |
 |---|---|---|
-| `--primitive-red` | #E5071A | Section-header badge on beige sections |
+| `--primitive-red` | #E5071A | Section-header badge on beige sections; problem-statement braces (`problem-statement.md`) |
 | `--primitive-red-dark` | #871105 | Section-header badge on white sections |
 | `--primitive-beige` | #F2F2F2 | Section background, used where Bill Pay uses grey-light. Hadar's name for it is beige — keep the name. |
 
@@ -39,7 +44,7 @@ Alternation starts at section 01 with white.
 | 01 | Sleeping giants / Context | white | dark red | Cognitive banking diagram (§1b); Engage first generation (not discussed yet) |
 | 02 | Growing pains / Measuring success (see workbench sync) | beige | red | Danny figure + speech bubble (§1b) |
 | 03 | How useful was this insight? / Inflection Point | white | dark red | — |
-| 04 | Mind the gap / Discovery & Problem Definition | beige | red | Pain map; Problem statement (§1b) |
+| 04 | Mind the gap / Discovery & Problem Definition | beige | red | Pain map (§1b); Problem statement (`problem-statement.md` — static spec complete, ships with the foundation build) |
 | 05 | The yet to come / Product Strategy | white | dark red | Financial journey with the engine (not discussed yet) |
 | 06 | Lorem ipsum (temp) / Principles & Execution | beige | red | Design principles; Condensed dashboard (not discussed yet) |
 | 07 | Impact & Postmortem | — | — | Not written yet. Not built. |
@@ -59,19 +64,24 @@ Heading 01 confirmed "Sleeping giants" (workbench), not "The sleeping giants" as
 ### Two-project split
 - Personetics text edits happen in the Personetics project (workbench), not here. Bill Pay text edits still happen here.
 
-### Definition of done for the first build (foundation page) — updated 26 Oct
+### Definition of done for the first build (foundation page) — updated 28 Oct
 - **What you'll look at:**
   - `/case-studies/personetics/` — beige hero plus 6 sections, right background and badge on each.
+  - `/case-studies/personetics/` — problem statement as the last element of section 04, overlaid against Figma node `2004:52157`.
   - `/case-studies/bill-pay/` — looks exactly as today (safety check for the shared CSS change).
   - `/` — two links that open each article; browser back returns here.
-- **The number that matters:** badges 01–06, three dark red (01, 03, 05) and three red (02, 04, 06), white numbers on all.
-- **Out of scope:** visuals, Impact & Postmortem, hero content, landing page design, commit.
+- **The numbers that matter:**
+  - Badges 01–06: three dark red (01, 03, 05) and three red (02, 04, 06), white numbers on all.
+  - Problem statement block: 800 × 302px.
+- **Out of scope:** every visual except the problem statement; problem-statement motion; Impact & Postmortem; hero content; landing page design; commit.
+
+Decision (Hadar, 28 Oct): the problem statement's static layout ships inside the foundation build, so it appears as soon as the article exists. It is the only visual in that build.
 
 ---
 
 ## 1b. Visuals — captured 26 Oct (high level; drill-down next session)
 
-Phase rule applies to every visual: static first, motion second, gate inside the prompt.
+Phase rule applies to every visual: static first, motion second, gate inside the prompt. Every visual below except the problem statement still lives here; each moves to its own file (spec placement rule, §1) when its drill-down starts.
 
 ### 01 — Cognitive banking diagram
 - **Placement:** between body paragraphs 2 and 3 of section 01.
@@ -106,13 +116,11 @@ Phase rule applies to every visual: static first, motion second, gate inside the
 - **Starting point:** existing workbench artifact in this project (accordion movement + content; no headline, older visuals). Find it at drill-down.
 
 ### 04 — Problem statement
-- **Placement:** last element of section 04, after body paragraph 3.
-- Large red curly braces left and right frame six italic serif statements, each with a bold italic lead-in: I am a / I'm trying to / But / Because / Which makes me feel / In an ideal world. Text from the locked version in the project, not the image.
-- **Entrance on viewport entry:** direction = braces-open family. The starting keyframe should be more creative than "braces centred, then open" (Hadar's example: starts as a circle). Claude to offer several starting-keyframe options as a playable comparison.
+- Full spec (static now, motion later): **`briefs/personetics/problem-statement.md`**.
 
 ---
 
-## 2. Technical approach (Claude's call) — updated 26 Oct
+## 2. Technical approach (Claude's call) — updated 28 Oct
 
 - New primitives in `tokens.css`: `--primitive-red`, `--primitive-red-dark`, `--primitive-beige`.
 - Page theme class on Personetics' `<main>` sets `--theme-badge-bg: var(--primitive-red-dark)` and `--theme-badge-text` (white token).
@@ -121,16 +129,17 @@ Phase rule applies to every visual: static first, motion second, gate inside the
 - No pink modifier any more.
 - New page `case-studies/personetics/index.njk` composed from `section()` + `sectionHeader()` + `sectionBody()`.
 - New `index.njk` at repo root for the landing page.
+- The problem statement (`problem-statement.md` §1) is part of the foundation build, written after the tokens.
 
 ### Parallel agents (next session)
-- **Foundation first, single agent:** shared CSS + tokens + page with text. Everything touches shared files, so parallel agents would collide.
-- **Then visuals in parallel**, each in its own files (partial + CSS + JS): cognitive banking diagram, Danny figure, pain map, problem statement. Integration into `index.njk` done by one agent afterwards, sequentially.
+- **Foundation first, single agent:** shared CSS + tokens + page with text + problem statement. Everything touches shared files, so parallel agents would collide.
+- **Then the other visuals in parallel**, each in its own files (partial + CSS + JS): cognitive banking diagram, Danny figure, pain map. Integration into `index.njk` done by one agent afterwards, sequentially.
 - Each agent still stops at its own phase 1 (static) gate. Hadar's browser QA is the bottleneck, not code generation.
-- Repo restructure (§3a) before Personetics adds asset files.
 
-Repo facts checked on 22 Oct (re-check on split day):
-- Branch `feature/build-step-partials`, remote head `1eaa88f`.
+Repo facts checked on 28 Oct (re-check on split day):
+- Branch `feature/build-step-partials`, head `2514765`. Repo restructure finished (commits `e2518a4`, `c16a7ae`, `2514765`, all pushed).
 - No root `index.njk` exists.
+- Structure is case-study-first inside each type folder: `assets/{case-study}/`, `briefs/{case-study}/`, `_includes/shared/` + `_includes/{case-study}/`, `css/widgets/{case-study}/`, `js/{case-study}/`. Shared CSS stays in `css/components/`. Personetics folders are created by the first prompt that puts a file in them.
 
 ---
 
@@ -139,7 +148,7 @@ Repo facts checked on 22 Oct (re-check on split day):
 ### Blocking specific visuals
 - **Mesh motion** (01 diagram + 02 head): Hadar looks for a reference. If none, Claude builds a playable comparison in a fresh chat. Includes whether leader-line ends follow a drifting dot.
 - **Leg technique** (02): test = 3 frames from Figma/Nano Banana (both swing ends + middle) → Claude builds a quick playable loop → Hadar decides. Alternative if frames flicker: image-to-video (same first/last frame), Claude Code extracts frames → background removal → sprite. Delivery: sprite (stop-motion) vs video (smooth, needs WebM + HEVC alpha) — undecided.
-- **Problem statement entrance:** starting-keyframe options to offer.
+- **Problem statement entrance:** see `problem-statement.md` §2.
 - **Pain map drill-down:** find the workbench artifact; per-tab content; expanded state from Figma keyframes; per-tab illustrations and motion.
 - **Exports from Hadar:** red shape SVG; lighthouse, compass, reel cut-outs; Danny figure; Figma artboard nodes for each visual.
 
@@ -154,7 +163,7 @@ Repo facts checked on 22 Oct (re-check on split day):
 - Hero design and content; TL;DR block under hero
 - Impact & Postmortem content; final headings for 06 and 07
 - Landing page design
-- Docs to update when this ships: `SITE-ARCHITECTURE.md` (Personetics "not started"); `COMPONENT-MAP.md` (beige modifier, theme)
+- Docs to update when this ships: `SITE-ARCHITECTURE.md` (Personetics "not started"); `COMPONENT-MAP.md` (beige modifier, theme, problem-statement component)
 
 ---
 
@@ -174,11 +183,13 @@ Base stays type-first (`css/`, `js/`, `assets/`, `_includes/`). Inside each type
 - Method: Claude Code lists every reference that would break first (as in commit `15440e4`), moves, confirms zero 404s; Hadar QAs Bill Pay.
 - WIP checkpoint commit before moving.
 
-Done 28 Oct 2026 (icons flattened to assets/bill-pay/icons/). Follow-up, not done: `_includes/` mixes shared and Bill Pay-only partials; `css/components/ap-manager-orbit.css` is Bill Pay-only inside shared components.
+Done 28 Oct 2026: assets, root pages and specs moved (`c16a7ae`, icons flattened to `assets/bill-pay/icons/`); `_includes/` split into `shared/` and `bill-pay/` (`2514765`). Follow-up, not done: `css/components/ap-manager-orbit.css` is Bill Pay-only inside shared components.
 
 ## 3b. Local machine — iCloud (recommended 22 Oct)
 
 Numbered files in `_site/` are iCloud sync-conflict copies. A git repo inside iCloud Drive (`~/Documents/portfolio`) risks the same inside `.git`. Recommendation: move the repo to e.g. `~/Developer/portfolio`, then delete `_site/` and rebuild.
+
+Done 28 Oct 2026: fresh clone at `~/Developer/portfolio`, verified. Old `~/Documents/portfolio` kept untouched for a week, then deleted.
 
 ## 3c. Process improvements — approved 22 Oct, written into working-with-hadar.md §21 (+ §17, §18, §19)
 
@@ -192,4 +203,4 @@ Numbered files in `_site/` are iCloud sync-conflict copies. A git repo inside iC
 
 ## 4. Draft build prompt — SUPERSEDED (22 Oct, pink version)
 
-Written before the 26 Oct colour change. Colours, badge rules, theme class and section backgrounds in it are now wrong. Rewrite on split day against §1 and §2; Part A (CLAUDE.md task types), Part E (landing page) and the article text in Part D are still the intended content (subject to the workbench text sync in §3). The 22 Oct version is in this doc's history and in the 22 Oct chat.
+Written before the 26 Oct colour change. Colours, badge rules, theme class and section backgrounds in it are now wrong. Rewrite on split day against §1, §2 and `problem-statement.md`; Part A (CLAUDE.md task types), Part E (landing page) and the article text in Part D are still the intended content (subject to the workbench text sync in §3). Add the problem statement as its own part, after the tokens. The 22 Oct version is in this doc's history and in the 22 Oct chat.
