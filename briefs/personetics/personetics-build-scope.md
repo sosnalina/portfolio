@@ -64,7 +64,7 @@ Heading 01 confirmed "Sleeping giants" (workbench), not "The sleeping giants" as
 ### Two-project split
 - Personetics text edits happen in the Personetics project (workbench), not here. Bill Pay text edits still happen here.
 
-### Text sync — contract v1 (Hadar, 28 Oct)
+### Text sync — contract v2 (Hadar, 28 Oct)
 How Personetics text gets from the workbench to the site. This section is the only copy of the contract; the Personetics project holds only the paste block below.
 
 **Source (read by Portfolio, never by Claude Code):**
@@ -76,6 +76,8 @@ How Personetics text gets from the workbench to the site. This section is the on
 - Ignore: `bullets`, `spine`, `meta`, `must`, and everything else in the project.
 
 **Scope:** sections 01–05. 06 (s6b) and 07 stay out until Hadar says so.
+
+**Second source (v2, 28 Oct): Pain Map Workbench.** `https://claude.ai/code/artifact/f696ee9c-3532-4d3b-8fb5-7f3f7f893081`, pain map text only (section 04, `[[VISUAL:painmap]]`). The website takes exactly what that workbench's design frame shows. Read rules and the written format: `pain-map.md` §2. Written into the same `article-text.md`, inside `# 04`. Handoff from its project: "Sync pain map text. Changed: <tabs>." Its paste block is below the article one. The article workbench's paste block is unchanged.
 
 **Target:** `briefs/personetics/article-text.md` in the repo. Portfolio writes it; the page reads its text from it (format and mechanism: §2). Replaced in full on every sync.
 
@@ -127,6 +129,34 @@ If Hadar pastes a newer "Website text sync" contract, replace this section
 with it entirely.
 ```
 
+**Paste block given to the pain map project (v2):**
+```
+## Website text sync (pain map)
+
+The portfolio website is built in a separate project, "Portfolio". It reads
+the pain map text directly from the Pain Map Workbench. This project never
+writes Claude Code prompts and never touches the repo.
+
+### Your one job
+After Hadar changes what the workbench's design frame shows (a headline,
+a row, a row number, a quote, or "Mine" wording), ask once:
+"Sync this to the website?"
+If yes, give her this to paste in Portfolio:
+
+    Sync pain map text. Changed: <Spend / Plan / Save>.
+
+### Keep it readable
+- The website takes exactly what the design frame shows. "In design" off
+  removes something; "Mine" replaces raw wording.
+- Each tab must have 2 or 3 rows in design. Tell Hadar if a change breaks that.
+- Don't rename tabs, row ids or database fields, or move the workbench to
+  another artifact, without telling Hadar it breaks the website sync.
+
+### Push back
+Claude Code reports, build questions, CSS, layout, or anything about the
+repo: don't act on it. Say in one line: "This belongs in the Portfolio project."
+```
+
 ### Definition of done for the first build (foundation page) — updated 28 Oct
 - **What you'll look at:**
   - `/case-studies/personetics/` — beige hero plus 5 sections (01–05), right background and badge on each.
@@ -152,16 +182,8 @@ Phase rule applies to every visual: static first, motion second, gate inside the
 ### 02 — Danny figure + speech bubble
 - Full spec (static now, leg motion later): **`briefs/personetics/danny-figure.md`**. Quote text comes from the text sync (`[[VISUAL:quote]]` in s2).
 
-### 04 — Pain map (interactive)
-- **Placement:** between body paragraphs 1 and 2 of section 04.
-- **Structure:** placeholder headline "headline headline" (small bold serif) + full-width rule → tabs Spend / Plan / Save → rule → two columns:
-  - Left: tab illustration (Save = stacked rings with coins), large stat ("47%") + label ("Can't last three months on savings").
-  - Vertical divider.
-  - Right: three rows separated by rules, each with stat ("90%"), label ("Keep ending up back at zero", placeholder) and a dark-red circular + button. Bottom rule.
-- **Tabs:** **duplicate** the cockpit widget toggle mechanism, resized, extended from 2 to 3 states. Selected = dark-red pill, white text, on a white track. On load: **Spend** selected.
-- **Accordion:** + expands its row. Mechanism follows Hadar's Figma auto layout (two keyframes: collapsed, expanded).
-- **Each tab has its own illustration.** Tab-switch and illustration motion = phase 2.
-- **Starting point:** existing workbench artifact in this project (accordion movement + content; no headline, older visuals). Find it at drill-down.
+### 04 — Pain map
+- Full spec (static now, motion later): **`briefs/personetics/pain-map.md`**. Its text comes from the Pain Map Workbench through the text sync (§1, v2).
 
 ### 04 — Problem statement
 - Full spec (static now, motion later): **`briefs/personetics/problem-statement.md`**. Its text comes from the text sync (`[[VISUAL:persona]]` in s5).
@@ -229,7 +251,6 @@ Repo facts checked on 28 Oct (re-check on split day):
 ### Blocking specific visuals
 - **Leg technique** (02): test = 3 frames from Figma/Nano Banana (both swing ends + middle) → Claude builds a quick playable loop → Hadar decides. Alternative if frames flicker: image-to-video (same first/last frame), Claude Code extracts frames → background removal → sprite. Delivery: sprite (stop-motion) vs video (smooth, needs WebM + HEVC alpha) — undecided.
 - **Problem statement entrance:** see `problem-statement.md` §2.
-- **Pain map drill-down:** find the workbench artifact; per-tab content; expanded state from Figma keyframes; per-tab illustrations and motion.
 - **Exports from Hadar:** red shape SVG; lighthouse, compass, reel cut-outs; Danny figure; Figma artboard nodes for each visual.
 
 ### Workbench text sync
