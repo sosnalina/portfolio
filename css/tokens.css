@@ -11,7 +11,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Literata:wght@600&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Literata:ital,wght@1,300&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Literata:ital,wght@1,400&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Literata:ital,wght@1,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Literata:ital,wght@1,600&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@800&display=swap');
 
 :root {
@@ -52,7 +52,7 @@
   --text-tag: 600 12px/14px "Literata", Georgia, serif;
   --text-quote: italic 400 18px/27px "Literata", Georgia, serif;
   --text-problem-statement: italic 300 16px/37.66px "Literata", Georgia, serif;
-  --text-problem-statement-lead: italic 700 16px/37.66px "Literata", Georgia, serif;
+  --text-problem-statement-lead: italic 600 16px/37.66px "Literata", Georgia, serif;
   --text-diagram-callout-title: 500 16px/1.46 "Literata", Georgia, serif;
   --text-diagram-callout-body: 200 14px/20px "Literata", Georgia, serif;
   --text-diagram-callout-keywords: 500 14px/1.5 "Literata", Georgia, serif;

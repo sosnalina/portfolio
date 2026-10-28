@@ -323,6 +323,7 @@ function renderReduced(t) {
 5. `textEl` = `.problem-statement__text`; `braceEls` = the two `.problem-statement__brace` spans.
 6. Static braces stay hidden while the overlay plays. At the end (t ≥ 1930) the overlay's final frame equals the static braces' position: show the static braces, remove the overlay. If they don't line up, STOP and report.
 7. Files: `js/personetics/problem-statement.js`; CSS additions in the existing `problem-statement.css`.
+8. The reference page's base CSS hid `[hidden]` elements; the site has no such rule. `problem-statement.css` adds `.problem-statement__overlay [hidden] { display: none; }` so the pen group hides after 1300 ms. (28 Oct)
 
 ### Unresolved — do not build
 - (none)

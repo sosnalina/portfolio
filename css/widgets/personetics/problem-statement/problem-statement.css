@@ -7,7 +7,7 @@
 .problem-statement__brace {
   display: flex;
   flex: none;
-  color: var(--primitive-red);
+  color: var(--primitive-black);
 }
 
 /* Opening brace = the closing brace rotated 180°, matching the Figma node.
@@ -29,4 +29,31 @@
 
 .problem-statement__text strong {
   font: var(--text-problem-statement-lead);
+}
+
+/* Entrance (spec §2). The script adds --armed; without JS the block shows its final state. */
+.problem-statement {
+  position: relative;
+}
+
+.problem-statement--armed .problem-statement__brace,
+.problem-statement--armed .problem-statement__text {
+  opacity: 0;
+}
+
+/* Temporary overlay that draws both braces in one filter group; removed at hand-off. */
+.problem-statement__overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
+
+.problem-statement__overlay-braces {
+  fill: var(--primitive-black);
+}
+
+/* The site has no base [hidden] rule, and SVG elements ignore the attribute without one. */
+.problem-statement__overlay [hidden] {
+  display: none;
 }

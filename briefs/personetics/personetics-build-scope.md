@@ -281,3 +281,6 @@ Done 28 Oct 2026: fresh clone at `~/Developer/portfolio`, verified. Old `~/Docum
 ## 4. Draft build prompt — SUPERSEDED (22 Oct, pink version)
 
 Written before the 26 Oct colour change. Colours, badge rules, theme class and section backgrounds in it are now wrong. Rewrite on split day against §1, §2 and `problem-statement.md`; Part A (CLAUDE.md task types) and Part E (landing page) are still the intended content. Article text no longer comes from Part D: it comes from the text sync (§1). Add the problem statement as its own part, after the tokens. The 22 Oct version is in this doc's history and in the 22 Oct chat.
+
+## Rework log
+- 28 Oct, problem-statement motion: a copy of the braces stayed at the drawing position during the drift. The approved reference relied on its page's base `[hidden]` rule, and the spec didn't carry it. §17 "Artifact" should have caught it: carry any page-level CSS the reference code depends on.
