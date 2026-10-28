@@ -20,7 +20,7 @@ Build type: **new structure, build new.** No existing component is duplicated. P
 | Statement text | Text node `I1979:49296;39:123;2004:52159`, fills the remaining width (800 − 2 × 50.4 − 2 × 64 = 571.2). Colour bound to `primitive/black`. |
 | Text styles | Figma styles created 28 Oct: `desktop/articles/problem-statement` (Literata Light Italic 16 / 37.66px) and `desktop/articles/problem-statement-lead` (Literata Bold Italic 16 / 37.66px). |
 | Brace colour | `--primitive-red` (Hadar, 28 Oct). Set in CSS; whatever fill is inside the SVG file is ignored. |
-| Copy | Hadar, 28 Oct — locked workbench version, verbatim, typographic apostrophes (’) kept. |
+| Copy | Text sync (scope doc §1): the LOCKED `[[VISUAL:persona]]` lines in workbench section s5. Never typed into this spec or the page by hand. Typographic apostrophes (’) kept. |
 | Placement | Last element of section 04, after body paragraph 3. Gap above = the content column's existing `gap: var(--spacing-64)` (`section.css`), which matches Figma. No extra margin. |
 | Viewport | Case study pages are desktop-only (`CLAUDE.md`). No mobile layout. |
 
@@ -43,6 +43,7 @@ Build type: **new structure, build new.** No existing component is duplicated. P
 - Edit the file in two ways only: set every `fill` to `currentColor`, and add `aria-hidden="true" focusable="false"` to the root. Keep the root `width`, `height` and `viewBox` exactly as exported (50.4 × 164.96).
 
 ### Markup (in `case-studies/personetics/index.njk`, placed after section 04's paragraph 3, the same way `principlesBlock` is placed in the Bill Pay page)
+The six lines below are the 28 Oct synced text, shown only to fix the structure. The page renders the lines from `briefs/personetics/article-text.md`: one `<p>` per line, with each line's lead-in (`I am a`, `I’m trying to`, `But`, `Because`, `Which makes me feel`, `In an ideal world`) in `<strong>`.
 ```njk
 {% set problemStatement %}
 <div class="problem-statement">

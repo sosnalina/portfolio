@@ -30,24 +30,24 @@ Source: Hadar, 26 Oct. Bill Pay is unchanged.
 ### Article
 - Same section templates, text styles and rules as Bill Pay. Only the colors differ.
 - Illustrations and visuals are Hadar's assets.
-- Hero: standalone, empty for now, **beige** background. Not part of the alternation (may join it later — undecided).
+- Hero: standalone, empty for now, **beige** background. Not part of the alternation (may join it later — undecided). Reuses `.section--hero` as-is (fixed 1000px, Hadar 28 Oct).
 - Paragraphs around each visual are split into separate body blocks, so each gap marks the visual's spot.
-- Text is verbatim from the Personetics project (the workbench). "Lorem ipsum" headings are temporary placeholders.
+- Text comes from the workbench through the text sync (below). "Lorem ipsum" headings are temporary placeholders.
 - `#` = section heading, `##` = subheading (Bill Pay pattern).
 
 ### Section order and backgrounds (26 Oct)
 Alternation starts at section 01 with white.
 
-| # | Heading / subheading | Background | Badge | Visuals |
-|---|---|---|---|---|
-| Hero | (empty) | beige | — | — |
-| 01 | Sleeping giants / Context | white | dark red | Cognitive banking diagram (§1b); Engage first generation (not discussed yet) |
-| 02 | Growing pains / Measuring success (see workbench sync) | beige | red | Danny figure + speech bubble (§1b) |
-| 03 | How useful was this insight? / Inflection Point | white | dark red | — |
-| 04 | Mind the gap / Discovery & Problem Definition | beige | red | Pain map (§1b); Problem statement (`problem-statement.md` — static spec complete, ships with the foundation build) |
-| 05 | The yet to come / Product Strategy | white | dark red | Financial journey with the engine (not discussed yet) |
-| 06 | Lorem ipsum (temp) / Principles & Execution | beige | red | Design principles; Condensed dashboard (not discussed yet) |
-| 07 | Impact & Postmortem | — | — | Not written yet. Not built. |
+| # | Workbench id | Heading / subheading | Background | Badge | Visuals |
+|---|---|---|---|---|---|
+| Hero | — | (empty) | beige | — | — |
+| 01 | s1 | Sleeping giants / Context | white | dark red | Cognitive banking diagram (§1b); Engage first generation (not discussed yet) |
+| 02 | s2 | Growing pains / Measuring Success | beige | red | Danny figure + speech bubble (§1b) |
+| 03 | s4 | How useful was this insight? / Inflection Point | white | dark red | — |
+| 04 | s5 | Mind the gap / Discovery & Problem Definition | beige | red | Pain map (§1b); Problem statement (`problem-statement.md` — static spec complete, ships with the foundation build) |
+| 05 | s6 | The yet to come / Product Strategy | white | dark red | Financial journey with the engine (not discussed yet) |
+| 06 | s6b | Lorem ipsum (temp) / Principles & Execution | beige | red | Design principles; Condensed dashboard (not discussed yet) |
+| 07 | s7 | Impact & Postmortem | — | — | Not written yet. Not built. |
 
 Heading 01 confirmed "Sleeping giants" (workbench), not "The sleeping giants" as in the Figma image.
 
@@ -63,6 +63,69 @@ Heading 01 confirmed "Sleeping giants" (workbench), not "The sleeping giants" as
 
 ### Two-project split
 - Personetics text edits happen in the Personetics project (workbench), not here. Bill Pay text edits still happen here.
+
+### Text sync — contract v1 (Hadar, 28 Oct)
+How Personetics text gets from the workbench to the site. This section is the only copy of the contract; the Personetics project holds only the paste block below.
+
+**Source (read by Portfolio, never by Claude Code):**
+- Artifact "Engage Skeleton Workbench", `https://claude.ai/code/artifact/26d81199-f92c-460f-8f8a-29cb932a4829`
+- Database collection `skeleton`, doc `current`
+- `sections[]` in order = website sections 01–07 (ids in the section table above; ids skip s3, that is expected)
+- Per section: `header` = `#`, `title` = `##`, `drafts.<id>.text` = body, used only when `locked: true`. Paragraphs split by blank lines; single line breaks inside a paragraph are intentional.
+- `[[VISUAL:name]]` alone in a paragraph = a visual's position. Text inside a visual (quote, persona, diagram tiers) is in the section's `visual` field, marked LOCKED. Only those locked lines sync; the rest of the field is working notes.
+- Ignore: `bullets`, `spine`, `meta`, `must`, and everything else in the project.
+
+**Scope:** sections 01–05. 06 (s6b) and 07 stay out until Hadar says so.
+
+**Target:** `briefs/personetics/article-text.md` in the repo. Portfolio writes it; the page reads its text from it (mechanism confirmed at the foundation build's pre-flight). Replaced in full on every sync.
+
+**Flow:**
+1. Hadar edits and locks text in the workbench.
+2. The workbench asks "Sync this to the website?" On yes, it gives a one-line handoff naming what changed.
+3. Hadar pastes the handoff here. Portfolio reads the workbench and writes one Claude Code prompt: replace the file, report, STOP.
+4. Hadar checks the page in the browser, then the commit (that file only).
+
+**Ownership:**
+- Text and visual positions (`[[VISUAL]]` lines) belong to the workbench. If Hadar asks here to add, move or remove a visual, Portfolio sends her to the workbench first.
+- Moving a visual or changing text = text only, no build.
+- Adding or removing a visual, a section or a heading = structure change: the sync prompt is followed by a build prompt.
+
+**Change control:** any change to the source location, the field layout, the scope or the flow bumps the version. The chat that makes it ends with the repo prompt and a new paste block for the Personetics project. A change to the repo path needs no paste block (the workbench never sees it).
+
+**Paste block given to the Personetics project (v1):**
+```
+## Website text sync (contract v1)
+
+The portfolio website is built in a separate project, "Portfolio". It reads
+this project's article text directly from the Engage Skeleton Workbench. This
+project never writes Claude Code prompts and never touches the repo.
+
+### Your one job
+After Hadar locks a change to article text, a heading, or a visual's position
+([[VISUAL:...]] line), ask once: "Sync this to the website?"
+If yes, give her this to paste in Portfolio:
+
+    Sync Personetics text. Changed: <sections, by number and header>.
+    Structure: <none | added/removed visual X | added/removed section/heading Y>.
+
+Section numbers = reading order in the sections list, never the id
+(3 = s4, 4 = s5, 5 = s6, 6 = s6b, 7 = s7).
+Moving a [[VISUAL]] line counts as Structure: none.
+
+### Keep it readable
+- Keep article text only in drafts.<id>.text, with locked set correctly.
+- Keep [[VISUAL:name]] alone in its own paragraph.
+- Text that appears inside a visual goes in the section's visual field, after
+  its [[VISUAL:name]] line, marked LOCKED.
+- Don't rename section ids or move the article to another artifact without
+  telling Hadar it breaks the website sync.
+
+### Push back
+Claude Code reports, build questions, CSS, layout, or anything about the repo:
+don't act on it. Say in one line: "This belongs in the Portfolio project."
+If Hadar pastes a newer "Website text sync" contract, replace this section
+with it entirely.
+```
 
 ### Definition of done for the first build (foundation page) — updated 28 Oct
 - **What you'll look at:**
@@ -97,7 +160,7 @@ Phase rule applies to every visual: static first, motion second, gate inside the
 - **Motion:** mesh dots drift slightly (purpose: delight). Everything else static. Mechanism OPEN (see §3).
 
 ### 02 — Danny figure + speech bubble
-- **Speech bubble:** white organic blob inside section 02, tail pointing down-left to the figure. Quote in italic serif ("Counting clicks won't tell you how well the experience you've built delivers. Knowing whether customers acted on it will." — final text from workbench).
+- **Speech bubble:** white organic blob inside section 02, tail pointing down-left to the figure. Quote in italic serif. Quote text comes from the text sync (`[[VISUAL:quote]]` in s2).
 - **Figure:** B&W photo cut-out of a seated man; head replaced by a red asterisk shape; mesh around the head.
 - **Placement:** sits on the boundary between 02 and 03 — torso in 02, legs hang into 03, feet just above the 03 badge. In Figma he's outside the auto-layout artboard (Figma limitation).
 - **Technical (Claude's call):** anchored to the bottom edge of section 02, overflows into 03, static paint order in front of 03. Position measured against 02's bottom edge.
@@ -116,18 +179,18 @@ Phase rule applies to every visual: static first, motion second, gate inside the
 - **Starting point:** existing workbench artifact in this project (accordion movement + content; no headline, older visuals). Find it at drill-down.
 
 ### 04 — Problem statement
-- Full spec (static now, motion later): **`briefs/personetics/problem-statement.md`**.
+- Full spec (static now, motion later): **`briefs/personetics/problem-statement.md`**. Its text comes from the text sync (`[[VISUAL:persona]]` in s5).
 
 ---
 
 ## 2. Technical approach (Claude's call) — updated 28 Oct
 
 - New primitives in `tokens.css`: `--primitive-red`, `--primitive-red-dark`, `--primitive-beige`.
-- Page theme class on Personetics' `<main>` sets `--theme-badge-bg: var(--primitive-red-dark)` and `--theme-badge-text` (white token).
-- `header.css` badge reads `background: var(--theme-badge-bg, var(--primitive-green-light))` and `color: var(--theme-badge-text, <current Bill Pay value>)`. No theme → Bill Pay unchanged.
-- New `.section--beige` modifier sets the beige background and overrides `--theme-badge-bg` to `var(--primitive-red)` locally. Body text on beige mirrors whatever grey-light does (check at split day). Placed after `.section--hero` (order matters: hero carries both classes).
+- Page theme class `.theme-red` on Personetics' `<main>` sets `--theme-badge-bg: var(--primitive-red-dark)` and `--theme-badge-text` (white token).
+- `header.css` badge reads `background: var(--theme-badge-bg, var(--primitive-green-light))` and `color: var(--theme-badge-text, var(--primitive-black))`. No theme → Bill Pay unchanged.
+- New `.section--beige` modifier sets the beige background and overrides `--theme-badge-bg` to `var(--primitive-red)` locally. No body-text rule needed (grey-light has none). Placed after `.section--hero` (order matters: hero carries both classes).
 - No pink modifier any more.
-- New page `case-studies/personetics/index.njk` composed from `section()` + `sectionHeader()` + `sectionBody()`.
+- New page `case-studies/personetics/index.njk` composed from `section()` + `sectionHeader()` + `sectionBody()`, with its text read from `briefs/personetics/article-text.md` (§1 Text sync).
 - New `index.njk` at repo root for the landing page.
 - The problem statement (`problem-statement.md` §1) is part of the foundation build, written after the tokens.
 
@@ -137,9 +200,10 @@ Phase rule applies to every visual: static first, motion second, gate inside the
 - Each agent still stops at its own phase 1 (static) gate. Hadar's browser QA is the bottleneck, not code generation.
 
 Repo facts checked on 28 Oct (re-check on split day):
-- Branch `feature/build-step-partials`, head `2514765`. Repo restructure finished (commits `e2518a4`, `c16a7ae`, `2514765`, all pushed).
+- Branch `feature/build-step-partials`, head `f95cfc5`. Repo restructure finished (commits `e2518a4`, `c16a7ae`, `2514765`, all pushed).
 - No root `index.njk` exists.
 - Structure is case-study-first inside each type folder: `assets/{case-study}/`, `briefs/{case-study}/`, `_includes/shared/` + `_includes/{case-study}/`, `css/widgets/{case-study}/`, `js/{case-study}/`. Shared CSS stays in `css/components/`. Personetics folders are created by the first prompt that puts a file in them.
+- Hero redesign changed `section.css` `.section--hero` (overflow-x clip, justify-content flex-start). Take line positions from the current file.
 
 ---
 
@@ -152,11 +216,8 @@ Repo facts checked on 28 Oct (re-check on split day):
 - **Pain map drill-down:** find the workbench artifact; per-tab content; expanded state from Figma keyframes; per-tab illustrations and motion.
 - **Exports from Hadar:** red shape SVG; lighthouse, compass, reel cut-outs; Danny figure; Figma artboard nodes for each visual.
 
-### Workbench text sync (Hadar, in the Personetics project — remind her)
-- 02 subheading: "Zero to N" → "Measuring success"
-- 02 paragraph 2 reworded (star rating version)
-- 02 quote moved into the speech bubble; check whether "Makes sense…" / "I believe we can." lines stay
-- 04 subheading capitalisation: "Problem definition" vs "Problem Definition"
+### Workbench text sync
+- Done 28 Oct: Hadar aligned headings and text in the workbench; solid through section 05. From now on, text changes go through §1 Text sync.
 
 ### Not yet discussed
 - Engage first generation visual (01), Financial journey (05), Design principles + Condensed dashboard (06)
@@ -203,4 +264,4 @@ Done 28 Oct 2026: fresh clone at `~/Developer/portfolio`, verified. Old `~/Docum
 
 ## 4. Draft build prompt — SUPERSEDED (22 Oct, pink version)
 
-Written before the 26 Oct colour change. Colours, badge rules, theme class and section backgrounds in it are now wrong. Rewrite on split day against §1, §2 and `problem-statement.md`; Part A (CLAUDE.md task types), Part E (landing page) and the article text in Part D are still the intended content (subject to the workbench text sync in §3). Add the problem statement as its own part, after the tokens. The 22 Oct version is in this doc's history and in the 22 Oct chat.
+Written before the 26 Oct colour change. Colours, badge rules, theme class and section backgrounds in it are now wrong. Rewrite on split day against §1, §2 and `problem-statement.md`; Part A (CLAUDE.md task types) and Part E (landing page) are still the intended content. Article text no longer comes from Part D: it comes from the text sync (§1). Add the problem statement as its own part, after the tokens. The 22 Oct version is in this doc's history and in the 22 Oct chat.
