@@ -45,7 +45,7 @@
 
 .section--bp-mock-overhang {
   /* Bill Pay only: this is the section directly under the hero, and the
-     hero's mock-frame (_includes/mock-frame.njk) bleeds 436.6px down into
+     hero's mock-frame (_includes/bill-pay/mock-frame.njk) bleeds 436.6px down into
      it. Derivation, current hero (scene variant, css/widgets/bill-pay/hero-headline/):
        frame bottom = 711.1 (hero subheader's bottom edge — 655 sub-headline
                      top, from the headline-stage's 527px height + 128px

@@ -40,19 +40,19 @@ scripts:
   - ../../js/bill-pay/scroll-cue.js
   - ../../js/bill-pay/crystal-ball.js
 ---
-{% extends "base.njk" %}
-{% from "hero.njk" import hero %}
-{% from "mock-frame.njk" import mockFrame %}
-{% from "section.njk" import section %}
-{% from "section-header.njk" import sectionHeader %}
-{% from "section-body.njk" import sectionBody %}
-{% from "section-visual.njk" import sectionVisual %}
-{% from "two-block-header.njk" import twoBlockHeader %}
-{% from "gallery-navigation.njk" import galleryNavigation %}
-{% from "scene-gallery-accordion.njk" import sceneGalleryAccordion %}
-{% from "scene-accordion.njk" import sceneAccordion %}
-{% from "scene-stack.njk" import sceneStack %}
-{% from "crystal-ball.njk" import crystalBall %}
+{% extends "shared/base.njk" %}
+{% from "shared/hero.njk" import hero %}
+{% from "bill-pay/mock-frame.njk" import mockFrame %}
+{% from "shared/section.njk" import section %}
+{% from "shared/section-header.njk" import sectionHeader %}
+{% from "shared/section-body.njk" import sectionBody %}
+{% from "shared/section-visual.njk" import sectionVisual %}
+{% from "shared/two-block-header.njk" import twoBlockHeader %}
+{% from "bill-pay/gallery-navigation.njk" import galleryNavigation %}
+{% from "bill-pay/scene-gallery-accordion.njk" import sceneGalleryAccordion %}
+{% from "bill-pay/scene-accordion.njk" import sceneAccordion %}
+{% from "bill-pay/scene-stack.njk" import sceneStack %}
+{% from "bill-pay/crystal-ball.njk" import crystalBall %}
 
 {% block body %}
 <main>
@@ -297,7 +297,7 @@ scripts:
         <g class="scroll-cue__arrow" clip-path="url(#scroll-cue-icon-clip)">
           {#
             Arrow paths copied verbatim from the circle+arrow icon in
-            _includes/accordion-gallery.njk (Figma node 784:37315, confirmed
+            _includes/bill-pay/accordion-gallery.njk (Figma node 784:37315, confirmed
             via Figma MCP to be the same node the scroll-cue spec points at).
             That version mirrors/scales the glyph to point right; here the
             same raw path/line is instead rotated -90deg about its own

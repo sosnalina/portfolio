@@ -38,9 +38,9 @@
 
     {{ twoBlockHeader(heading, subheading, firstParagraphs, firstExtra=block, secondSection=false) }}
 #}
-{% from "section.njk" import section %}
-{% from "section-header.njk" import sectionHeader %}
-{% from "section-body.njk" import sectionBody %}
+{% from "shared/section.njk" import section %}
+{% from "shared/section-header.njk" import sectionHeader %}
+{% from "shared/section-body.njk" import sectionBody %}
 {% macro twoBlockHeader(heading, subheading, firstParagraphs, secondParagraphs=[], secondModifiers="section--green-light", id="", firstExtra="", secondSection=true) %}
 {% call section("", id) %}
 {{ sectionHeader(heading, subheading) }}

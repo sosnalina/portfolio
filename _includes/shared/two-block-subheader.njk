@@ -24,8 +24,8 @@
       ...anything...
     {% endcall %}
 #}
-{% from "section.njk" import section %}
-{% from "section-body.njk" import sectionBody %}
+{% from "shared/section.njk" import section %}
+{% from "shared/section-body.njk" import sectionBody %}
 {% macro twoBlockSubheader(title, subtitle, firstParagraphs, secondParagraphs=[], secondModifiers="section--green-light", id="", firstExtra="") %}
 {% call section("", id) %}
 <div class="section-subheader">

@@ -216,7 +216,7 @@
   color: var(--primitive-black);
 }
 
-/* Motion (v2 — case-studies/bill-pay/ap-manager-orbit-spec.md, node
+/* Motion (v2 — briefs/bill-pay/ap-manager-orbit-spec.md, node
    478:8539 static layout unchanged). Each of the 14 characters/objects/
    stars is locked to one of 3 fixed radii from the ring center, with an
    optional small per-item "lean" — computed per-frame in

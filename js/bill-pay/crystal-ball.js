@@ -1,6 +1,6 @@
 /*
   Crystal ball — Bill Pay, "High hopes, flat Metrics" section.
-  Markup: _includes/crystal-ball.njk · Styles: css/widgets/bill-pay/crystal-ball/crystal-ball.css
+  Markup: _includes/bill-pay/crystal-ball.njk · Styles: css/widgets/bill-pay/crystal-ball/crystal-ball.css
 
   Ported verbatim from the playable mock Hadar approved on 28 Sep 2026. Every number below is
   an approved value; do not retune or re-derive.

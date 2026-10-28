@@ -18,13 +18,13 @@ This replaces the old manual "Used by:" comment convention (previously documente
 
 **Where things live:**
 
-- `_includes/*.njk` — one file per reusable pattern (e.g. `hero.njk`, `section-header.njk`, `section-body.njk`, `section-visual.njk`, `two-block-subheader.njk`), each exporting a Nunjucks macro. `section.njk` is the shared outer shell (`.section > .section__content > .section__slot`) every pattern renders inside via `{% call %}`.
+- `_includes/shared/*.njk` (generic, any case study) and `_includes/{case-study}/*.njk` (e.g. `_includes/bill-pay/`, case-study-only) — one file per reusable pattern (e.g. `hero.njk`, `section-header.njk`, `section-body.njk`, `section-visual.njk`, `two-block-subheader.njk`), each exporting a Nunjucks macro. `section.njk` is the shared outer shell (`.section > .section__content > .section__slot`) every pattern renders inside via `{% call %}`.
 - `case-studies/{name}/index.njk` — one template per case study, importing the macros it needs and passing in that case study's actual content as macro arguments. This is what used to be a plain `.html` file with hand-copied markup.
 - `_template-reference.njk` — still exists as a human-readable gallery of every available pattern (useful for seeing what each one looks like), but it is no longer the thing you copy from. The partials in `_includes/` are the actual source of truth; `_template-reference.njk` just calls the same macros a real page would.
 
 **Not every pattern needs a dedicated macro.** `section-header.njk` covers both "plain header" and "header with subheading" — subheading is an optional parameter, not a second component, since duplicating the badge/heading markup across two files would just be parallel implementations of the same thing. Similarly, the "header + body + visual container" pattern from the old template isn't its own macro — real pages vary too much in body/visual ordering and count (see `case-studies/bill-pay/index.njk`'s sections 5 and 6) to force into one rigid macro; it's composed per-page from `section()` + `sectionHeader()` + `sectionBody()` + `sectionVisual()` primitives instead.
 
-**How to add a new article going forward:** create `case-studies/{name}/index.njk`, set its front-matter (`title`, `stylesheets`, `scripts`), `{% extends "base.njk" %}`, import the macros needed from `_includes/`, and call them with that case study's real content. Only add a new file to `_includes/` when a genuinely new structural pattern is needed that no existing macro/composition covers — check `_template-reference.njk` first.
+**How to add a new article going forward:** create `case-studies/{name}/index.njk`, set its front-matter (`title`, `stylesheets`, `scripts`), `{% extends "shared/base.njk" %}`, import the macros needed from `_includes/shared/` (and the case study's own `_includes/{name}/`), and call them with that case study's real content. Only add a new file to `_includes/` when a genuinely new structural pattern is needed that no existing macro/composition covers — check `_template-reference.njk` first.
 
 ## Build/deploy safety
 
@@ -87,7 +87,7 @@ Before building any new component structure (not small tweaks — actual new lay
 - Section headers are only ever built from the section-header partial, which owns their entrance. Never hand-build a section header.
 
 ### Smooth scrolling
-- Smooth scrolling is site-wide, from `js/shared/smooth-scroll.js` (Lenis 1.3.4, vendored, lerp 0.08), loaded by `_includes/base.njk`. Never add a second smooth-scroll library or change its settings unless asked.
+- Smooth scrolling is site-wide, from `js/shared/smooth-scroll.js` (Lenis 1.3.4, vendored, lerp 0.08), loaded by `_includes/shared/base.njk`. Never add a second smooth-scroll library or change its settings unless asked.
 - It forwards wheel input from every same-origin iframe on the page to Lenis, so galleries scroll smoothly. New galleries in iframes are covered automatically. Do not add wheel or scroll handlers inside gallery documents.
 - To scroll the page from code, use `window.siteLenis.scrollTo(...)`, not window.scrollTo or scrollIntoView.
 

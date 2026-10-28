@@ -5,7 +5,7 @@
 
   Geometry below is raw px from the Figma node (absoluteRenderBounds relative to the
   156 × 156 frame), not spacing-scale values — same convention as ap-manager-orbit.css.
-  Vectors are Figma's own SVG export of each brush stroke (inline in _includes/crystal-ball.njk).
+  Vectors are Figma's own SVG export of each brush stroke (inline in _includes/bill-pay/crystal-ball.njk).
 */
 
 /* ── Placement: text wrap (Hadar, 28 Sep — replaces Figma 1436:28345's side-by-side row) ── */

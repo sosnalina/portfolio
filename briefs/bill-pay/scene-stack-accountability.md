@@ -17,7 +17,7 @@ This round builds the shell: correct geometry, correct motion, and a placeholder
 | Panel mechanism, markup shape, class structure | `assets/bill-pay/scene-gallery/scenes-accordion.html` — the `#ag-row` subtree only |
 | Panel / caption / tag CSS and all timing values | the `.ag-*` rules inside `scenes-accordion.html` |
 | Stage sizing and section layout | `css/widgets/bill-pay/scene-accordion/scene-accordion.css` |
-| Section markup pattern | `_includes/scene-accordion.njk` |
+| Section markup pattern | `_includes/bill-pay/scene-accordion.njk` |
 | Asset registration | `case-studies/bill-pay/index.njk` |
 | Tag component | existing `principles-tag` component — reuse, do not duplicate |
 | Panel copy | the existing `scene-gallery-accountability` placeholder markup in the same page |
@@ -39,7 +39,7 @@ All four are **new**. Duplicate the structure of the `scene-accordion` equivalen
 | `assets/bill-pay/scene-gallery/scenes-stack.html` | `assets/bill-pay/scene-gallery/scenes-accordion.html` — **the `#ag-row` subtree and its `.ag-*` rules only** |
 | `css/widgets/bill-pay/scene-stack/scene-stack.css` | `css/widgets/bill-pay/scene-accordion/scene-accordion.css` |
 | `js/bill-pay/scene-stack.js` | `js/bill-pay/scene-accordion.js` |
-| section partial, alongside `_includes/scene-accordion.njk` | `_includes/scene-accordion.njk` |
+| section partial, alongside `_includes/bill-pay/scene-accordion.njk` | `_includes/bill-pay/scene-accordion.njk` |
 
 ### Critical: what not to copy
 

@@ -19,7 +19,7 @@
   truthy when invoked as `{% call hero(...) %}...{% endcall %}` (same guard
   pattern as two-block-header.njk).
 #}
-{% from "section.njk" import section %}
+{% from "shared/section.njk" import section %}
 {% macro hero(headline, subHeadline, id="", scene=false) %}
 {% call section("section--hero section--green-light", id) %}
 <div class="section-hero{% if scene %} section-hero--scene{% endif %}">

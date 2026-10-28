@@ -1,7 +1,7 @@
 {#
   Bill Pay — Scene gallery. Figma: node 856:9399 ("section" instance),
   Portfolio file (3XG9JnADI2psNR3B7TwQdx). Replaces the earlier accordion-list
-  version (_includes/accordion-gallery.njk) in the last section of the Bill
+  version (_includes/bill-pay/accordion-gallery.njk) in the last section of the Bill
   Pay case study — that file is superseded and left in place unreferenced,
   not deleted.
 
@@ -16,7 +16,7 @@
   Standalone component — no section wrapper, no headline, no background.
   Caller drops {{ sceneGallery() }} into its own content column.
 #}
-{% from "gallery-navigation.njk" import galleryInteraction %}
+{% from "bill-pay/gallery-navigation.njk" import galleryInteraction %}
 
 {% macro sceneGallery() %}
 <div class="scene-gallery">

@@ -12,12 +12,12 @@ stylesheets:
   - css/components/video.css
 scripts: []
 ---
-{% extends "base.njk" %}
-{% from "hero.njk" import hero %}
-{% from "section.njk" import section %}
-{% from "section-header.njk" import sectionHeader %}
-{% from "section-body.njk" import sectionBody %}
-{% from "two-block-subheader.njk" import twoBlockSubheader %}
+{% extends "shared/base.njk" %}
+{% from "shared/hero.njk" import hero %}
+{% from "shared/section.njk" import section %}
+{% from "shared/section-header.njk" import sectionHeader %}
+{% from "shared/section-body.njk" import sectionBody %}
+{% from "shared/two-block-subheader.njk" import twoBlockSubheader %}
 
 {% block body %}
 <nav>
@@ -30,14 +30,14 @@ scripts: []
   </ul>
 </nav>
 <main>
-  {# PATTERN: hero — implemented by _includes/hero.njk #}
+  {# PATTERN: hero — implemented by _includes/shared/hero.njk #}
   {{ hero(
     'Lorem <span class="section-hero__headline-accent-strong section-hero__headline-accent">ipsum dolor</span><br /><span class="section-hero__headline-accent-strong">sit amet consectetur</span> <span class="section-hero__headline-accent">adipiscing elit</span>?',
     "Lorem ipsum is a dummy placeholder text used in design and publishing. It lets people view page layouts and fonts without being distracted by real words.",
     "pattern-hero"
   ) }}
 
-  {# PATTERN: section-header with subheading — implemented by _includes/section-header.njk (subheading param) #}
+  {# PATTERN: section-header with subheading — implemented by _includes/shared/section-header.njk (subheading param) #}
   {% call section("section--grey-light", "pattern-header-subheading") %}
   {{ sectionHeader("Lorem ipsum dolor sit amet", "Lorem ipsum elephant") }}
   {{ sectionBody(["Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."]) }}
@@ -50,7 +50,7 @@ scripts: []
   <div class="section-video section-video--placeholder"></div>
   {% endcall %}
 
-  {# PATTERN: two-block section (shared subheader) — implemented by _includes/two-block-subheader.njk #}
+  {# PATTERN: two-block section (shared subheader) — implemented by _includes/shared/two-block-subheader.njk #}
   {{ twoBlockSubheader(
     "Lorem ipsum dolor sit amet",
     "Lorem ipsum dolor sit amet",
