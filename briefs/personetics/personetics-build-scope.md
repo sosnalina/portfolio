@@ -180,7 +180,7 @@ Phase rule applies to every visual: static first, motion second, gate inside the
 - Full spec (static values and locked motion): **`briefs/personetics/cognitive-banking-diagram.md`**.
 
 ### 02 — Danny figure + speech bubble
-- Full spec (static now, leg motion later): **`briefs/personetics/danny-figure.md`**. Quote text comes from the text sync (`[[VISUAL:quote]]` in s2).
+- Full spec (static values and locked leg motion): **`briefs/personetics/danny-figure.md`**. Quote text comes from the text sync (`[[VISUAL:quote]]` in s2).
 
 ### 04 — Pain map
 - Full spec (static now, motion later): **`briefs/personetics/pain-map.md`**. Its text comes from the Pain Map Workbench through the text sync (§1, v2).
@@ -249,7 +249,7 @@ Repo facts checked on 28 Oct (re-check on split day):
 ## 3. Open / to add
 
 ### Blocking specific visuals
-- **Leg technique** (02): test = 3 frames from Figma/Nano Banana (both swing ends + middle) → Claude builds a quick playable loop → Hadar decides. Alternative if frames flicker: image-to-video (same first/last frame), Claude Code extracts frames → background removal → sprite. Delivery: sprite (stop-motion) vs video (smooth, needs WebM + HEVC alpha) — undecided.
+- **Leg technique** (02): decided 29 Oct 2026 (whole-figure frame strip, 7 frames, stop motion). Full spec in `briefs/personetics/danny-figure.md` §2. No longer blocking.
 - **Problem statement entrance:** see `problem-statement.md` §2.
 - **Exports from Hadar:** red shape SVG; lighthouse, compass, reel cut-outs; Danny figure; Figma artboard nodes for each visual.
 
