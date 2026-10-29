@@ -20,9 +20,21 @@
   </div>
   <div class="pain-map__main">
     <div class="pain-map__left">
+      <div class="pain-map__illustration">
+        <svg class="pain-map__filters" width="0" height="0" aria-hidden="true" focusable="false">
+          <defs>
+            <filter id="pain-map-goo" filterUnits="userSpaceOnUse" x="0" y="0" width="228" height="188" color-interpolation-filters="sRGB">
+              <feGaussianBlur id="pain-map-goo-blur" in="SourceGraphic" stdDeviation="2.5" result="b"></feGaussianBlur>
+              <feColorMatrix in="b" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -8"></feColorMatrix>
+            </filter>
+          </defs>
+        </svg>
+        {% for tab in data.tabs %}
+        <div class="pain-map__scene" data-tab="{{ tab.id }}"{% if not loop.first %} hidden{% endif %}>{% include "personetics/pain-map-illustration-" + tab.id + ".svg" %}</div>
+        {% endfor %}
+      </div>
       {% for tab in data.tabs %}
       <div class="pain-map__left-panel" data-tab="{{ tab.id }}"{% if not loop.first %} hidden{% endif %}>
-        <div class="pain-map__illustration">{% include "personetics/pain-map-illustration-" + tab.id + ".svg" %}</div>
         <div class="pain-map__left-text">
           <p class="pain-map__number">{{ tab.number | safe }}</p>
           <p class="pain-map__label">{{ tab.label | safe }}</p>
