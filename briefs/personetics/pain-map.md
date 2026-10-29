@@ -115,7 +115,7 @@ All rules 1px, `--primitive-grey-dark`.
 - Accessibility (Claude's call): the toggle is a `tablist`; each row's header is a `button` with `aria-expanded`; keyboard Enter/Space opens or closes a row; visible focus ring using the project's existing focus style. The plus/minus icons are `aria-hidden`.
 
 ### 1.8 Overflow — clip and report, never scroll
-- The block never scrolls, inside or outside. Every part clips at its box (`overflow: hidden`).
+- The block never scrolls, inside or outside. Every part clips at its own box (`overflow: hidden`). One exception (29 Oct): the block root `.pain-map` itself does not clip, because the tab pill's overshoot (§1.3, `cubic-bezier(0.34, 1.56, 0.64, 1)`) reaches 21.5px left of the block edge when switching to Spend and must stay visible. Every other part keeps its own clip, so the root clip was redundant for them.
 - Nothing about overflow is ever shown on the page.
 - Overflow is reported in Claude Code's report, in the build prompt and in every pain map text sync. Checks, per tab:
   - headline wraps or is cut;
