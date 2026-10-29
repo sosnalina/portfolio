@@ -20,6 +20,21 @@
   color: var(--primitive-white);
 }
 
+/* The ellipse's own box: its centre is the ellipse's centre (250.5, 164.5), the rotation origin in §3 phase 2. */
+.dfg__bubble-body {
+  position: absolute;
+  inset: 0;
+}
+
+/* The tail never moves. Position = Figma frame (284, 283) minus the bubble origin (267, 21). Later in the DOM than the ellipse, so it paints on top; same fill, so no seam. */
+.dfg__bubble-tail {
+  position: absolute;
+  top: 262px;
+  left: 17px;
+  width: 116.555px;
+  height: 56.398px;
+}
+
 .dfg__bubble svg,
 .dfg__asterisk svg {
   display: block;
@@ -33,6 +48,12 @@
   margin: 0;
   font: var(--text-danny-quote);
   color: var(--primitive-black);
+}
+
+/* Hidden until the entrance plays; the script arms the block. Without JS the quote shows. */
+.dfg--armed .dfg__quote {
+  opacity: 0;
+  transform: translateY(20px);
 }
 
 .dfg__figure {

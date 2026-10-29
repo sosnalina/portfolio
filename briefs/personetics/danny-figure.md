@@ -148,8 +148,12 @@ The strip `danny-leg-frames.webp`: 7 frames, index 0 to 6 = sheet frames 01, 03,
 
 ### Phase 2 — motion
 - **Mechanism:** JS sets `--dfg-frame` (an integer 0 to 6) on the strip, only when the integer changes. Nothing else animates. Property animated: `transform` only. A hard cut between frames, with no tween (stop motion).
-- **One clock, one loop, one gate.** Add the legs to the existing code in `js/personetics/danny-figure.js`: a `renderLegs(t)` called from the existing `tick()` next to `render(t)`, with the same `t = performance.now() / 1000` as the head mesh. No second `requestAnimationFrame` loop and no second observer: the existing `ViewportGate.observe` controls both.
-- **Trigger and exit:** as the head mesh. Nothing plays before `onEnter`. On exit the loop stops and the legs freeze on the last frame shown (no reset). On enter the legs render from the current `t`, so legs and mesh stay on one clock.
+- **One clock, one loop, one gate.** Add the legs to the existing code in `js/personetics/danny-figure.js`: a `renderLegs(t)` called from the existing `tick()` next to `render(t)`, with the same `t = performance.now() / 1000` as the head mesh. No second `requestAnimationFrame` loop. The loop's start and stop follows the two-gate rule below (29 Oct 2026).
+- **Trigger and exit (changed 29 Oct 2026):** the loop plays while either gate reports "in" and stops only when both report "out". Nothing plays before the first `onEnter`. On stop the legs freeze on the last frame shown (no reset). On resume the legs render from the current `t`, so legs and mesh stay on one clock.
+  - Gate 1: `ViewportGate.observe` on `.dfg` (800 × 350). Also drives the bubble sway, the head mesh and the quote's one-time entrance (`enterT`).
+  - Gate 2: `ViewportGate.observe` on `.dfg__figure`. The legs hang about 245px below `.dfg` into section 03, so gate 1 alone stopped the loop while they were still visible.
+  - Two booleans, `inRoot` and `inFigure`, one per gate. `sync()` is the only place the tick starts or stops, called from both gates, so it is never started twice.
+  - The helper is used as is: no options, enter ratio stays 90% (`CLAUDE.md`). Known limit: scrolling up from below, the legs resume once about 90% of the figure is visible, not at the first pixel. Exit fires when no part is visible.
 - **Reduced motion:** no new handling, per Hadar's standing rule (28 Oct 2026). The existing reduced-motion path calls only `render(0)` and never `renderLegs`, so the legs simply stay on the rest frame. Do not add anything.
 - **Curve:** none between frames. The timing is the sine blend below, set by Hadar by eye on the viewer. The standard's `linear` rule (§2) is for constant-speed loops and does not apply: a pendulum eases at each end by design.
 - **Total duration (standard §3):** **Fixed**, a continuous loop with a cycle of **1.50 s** (0 to 6 to 0, so ping-pong is built in). More than 15% off is a defect: report it.
@@ -272,7 +276,7 @@ Two additions to the finished figure: the speech bubble's ellipse sways, and the
 
 ### Phase 2 — motion
 - **Mechanism:** JS sets `transform` on `.dfg__bubble-body` (rotation) and `opacity` / `transform` on `.dfg__quote` (entrance). Nothing else moves. Properties animated: `transform` and `opacity` only.
-- **One clock, one loop, one gate.** Add `renderBubble(t)` and `renderText(t)` to the existing `tick()` next to `render(t)` and `renderLegs(t)`, same `t = performance.now() / 1000`. No second loop, no new observer. The existing `ViewportGate.observe` controls both.
+- **One clock, one loop, one gate.** Add `renderBubble(t)` and `renderText(t)` to the existing `tick()` next to `render(t)` and `renderLegs(t)`, same `t = performance.now() / 1000`. No second loop. Sway runs while the tick runs (two-gate rule, §2 Phase 2); the quote entrance starts on gate 1's first `onEnter`.
 - **Sway:** the reference below. Continuous, from the first `onEnter`. On exit the loop stops and the bubble freezes at its last angle (same as the legs). Starts at whatever angle `t` gives, no reset.
 - **Text entrance:** plays **once, the first time the figure enters the viewport** (the existing gate's `onEnter`). Never replays on scrolling away and back. In the first `onEnter`, record `enterT = performance.now() / 1000` if it is not set. `renderText(t)` returns early until `enterT` is set and after the entrance is done.
 - **Before the trigger:** the quote is hidden only once JS has armed the block: the script adds class `dfg--armed` to `.dfg` at load (not when reduced motion is on). Without JS the quote shows. CSS:
@@ -288,7 +292,7 @@ Two additions to the finished figure: the speech bubble's ellipse sways, and the
 - **Total duration (standard §3):** sway is a continuous loop, cycle 2π / 0.60 = **10.47 s, derived**. Text entrance **900 ms, fixed**. More than 15% off is a defect: report it.
 - **Seekable:** both are pure functions of `t` (and of `enterT` for the text). No accumulated state, no randomness.
 - **Paint order (standard §7a):** static. The ellipse paints first, the tail on top, both white; the order never changes. The quote does not move with the ellipse.
-- **Reduced motion:** per Hadar's standing rule (28 Oct 2026), as the legs: no fade, no sway. The script never arms the block, so the quote shows. In the existing reduced-motion branch of `sync()`, also clear the quote's inline styles, remove `dfg--armed` and clear the bubble's inline `transform`, so the same holds if the setting turns on while the page is open.
+- **Reduced motion:** per Hadar's standing rule (28 Oct 2026), as the legs: no fade, no sway. The script never arms the block, so the quote shows. In the existing reduced-motion branch of `sync()`, also clear the quote's inline styles, remove `dfg--armed` and clear the bubble's inline `transform`, so the same holds if the setting turns on while the page is open. That clearing also sets the entrance's done flag, so switching back to full motion later does not restart the fade (decided in the build, 29 Oct 2026).
 
 ### Reference code — port this
 Copied from the approved comparison page (version 1), option A. Only what option A uses; the sliders, tabs and options B and C are not ported. Where the prose and the code disagree, the code wins.

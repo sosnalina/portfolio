@@ -81,14 +81,68 @@
     strip.style.setProperty("--dfg-frame", f);
   }
 
+  // Bubble wobble and text entrance (spec: briefs/personetics/danny-figure.md §3 phase 2).
+  // The ellipse sways as a sine of t; the quote fades in once, from the first onEnter.
+  // Both are pure functions of t (and of enterT for the text).
+  var BUBBLE_ANGLE = 5; // deg, same as the Bill Pay AP manager blob
+  var BUBBLE_RATE = 0.6; // rad/s, same
+  var TEXT_DURATION = 0.9; // s
+  var TEXT_RISE = 20; // px
+
+  function bezier(x1, y1, x2, y2) {
+    var f = function (a, b, t) { return 3 * a * (1 - t) * (1 - t) * t + 3 * b * (1 - t) * t * t + t * t * t; };
+    return function (x) {
+      if (x <= 0) return 0;
+      if (x >= 1) return 1;
+      var lo = 0, hi = 1, t = x;
+      for (var i = 0; i < 28; i++) { t = (lo + hi) / 2; if (f(x1, x2, t) < x) lo = t; else hi = t; }
+      return f(y1, y2, t);
+    };
+  }
+  var EASE_OUT = bezier(0.23, 1, 0.32, 1);
+
+  var bubbleBody = root.querySelector(".dfg__bubble-body");
+  var quote = root.querySelector(".dfg__quote");
+  var enterT = null; // seconds on the shared clock at the first onEnter
+  var textDone = false;
+
+  function renderBubble(t) {
+    var deg = Math.sin(t * BUBBLE_RATE) * BUBBLE_ANGLE;
+    bubbleBody.style.transform = "rotate(" + deg.toFixed(3) + "deg)";
+  }
+
+  function clearText() {
+    quote.style.opacity = "";
+    quote.style.transform = "";
+    root.classList.remove("dfg--armed");
+    textDone = true;
+  }
+
+  function renderText(t) {
+    if (enterT === null || textDone) return;
+    var k = EASE_OUT((t - enterT) / TEXT_DURATION);
+    if (k >= 1) {
+      clearText();
+      return;
+    }
+    quote.style.opacity = k.toFixed(3);
+    quote.style.transform = "translateY(" + ((1 - k) * TEXT_RISE).toFixed(2) + "px)";
+  }
+
   var reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
-  var onScreen = false;
+  var inRoot = false; // .dfg gate: bubble, quote, mesh
+  var inFigure = false; // .dfg__figure gate: legs
   var frame = 0;
+
+  // Hidden until the entrance plays; without this class (no JS, or reduced motion) the quote shows.
+  if (!reduced.matches) root.classList.add("dfg--armed");
 
   function tick() {
     var t = performance.now() / 1000; // t = seconds since page load
     render(t);
     renderLegs(t);
+    renderBubble(t);
+    renderText(t);
     frame = requestAnimationFrame(tick);
   }
 
@@ -98,9 +152,11 @@
       cancelAnimationFrame(frame);
       frame = 0;
       render(0);
-    } else if (onScreen && !frame) {
+      clearText();
+      bubbleBody.style.transform = "";
+    } else if ((inRoot || inFigure) && !frame) {
       frame = requestAnimationFrame(tick);
-    } else if (!onScreen && frame) {
+    } else if (!inRoot && !inFigure && frame) {
       cancelAnimationFrame(frame);
       frame = 0;
     }
@@ -108,8 +164,17 @@
 
   reduced.addEventListener("change", sync);
   ViewportGate.observe(root, {
-    onEnter: function () { onScreen = true; sync(); },
-    onExit: function () { onScreen = false; sync(); },
+    onEnter: function () {
+      inRoot = true;
+      if (enterT === null) enterT = performance.now() / 1000;
+      sync();
+    },
+    onExit: function () { inRoot = false; sync(); },
+  });
+  // The legs hang below .dfg into section 03, so they get their own gate; the loop runs while either is on screen.
+  ViewportGate.observe(root.querySelector(".dfg__figure"), {
+    onEnter: function () { inFigure = true; sync(); },
+    onExit: function () { inFigure = false; sync(); },
   });
   sync();
 })();

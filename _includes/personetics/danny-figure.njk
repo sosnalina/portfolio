@@ -13,7 +13,10 @@
 {% set edges = [[0,1],[1,2],[2,3],[3,4],[4,0],[4,2],[1,3],[3,0],[4,5],[5,2],[1,5],[5,0]] %}
 {% if not lines.length %}{{ dannyFigureMissingQuote() }}{% endif %}
 <div class="dfg">
-  <div class="dfg__bubble">{% include "personetics/danny-figure-bubble.svg" %}</div>
+  <div class="dfg__bubble">
+    <div class="dfg__bubble-body">{% include "personetics/danny-figure-bubble.svg" %}</div>
+    <span class="dfg__bubble-tail">{% include "personetics/danny-figure-bubble-tail.svg" %}</span>
+  </div>
   <p class="dfg__quote">{{ lines | join("<br>") | safe }}</p>
   <div class="dfg__figure"><img class="dfg__strip" src="/assets/personetics/danny-figure/danny-leg-frames.webp" alt="" width="4606" height="821" decoding="async"></div>
   <div class="dfg__asterisk">{% include "personetics/danny-figure-asterisk.svg" %}</div>
