@@ -54,12 +54,41 @@
     });
   }
 
+  // Leg swing (spec: briefs/personetics/danny-figure.md §2). Whole-figure stop motion: the frame
+  // is a pure function of t, and --dfg-frame (0..6) selects one frame of the strip.
+  var CYCLE = 1.5; // s, locked by Hadar 29 Oct
+  var SINE = 0.55; // 0 = constant speed, 1 = full sine; locked by eye
+  var FRAMES = 7; // strip index 0..6
+
+  // Frame index as a pure function of time t (seconds). One cycle goes 0 -> 6 -> 0.
+  // The sine makes the ends linger and the middle fast; blending toward a triangle
+  // wave (SINE < 1) keeps the legs from parking at the ends.
+  function frameAt(t) {
+    var p = (t / CYCLE) % 1;
+    var sn = 0.5 - 0.5 * Math.cos(TAU * p);
+    var tri = p < 0.5 ? 2 * p : 2 - 2 * p;
+    var s = tri + (sn - tri) * SINE;
+    return Math.round(s * (FRAMES - 1));
+  }
+
+  var strip = root.querySelector(".dfg__strip");
+  var legFrame = -1; // last index set; -1 so the first call always writes
+
+  function renderLegs(t) {
+    var f = frameAt(t);
+    if (f === legFrame) return;
+    legFrame = f;
+    strip.style.setProperty("--dfg-frame", f);
+  }
+
   var reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
   var onScreen = false;
   var frame = 0;
 
   function tick() {
-    render(performance.now() / 1000); // t = seconds since page load
+    var t = performance.now() / 1000; // t = seconds since page load
+    render(t);
+    renderLegs(t);
     frame = requestAnimationFrame(tick);
   }
 

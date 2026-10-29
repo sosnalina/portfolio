@@ -6,6 +6,9 @@
   flex: none;
   width: 800px;
   height: 350px;
+  /* The figure, asterisk and mesh drop together by this much so the crotch sits on section 02's
+     bottom edge (the table he sits on). The bubble and quote do not move. Spec §1 "Seat drop". */
+  --dfg-seat-drop: 3.4px;
 }
 
 .dfg__bubble {
@@ -35,7 +38,7 @@
 .dfg__figure {
   position: absolute;
   z-index: 1;
-  top: 340.32px;
+  top: calc(340.32px + var(--dfg-seat-drop));
   left: 95.12px;
   width: 204.35px;
   height: 254.97px;
@@ -56,7 +59,7 @@
 .dfg__asterisk {
   position: absolute;
   z-index: 1;
-  top: 267px;
+  top: calc(267px + var(--dfg-seat-drop));
   left: 144px;
   width: 110.76px;
   height: 110.76px;
@@ -66,7 +69,7 @@
 .dfg__lines {
   position: absolute;
   z-index: 1;
-  top: 0;
+  top: var(--dfg-seat-drop);
   left: 0;
   overflow: visible;
 }
