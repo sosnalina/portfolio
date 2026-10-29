@@ -544,6 +544,14 @@ Static, fixed DOM order, valid because it never changes during the motion: Plan 
 - One illustration stage replaces the three per-panel illustrations. `.pain-map__left` becomes `display: flex; flex-direction: column; gap: var(--spacing-32); box-sizing: border-box; padding: 79.5px var(--spacing-32) 0 0` (the values `.pain-map__left-panel` has today). `.pain-map__left-panel` keeps only `.pain-map__left-text` and loses its height, padding and gap.
 - `.pain-map__illustration` (228 × 188, `position: relative`) contains three `.pain-map__scene` boxes, one per tab (`data-tab`), each `position: absolute; inset: 0` and holding that tab's existing SVG partial. Without JS only the Spend scene is visible.
 - A zero-size, absolutely positioned `<svg>` inside `.pain-map__illustration` holds the one metaball filter (`filterUnits="userSpaceOnUse" x="0" y="0" width="228" height="188"`). It is not `display: none`, because a filter inside a `display: none` SVG does not apply.
+- The filter, from the approved reference, version 9:
+  ```html
+  <filter id="goo" filterUnits="userSpaceOnUse" x="0" y="0" width="228" height="188" color-interpolation-filters="sRGB">
+    <feGaussianBlur id="gooBlur" in="SourceGraphic" stdDeviation="2.5" result="b"></feGaussianBlur>
+    <feColorMatrix in="b" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -8"></feColorMatrix>
+  </filter>
+  ```
+  `stdDeviation` 2.5 is the initial attribute only. If the §6.8 engine code sets `stdDeviation` per frame, the code wins. Do not reuse the problem statement's filter (800 × 302, `stdDeviation` 6). In the port the ids carry the `pain-map-` prefix (§6.9, item 8).
 - The three partials stay plain static SVG, unchanged. The script prepares them at init (§6.9).
 - New file `js/personetics/pain-map-illustration.js`, loaded from the Personetics page the way `pain-map.js` is. It listens to the tab buttons' clicks itself.
 
