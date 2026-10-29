@@ -23,7 +23,7 @@ Status (29 Oct 2026): phase 1 built and QA'd by Hadar (commit d63dc6d). Phase 2 
 - **What Hadar looks at:** `/case-studies/personetics/`, section 04, side by side with the approved reference (artifact "Pain Map Drawer", `https://claude.ai/artifact/8pD6yYdLc6H3cbZaKUqJ4L`, version 7) and overlaid against Figma frame `open` (node `2004:51829`) and the open row (node `2004:51870`). Every tab; every row opened and closed; the 5-quote row in the third tab; tab switching with a row open.
 - **Behaviour she checks:**
   - Opening a row: the drawer grows from the header downward, the number and title scale up while moving into place, the quotes appear one after another, the plus turns into a minus. Other rows shrink at the same time. One continuous motion.
-  - Clicking the open row's header (number, title or minus) closes it, by the reverse motion; the quotes are gone before the drawer shuts on them.
+  - Clicking anywhere in the open row (header or quotes) closes it, by the reverse motion; the quotes are gone before the drawer shuts on them.
   - Opening another row while one is open: the open one closes and the new one opens at the same time.
   - Switching tabs: all rows closed, nothing animates inside the block (the toggle's pill still moves).
 - **Numbers that matter:** drawer 200 ms, `cubic-bezier(0, 0, 0.58, 1)`; plus/minus turn 110 ms; quotes 300 ms fade + 8px rise, first quote starts 60 ms in, 60 ms between quotes; closing quotes fade 150 ms, no stagger. Row paddings per §3.4. Right column stays 540 × 526 in every frame of the motion.
@@ -96,17 +96,16 @@ All rules 1px, `--primitive-grey-dark`.
 - One heading made of number + title, laid out once at the **open size** (number Literata Bold 700 40px / line-height 1; 8px gap; title Literata Regular 400 16px / line-height 1.46, one line). When the row is closed they are drawn scaled down from their top-left corner: number × 0.675 (= 27px), title × 0.875 (= 14px) and lifted 9px so the closed gap is 12px. They are never re-laid-out at the small size. This is what makes the scale-up smooth (§3.2).
 - Text frame: fills the width left by the toggle icon (475.96px = 540 − 16.04 − 48 gap). Horizontal padding 32 on both sides when closed; 32 on the left only when open (title room is therefore 411.96 closed, 443.96 open, measured at the open size).
 - Toggle icon: 16.04 wide, flush to the right edge, 48px gap from the text frame. Colour `--primitive-red-dark`.
-- The whole closed row is clickable (cursor pointer). In an open row only the header (number, title, minus) is clickable, cursor pointer there; the quotes are not.
+- The whole closed row is clickable (cursor pointer). An open row is clickable anywhere (header and quotes), cursor pointer over the whole row (Hadar, 29 Oct).
 - No other hover change (open item, §4).
 
 **Quotes** (inside the drawer)
 - 19px below the header (the drawer's top padding), horizontal padding 32 (content 476 wide).
-- One paragraph per quote, Literata Light Italic 300, **12px, line-height 17.5px** (Hadar, 28 Oct, for readability; Figma has 11/16), `--primitive-black`, 8px between paragraphs, exactly as synced. *The reference artifact uses 11/16; the build uses 12/17.5.*
+- One paragraph per quote, Literata Light Italic 300, **12px, line-height 17.5px** (Hadar, 28 Oct, for readability; Figma has 11/16), `--primitive-black`, **12px between paragraphs** (Figma; Hadar, 29 Oct), exactly as synced. *The reference artifact uses 11/16; the build uses 12/17.5.*
 
 ### 1.7 Behaviour — replaced in phase 2
 - Clicking a closed row opens it and closes any other open row, in one motion (§3).
-- Clicking the header of the open row closes it (new close control: the minus).
-- Clicking the quotes of an open row does nothing.
+- Clicking anywhere in the open row (header, quotes, padding) closes it. The minus is the visible cue.
 - Switching tabs resets to the zero state: all rows closed, **instantly with no animation** (the toggle's pill still moves). Coming back to a tab also shows it all closed.
 - Load state: Spend selected, all rows closed, no animation.
 - Accessibility (Claude's call): the toggle is a `tablist`; each row's header is a `button` with `aria-expanded`; keyboard Enter/Space opens or closes a row; visible focus ring using the project's existing focus style. The plus/minus icons are `aria-hidden`.
@@ -233,7 +232,8 @@ Source: artifact "Pain Map Drawer", version 7, approved by Hadar 29 Oct. **Port 
 **What changes in the port (and nothing else):**
 - Class names: reference → built BEM, `pain-map-row` family. `.row` → `.pain-map-row`; `.row__inner` → `.pain-map-row__inner`; `.row__head` → `.pain-map-row__head`; `.row__text` → `.pain-map-row__text`; `.row__num` → `.pain-map-row__number`; `.row__title` → `.pain-map-row__title`; `.tg` → `.pain-map-row__toggle`, its svgs `.pain-map-row__toggle-plus` / `-minus`; `.quotes` → `.pain-map-row__quotes`, `.quotes__in` → `.pain-map-row__quotes-inner`, its `p` → `.pain-map-row__quote`; `.is-open` → the existing open modifier `.pain-map-row--open` (pre-flight confirms its name). Pre-flight confirms the other existing names.
 - Tokens: reference colour and font variables (`--primitive-*`, `--serif`) → the built tokens (`--primitive-red-dark`, `--primitive-grey-dark`, `--primitive-black`, the `--text-pain-map-*` set, "Literata Optical"). Spacing numbers that match an existing spacing token use the token (32 → `--spacing-32`, 8 → `--spacing-8`, 48 → `--spacing-48` if it exists); the rest (19, 21.24, 16.04, 5.96, 59.44 …) are Figma-derived values and stay literal with a comment saying where they come from.
-- Quote font: **12px / 17.5px** (the reference has 11 / 16).
+- Quote font: **12px / 17.5px** (the reference has 11 / 16). Quote gap: **12px** (the reference has 8px, `margin: 0 0 8px`). The quote margins must actually show on the page: the first build had them overridden by another rule; verify in the browser that three quotes are 12px apart.
+- Click: the row listener closes an open row on a click anywhere in it (reference only closes from `.row__head`). The open row's cursor is pointer over the whole row (reference has `cursor: default` there).
 - Reduced-motion block: replaced by §3.3.
 - `--idur` is **110ms** (reference file now says 110; this note exists because earlier versions said 120).
 - Motion variables (`--dur`, `--ease`, `--ease-out`, `--idur`, `--rise`, `--k`) live on `.pain-map` instead of `:root`, and `--k` (the test strip's slow-motion multiplier) is removed: replace `calc(X * var(--k))` with `X`.
@@ -459,12 +459,15 @@ Source: artifact "Pain Map Drawer", version 7, approved by Hadar 29 Oct. **Port 
 - **Names:** `__head`, `__toggle`, `__toggle-plus`, `__toggle-minus`, `__quotes-inner`; `OPEN_CONTENT_MAX` renamed `MAX_OPEN`. Keep `aria-controls` from the header to the drawer id.
 - All-closed padding computes to 57.95 vs Figma 58.17 (0.22px): within the 0.5px limit.
 
+### 3.11 Quote gap and the 282px limit (29 Oct)
+Quotes block room = 282 − 71.36 header − 19 top gap = 191.64px. At 12px / 17.5px a quote of up to ~160 characters wraps to 2 lines. With the 12px gap, a 5-quote row fits if its quotes total 8 lines or fewer (4 × 12 + 8 × 17.5 = 188); beyond that the last quote clips. A clip is a safety net, never an accepted outcome: `checkOverflow` reports it and the text is trimmed.
+
 ### 3.9 Checklist for the build (Claude Code reports each as pass / fail / not measured)
 - [ ] Right column is exactly 540 × 526 in every frame: all closed, each row open, mid-motion. No scrollbar anywhere.
 - [ ] Row padding values within 0.5px of §1.6's check values (all closed, four quotes, five quotes).
 - [ ] Number 40px / title 16px when open; scaled to 27px / 14px visual when closed.
 - [ ] Beats table matches: 200 / 110 / 300, stagger 60 + 60, close 150 (read from the computed styles).
-- [ ] Closed row: click anywhere opens. Open row: header click closes, quotes click does nothing.
+- [ ] Closed row: click anywhere opens. Open row: a click anywhere in it closes it.
 - [ ] Tab switch resets with no animation; load state all closed.
 - [ ] Reduced motion per §3.3.
 - [ ] `PainMap.checkOverflow()` run on the rendered page, findings reported.

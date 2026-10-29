@@ -35,22 +35,23 @@
       <div class="pain-map__rows" role="tabpanel" id="pain-map-panel-{{ tab.id }}" aria-labelledby="pain-map-tab-{{ tab.id }}" data-tab="{{ tab.id }}"{% if not loop.first %} hidden{% endif %}>
         {% for row in tab.rows %}
         <div class="pain-map-row">
-          <button class="pain-map-row__closed" type="button" aria-expanded="false" aria-controls="pain-map-open-{{ tab.id }}-{{ loop.index }}">
-            <span class="pain-map-row__text">
-              <span class="pain-map-row__number">{{ row.number | safe }}</span>
-              <span class="pain-map-row__title">{{ row.title | safe }}</span>
-            </span>
-            <span class="pain-map-row__plus">{% include "personetics/pain-map-plus.svg" %}</span>
-          </button>
-          <div class="pain-map-row__open" id="pain-map-open-{{ tab.id }}-{{ loop.index }}" tabindex="-1">
-            <div class="pain-map-row__heading">
-              <p class="pain-map-row__number-open">{{ row.number | safe }}</p>
-              <p class="pain-map-row__title-open">{{ row.title | safe }}</p>
-            </div>
-            <div class="pain-map-row__quotes">
-              {% for quote in row.quotes %}
-              <p class="pain-map-row__quote">{{ quote | safe }}</p>
-              {% endfor %}
+          <div class="pain-map-row__inner">
+            <button class="pain-map-row__head" type="button" aria-expanded="false" aria-controls="pain-map-open-{{ tab.id }}-{{ loop.index }}">
+              <span class="pain-map-row__text">
+                <span class="pain-map-row__number">{{ row.number | safe }}</span>
+                <span class="pain-map-row__title">{{ row.title | safe }}</span>
+              </span>
+              <span class="pain-map-row__toggle" aria-hidden="true">
+                <svg class="pain-map-row__toggle-plus" width="17" height="17" viewBox="0 0 17 17" fill="none" focusable="false"><path d="M7.9048 16.9664C7.07425 16.9664 6.40096 16.2931 6.40096 15.4626V11.7171C6.40096 10.6126 5.50553 9.71712 4.40096 9.71712H1.446C0.647397 9.71712 0 9.06972 0 8.27112C0 7.47252 0.647396 6.82512 1.446 6.82512H4.40096C5.50553 6.82512 6.40096 5.92969 6.40096 4.82512V1.50384C6.40096 0.673293 7.07425 0 7.9048 0C8.73535 0 9.40864 0.673293 9.40864 1.50384V4.82512C9.40864 5.92969 10.3041 6.82512 11.4086 6.82512H14.595C15.3936 6.82512 16.041 7.47252 16.041 8.27112C16.041 9.06972 15.3936 9.71712 14.595 9.71712H11.4086C10.3041 9.71712 9.40864 10.6126 9.40864 11.7171V15.4626C9.40864 16.2931 8.73535 16.9664 7.9048 16.9664Z" fill="currentColor"/></svg>
+                <svg class="pain-map-row__toggle-minus" width="17" height="3" viewBox="0 0 17 3" fill="none" focusable="false"><path d="M6.40096 2.892H1.446C0.647397 2.892 0 2.2446 0 1.446C0 0.647396 0.647396 0 1.446 0H6.40096H9.40864H14.595C15.3936 0 16.041 0.647396 16.041 1.446C16.041 2.2446 15.3936 2.892 14.595 2.892H9.40864H6.40096Z" fill="currentColor"/></svg>
+              </span>
+            </button>
+            <div class="pain-map-row__quotes" id="pain-map-open-{{ tab.id }}-{{ loop.index }}">
+              <div class="pain-map-row__quotes-inner">
+                {% for quote in row.quotes %}
+                <p class="pain-map-row__quote" style="--i: {{ loop.index0 }}">{{ quote | safe }}</p>
+                {% endfor %}
+              </div>
             </div>
           </div>
         </div>

@@ -39,8 +39,7 @@
   display: none;
 }
 
-.pain-map p,
-.pain-map h3 {
+:where(.pain-map p, .pain-map h3) { /* zero specificity: the reset must not beat component margins */
   margin: 0;
 }
 
@@ -208,98 +207,198 @@
   height: 100%;
 }
 
+/* Phase 2 (§3.8): rows animate height, top padding and the quotes drawer together on one curve.
+   JS (layout()) writes the target heights inline; CSS transitions do all the motion. */
+.pain-map {
+  --dur: 200ms;
+  --ease: cubic-bezier(0, 0, 0.58, 1);
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --idur: 110ms;
+  --rise: 8px;
+  --quote-head-start: 60ms;
+  --quote-step: 60ms;
+}
+
 .pain-map-row {
-  flex: 1 1 0;
-  min-height: 0;
+  /* Figma 2004:51870: closed number 27/40 and title 14/16 as scales of the open size; title rides up 9px (12 vs 8 gap); icon rides down 5.96px when open. */
+  --ns: 0.675;
+  --ts: 0.875;
+  --ty: -9px;
+  --iy: 0px;
+  flex: none;
+  box-sizing: border-box;
+  overflow: hidden;
+  cursor: pointer;
+  transition: height var(--dur) var(--ease);
 }
 
 .pain-map-row + .pain-map-row {
   box-shadow: inset 0 1px 0 var(--primitive-grey-dark);
 }
 
-.pain-map-row__closed {
+.pain-map-row--open {
+  --ns: 1;
+  --ts: 1;
+  --ty: 0px;
+  --iy: 5.96px; /* Figma 2004:51870: (71.36 - 59.44) / 2 */
+}
+
+.pain-map-row__inner {
+  box-sizing: border-box;
+  padding: 21px 0; /* Figma 2004:51870 start value; JS overwrites padding-top */
+  transition: padding-top var(--dur) var(--ease);
+}
+
+.pain-map-row__head {
   display: flex;
   align-items: center;
-  gap: 48px;
-  box-sizing: border-box;
+  gap: 48px; /* Figma 2004:51870: gap between text frame and icon (no token) */
   width: 100%;
-  height: 100%;
+  margin: 0;
   padding: 0;
   border: 0;
   background: none;
-  text-align: left;
-  color: inherit;
   font: inherit;
-  cursor: pointer;
+  color: inherit;
+  text-align: left;
+  cursor: inherit;
 }
 
+.pain-map-row__head:focus-visible {
+  outline: 2px solid var(--primitive-red-dark);
+  outline-offset: -2px;
+}
+
+/* Text frame fills what the icon leaves (540 - 16.04 - 48 = 475.96); closed keeps 32 both sides, open only the left. */
 .pain-map-row__text {
-  display: flex;
-  flex: none;
-  flex-direction: column;
-  gap: var(--spacing-12);
   box-sizing: border-box;
-  width: 460px;
+  flex: 1 1 auto;
+  min-width: 0;
   padding: 0 var(--spacing-32);
 }
 
+.pain-map-row--open .pain-map-row__text {
+  padding-right: 0;
+}
+
+/* Number and title are always laid out at the open size and scaled down when closed (never re-laid-out). */
 .pain-map-row__number {
-  font: var(--text-pain-map-row-number);
+  display: block;
+  font: var(--text-pain-map-row-number-open);
+  transform-origin: 0 0;
+  transform: scale(var(--ns));
+  transition: transform var(--dur) var(--ease);
 }
 
 .pain-map-row__title {
-  font: var(--text-pain-map-row-title);
-}
-
-.pain-map-row__plus {
-  flex: none;
   display: block;
-  color: var(--primitive-red-dark);
-}
-
-.pain-map-row__open {
-  display: none;
-  box-sizing: border-box;
-  padding: 21px var(--spacing-32);
-}
-
-/* Open row: height = content + 42, content capped at 282 (Figma `open` frame); more is clipped. */
-.pain-map-row--open {
-  flex: 0 0 auto;
-  max-height: calc(282px + 42px);
+  margin-top: var(--spacing-8);
   overflow: hidden;
-}
-
-.pain-map-row--open .pain-map-row__closed {
-  display: none;
-}
-
-.pain-map-row--open .pain-map-row__open {
-  display: flex;
-  flex-direction: column;
-  gap: 19px;
-}
-
-.pain-map-row__heading {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-8);
-}
-
-.pain-map-row__number-open {
-  font: var(--text-pain-map-row-number-open);
-}
-
-.pain-map-row__title-open {
+  white-space: nowrap;
   font: var(--text-pain-map-row-title-open);
+  transform-origin: 0 0;
+  transform: translateY(var(--ty)) scale(var(--ts));
+  transition: transform var(--dur) var(--ease);
+}
+
+/* Toggle icon, flush right. Closed it is centred on the 59.44px visual text block (21.24 + 8.485 = 29.72), */
+/* open on the 71.36px header (rides down --iy). Figma 2004:51870 / Hadar's SVGs. */
+.pain-map-row__toggle {
+  position: relative;
+  flex: none;
+  align-self: flex-start;
+  width: 16.04px;
+  height: 16.97px;
+  margin-top: 21.24px;
+  color: var(--primitive-red-dark);
+  transform: translateY(var(--iy));
+  transition: transform var(--dur) var(--ease);
+}
+
+.pain-map-row__toggle svg {
+  position: absolute;
+  left: 0;
+  overflow: visible;
+  transition: transform var(--idur) var(--ease), opacity var(--idur) linear;
+}
+
+.pain-map-row__toggle-plus {
+  top: 0;
+  transform-origin: 8.02px 8.485px; /* centre of the plus path */
+}
+
+.pain-map-row__toggle-minus {
+  top: 7.04px; /* puts the minus on the plus's horizontal bar */
+  transform-origin: 8.02px 1.446px; /* centre of the minus path */
+  opacity: 0;
+  transform: rotate(-90deg);
+}
+
+.pain-map-row--open .pain-map-row__toggle-plus {
+  opacity: 0;
+  transform: rotate(90deg);
+}
+
+.pain-map-row--open .pain-map-row__toggle-minus {
+  opacity: 1;
+  transform: none;
 }
 
 .pain-map-row__quotes {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-8);
+  height: 0;
+  overflow: hidden;
+  transition: height var(--dur) var(--ease);
 }
 
+.pain-map-row__quotes-inner {
+  padding: 19px var(--spacing-32) 0; /* Figma 2004:51870: 19px below the header */
+}
+
+/* Quotes arrive one after another (fade + rise); closing is a quick fade with no stagger. */
 .pain-map-row__quote {
+  margin: 0 0 var(--spacing-12);
   font: var(--text-pain-map-quote);
+  opacity: 0;
+  transform: translateY(var(--rise));
+  transition: opacity 150ms linear, transform 150ms var(--ease-out);
+}
+
+.pain-map-row__quote:last-child {
+  margin-bottom: 0;
+}
+
+.pain-map-row--open .pain-map-row__quote {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 300ms var(--ease-out) calc(var(--quote-head-start) + var(--i) * var(--quote-step)),
+    transform 300ms var(--ease-out) calc(var(--quote-head-start) + var(--i) * var(--quote-step));
+}
+
+.pain-map.no-anim *,
+.pain-map.no-anim *::before,
+.pain-map.no-anim *::after {
+  transition: none !important;
+}
+
+/* §3.3: movement is removed, the crossfades stay (plus/minus 110ms, quotes 150ms, linear, no delay). */
+@media (prefers-reduced-motion: reduce) {
+  .pain-map .pain-map-row,
+  .pain-map .pain-map-row__inner,
+  .pain-map .pain-map-row__quotes,
+  .pain-map .pain-map-row__number,
+  .pain-map .pain-map-row__title,
+  .pain-map .pain-map-row__toggle {
+    transition: none;
+  }
+
+  .pain-map .pain-map-row__toggle svg {
+    transition: opacity var(--idur) linear;
+  }
+
+  .pain-map .pain-map-row__quote,
+  .pain-map .pain-map-row--open .pain-map-row__quote {
+    transform: none;
+    transition: opacity 150ms linear;
+  }
 }

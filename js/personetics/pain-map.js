@@ -1,55 +1,86 @@
 (function () {
-  // Pain map (spec: briefs/personetics/pain-map.md §1.7–§1.8). Tab switch and row open are instant;
-  // the only motion is the toggle pill's CSS transition. Also exports PainMap.checkOverflow().
+  // Pain map (spec: briefs/personetics/pain-map.md §1.7–§1.8, §3). layout() writes every row's target
+  // height, top padding and drawer height; CSS transitions do the motion. Also exports PainMap.checkOverflow().
   var root = document.getElementById("pain-map");
   if (!root) return;
 
-  var OPEN_CONTENT_MAX = 282; // Figma `open` frame; keep in sync with pain-map.css
+  var MAIN_H = 526; // Figma `open` frame: height of main
+  var MAX_OPEN = 282; // Figma `open` frame: max open content (header + quotes); keep in sync with the spec
+  var CLOSED_VISUAL = 27 + 12 + 16 * 1.46 * (14 / 16); // closed text block as drawn: 59.44px
+  var TITLE_ROOM_CLOSED = 411.96; // §1.6: 540 - 16.04 - 48 - 2 × 32
+  var TITLE_ROOM_OPEN = 443.96;
+
   var track = root.querySelector(".pain-map-toggle__track");
   var tabs = Array.prototype.slice.call(root.querySelectorAll(".pain-map-toggle__tab"));
   var TAB_IDS = tabs.map(function (t) { return t.getAttribute("data-tab"); });
   var current = TAB_IDS[0];
+  var rows = [];
 
   function panelFor(selector, id) {
     return root.querySelector(selector + '[data-tab="' + id + '"]');
   }
 
-  function closeRows(panel) {
-    Array.prototype.forEach.call(panel.querySelectorAll(".pain-map-row"), function (row) {
-      row.classList.remove("pain-map-row--open");
-      row.querySelector(".pain-map-row__closed").setAttribute("aria-expanded", "false");
+  // Sets every row's target height, top padding and drawer height (-1 = all closed).
+  function layout(openIdx) {
+    rows.forEach(function (r, i) {
+      var open = i === openIdx;
+      r.classList.toggle("pain-map-row--open", open);
+      r.querySelector(".pain-map-row__head").setAttribute("aria-expanded", open ? "true" : "false");
     });
+    var n = rows.length, qh = 0, co = 0;
+    if (openIdx >= 0) {
+      var r0 = rows[openIdx];
+      var headOpen = r0.querySelector(".pain-map-row__head").offsetHeight;
+      var natural = r0.querySelector(".pain-map-row__quotes-inner").offsetHeight;
+      qh = Math.min(natural, Math.max(0, MAX_OPEN - headOpen)); // clipped past 282, never scrolls
+      co = headOpen + qh;
+    }
+    // Same top and bottom padding on every row: whatever is left of the 526px once contents are placed.
+    var contents = openIdx >= 0 ? co + (n - 1) * CLOSED_VISUAL : n * CLOSED_VISUAL;
+    var pad = (MAIN_H - contents) / (2 * n);
+    rows.forEach(function (r, i) {
+      var open = i === openIdx;
+      r.style.height = ((open ? co : CLOSED_VISUAL) + 2 * pad) + "px";
+      r.querySelector(".pain-map-row__inner").style.paddingTop = pad + "px";
+      r.querySelector(".pain-map-row__quotes").style.height = (open ? qh : 0) + "px";
+    });
+  }
+
+  // Tab switch / load: all rows closed with no animation.
+  function resetRows() {
+    root.classList.add("no-anim");
+    layout(-1);
+    void root.offsetWidth; // commit the no-transition state before re-enabling
+    root.classList.remove("no-anim");
   }
 
   function setTab(id) {
     current = id;
     TAB_IDS.forEach(function (t) {
       track.classList.toggle(t, t === id);
-      var left = panelFor(".pain-map__left-panel", t);
-      var rows = panelFor(".pain-map__rows", t);
-      left.hidden = rows.hidden = t !== id;
-      closeRows(rows); // every tab shows all rows closed when it is (re)entered
+      panelFor(".pain-map__left-panel", t).hidden = t !== id;
+      panelFor(".pain-map__rows", t).hidden = t !== id;
     });
     tabs.forEach(function (b) {
       b.setAttribute("aria-selected", b.getAttribute("data-tab") === id ? "true" : "false");
     });
-  }
-
-  function openRow(row, viaKeyboard) {
-    closeRows(row.parentNode);
-    row.classList.add("pain-map-row--open");
-    row.querySelector(".pain-map-row__closed").setAttribute("aria-expanded", "true");
-    if (viaKeyboard) row.querySelector(".pain-map-row__open").focus(); // the pressed button just left the layout
+    rows = Array.prototype.slice.call(panelFor(".pain-map__rows", id).querySelectorAll(".pain-map-row"));
+    resetRows(); // after unhiding: a hidden panel measures 0
   }
 
   tabs.forEach(function (b) {
     b.addEventListener("click", function () { setTab(b.getAttribute("data-tab")); });
   });
   Array.prototype.forEach.call(root.querySelectorAll(".pain-map-row"), function (row) {
-    row.querySelector(".pain-map-row__closed").addEventListener("click", function (e) {
-      openRow(row, e.detail === 0);
+    // Anywhere in a closed row opens it; anywhere in the open row (header, quotes, padding) closes it.
+    row.addEventListener("click", function () {
+      var i = rows.indexOf(row);
+      if (i < 0) return;
+      layout(row.classList.contains("pain-map-row--open") ? -1 : i);
     });
   });
+
+  setTab(current);
 
   // ---------- Overflow check (§1.8): returns a list of findings; [] means measured, none ----------
   function lineCount(el) {
@@ -76,22 +107,25 @@
       if (left.querySelector(".pain-map__label").getBoundingClientRect().bottom > mainBottom) {
         findings.push(id + ": left label runs past the bottom of main");
       }
-      var rows = panelFor(".pain-map__rows", id).querySelectorAll(".pain-map-row");
-      Array.prototype.forEach.call(rows, function (row, i) {
+      rows.forEach(function (row, i) {
         var name = id + " row " + (i + 1);
-        if (lineCount(row.querySelector(".pain-map-row__number")) > 1) findings.push(name + ": closed number wraps");
-        if (lineCount(row.querySelector(".pain-map-row__title")) > 1) findings.push(name + ": closed title wraps");
-        openRow(row, false);
-        if (lineCount(row.querySelector(".pain-map-row__number-open")) > 1) findings.push(name + ": open number wraps");
-        if (lineCount(row.querySelector(".pain-map-row__title-open")) > 1) findings.push(name + ": open title wraps");
-        var open = row.querySelector(".pain-map-row__open");
-        var cs = getComputedStyle(open);
-        var content = open.scrollHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
-        if (content > OPEN_CONTENT_MAX) {
-          findings.push(name + ": open content is " + Math.round(content) + "px, over " + OPEN_CONTENT_MAX + "px (clipped)");
+        var number = row.querySelector(".pain-map-row__number");
+        var title = row.querySelector(".pain-map-row__title");
+        // Number and title are laid out at the open size and nowrap: compare their scrollWidth to the room.
+        var textW = row.querySelector(".pain-map-row__text").clientWidth;
+        if (number.scrollWidth > textW - 2 * 32) findings.push(name + ": number wider than its room (closed)");
+        if (title.scrollWidth > TITLE_ROOM_CLOSED + 0.5) findings.push(name + ": title wider than " + TITLE_ROOM_CLOSED + "px (closed)");
+        layout(i);
+        // scrollWidth is of the unscaled box, so the same measure holds with the row open.
+        if (title.scrollWidth > TITLE_ROOM_OPEN + 0.5) findings.push(name + ": title wider than " + TITLE_ROOM_OPEN + "px (open)");
+        var head = row.querySelector(".pain-map-row__head");
+        var natural = row.querySelector(".pain-map-row__quotes-inner").offsetHeight;
+        var content = head.offsetHeight + natural;
+        if (content > MAX_OPEN) {
+          findings.push(name + ": open content is " + Math.round(content) + "px, over " + MAX_OPEN + "px (clipped)");
         }
-        closeRows(row.parentNode);
       });
+      resetRows();
     });
     setTab(startTab);
     return findings;
