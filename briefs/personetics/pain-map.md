@@ -3,7 +3,7 @@
 Section 04 (Mind the gap / Discovery & Problem Definition), between body paragraphs 1 and 2.
 Scope doc: `briefs/personetics/personetics-build-scope.md`. This file holds every value for this visual, static and motion. The scope doc only links here.
 
-Status (29 Oct 2026): phase 1 built and QA'd by Hadar (commit d63dc6d). Phase 2 (drawer motion + close control) specced and approved in a playable reference, below (§3). Phase 2 build not started. Still open: §4.
+Status (29 Oct 2026): phase 1 built and QA'd by Hadar (commit d63dc6d). Phase 2 (drawer motion + close control) specced and approved in a playable reference, below (§3). Phase 2 build not started. Phase 2b (illustration transition on tab switch) specced and approved in a playable reference: §6. Still open: §4.
 
 > **Conflict rule.** If any number in this spec conflicts with the existing layout or code, the existing source wins. STOP and report. Do not redesign, flatten or substitute your own markup.
 >
@@ -28,6 +28,9 @@ Status (29 Oct 2026): phase 1 built and QA'd by Hadar (commit d63dc6d). Phase 2 
   - Switching tabs: all rows closed, nothing animates inside the block (the toggle's pill still moves).
 - **Numbers that matter:** drawer 200 ms, `cubic-bezier(0, 0, 0.58, 1)`; plus/minus turn 110 ms; quotes 300 ms fade + 8px rise, first quote starts 60 ms in, 60 ms between quotes; closing quotes fade 150 ms, no stagger. Row paddings per §3.4. Right column stays 540 × 526 in every frame of the motion.
 - **Out of scope:** illustrations and their animation, tab-content transition, row hover state, commit (Hadar QAs first).
+
+### Phase 2b — illustration transition on tab switch
+See §6.0.
 
 ---
 
@@ -76,7 +79,7 @@ All rules 1px, `--primitive-grey-dark`.
 ### 1.4 Illustration
 - The grey placeholder is replaced by the three inline SVGs, one per tab: `_includes/personetics/pain-map-illustration-spend.svg`, `-plan.svg`, `-save.svg`, included in each left panel by tab id. Inline (not `<img>`) because the colours are CSS variables.
 - Each SVG is 228 × 188, `display: block`, in the unchanged 228 × 188 box. The `<image>` hrefs point at `/assets/personetics/pain-map/*.png`.
-- Same box in every tab. Motion is still phase 2.
+- Same box in every tab. Motion: §6.
 
 ### 1.5 Left column (260 wide)
 - Content: placeholder box → 32px gap → number → 16px gap → label. Right padding 32 (content 228 wide).
@@ -221,7 +224,7 @@ All beats start on the same click. Times in ms from the click (open), 5-quote ro
 - **Plain CSS transitions on a user click**, not a scripted pure-function-of-time animation. The standard's scripted-timeline rules do not apply; the beats table is the spec.
 
 ### 3.6 Not in this phase
-Illustrations and their animation; tab-content transition; row hover state; the headline and left column (they never move).
+Illustrations and their animation (§6); tab-content transition; row hover state; the headline and left column (they never move).
 
 ### 3.7 Approved values still carrying an assumption
 - Quote rise **8px** is Claude's default, not drawn in Figma. Hadar saw it in the reference and did not change it. Confirm in browser.
@@ -479,9 +482,311 @@ Quotes block room = 282 − 71.36 header − 19 top gap = 191.64px. At 12px / 17
 ## 4. Open — do not build now
 - **Row hover state** — Hadar wants one, not designed yet. **Raise before motion is closed.**
 - Tab-content transition (the toggle's own movement already ships in phase 1).
-- Illustration animations — Hadar designs them with another agent; each tab's illustration is now a static inline SVG at 228 × 188; the motion is added to these.
+- Illustration animation: the tab-switch transition is specced in §6. Any other motion inside a settled illustration: none designed.
 - Figma frame `closed` (`2003:51642`) still shows the old circle button; update it to the plus or delete it so it cannot mislead.
 
 ## 5. Open — content, decide later (Hadar, 28 Oct)
 - **Source caption.** The article workbench's note on this visual: the caption must say the numbers come from public studies, not the partner banks' own research. Not in Figma. Not built.
 - **Block headline** (above the tabs): placeholder until Hadar supplies it (§2).
+
+---
+
+## 6. Illustration transition on tab switch (phase 2b, 29 Oct 2026)
+
+Status: specced and approved by Hadar in a playable reference. Build not started. Commit this spec before building.
+
+> **Conflict rule.** Same as the top of this file: if any number here conflicts with the existing layout or code, the existing source wins. STOP and report.
+
+### 6.0 Definition of done
+- **What Hadar looks at:** `/case-studies/personetics/`, section 04, next to the approved reference: artifact "Pain Map Transition", `https://claude.ai/artifact/XeYZJSEUBGKMkVWsf3AmQj`, version 9, speed slider at 1.20. She switches between every pair of tabs in both directions, switches again in the middle of a move, and clicks the tab that is already selected.
+- **The numbers that matter** (playback speed 1.2×, derived from the beats below): arriving takes Plan 646 ms, Save 763 ms, Spend 812 ms; leaving takes 1 / 1.4 of that. A build more than 15% off is a defect: report it, do not tune it. The settled illustration equals the static one in §1.4 (same look as the static partial), and every position in the block is unchanged.
+- **Out of scope:** the number, label and rows still swap instantly on click, exactly as in phase 1 (their transition is a separate open item); row motion; hover; commit (Hadar QAs first).
+
+### 6.1 Purpose (animation-planning-standard §1)
+State indication and delight. The illustration shows which tab is active. Every illustration is born from and returns to the same seed, so any tab can hand over to any other.
+
+### 6.2 What happens
+Times below are at 1.0×, the reference's own clock. The page plays everything 1.2× faster (§6.9, item 6).
+
+**The seed:** a black circle, radius 5, at the illustration's centre (114, 94). Every illustration starts from it and ends in it.
+
+**Leaving a tab** plays the arrival of that tab backwards from the current moment, 1.4× faster, down to the seed. **Arriving** plays forwards from the seed. Switching again mid-move reverses from wherever the motion is.
+
+| Tab | Beats (ms, 1.0×) | Total (1.0×) |
+|---|---|---|
+| Plan | 0–300 the black ellipse (layer 4) grows from the seed circle to its own width, 0–200 to its own height. 180–600 it travels down to its place at the bottom. The other rings leave the seed's shape one after another (start 190 + 35 × n, n = order by distance from the centre, 380 each) and open to their own shape and place, fading in over the first 30%. When the dotted ring is 75% in place, the red ellipse (layer 2) appears on it and rises to the top (340). Items pop on their rings from scale 0, each at its own seeded time, with a spin. | 775 |
+| Save | 0–240 the seed splits in two (liquid), 130–380 each splits again, giving four dots. Each dot stretches into its line like liquid: it gets thinner as it gets longer, no shrink step (starts 380, 405, 430, 455; 300 each). Items pop on their lines at seeded times. | 915 |
+| Spend | 0–240 the seed splits and the halves fly apart: one to the left end of the lower line, one to the right end of the upper line. 200 and 230 (360 each) each draws its line back across the artboard as a pen, shrinking to hairline thickness and vanishing at the far end. When both lines have crossed the middle of the artboard, the scalloped ring (layer 4) spins in (300). 160 ms later the other objects pop in between the lines, the boat first. | 974 |
+
+At 1.2×: 646, 763 and 812 ms. Totals are derived, not fixed.
+
+### 6.3 Behaviour
+- Load state: Spend selected, its illustration settled. No entrance at load, nothing waits on `ViewportGate`.
+- The transition starts only from a click on a tab button. `setTab` and `checkOverflow` run without starting it.
+- Clicking the selected tab does nothing.
+- The animation loop runs only while something moves and stops once the target scene is settled.
+- Everything outside the illustration behaves as in phase 1 (§1.7, phase 2 row motion).
+
+### 6.4 Reduced motion (standard §8)
+The illustration tells which tab is active, so it still changes. No splits, drawing, travel, spin or pop. On a tab click: the illustration fades out over 75 ms, swaps to the target's settled state, fades in over 75 ms, linear.
+
+### 6.5 Exceptions to the animation standard, stated
+- **Elements pop from scale 0.** Hadar's call. The standard says never scale(0) on an entrance.
+- **Not transform/opacity only:** the dots and pens are SVG attributes, Spend's lines are revealed by `stroke-dashoffset`, and the splits use an SVG filter (metaball, the same technique as the problem statement). All of it sits on small elements and runs under 1 s. The filter is removed once its blur reaches 0.
+- **Duration is above the UI ceiling** (standard §0, 300 ms). Hadar set the speed by eye on the reference.
+- **Leaving is the arrival played backwards**, so exits ease in. Accepted.
+- **User-triggered, not a scripted narrative scene**, but every frame is still a pure function of `(scene, t)`: no accumulated state.
+
+### 6.6 Paint order (standard §7a)
+Static, fixed DOM order, valid because it never changes during the motion: Plan keeps the partial's own order. Save: the four dots (which become the lines) first, then all items, so the lines are always behind the objects. Spend: the two lines, then the two pens, then the items.
+
+### 6.7 Markup and CSS (Claude's call; layout positions do not change)
+- One illustration stage replaces the three per-panel illustrations. `.pain-map__left` becomes `display: flex; flex-direction: column; gap: var(--spacing-32); box-sizing: border-box; padding: 79.5px var(--spacing-32) 0 0` (the values `.pain-map__left-panel` has today). `.pain-map__left-panel` keeps only `.pain-map__left-text` and loses its height, padding and gap.
+- `.pain-map__illustration` (228 × 188, `position: relative`) contains three `.pain-map__scene` boxes, one per tab (`data-tab`), each `position: absolute; inset: 0` and holding that tab's existing SVG partial. Without JS only the Spend scene is visible.
+- A zero-size, absolutely positioned `<svg>` inside `.pain-map__illustration` holds the one metaball filter (`filterUnits="userSpaceOnUse" x="0" y="0" width="228" height="188"`). It is not `display: none`, because a filter inside a `display: none` SVG does not apply.
+- The three partials stay plain static SVG, unchanged. The script prepares them at init (§6.9).
+- New file `js/personetics/pain-map-illustration.js`, loaded from the Personetics page the way `pain-map.js` is. It listens to the tab buttons' clicks itself.
+
+### 6.8 Reference code (approved, version 9): port this, do not re-derive
+Where the prose and the code disagree, the code wins. This is the engine from the playable page. The page's own controls (speed, shrink, rapid switching, scrub, readout) are not ported.
+
+```js
+// ---------- Easing: project tokens (animation-planning-standard §2) ----------
+function bezier(x1, y1, x2, y2) {
+  const f = (a, b, t) => 3 * a * (1 - t) * (1 - t) * t + 3 * b * (1 - t) * t * t + t * t * t;
+  return function (x) {
+    if (x <= 0) return 0; if (x >= 1) return 1;
+    let lo = 0, hi = 1, t = x;
+    for (let i = 0; i < 28; i++) { t = (lo + hi) / 2; if (f(x1, x2, t) < x) lo = t; else hi = t; }
+    return f(y1, y2, t);
+  };
+}
+const EASE_OUT = bezier(0.23, 1, 0.32, 1);          // entering / exiting
+const EASE_IO = bezier(0.77, 0, 0.175, 1);          // moving / morphing on screen
+const POP = bezier(0.175, 0.885, 0.32, 1.275);      // entrance overshoot
+const clamp = v => v < 0 ? 0 : v > 1 ? 1 : v;
+const seg = (t, start, dur, ease) => ease(clamp((t - start) / dur));
+const lerp = (a, b, k) => a + (b - a) * k;
+const $ = id => document.getElementById(id);
+
+const CX = 114, CY = 94, SEED_R = 5;
+let shrinkR = 5;                 // dot radius just before it stretches into a line
+const EXIT_FACTOR = 1.4;           // exits play 1.4x faster than entrances
+// Seeded, never Math.random(): a scrub must reproduce the same frame.
+const JITTER = [0, 70, 25, 100, 45, 85, 10, 60, 110, 35, 90, 15, 55, 95, 30, 75, 5, 65];
+
+const root = $("stage");
+const sceneEls = { plan: $("scene-plan"), save: $("scene-save"), spend: $("scene-spend") };
+function bboxOf(g) { const b = g.getBBox(); return { cx: b.x + b.width / 2, cy: b.y + b.height / 2, w: b.width, h: b.height }; }
+const pe = scene => Array.prototype.slice.call(sceneEls[scene].querySelectorAll(".pe")).map(g => Object.assign({ g, i: +g.dataset.i }, bboxOf(g)));
+
+// Non-scaling strokes are measured in screen pixels, so their weight follows the stage's display scale (2x here, 1x on the page).
+const strokeEls = Array.prototype.slice.call(document.querySelectorAll("[vector-effect]")).map(el => ({
+  el, w: parseFloat((el.getAttribute("style").match(/stroke-width:([\d.]+)/) || [0, 1])[1]),
+  dash: (el.getAttribute("stroke-dasharray") || "").split(/[\s,]+/).filter(Boolean).map(Number)
+}));
+function applyStrokeScale() {
+  const k = root.getBoundingClientRect().width / 228;
+  strokeEls.forEach(s => {
+    s.el.style.strokeWidth = (s.w * k).toFixed(3);
+    if (s.dash.length) s.el.style.strokeDasharray = s.dash.map(v => (v * k).toFixed(3)).join(" ");
+  });
+}
+applyStrokeScale(); window.addEventListener("resize", applyStrokeScale);
+
+// ---------- PLAN: the black bottom ellipse is the seed. It starts as the small circle, grows to its own shape,
+// then travels down to the bottom of the stack while the other five rings peel off the same spot. ----------
+const PLAN_BLACK = 4, PLAN_RED = 2, PLAN_DOTTED = 9;                                             // layer 4 = the black ellipse at the bottom
+const PLAN_RING_LINES = [2, 3, 4, 5, 7, 9];
+const PLAN_ITEM_PARENT = { 6: 3, 8: 5, 10: 9, 11: 7, 12: 3, 13: 9 };   // item layer -> the ring it sits on
+const PLAN_ROT = { 6: -40, 8: 25, 10: 90, 11: 30, 12: 0, 13: -30 };
+
+function makePlan() {
+  const all = pe("plan");
+  const rings = all.filter(e => PLAN_RING_LINES.includes(e.i));
+  const items = all.filter(e => PLAN_ITEM_PARENT[e.i]);
+  const black = rings.find(r => r.i === PLAN_BLACK);
+  const red = rings.find(r => r.i === PLAN_RED), dotted = rings.find(r => r.i === PLAN_DOTTED);
+  const others = rings.filter(r => r !== black && r !== red).sort((a, b) => Math.abs(a.cy - CY) - Math.abs(b.cy - CY));
+  black.start = 180; black.dur = 420;
+  others.forEach((r, n) => { r.start = 190 + 35 * n; r.dur = 380; });
+  // The red ellipse is born on the dotted ring (same colour, same shape) once that ring is nearly in place, then rises to the top.
+  let tRed = 0;
+  while (seg(tRed, dotted.start, dotted.dur, EASE_OUT) < 0.75) tRed++;
+  red.start = tRed + 40; red.dur = 340; red.fadeStart = tRed;
+  items.forEach((it, n) => {
+    it.ring = rings.find(r => r.i === PLAN_ITEM_PARENT[it.i]);
+    it.start = it.ring.start + 170 + JITTER[n];
+    it.dur = 260;
+  });
+  const T = Math.max.apply(null, rings.map(r => r.start + r.dur).concat(items.map(i => i.start + i.dur)));
+  const bRx = black.w / 2, bRy = black.h / 2;
+  function render(t) {
+    // The black ellipse's current shape: circle r5 -> its own width, then its own height.
+    const sxB = lerp(SEED_R / bRx, 1, seg(t, 0, 300, EASE_IO)), syB = lerp(SEED_R / bRy, 1, seg(t, 0, 200, EASE_OUT));
+    black.k = seg(t, black.start, black.dur, EASE_OUT);
+    black.g.setAttribute("transform", `translate(${black.cx} ${lerp(CY, black.cy, black.k)}) scale(${sxB} ${syB}) translate(${-black.cx} ${-black.cy})`);
+    others.forEach(r => {
+      r.k = seg(t, r.start, r.dur, EASE_OUT);
+      // Each ring leaves the seed's own shape, then opens to its own.
+      const Y = lerp(CY, r.cy, r.k), sx = lerp(sxB, 1, r.k), sy = lerp(syB * bRy / (r.h / 2), 1, r.k);
+      r.g.setAttribute("transform", `translate(${r.cx} ${Y}) scale(${sx} ${sy}) translate(${-r.cx} ${-r.cy})`);
+      r.g.style.opacity = clamp(r.k / 0.3);
+    });
+    red.k = seg(t, red.start, red.dur, EASE_OUT);
+    red.g.setAttribute("transform", `translate(${red.cx} ${lerp(dotted.cy, red.cy, red.k)}) scale(1 ${lerp((dotted.h / 2) / (red.h / 2), 1, red.k)}) translate(${-red.cx} ${-red.cy})`);
+    red.g.style.opacity = seg(t, red.fadeStart, 80, x => x);
+    items.forEach(it => {
+      const s = seg(t, it.start, it.dur, POP), rot = PLAN_ROT[it.i] * (1 - seg(t, it.start, it.dur, EASE_OUT));
+      const dy = (1 - it.ring.k) * (CY - it.ring.cy);
+      it.g.setAttribute("transform", `translate(0 ${dy}) translate(${it.cx} ${it.cy}) rotate(${rot}) scale(${Math.max(s, 0.0001)}) translate(${-it.cx} ${-it.cy})`);
+      it.g.style.opacity = s > 0.001 ? 1 : 0;
+    });
+  }
+  return { T, render };
+}
+
+// ---------- SAVE: seed circle splits 1 -> 2 -> 4 (liquid), each dot stretches into its line, items pop ----------
+const SAVE_LINES = [68.75, 119.75, 18.75, 170.75];     // centre of each hairline; first two are the inner pair
+function makeSave() {
+  const items = pe("save");
+  const dots = Array.prototype.slice.call(document.querySelectorAll(".sd"));
+  const lineStart = [380, 405, 430, 455];
+  items.forEach((it, n) => {
+    let best = 0;
+    SAVE_LINES.forEach((y, li) => { if (Math.abs(y - it.cy) < Math.abs(SAVE_LINES[best] - it.cy)) best = li; });
+    it.line = best;
+    it.start = lineStart[best] + 120 + JITTER[n % JITTER.length];
+    it.dur = 240;
+    it.rot = it.g.querySelector("image") ? (n % 2 ? 25 : -25) : it.g.querySelector("circle") ? 0 : (n % 2 ? 90 : -90);
+  });
+  const T = Math.max.apply(null, items.map(i => i.start + i.dur).concat(lineStart.map(s => s + 300)));
+  const goo = $("gooBlur"), dotsG = $("save-dots");
+  function render(t) {
+    const s1 = seg(t, 0, 240, EASE_IO), s2 = seg(t, 130, 250, EASE_IO);
+    const yA = lerp(CY, SAVE_LINES[0], s1), yB = lerp(CY, SAVE_LINES[1], s1);
+    const ys = [yA, yB, lerp(yA, SAVE_LINES[2], s2), lerp(yB, SAVE_LINES[3], s2)];   // inner A, inner B, outer A, outer B
+    const gooK = 1 - seg(t, 240, 90, x => x);
+    const r = lerp(SEED_R, shrinkR, seg(t, 300, 140, EASE_IO));   // dots get smaller first
+    dots.forEach((d, i) => {
+      const hk = seg(t, lineStart[i], 300, EASE_OUT);
+      const w = lerp(2 * r, 228, hk);
+      const h = Math.max(0.5, (4 * r * r) / w);   // stretches like liquid: the thinner, the longer, no pause
+      d.setAttribute("x", CX - w / 2); d.setAttribute("y", ys[i] - h / 2);
+      d.setAttribute("width", w); d.setAttribute("height", h); d.setAttribute("rx", h / 2);
+      d.style.fill = `color-mix(in srgb, #6b6c72 ${(hk * 100).toFixed(1)}%, #393a3d)`;
+    });
+    if (gooK > 0.02) { goo.setAttribute("stdDeviation", (SEED_R * 0.5 * gooK).toFixed(2)); dotsG.setAttribute("filter", "url(#goo)"); }
+    else dotsG.removeAttribute("filter");
+    items.forEach(it => {
+      const s = seg(t, it.start, it.dur, POP), rot = it.rot * (1 - seg(t, it.start, it.dur, EASE_OUT));
+      it.g.setAttribute("transform", `translate(${it.cx} ${it.cy}) rotate(${rot}) scale(${Math.max(s, 0.0001)}) translate(${-it.cx} ${-it.cy})`);
+      it.g.style.opacity = s > 0.001 ? 1 : 0;
+    });
+  }
+  return { T, render };
+}
+
+// ---------- SPEND: the seed splits in two and the halves fly apart, one to the left end of the lower line and one to the
+// right end of the upper line. Each draws its line back across the artboard as a pen (as in the problem-statement entrance),
+// shrinking to hairline as it goes. When both lines have crossed the middle, the scalloped ring pops in; once it is nearly
+// in place the rest of the objects pop in between the lines. ----------
+const SPEND_LINES = [   // origin = where the pen starts, (ux, uy) = unit direction it draws in, from the Figma line transforms
+  { i: 2, ox: 5, oy: 94.6499023, ux: 0.9874613285, uy: 0.1578612030, len: 218.134369, rev: false },   // lower line: drawn left to right
+  { i: 3, ox: 225.9348, oy: 41.2487, ux: -0.9963000417, uy: 0.0859434158, len: 221.729202, rev: true }  // upper line: drawn right to left
+];
+const SPEND_RING = 4;                                                       // layer 4 = the scalloped ring
+const SPEND_DELAY = [60, 0, 110, 80, 40, 100, 70, 30, 90, 50, 20, 120];     // seeded
+function makeSpend() {
+  const all = pe("spend");
+  const lines = SPEND_LINES.map(L => Object.assign({ el: all.find(e => e.i === L.i).g.querySelector("line") }, L));
+  lines.forEach(L => L.el.setAttribute("stroke-dasharray", `${L.len} ${L.len}`));
+  const penStart = [200, 230], penDur = 360;
+  const penX = (t, n) => {
+    const L = SPEND_LINES[n];
+    return lerp(CX, L.ox, seg(t, 0, 240, EASE_IO)) + L.ux * L.len * seg(t, penStart[n], penDur, EASE_IO);
+  };
+  // The ring starts when both pens have crossed x = 114 (the middle of the artboard).
+  let crossed = [null, null];
+  for (let ms = 0; ms <= 1000 && (crossed[0] === null || crossed[1] === null); ms++) {
+    if (crossed[0] === null && ms >= penStart[0] && penX(ms, 0) >= CX) crossed[0] = ms;
+    if (crossed[1] === null && ms >= penStart[1] && penX(ms, 1) <= CX) crossed[1] = ms;
+  }
+  const ringStart = Math.max(crossed[0], crossed[1]), ringDur = 300, restBase = ringStart + 160;   // the rest start as the ring nears its place
+  const items = all.filter(e => e.i > 3);
+  items.forEach((it, n) => {
+    const boat = it.i === 9, ring = it.i === SPEND_RING;
+    it.start = ring ? ringStart : restBase + (boat ? 0 : 40 + SPEND_DELAY[n % SPEND_DELAY.length]);
+    it.dur = ring ? ringDur : boat ? 320 : 260;
+    const hasImg = !!it.g.querySelector("image"), hasCircle = !!it.g.querySelector("circle");
+    it.rot = ring ? -100 : boat ? -8 : hasImg ? (n % 2 ? 22 : -22) : hasCircle ? 0 : (n % 2 ? 100 : -100);
+  });
+  const pens = Array.prototype.slice.call(document.querySelectorAll(".sp"));
+  const T = Math.max.apply(null, items.map(i => i.start + i.dur).concat(penStart.map(s => s + penDur)));
+  const goo = $("gooBlur"), pensG = $("spend-pens");
+  function render(t) {
+    const s = seg(t, 0, 240, EASE_IO);
+    lines.forEach((L, n) => {
+      const k = seg(t, penStart[n], penDur, EASE_IO);
+      L.el.setAttribute("stroke-dashoffset", ((L.rev ? -1 : 1) * L.len * (1 - k)).toFixed(2));
+      L.el.parentNode.style.opacity = k > 0 ? 1 : 0;
+      pens[n].setAttribute("cx", lerp(CX, L.ox, s) + L.ux * L.len * k);
+      pens[n].setAttribute("cy", lerp(CY, L.oy, s) + L.uy * L.len * k);
+      pens[n].setAttribute("r", lerp(SEED_R, 0.3, k));
+      pens[n].style.opacity = k >= 0.999 ? 0 : 1;
+    });
+    const gooK = 1 - seg(t, 100, 130, x => x);
+    if (gooK > 0.02) { goo.setAttribute("stdDeviation", (SEED_R * 0.5 * gooK).toFixed(2)); pensG.setAttribute("filter", "url(#goo)"); }
+    else pensG.removeAttribute("filter");
+    items.forEach(it => {
+      const p = seg(t, it.start, it.dur, POP), rot = it.rot * (1 - seg(t, it.start, it.dur, EASE_OUT));
+      it.g.setAttribute("transform", `translate(${it.cx} ${it.cy}) rotate(${rot}) scale(${Math.max(p, 0.0001)}) translate(${-it.cx} ${-it.cy})`);
+      it.g.style.opacity = p > 0.001 ? 1 : 0;
+    });
+  }
+  return { T, render, ringStart };
+}
+
+// All scenes are measured while visible, then one is shown at a time.
+const SCENES = { plan: makePlan(), save: makeSave(), spend: makeSpend() };
+function show(scene) { for (const k in sceneEls) sceneEls[k].style.display = k === scene ? "" : "none"; }
+
+// ---------- Driver: any tab to any tab ----------
+// State is (scene, t). Not on the target tab: run t back to 0 (the seed, identical in every scene), swap, run forward.
+// Switching again mid-move just reverses t from wherever it is, so interruptions are continuous.
+let scene = "plan", t = SCENES.plan.T, target = "plan", speed = 1, scrubbing = false, last = performance.now();
+function draw() { show(scene); SCENES[scene].render(t); }
+function frame(now) {
+  const dt = Math.min(64, now - last) * speed; last = now;
+  if (!scrubbing) {
+    if (scene !== target) { t -= dt * EXIT_FACTOR; if (t <= 0) { scene = target; t = 0; } }
+    else t = Math.min(SCENES[scene].T, t + dt);
+    draw();
+  }
+  readout();
+  requestAnimationFrame(frame);
+}
+```
+
+### 6.9 What changes in the port (everything else is copied)
+1. **Layers.** At init, wrap each element child of each partial's `<svg>` in `<g class="pe" data-i="N">`, with N = 2 + the child's position (0-based) among the SVG's element children. This reproduces the layer numbers used above: Plan 2–13, Save 2–… , Spend 2–14. Do this before measuring.
+2. **Scenes.** `sceneEls.plan/save/spend` = the three `.pain-map__scene` boxes; `root` = `.pain-map__illustration`. All three are visible while the engine measures bounding boxes (once, at init, with no transforms applied); then only the active one is shown.
+3. **Plan strokes.** Set `vector-effect="non-scaling-stroke"` on the shapes inside layers 3, 5, 7 and 9 (the stroked rings). Keep `applyStrokeScale`; on the page the display scale is 1.
+4. **Save lines.** Remove the partial's four hairline layers (2–5). Insert a `<g class="pe-free">` of four `<rect>` dots *before* the remaining layers; the reference's `.sd` becomes `.pain-map-save-dot`, `#save-dots` becomes an element with a class, not an id. In the port, the layer numbers used by Save's items are unaffected because items are located by position, not number.
+5. **Spend lines and pens.** Layers 2 and 3 get their dash reveal from the engine. Insert two `<circle>` pens in a group after layer 3 and before layer 4; `.sp` becomes `.pain-map-spend-pen`.
+6. **Playback speed.** `speed = 1.2` as a named constant `PLAYBACK`. Remove `scrubbing`, `readout`, the shrink slider (`shrinkR` becomes the constant 5) and the demo's `scene = "plan"` start: the start scene is `spend`, settled (`t = T`).
+7. **Loop.** `frame` is started by a click and cancels itself when `scene === target` and `t >= T`.
+8. **Tokens.** No hex values: the dot and pen fill is `var(--primitive-black)`; the stretch colour is `color-mix(in srgb, var(--primitive-grey-dark) X%, var(--primitive-black))`. Ids and classes carry the `pain-map-` prefix (for example `pain-map-goo`, `pain-map-goo-blur`).
+9. **Tab clicks.** `setTarget(id)` is called from the tab buttons' click listener only. Reduced motion follows §6.4.
+10. **Seekable and seeded.** Keep every position a pure function of `(scene, t)`, and the `JITTER`, `SPEND_DELAY`, `PLAN_ROT` arrays as given. No `Math.random()`.
+
+### 6.10 Checklist for the build (Claude Code reports each as pass / fail / not measured)
+- Settled Plan, Save and Spend look the same as the static partials (compare each at 1× in the browser, not across a screenshot).
+- Measured in the page: each scene's arrival total at 1.2× (§6.0) and the 15% rule.
+- Every pair of tabs, both directions, plays through the seed; no frame shows a hard cut.
+- Switching mid-move reverses smoothly; the same tab does nothing.
+- Save's lines are behind the objects in every frame; Spend's ring starts after both lines cross the middle.
+- No hex value in any file touched; no `Math.random()`; ids and classes prefixed.
+- Reduced motion: fade 75 + 75 ms, no other motion.
+- `PainMap.checkOverflow()` still returns the same findings as before (it must not start a transition).
+- Phase 1 and the row motion behave exactly as before.
