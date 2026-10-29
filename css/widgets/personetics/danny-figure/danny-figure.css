@@ -35,8 +35,22 @@
 .dfg__figure {
   position: absolute;
   z-index: 1;
-  top: 318px;
-  left: 62px;
+  top: 340.32px;
+  left: 95.12px;
+  width: 204.35px;
+  height: 254.97px;
+  overflow: hidden;
+}
+
+/* The leg-swing frame strip: 7 frames side by side, shifted to show one. Index 3 is the rest pose.
+   max-width: none is required: css/reset.css sets img { max-width: 100% }. */
+.dfg__strip {
+  --dfg-frame: 3;
+  display: block;
+  width: 700%;
+  height: 100%;
+  max-width: none;
+  transform: translateX(calc(var(--dfg-frame) * -100% / 7));
 }
 
 .dfg__asterisk {
