@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 228 188" width="228" height="188" fill="none" aria-hidden="true" focusable="false">
+<g transform="translate(0 18.5)"><line x1="0" y1="0.25" x2="228" y2="0.25" style="fill:none;stroke:var(--primitive-grey-dark);stroke-width:0.5"/></g>
+<g transform="translate(0 170.5)"><line x1="0" y1="0.25" x2="228" y2="0.25" style="fill:none;stroke:var(--primitive-grey-dark);stroke-width:0.5"/></g>
+<g transform="translate(0 119.5)"><line x1="0" y1="0.25" x2="228" y2="0.25" style="fill:none;stroke:var(--primitive-grey-dark);stroke-width:0.5"/></g>
+<g transform="translate(0 68.5)"><line x1="0" y1="0.25" x2="228" y2="0.25" style="fill:none;stroke:var(--primitive-grey-dark);stroke-width:0.5"/></g>
+<g transform="translate(94 0)"><path d="M22.5146 0V7.27246L27.5146 2.27246L34.0303 8.78809L29.333 13.4854H36V22.6992H28.8496L33.8789 27.7285L27.3633 34.2441L22.5146 29.3955V36H13.2998V29.5186L8.57422 34.2441L2.05859 27.7285L7.08789 22.6992H0V13.4854H6.60449L1.90723 8.78809L8.42285 2.27246L13.2998 7.14941V0H22.5146Z" style="fill:var(--primitive-black)"/></g>
+<g transform="translate(50 50)"><path d="M22.5146 0V7.27246L27.5146 2.27246L34.0303 8.78809L29.333 13.4854H36V22.6992H28.8496L33.8789 27.7285L27.3633 34.2441L22.5146 29.3955V36H13.2998V29.5186L8.57422 34.2441L2.05859 27.7285L7.08789 22.6992H0V13.4854H6.60449L1.90723 8.78809L8.42285 2.27246L13.2998 7.14941V0H22.5146Z" style="fill:var(--primitive-red)"/></g>
+<g transform="translate(148 11)"><circle cx="8" cy="8" r="8" style="fill:var(--primitive-red)"/></g>
+<g transform="translate(132 163)"><circle cx="8" cy="8" r="8" style="fill:var(--primitive-white)"/></g>
+<g transform="translate(15 163)"><circle cx="8" cy="8" r="8" style="fill:var(--primitive-red-dark)"/></g>
+<g transform="translate(202 61)"><circle cx="8" cy="8" r="8" style="fill:var(--primitive-white)"/></g>
+<g transform="translate(49 10)"><circle cx="8" cy="8" r="8" style="fill:var(--primitive-white)"/></g>
+<g transform="translate(148 163)"><circle cx="8" cy="8" r="8" style="fill:var(--primitive-black)"/></g>
+<g transform="translate(164 11)"><circle cx="8" cy="8" r="8" style="fill:var(--primitive-red-dark)"/></g>
+<g transform="translate(86 111)"><circle cx="8" cy="8" r="8" style="fill:var(--primitive-red-dark)"/></g>
+<image href="/assets/personetics/pain-map/coin-leaf.png" width="56.209" height="56.209" transform="matrix(1 0 0 1 102 111) translate(8.0000 8.0000) scale(0.34701) rotate(14.5421) translate(-28.1045 -28.1045)"/>
+<image href="/assets/personetics/pain-map/coin-leaf.png" width="56.209" height="56.209" transform="matrix(1 0 0 1 15 56) translate(12.0000 12.0000) scale(0.52051) rotate(14.5421) translate(-28.1045 -28.1045)"/>
+<g transform="translate(13 102)"><path d="M18 0L22.0779 8.15514L30.7279 5.27208L27.8449 13.9221L36 18L27.8449 22.0779L30.7279 30.7279L22.0779 27.8449L18 36L13.9221 27.8449L5.27208 30.7279L8.15514 22.0779L0 18L8.15514 13.9221L5.27208 5.27208L13.9221 8.15514L18 0Z" style="fill:var(--primitive-black)"/></g>
+<g transform="translate(182 153)"><path d="M18 0L22.0779 8.15514L30.7279 5.27208L27.8449 13.9221L36 18L27.8449 22.0779L30.7279 30.7279L22.0779 27.8449L18 36L13.9221 27.8449L5.27208 30.7279L8.15514 22.0779L0 18L8.15514 13.9221L5.27208 5.27208L13.9221 8.15514L18 0Z" style="fill:var(--primitive-red)"/></g>
+<g transform="translate(142.304 100)"><path d="M19.696 0L20.7796 13.8548L26.5364 1.20615L22.816 14.596L32.5518 4.67911L24.4762 15.989L37.0166 10L25.5597 17.8658L39.3922 16.527L25.936 20L39.3922 23.473L25.5597 22.1342L37.0166 30L24.4762 24.011L32.5518 35.3209L22.816 25.404L26.5364 38.7939L20.7796 26.1452L19.696 40L18.6125 26.1452L12.8556 38.7939L16.576 25.404L6.84029 35.3209L14.9159 24.011L2.37554 30L13.8324 22.1342L-0.000110626 23.473L13.456 20L-0.000110626 16.527L13.8324 17.8658L2.37554 10L14.9159 15.989L6.84029 4.67911L16.576 14.596L12.8556 1.20615L18.6125 13.8548L19.696 0Z" style="fill:var(--primitive-red)"/></g>
+<image href="/assets/personetics/pain-map/coin-woman.png" x="167" y="51" width="35" height="35"/>
+<image href="/assets/personetics/pain-map/coin-building.png" x="56" y="158" width="24" height="24"/>
+</svg>

@@ -22,7 +22,7 @@
     <div class="pain-map__left">
       {% for tab in data.tabs %}
       <div class="pain-map__left-panel" data-tab="{{ tab.id }}"{% if not loop.first %} hidden{% endif %}>
-        <div class="pain-map__illustration"></div>
+        <div class="pain-map__illustration">{% include "personetics/pain-map-illustration-" + tab.id + ".svg" %}</div>
         <div class="pain-map__left-text">
           <p class="pain-map__number">{{ tab.number | safe }}</p>
           <p class="pain-map__label">{{ tab.label | safe }}</p>

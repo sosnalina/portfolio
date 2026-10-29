@@ -17,7 +17,7 @@ Status (29 Oct 2026): phase 1 built and QA'd by Hadar (commit d63dc6d). Phase 2 
 - **What Hadar looks at:** `/case-studies/personetics/`, section 04: the pain map, overlaid against Figma. All 3 tabs, every row opened.
 - **Motion included:** only the tab toggle's existing movement, duplicated from the Bill Pay cockpit widget. Tab content swaps instantly.
 - **Numbers that matter:** block 800 × 654; right column 540 × 526 in every state; no scrollbar anywhere, inside or outside the block.
-- **Out of scope:** illustrations (grey placeholder boxes only), row hover state, commit.
+- **Out of scope:** illustrations (the three inline SVGs, static; their motion is phase 2), row hover state, commit.
 
 ### Phase 2 — row open/close motion
 - **What Hadar looks at:** `/case-studies/personetics/`, section 04, side by side with the approved reference (artifact "Pain Map Drawer", `https://claude.ai/artifact/8pD6yYdLc6H3cbZaKUqJ4L`, version 7) and overlaid against Figma frame `open` (node `2004:51829`) and the open row (node `2004:51870`). Every tab; every row opened and closed; the 5-quote row in the third tab; tab switching with a row open.
@@ -41,7 +41,7 @@ Build type: **new structure, with one duplicated part** (the tab toggle, §1.3).
 | Whole block | Figma file `3XG9JnADI2psNR3B7TwQdx`, page "Perso illustration new", 800 × 654. **Use frame `open` (`2004:51829`) and the open row (`2004:51870`).** Frame `closed` (`2003:51642`) is stale: it still shows the old circle button. Do not use it. |
 | Tab toggle | **Duplicate** the Bill Pay cockpit widget toggle (its markup, JS and existing movement). Change only what §1.3 lists. Pre-flight names the exact source file. |
 | Text | Text sync from the Pain Map Workbench (§2). Never typed by hand. Figma copy is placeholder only. |
-| Illustrations | Not in this build. Grey placeholder box (§1.4). |
+| Illustrations | The grey placeholder is replaced by three inline SVGs, `_includes/personetics/pain-map-illustration-spend.svg`, `-plan.svg`, `-save.svg` (228 × 188; photos from `assets/personetics/pain-map/`). Motion still phase 2 (§4). |
 | Plus / minus toggle | Hadar's two SVGs (28–29 Oct), paths unchanged, inlined, `fill="currentColor"`, colour `--primitive-red-dark`. The paths are in the reference code (§3.8), in `toggleIcon()`. They replace `_includes/personetics/pain-map-plus.svg` (the old 32 × 32 circle, Figma node `2004:52189`, which is deleted). |
 | Behaviour | Hadar, 28–29 Oct. |
 
@@ -73,9 +73,10 @@ All rules 1px, `--primitive-grey-dark`.
 - Tab text: Literata SemiBold 600, 12px, line-height 1.3 (Figma style `desktop/hero/note`), centred.
 - Keep the cockpit toggle's existing movement as it is. Any value in this list that differs from the cockpit source: this list wins (it's Figma). Any value not in this list: copy from the source. **Phase 2 does not touch the toggle.**
 
-### 1.4 Illustration placeholder
-- 228 × 188 box, plain light grey fill, no text, no border. Use the existing grey-light primitive token (pre-flight names it).
-- Same box in every tab.
+### 1.4 Illustration
+- The grey placeholder is replaced by the three inline SVGs, one per tab: `_includes/personetics/pain-map-illustration-spend.svg`, `-plan.svg`, `-save.svg`, included in each left panel by tab id. Inline (not `<img>`) because the colours are CSS variables.
+- Each SVG is 228 × 188, `display: block`, in the unchanged 228 × 188 box. The `<image>` hrefs point at `/assets/personetics/pain-map/*.png`.
+- Same box in every tab. Motion is still phase 2.
 
 ### 1.5 Left column (260 wide)
 - Content: placeholder box → 32px gap → number → 16px gap → label. Right padding 32 (content 228 wide).
@@ -478,7 +479,7 @@ Quotes block room = 282 − 71.36 header − 19 top gap = 191.64px. At 12px / 17
 ## 4. Open — do not build now
 - **Row hover state** — Hadar wants one, not designed yet. **Raise before motion is closed.**
 - Tab-content transition (the toggle's own movement already ships in phase 1).
-- Illustration animations — Hadar designs them with another agent; each tab's illustration replaces its grey box at 228 × 188.
+- Illustration animations — Hadar designs them with another agent; each tab's illustration is now a static inline SVG at 228 × 188; the motion is added to these.
 - Figma frame `closed` (`2003:51642`) still shows the old circle button; update it to the plus or delete it so it cannot mislead.
 
 ## 5. Open — content, decide later (Hadar, 28 Oct)

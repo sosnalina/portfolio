@@ -174,7 +174,12 @@
   flex: none;
   width: 228px;
   height: 188px;
-  background: var(--primitive-grey-light);
+}
+
+.pain-map__illustration svg {
+  display: block;
+  width: 228px;
+  height: 188px;
 }
 
 .pain-map__left-text {
